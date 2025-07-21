@@ -37,3 +37,21 @@ Angle drift diagram: θ(ε) around 45°
 Code Snippet: Python simulation of Q(ε)
 
 Figure Index: 3.1, 3.2
+
+code_snippets:
+      - name: simulate_koide_distribution
+        file: rcft_lib/chapter3.py
+        function: simulate_koide(mu0, sigma0, trials)
+        description: Samples random lepton masses and computes Q distribution under perturbations
+      - name: koide_sensitivity
+        file: rcft_lib/chapter3.py
+        function: sensitivity_dQ_dm(m_e, m_mu, m_tau)
+        description: Analytic computation of ∂Q/∂m_i for each lepton mass
+    extra_equations:
+      - sensitivity_expression: "∂Q/∂m_i = analytic expression in terms of (m_e, m_μ, m_τ)"
+    field_tests:
+      - name: Optical Fringe Ratio
+        description: Physical interference experiment to measure 2/3 ratio in fringe spacing
+    visualizations:
+      - name: Q Distribution vs ε
+        notebook: notebooks/chapter3/q_distribution.ipynb
