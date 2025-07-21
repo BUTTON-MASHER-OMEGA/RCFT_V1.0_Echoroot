@@ -1,10 +1,25 @@
 format: jb-book
 root: docs/introduction.md
 chapters:
+```yaml
+chapters:
   - file: docs/chapter_1_intro_memory.md
   - file: docs/chapter_2_geometry.md
   - file: docs/chapter_3_duality.md
   - file: docs/chapter_4_multiverse_topology.md
   - file: docs/chapter_5_dimensional_transitions.md
-  ...
-  - file: docs/chapter_33_calabi_yau.md
+  - file: docs/chapter_6_entropy_measures.md
+  - file: docs/chapter_7_thermo_fusion.md
+  - file: docs/chapter_8_hyperbolic_tessellations.md
+  - file: docs/chapter_9_spherical_harmonics.md
+  - file: docs/chapter_10_qft_coherence.md
+  - file: docs/chapter_11_gauge_gravity_duality.md
+  - file: docs/chapter_12_scaling_recursive_modes.md
+  - file: docs/chapter_13_logarithmic_growth_information_limits.md
+  - file: docs/chapter_14_nonlinear_dynamics_solitons.md
+  - file: docs/chapter_15_coherence_vortices_defects.md
+  - file: docs/chapter_16_chern_simons_topology.md
+  - file: docs/chapter_17_twistor_gauge_interplay.md
+  - file: docs/chapter_18_nonlinear_gravitons.md
+  - file: docs/chapter_19_instantons_bounce_solutions.md
+  - file: docs/chapter_20_cosmogenesis_vacuum_decay.md
