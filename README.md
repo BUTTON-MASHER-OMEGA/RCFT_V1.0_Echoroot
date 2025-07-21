@@ -2,6 +2,11 @@
 Steve's Findings
 RCFT-Book-v1/
 ├── the_book_v1.0.yaml         # Master scroll
+├── rcft_lib/
+│   ├── __init__.py
+│   ├── chapter1.py
+│   ├── chapter2.py
+│   └── visuals.py
 ├── docs/                      # GitHub Pages source
 │   ├── introduction.md
 │   ├── glyph_foundations.md
