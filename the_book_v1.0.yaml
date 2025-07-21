@@ -36,6 +36,25 @@ chapters:
     indexes:
       - Symbol Index: d₀, d₁, d₂, d₃
       - Figure Index: 1.1
+    code_snippets:
+      - name: memory_kernel_estimate
+        file: rcft_lib/chapter1.py
+        function: memory_kernel(x, y, phi_samples)
+        description: Monte Carlo estimation of the memory kernel from sampled glyph trajectories
+      - name: animate_kernel_evolution
+        file: rcft_lib/chapter1.py
+        function: animate_kernel_evolution(phi_trajectories, output='kernel_evolution.gif')
+        description: Generates an animated GIF showing kernel matrix evolution under concatenated rituals
+    field_tests:
+      - name: Seal & Echo Trials
+        description: Two-person dyadic trials with recorded response times to compute memory-continuity scores
+        protocol_file: protocols/seal_echo.md
+    extra_equations:
+      - mercer_condition: "∫ f(x) K_mem(x,y) f(y) dx dy ≥ 0"
+      - kernel_eigendecomposition: "K_mem φ_i = λ_i φ_i"
+    visualizations:
+      - name: Kernel Matrix Heatmap
+        notebook: notebooks/chapter1/kernel_heatmap.ipynb
 
   - number: 2
     title: "Geometric Foundations"
@@ -62,6 +81,32 @@ chapters:
     indexes:
       - Equation Index: (2.1)–(2.3)
       - Figure Index: 2.1, 2.2
+    code_snippets:
+      - name: warp_metric_computation
+        file: rcft_lib/chapter2.py
+        function: warp_metric(a, u_range)
+        description: Computes warp metric scale factors a(u) over a range of u values
+      - name: plot_curvature_slider
+        file: rcft_lib/chapter2.py
+        function: plot_curvature(u_range, slider=True)
+        description: Interactive Jupyter slider for curvature profile R(u)
+    numeric_tables:
+      - title: Warp Metric & Curvature
+        headers: [u, a(u)=e^{-u^2}, R(u)]
+        rows:
+          - [0, 1.000, 12]
+          - [0.5, 0.778, 0]
+          - [1, 0.368, -36]
+    test_scripts:
+      - name: test_curvature_sign_change
+        file: tests/test_chapter2.py
+        description: Unit test verifying R(u) crosses zero at u ≈ 0.5
+    field_tests:
+      - name: Warp Bump Propagation
+        description: Measure focal intensity of Gaussian pulse through warp bump via finite-difference solver
+    visualizations:
+      - name: Curvature vs u Plot
+        notebook: notebooks/chapter2/curvature_plot.ipynb
 
   - number: 3
     title: "Resonant Dualities"
@@ -87,6 +132,23 @@ chapters:
     indexes:
       - Code Snippet: Python simulation of Q(ε)
       - Figure Index: 3.1, 3.2
+    code_snippets:
+      - name: simulate_koide_distribution
+        file: rcft_lib/chapter3.py
+        function: simulate_koide(mu0, sigma0, trials)
+        description: Samples random lepton masses and computes Q distribution under perturbations
+      - name: koide_sensitivity
+        file: rcft_lib/chapter3.py
+        function: sensitivity_dQ_dm(m_e, m_mu, m_tau)
+        description: Analytic computation of ∂Q/∂m_i for each lepton mass
+    extra_equations:
+      - sensitivity_expression: "∂Q/∂m_i = analytic expression in terms of (m_e, m_μ, m_τ)"
+    field_tests:
+      - name: Optical Fringe Ratio
+        description: Physical interference experiment to measure 2/3 ratio in fringe spacing
+    visualizations:
+      - name: Q Distribution vs ε
+        notebook: notebooks/chapter3/q_distribution.ipynb
 
   - number: 4
     title: "Multiverse Boundaries & Topology"
@@ -109,6 +171,21 @@ chapters:
     indexes:
       - Equation Index: χ formula
       - Figure Index: 4.1
+    code_snippets:
+      - name: euler_characteristic_calc
+        file: rcft_lib/chapter4.py
+        function: compute_euler_characteristic(mesh)
+        description: Computes χ = V - E + F for a given shard-glued mesh
+      - name: homology_rank
+        file: rcft_lib/chapter4.py
+        function: compute_homology_rank(complex)
+        description: Calculates ranks of homology groups using networkx and gudhi
+    field_tests:
+      - name: Shard Genus Determination
+        description: 3D-printed dodecahedron shards glued manually to validate genus by loop counting
+    visualizations:
+      - name: Boundary Gluing Animation
+        script: scripts/blender/chapter4_gluing.py
 
   - number: 5
     title: "Dimensional Transitions"
@@ -130,7 +207,22 @@ chapters:
     indexes:
       - Equation Index: λ_transition
       - Figure Index: 5.1
-
+    code_snippets:
+      - name: solve_transition_profiles
+        file: rcft_lib/chapter5.py
+        function: solve_lambda_transition(params)
+        description: Symbolically solves continuity and jump conditions for λ_transition(u)
+      - name: compute_transition_samples
+        file: rcft_lib/chapter5.py
+        function: compute_transition_profiles(param_grid)
+        description: Generates CSV of (u, λ_minus, λ_plus) for sampled parameter sets
+    field_tests:
+      - name: VR Warp Bump Walkthrough
+        description: Immersive VR experience measuring user perceived continuity across d₂→d₃ transitions
+    visualizations:
+      - name: Transition Profile Plot
+        notebook: notebooks/chapter5/transition_profiles.ipynb
+    
   - number: 6
     title: "Entropy & Information Measures"
     description: |
@@ -152,6 +244,32 @@ chapters:
     indexes:
       - Equation Index: S, H_α
       - Figure Index: 6.1
+    code_snippets:
+      - name: shannon_entropy
+        file: rcft_lib/chapter6.py
+        function: shannon(p_dist)
+        description: Computes Shannon entropy S = -∑ p_i log p_i
+      - name: renyi_entropy
+        file: rcft_lib/chapter6.py
+        function: renyi(p_dist, alpha)
+        description: Computes Rényi entropy H_α
+      - name: compute_renyi_dimension
+        file: rcft_lib/chapter6.py
+        function: renyi_dimension(p_dist, alpha)
+        description: Estimates monofractal dimension D_α via log-ratio method
+    numeric_tables:
+      - title: Entropy vs Rényi Dimension
+        headers: [α, H_α, D_α]
+        rows:
+          - [0.5, 2.31, 1.95]
+          - [1.0, 2.00, 2.00]
+          - [∞, 1.00, 1.00]
+    field_tests:
+      - name: Fusion Coherence Survey
+        description: Participant-rated fusion coherence correlating subjective scores with computed H_α values
+    visualizations:
+      - name: H_α vs α Plot
+        notebook: notebooks/chapter6/renyi_dim.ipynb
 
   - number: 7
     title: "Shard Fusion & Thermodynamics"
@@ -174,6 +292,23 @@ chapters:
     indexes:
       - Equation Index: Z, F
       - Figure Index: 7.1
+    code_snippets:
+      - name: partition_function_mc
+        file: rcft_lib/chapter7.py
+        function: partition_function(energies, beta_values)
+        description: Monte Carlo estimation of Z(β) = ∑ e^{-β E}
+      - name: free_energy_sweep
+        file: rcft_lib/chapter7.py
+        function: free_energy(energies, beta_values)
+        description: Computes F(β) = -β^{-1} log Z
+    extra_equations:
+      - heat_capacity_relation: "C(β) = ∂²F/∂β²"
+    field_tests:
+      - name: Cellular Automaton Assembly
+        description: Automaton-based simulation of shard coalescence measuring empirical fusion rates
+    visualizations:
+      - name: Z(β) & F(β) Plot
+        notebook: notebooks/chapter7/partition_free_energy.ipynb
 
   - number: 8
     title: "Hyperbolic Geometry & Tessellations"
@@ -194,6 +329,27 @@ chapters:
       - {7,3} tessellation diagram
     indexes:
       - Figure Index: 8.1, 8.2
+     code_snippets:
+      - name: generate_hyperbolic_tessellation
+        file: rcft_lib/chapter8.py
+        function: generate_tessellation(p, q, depth)
+        description: Generates node and edge lists for {p,q} tessellations
+      - name: export_tessellation_json
+        file: rcft_lib/chapter8.py
+        function: export_to_json(tessellation, path)
+        description: Exports tessellation data for d3.js live visualization
+    numeric_tables:
+      - title: Hyperbolic Cell Areas & Decay Exponents
+        headers: ["{p,q}", "Area A", "λ_decay"]
+        rows:
+          - ["{7,3}", 0.415, 0.18]
+          - ["{8,3}", 0.588, 0.22]
+    field_tests:
+      - name: Laser-Etched Tiling
+        description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
+    visualizations:
+      - name: Tessellation Diagram
+        notebook: notebooks/chapter8/tessellation_plot.ipynb
 
   - number: 9
     title: "Spherical Harmonics"
@@ -216,6 +372,21 @@ chapters:
     indexes:
       - Equation Index: Spherical harmonics
       - Figure Index: 9.1
+    code_snippets:
+      - name: compute_spherical_harmonics
+        file: rcft_lib/chapter9.py
+        function: spherical_harmonics_grid(l, m, grid)
+        description: Generates Y_{l,m}(θ,φ) values on a meshgrid
+      - name: verify_orthonormality
+        file: rcft_lib/chapter9.py
+        function: check_orthonormality(Y_grid, Omega)
+        description: Numerically integrates Y*Y' over sphere to test orthonormality
+    field_tests:
+      - name: 3D-Printed Harmonic Shells
+        description: Printed spherical harmonic shells to count nodal lines for validation
+    visualizations:
+      - name: Spherical Harmonics Surface Plot
+        notebook: notebooks/chapter9/spherical_surface.ipynb
 
   - number: 10
     title: "Quantum Field Theoretic Coherence"
@@ -238,6 +409,23 @@ chapters:
     indexes:
       - Equation Index: Z[J], G₂
       - Figure Index: 10.1
+    ode_snippets:
+      - name: compute_two_point_function
+        file: rcft_lib/chapter10.py
+        function: compute_two_point(phi_grid, action)
+        description: Metropolis sampling to approximate G₂(x,y)
+      - name: metropolis_sampler
+        file: rcft_lib/chapter10.py
+        function: metropolis_update(phi_grid, beta)
+        description: Update function for Metropolis algorithm in coherence path integral
+    extra_equations:
+      - lattice_corrections: "G₂^L(x) = G₂(x) + O(a²)"
+    field_tests:
+      - name: FPGA Propagator Benchmark
+        description: Hardware-accelerated shard propagator evaluation compared to Python baseline
+    visualizations:
+      - name: G₂ vs Distance Plot
+        notebook: notebooks/chapter10/two_point_plot.ipynb
 
   - number: 11
     title: "Gauge–Gravity Duality"
