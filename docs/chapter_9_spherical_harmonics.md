@@ -33,3 +33,20 @@ Spherical harmonic surface plots
 Equation Index: Spherical harmonics
 
 Figure Index: 9.1
+
+number: 9
+    code_snippets:
+      - name: compute_spherical_harmonics
+        file: rcft_lib/chapter9.py
+        function: spherical_harmonics_grid(l, m, grid)
+        description: Generates Y_{l,m}(θ,φ) values on a meshgrid
+      - name: verify_orthonormality
+        file: rcft_lib/chapter9.py
+        function: check_orthonormality(Y_grid, Omega)
+        description: Numerically integrates Y*Y' over sphere to test orthonormality
+    field_tests:
+      - name: 3D-Printed Harmonic Shells
+        description: Printed spherical harmonic shells to count nodal lines for validation
+    visualizations:
+      - name: Spherical Harmonics Surface Plot
+        notebook: notebooks/chapter9/spherical_surface.ipynb
