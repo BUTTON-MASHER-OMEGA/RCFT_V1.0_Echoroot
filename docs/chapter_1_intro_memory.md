@@ -40,9 +40,6 @@ field_tests:
         description: Two-person dyadic trials with recorded response times to compute memory-continuity scores
         protocol_file: protocols/seal_echo.md
 
-    visualizations:
-
-
 Mathematical Findings
 Defined “meaning map” as a positive-definite kernel on glyph space
 
