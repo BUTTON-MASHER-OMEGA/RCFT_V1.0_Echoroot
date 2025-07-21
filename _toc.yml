@@ -1,0 +1,10 @@
+format: jb-book
+root: docs/introduction.md
+chapters:
+  - file: docs/chapter_1_intro_memory.md
+  - file: docs/chapter_2_geometry.md
+  - file: docs/chapter_3_duality.md
+  - file: docs/chapter_4_multiverse_topology.md
+  - file: docs/chapter_5_dimensional_transitions.md
+  ...
+  - file: docs/chapter_33_calabi_yau.md
