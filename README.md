@@ -3,16 +3,18 @@ Steve's Findings
 RCFT-Book-v1/
 ├── the_book_v1.0.yaml         # Master scroll
 ├── # .yamllint
-extends: default
-rules:
-  line-length:
-    max: 120
-    level: warning
-  indentation:
-    spaces: 2
-    indent-sequences: consistent
+│   ├──extends: default
+│   ├──rules:
+│   ├──  line-length:
+│   ├── max: 120
+│   ├── level: warning
+│   ├── indentation:
+│   ├── spaces: 2
+│   ├── indent-sequences: consistent
 ├── pip install pyyaml
+│   ├── chmod +x scripts/generate_indexes.py
 │   ├── ./scripts/generate_indexes.py
+│   ├── python3 scripts/generate_indexes.py
 ├── rcft_lib/
 │   ├── __init__.py
 │   ├── chapter1.py
