@@ -1,15 +1,29 @@
-name: Validate Book YAML
+name: Validate YAML
 
 on:
   push:
     paths:
-      - the_book_v1.0.yaml
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '.github/workflows/validate_yaml.yml'
 
 jobs:
-  lint:
+  yamllint:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Validate YAML
-        run: yamllint the_book_v1.0.yaml
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Lint all YAML files
+        run: |
+          yamllint **/*.yml
+          yamllint **/*.yaml
