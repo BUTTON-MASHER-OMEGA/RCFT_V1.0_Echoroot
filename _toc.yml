@@ -23,3 +23,17 @@ chapters:
   - file: docs/chapter_18_nonlinear_gravitons.md
   - file: docs/chapter_19_instantons_bounce_solutions.md
   - file: docs/chapter_20_cosmogenesis_vacuum_decay.md
+  - file: docs/chapter_21_dimensional_uplifts.md
+  - file: docs/chapter_22_warp_potentials_metric_ansatze.md
+  - file: docs/chapter_23_einstein_shard_metrics.md
+  - file: docs/chapter_24_ricci_flow_evolution.md
+  - file: docs/chapter_25_spinor_twistor_reformulation.md
+  - file: docs/chapter_26_holomorphic_solution_generators.md
+  - file: docs/chapter_27_simulations_toy_models.md
+  - file: docs/chapter_28_conclusions_future_directions.md
+  - file: docs/chapter_29_field_companion_primer_welcoming_others.md
+  - file: docs/chapter_30_visual_lexicon_tensor_toolkit.md
+
+  git add docs/ _toc.yml
+git commit -m "Add Chapters 1–30 markdown stubs"
+git push
