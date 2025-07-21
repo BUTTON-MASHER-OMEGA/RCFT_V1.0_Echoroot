@@ -2,6 +2,16 @@
 Steve's Findings
 RCFT-Book-v1/
 ├── the_book_v1.0.yaml         # Master scroll
+├── # .yamllint
+extends: default
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+├── pip install pyyaml
 ├── rcft_lib/
 │   ├── __init__.py
 │   ├── chapter1.py
