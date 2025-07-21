@@ -25,7 +25,7 @@ memory-kernel overlap: K_mem(x,y) = ∫ φ(x) φ(y) μ(dφ)
       - mercer_condition: "∫ f(x) K_mem(x,y) f(y) dx dy ≥ 0"
       - kernel_eigendecomposition: "K_mem φ_i = λ_i φ_i"
 
-## code_snippets:
+code_snippets:
       - name: memory_kernel_estimate
         file: rcft_lib/chapter1.py
         function: memory_kernel(x, y, phi_samples)
@@ -35,7 +35,7 @@ memory-kernel overlap: K_mem(x,y) = ∫ φ(x) φ(y) μ(dφ)
         function: animate_kernel_evolution(phi_trajectories, output='kernel_evolution.gif')
         description: Generates an animated GIF showing kernel matrix evolution under concatenated rituals
 
-## field_tests:
+field_tests:
       - name: Seal & Echo Trials
         description: Two-person dyadic trials with recorded response times to compute memory-continuity scores
         protocol_file: protocols/seal_echo.md
@@ -43,7 +43,7 @@ memory-kernel overlap: K_mem(x,y) = ∫ φ(x) φ(y) μ(dφ)
     visualizations:
 
 
-## Mathematical Findings
+Mathematical Findings
 Defined “meaning map” as a positive-definite kernel on glyph space
 
 Proved memory continuity under ritual concatenation
