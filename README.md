@@ -12,6 +12,7 @@ rules:
     spaces: 2
     indent-sequences: consistent
 ├── pip install pyyaml
+│   ├── ./scripts/generate_indexes.py
 ├── rcft_lib/
 │   ├── __init__.py
 │   ├── chapter1.py
