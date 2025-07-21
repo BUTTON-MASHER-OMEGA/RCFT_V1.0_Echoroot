@@ -34,3 +34,25 @@ Visualizations
 
 ## Indexes
 Figure Index: 8.1, 8.2
+
+code_snippets:
+      - name: generate_hyperbolic_tessellation
+        file: rcft_lib/chapter8.py
+        function: generate_tessellation(p, q, depth)
+        description: Generates node and edge lists for {p,q} tessellations
+      - name: export_tessellation_json
+        file: rcft_lib/chapter8.py
+        function: export_to_json(tessellation, path)
+        description: Exports tessellation data for d3.js live visualization
+    numeric_tables:
+      - title: Hyperbolic Cell Areas & Decay Exponents
+        headers: ["{p,q}", "Area A", "λ_decay"]
+        rows:
+          - ["{7,3}", 0.415, 0.18]
+          - ["{8,3}", 0.588, 0.22]
+    field_tests:
+      - name: Laser-Etched Tiling
+        description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
+    visualizations:
+      - name: Tessellation Diagram
+        notebook: notebooks/chapter8/tessellation_plot.ipynb
