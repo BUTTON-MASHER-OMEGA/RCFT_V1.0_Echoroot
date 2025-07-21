@@ -33,3 +33,8 @@ RCFT-Book-v1/
 └── .github/
     └── workflows/
         └── validate_yaml.yml  # CI to lint schema and build docs
+
+git add docs/chapter_summaries.md docs/code_snippets_index.md docs/field_tests_index.md
+git commit -m "Regenerate chapter indexes"
+git push
+
