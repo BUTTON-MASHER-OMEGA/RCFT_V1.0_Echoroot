@@ -12,6 +12,9 @@ rules:
     spaces: 2
     indent-sequences: consistent
 
+chmod +x scripts/generate_indexes.py
+
+
 chapters:
 
   - number: 1
