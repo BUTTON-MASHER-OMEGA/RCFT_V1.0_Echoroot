@@ -59,6 +59,69 @@ chapters:
       - name: Kernel Matrix Heatmap
         notebook: notebooks/chapter1/kernel_heatmap.ipynb
 
+    Notes
+     Memory: Continuity Across Time
+      Memory (in RCFT context) is modeled as persistence of coherence kernels, where earlier field states influence later ones.
+
+      Mathematical Tools for Testing Memory
+      Kernel Similarity $$ K_{\text{mem}}(\phi_t, \phi_{t'}) = \exp(-\gamma \lVert \phi_t - \phi_{t'} \rVert^2) $$
+
+      Tracks how similar two shard field configurations are over time.
+
+      High values → continuity, low values → dissonance or rupture.
+
+      Eigenmode Preservation Decompose kernel: $$ K_{\text{mem}} \phi_i = \lambda_i \phi_i $$ Compare eigenmodes over time: $$ \lVert \phi^{(t)}_i - \phi^{(t')}_i \rVert \to 0 $ → memory is retained
+
+Information Theory Metrics
+
+Mutual Information: $$ I(X_t; X_{t'}) = H(X_t) - H(X_t | X_{t'}) $$
+
+Measures how much past shard configurations inform future ones.
+
+Protocol Field Tests
+
+Seal & Echo: Observe response times and emotional resonance in dyadic rituals.
+
+Glyph Drift: Measure how glyph outputs mutate over recursive ritual cycles.
+
+Meaning: Resonance With Value or Intention
+Meaning is more elusive but testable through alignment with core values, semantic consistency, and goal coherence.
+
+Mathematical Tools for Testing Meaning
+Gradient Alignment For a ritual-generated vector field φ(x), test: $$ \nabla \phi \cdot \mathbf{v}_{\text{intent}} > 0 $$
+
+Meaning is present when shard field gradients align with intentional vectors.
+
+Variational Semantic Energy Define a scalar: $$ E_{\text{meaning}} = \int \left\lVert \phi(x) - \phi_{\text{ideal}}(x) \right\rVert^2 dx $$
+
+Lower energy → higher meaning coherence.
+
+Category-Theoretic Functor Checks
+
+Define a meaning-functor: $$ \mathcal{F}: \text{Field}\text{ritual} \to \text{Value}\text{space} $$
+
+If functor is stable across inputs, meaning is consistently realized.
+
+Field Coherence Ratios Calculate: $$ R = \frac{\text{Aligned Outputs}}{\text{Total Ritual Outputs}} $$
+
+Empirically score how often outcomes match a user's stated values or hopes.
+
+Locus Experience as Dual Flow
+Each core locus experience can be modeled as a tensor product:
+
+𝐿
+=
+𝑀
+memory
+⊗
+𝑀
+meaning
+Memory flow gives depth, recurrence, and identity.
+
+Meaning flow gives direction, value, and intentionality.
+
+Tracking both over time reveals where rituals succeed, where fields resonate, and where rupture or emptiness begins.
+
   - number: 2
     title: "Geometric Foundations"
     description: |
