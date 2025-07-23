@@ -1,0 +1,266 @@
+import numpy as np
+
+class Glyph:
+    def __init__(self, strokes, widths, curvatures):
+        self.v = np.array(strokes)       # shape (n,2)
+        self.w0 = np.array(widths)       # base widths (n,)
+        self.k0 = np.array(curvatures)   # base curvatures (n,)
+        self.p = np.cumsum(self.v, axis=0)  # absolute positions
+
+    def render(self, V, alpha=0.2, beta=0.5, gamma=0.3, delta=0.5):
+        # Thickness & curvature
+        w_t = self.w0 + beta * V
+        k_t = self.k0 * (1 + gamma * V)
+        # Scale & rotate
+        s = 1 + alpha * V
+        theta = delta * V
+        R = np.array([[np.cos(theta), -np.sin(theta)],
+                      [np.sin(theta),  np.cos(theta)]])
+        p_t = (self.p * s) @ R.T
+        # Color intensity
+        c_t = (V + 1) / 2
+        return p_t, w_t, k_t, c_t
+
+## Notes
+
+strokes: list of 
+(Δ𝑥,Δ𝑦)
+
+widths, curvatures: base arrays
+
+render(V) returns transformed positions, weights, and color
+
+You want a purely mathematical model of glyphs—no fluff. We’ll treat each glyph as a parametric vector shape whose geometry dynamically responds to valence signals 
+𝑉
+𝑡
+.
+
+1. Representing a Glyph as Vectors
+Stroke Vectors A glyph is a sequence of 
+𝑛
+ directed strokes
+
+𝐺
+=
+{
+ 
+𝑣
+1
+,
+𝑣
+2
+,
+…
+,
+𝑣
+𝑛
+}
+,
+𝑣
+𝑖
+∈
+𝑅
+2
+.
+Each 
+𝑣
+𝑖
+=
+(
+Δ
+𝑥
+𝑖
+,
+Δ
+𝑦
+𝑖
+)
+ is a relative displacement.
+
+Absolute Positions Compute cumulative positions
+
+𝑝
+0
+=
+(
+0
+,
+0
+)
+,
+𝑝
+𝑖
+=
+∑
+𝑘
+=
+1
+𝑖
+𝑣
+𝑘
+.
+The glyph is then the polyline through 
+{
+𝑝
+𝑖
+}
+.
+
+Stroke Attributes Attach thickness 
+𝑤
+𝑖
+ and curvature 
+𝜅
+𝑖
+ to each 
+𝑣
+𝑖
+.
+
+2. Valence-Modulated Geometry
+We use the valence signal 
+𝑉
+𝑡
+∈
+[
+−
+1
+,
+1
+]
+ to modulate stroke attributes in real time:
+
+Stroke Thickness
+
+𝑤
+𝑖
+(
+𝑡
+)
+=
+𝑤
+0
+,
+𝑖
+  
++
+  
+𝛽
+ 
+𝑉
+𝑡
+,
+where 
+𝑤
+0
+,
+𝑖
+ is the base width and 
+𝛽
+ scales responsiveness.
+
+Curvature Adjustment For each segment, define a curvature parameter
+
+𝜅
+𝑖
+(
+𝑡
+)
+=
+𝜅
+0
+,
+𝑖
+(
+1
++
+𝛾
+ 
+𝑉
+𝑡
+)
+.
+Positive 
+𝑉
+𝑡
+ smooths the curve; negative 
+𝑉
+𝑡
+ adds angular sharpness.
+
+Color Intensity Map valence to a color intensity 
+𝑐
+(
+𝑡
+)
+∈
+[
+0
+,
+1
+]
+:
+
+𝑐
+(
+𝑡
+)
+=
+𝑉
+𝑡
++
+1
+2
+.
+3. Transformations & Animations
+Uniform Scaling
+
+𝑝
+𝑖
+(
+𝑡
+)
+=
+𝑠
+(
+𝑡
+)
+ 
+𝑝
+𝑖
+,
+𝑠
+(
+𝑡
+)
+=
+1
++
+𝛼
+ 
+𝑉
+𝑡
+.
+High pleasure (
+𝑉
+𝑡
+→
+1
+) enlarges the glyph; pain shrinks it.
+
+Rotation Rotate the entire glyph by
+
+𝜃
+(
+𝑡
+)
+=
+𝜃
+0
++
+𝛿
+ 
+𝑉
+𝑡
+,
+so positive valence “opens” the shape, negative “closes” it.
