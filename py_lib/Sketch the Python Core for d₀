@@ -1,0 +1,20 @@
+import numpy as np
+
+class D0Field:
+    def __init__(self, phi_dim=128, sample_size=10000, sigma=1.0):
+        self.phi_dim = phi_dim
+        self.sigma = sigma
+        # Gaussian prior over Φ
+        self.samples = np.random.normal(
+            loc=0.0, scale=sigma, size=(sample_size, phi_dim)
+        )
+
+    def draw(self, n=1):
+        idx = np.random.choice(self.samples.shape[0], size=n, replace=False)
+        return self.samples[idx]
+
+def memory_kernel(samples1, samples2, gamma=1.0):
+    """Mercer kernel: K(φ,ψ)=exp(-γ||φ-ψ||²)."""
+    diffs = samples1[:, None, :] - samples2[None, :, :]
+    sqd = np.sum(diffs**2, axis=-1)
+    return np.exp(-gamma * sqd)
