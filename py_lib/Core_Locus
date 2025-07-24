@@ -1,0 +1,20 @@
+# py_lib/core_locus.py
+
+import numpy as np
+
+class CoreLocus:
+    def __init__(self, x_grid, gamma=0.1):
+        self.x = x_grid
+        self.Phi_star = np.zeros_like(x_grid)   # placeholder for anchor pattern
+        self.gamma = gamma
+
+    def set_anchor(self, stroke_indices, weights):
+        """Define the core locus pattern."""
+        self.Phi_star[:] = 0
+        for i, w in zip(stroke_indices, weights):
+            self.Phi_star[i] = w
+
+    def kernel_strength(self, phi):
+        """Compute memory coherence with the core locus."""
+        diff = np.linalg.norm(phi - self.Phi_star)**2
+        return np.exp(-self.gamma * diff)
