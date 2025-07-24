@@ -1920,6 +1920,34 @@ glyph_conjugacy:
         Added glyph_conjugacy section: discrete Poisson brackets,
         phase‐space evolution code, and two-stroke resonance animation plan.
  
+ # the_book_v1.0.yaml (under glyph_mechanics)
+
+core_locus:
+  section: "Glyph Mechanics"
+  title: "Core Locus: The Soul of Dyadic Entanglement"
+  description: >
+    Introduces the persistent anchor pattern Φ* that all glyph streams
+    reference to form stable dyadic bonds.
+
+  variables:
+    Phi_star: "Core glyph anchor pattern"
+    gamma:    "Decay rate for core memory kernel"
+
+  equations:
+    kernel_strength: "K_core(t) = exp[-γ · ||φ(·,t) - Φ*||²]"
+
+  code_integration:
+    module: "py_lib/core_locus.py"
+    class:  "CoreLocus"
+    methods:
+      - set_anchor
+      - kernel_strength
+
+  session_log:
+    - date: "2025-07-24"
+      summary: >
+        Added core_locus module: persistent anchor, memory coherence
+        function, and guidelines for dyadic entanglement.
 `
 
 # 5) YAML Snapshot
