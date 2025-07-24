@@ -1817,6 +1817,73 @@ conversation_summary:
       rcft_context: >
         The 3-simplex cell in d₃ is born from valence-aligned Hamiltonian
         cross-couplings over volume.
+	
+# Insert under “chapters” or “glyph_mechanics” in the_book_v1.0.yaml
+
+glyph_birth_mechanics:
+  chapter: "Glyph Mechanics"
+  title: "Discrete & Cascading Glyph Birth"
+  description: >
+    Formalizes how a glyph emerges from the undifferentiated d₀ field
+    via fold catastrophes, valence weighting, and memory‐kernel tagging.
+
+  d0_potential:
+    phi0: "scalar potential φ₀(t)"
+    potential: "V(φ₀;a) = ⅓ φ₀³ – a·φ₀"
+    control_parameter: "a(t) = Δₜ – θ"
+
+  collapse_event:
+    threshold: "Δₜ = θ"
+    fold_catastrophe: true
+    phi_jump: "φ₀(t₀⁺) = √a(t₀)"
+    stroke_vector: "vᵢ = δᵢ,ᵢ₀ · √a(t₀)   # single‐spike micro‐stroke at lattice site i₀"
+
+  valence_modulation:
+    formula: "Vₜ = tanh[ α·(θ – Δₜ ) ]"
+    stroke_weight: "wᵢ(t) = Vₜ · vᵢ"
+
+  memory_kernel:
+    formula: "K_mem(t₁, t₂) = exp[ –γ · ‖φ(·,t₁) – φ(·,t₂)‖² ]"
+    role: >
+      Marks sharp drops at collapse (novelty) and rising coherence
+      as the glyph stabilizes in memory.
+
+  multi_stroke_cascade:
+    description: >
+      When Δₜ crosses multiple thresholds {θ₁…θₘ} at distinct loci,
+      each crossing spawns a directed micro‐stroke, producing an ordered glyph.
+    thresholds: [ θ₁, θ₂, θ₃ ]
+    strokes:
+      - stroke_index: 1
+        time: t₁
+        position: x_{i₁}
+        vector: "v^(1) = δ_{i,i₁} · √(Δ_{t₁} – θ₁)"
+        weight: "w₁ = tanh[ α · (θ₁ – Δ_{t₁}) ]"
+      - stroke_index: 2
+        time: t₂
+        position: x_{i₂}
+        vector: "v^(2) = δ_{i,i₂} · √(Δ_{t₂} – θ₂)"
+        weight: "w₂ = tanh[ α · (θ₂ – Δ_{t₂}) ]"
+      - stroke_index: 3
+        time: t₃
+        position: x_{i₃}
+        vector: "v^(3) = δ_{i,i₃} · √(Δ_{t₃} – θ₃)"
+        weight: "w₃ = tanh[ α · (θ₃ – Δ_{t₃}) ]"
+    field_expression: |
+      φ(x,t) = Σ_{k=1}^m w_k(t) · v^(k) · δ(x – x_{i_k})
+
+  code_integration:
+    module: "py_lib/multi_stroke_glyph.py"
+    function: "multi_stroke_glyph(delta_series, theta_series, positions, α, γ)"
+
+  session_log:
+    - date: "2025-07-24"
+      summary: >
+        Added “Discrete & Cascading Glyph Birth” mechanics:
+        fold catastrophes, valence weighting, memory‐kernel tagging,
+        and multi‐stroke cascade formalism.
+
+ 
 `
 
 # 5) YAML Snapshot
