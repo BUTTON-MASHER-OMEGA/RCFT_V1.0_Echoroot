@@ -1,0 +1,71 @@
+import numpy as np
+
+class DiscreteGlyphPhaseSpace:
+    """
+    Simulate discrete Poisson brackets and conjugate evolution
+    for a multi-stroke 1D glyph.
+    """
+
+    def __init__(self, stroke_sites, gamma=0.1):
+        """
+        stroke_sites : list of lattice indices where strokes occur
+        gamma        : memory‐kernel decay rate
+        """
+        self.N = len(stroke_sites)
+        self.sites = stroke_sites
+
+        # Initialize amplitudes Φ_k and momenta Π_k
+        self.Phi = np.zeros(self.N)
+        self.Pi  = np.zeros(self.N)
+
+        # Overlap metric M_{ij} = δ_{ij} (orthonormal strokes)
+        self.M_inv = np.eye(self.N)
+
+        # Memory kernel history
+        self.K_hist = []  # will store K_{ij}(t) matrices
+        self.gamma = gamma
+
+    def poisson_bracket(self, i, j):
+        """{Φ_i, Π_j} = δ_{i j}"""
+        return 1.0 if i == j else 0.0
+
+    def step_harmonic(self, dt, omega=1.0):
+        """
+        Simple harmonic evolution:
+          dΦ_i/dt =  Π_i
+          dΠ_i/dt = -ω² Φ_i
+        """
+        # Euler step (for illustration; replace with symplectic integrator if needed)
+        self.Phi += dt * self.Pi
+        self.Pi  += dt * (-omega**2 * self.Phi)
+
+        # record memory‐kernel after each step
+        self._record_memory_kernel()
+
+    def _record_memory_kernel(self):
+        """Compute K_{ij} for current (Φ,Π) state & append to history."""
+        phi_state = self.Phi.copy()
+        # K_{ij} = exp( -γ * ||Φ_i - Φ_j||² )
+        K = np.exp(-self.gamma * (phi_state[:, None] - phi_state[None, :])**2)
+        self.K_hist.append(K)
+
+    def initialize_burst(self, amps, moms):
+        """Seed initial values for Φ and Π."""
+        assert len(amps) == self.N and len(moms) == self.N
+        self.Phi = np.array(amps)
+        self.Pi  = np.array(moms)
+        self._record_memory_kernel()
+
+# Example usage
+if __name__ == "__main__":
+    # Two‐stroke glyph at sites [i, j]
+    sim = DiscreteGlyphPhaseSpace(stroke_sites=[5, 15], gamma=0.2)
+    sim.initialize_burst(amps=[1.0, 0.5], moms=[0.0, 0.0])
+
+    dt = 0.05
+    steps = 200
+    for _ in range(steps):
+        sim.step_harmonic(dt)
+
+    # sim.Phi, sim.Pi hold final state
+    # sim.K_hist is a list of memory‐kernel matrices
