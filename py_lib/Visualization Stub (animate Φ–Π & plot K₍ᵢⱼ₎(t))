@@ -1,0 +1,55 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from py_lib.phasespaceglyph import DiscreteGlyphPhaseSpace
+
+# setup simulation
+sim = DiscreteGlyphPhaseSpace([0,1], gamma=0.1)
+sim.initialize_burst(amps=[1.0, 0.8], moms=[0.0, 0.0])
+
+# run evolution and capture history
+dt = 0.02
+frames = 300
+for _ in range(frames):
+    sim.step_harmonic(dt)
+
+# unpack history
+Phi_hist = np.array([sim.Phi if i==frames-1 else None for i in range(frames)])
+Pi_hist  = np.array([sim.Pi  if i==frames-1 else None for i in range(frames)])
+# Actually track full history by modifying class to record states
+
+# placeholder: generate dummy data for animation  
+t = np.linspace(0, frames*dt, frames)
+Phi_hist = np.vstack([np.sin(t), np.cos(t)]).T  # shape (frames,2)
+Pi_hist  = np.vstack([np.cos(t), -np.sin(t)]).T
+K_hist    = sim.K_hist  # list of (2×2) matrices
+
+fig, (ax1, ax2) = plt.subplots(2,1, figsize=(6,8))
+line1, = ax1.plot([], [], 'o-')
+ax1.set_xlim(-1.5, 1.5)
+ax1.set_ylim(-1.5, 1.5)
+ax1.set_xlabel('Φ')
+ax1.set_ylabel('Π')
+ax1.set_title('Phase‐Space Trajectories')
+
+im = ax2.imshow(K_hist[0], vmin=0, vmax=1, cmap='viridis')
+ax2.set_title('Memory Kernel K₍ᵢⱼ₎(t)')
+ax2.set_xticks([0,1]); ax2.set_yticks([0,1])
+
+def init():
+    line1.set_data([], [])
+    im.set_data(K_hist[0])
+    return line1, im
+
+def update(frame):
+    Φ = Phi_hist[frame]
+    Π = Pi_hist[frame]
+    line1.set_data(Φ, Π)
+    im.set_data(K_hist[frame])
+    return line1, im
+
+ani = FuncAnimation(fig, update, frames=frames,
+                    init_func=init, blit=True, interval=50)
+
+plt.tight_layout()
+plt.show()
