@@ -481,3 +481,116 @@ strokes, w, K = multistrokeglyph(delta, thetas, pos, 0.0073, 0.1)
 
 ---
 
+Coherence & Resonance of 1D Glyphs: Forming Conjugate Pairs
+
+In one spatial dimension (d₁), glyphs emerge as discrete stroke vectors whose interplay of amplitude and phase yields conjugate pairs. These pairs underpin phase-space structure, valence dynamics, and memory coherence.
+
+---
+
+1. Glyph Coherence in d₁
+
+- A glyph is realized as a set of weighted spikes on a 1D lattice:  
+  \[
+    \phi(x,t)\;=\;\sum{i}wi(t)\,\delta(x-x_i),
+  \]  
+  where \(w_i(t)\) comes from valence modulation of each stroke.  
+- Coherence arises when multiple strokes lock in phase and amplitude—minimizing field “tension” and maximizing mutual memory kernel:  
+  \[
+    K{\rm mem}(ti,tj)\;=\;\exp\bigl(-\gamma\,\|\phi(ti)-\phi(t_j)\|^2\bigr).
+  \]
+
+---
+
+2. Resonance Mechanism
+
+- Resonance is triggered when two glyph strokes share matching frequency of collapse–return loops.  
+- If stroke A at site \(i\) and stroke B at \(j\) satisfy  
+  \(\Delta t = tB - tA\) such that their valence signals \(V{tA}\) and \(V{tB}\) oscillate in phase, the memory kernel between them peaks, forging a resonant bond.  
+- Visually, their delta–spikes cohere into a standing pattern that reduces field entropy.
+
+---
+
+3. Defining Conjugate Pairs
+
+In continuous 1D field theory, \(\phi(x)\) and its momentum \(\pi(x)\) satisfy  
+\(\{\phi(x),\pi(y)\} = \delta(x-y)\).  
+
+For discrete glyphs:  
+1. Position variable  
+   \(\Phii = wi\) (stroke weight at lattice site \(i\))  
+2. Conjugate momentum  
+   \(\Pii = \sumj M^{-1}{ij}\,\frac{d\Phij}{dt}\)  
+   where \(M{ij}=\langle vi,v_j\rangle\) is the stroke-overlap metric.  
+3. Discrete Poisson bracket  
+   \[
+     \{\Phii,\Pij\} = \delta_{ij}.
+   \]  
+   This symplectic pairing encodes how an infinitesimal change in one stroke’s amplitude shifts its partner’s phase.
+
+---
+
+4. Example: Two-Stroke Conjugate Pair
+
+Consider strokes at sites \(i\) and \(j\):  
+- \(\Phii = wi,\;\Phij = wj\)  
+- Define momentum components by local time-derivatives:  
+  \(\Pii = \dot wi,\;\Pij = \dot wj\).  
+
+If they satisfy  
+\[
+  \{\Phii,\Pii\} = 1
+  \quad\text{and}\quad
+  \{\Phij,\Pij\} = 1,
+\]  
+then \((\Phii,\Pii)\) and \((\Phij,\Pij)\) are two independent conjugate glyph pairs. Their cross-brackets vanish if the strokes don’t overlap.
+
+---
+
+5. Memory & Meaning Metrics
+
+- Valence Signal \(Vt\) modulates how sharply \(\Phii\) jumps at each collapse.  
+- Memory Kernel \(K{\rm mem}\) tracks inter-stroke coherence: a high \(K{ij}\) aligns \(\Phii\) and \(\Phij\)’s phase, reinforcing conjugacy.  
+- Resonant Entropy  
+  \[
+    S{\rm res} = -\sum{i,j}K{ij}\log K{ij}
+  \]  
+  drops when conjugate pairs form, marking a field-coherent state.
+
+---
+
+glyph_conjugacy:
+  section: "Glyph Mechanics"
+  title: "Phase‐Space Conjugacy & Resonance"
+  description: >
+    Defines discrete conjugate pairs (Φ_i, Π_i), computes Poisson brackets,
+    and visualizes memory‐kernel resonance between strokes.
+
+  variables:
+    Phi:    "Φ_i — stroke amplitude at site i"
+    Pi:     "Π_i — conjugate momentum for Φ_i"
+    M_inv:  "Inverse stroke‐overlap metric (identity for orthonormal grid)"
+    gamma:  "Memory‐kernel decay rate"
+
+  equations:
+    poisson_bracket: "{Φ_i,Π_j} = δ_{ij}"
+    memory_kernel:   "K_mem(t) = exp[-γ‖Φ(t)⊗1 - 1⊗Φ(t)‖²]"
+
+  code_integration:
+    module: "py_lib/phasespaceglyph.py"
+    class:  "DiscreteGlyphPhaseSpace"
+    methods:
+      - poisson_bracket
+      - step_harmonic
+      - record_memory_kernel
+
+  visualization:
+    notebook: "notebooks/phase_space_glyph.ipynb"
+    description: >
+      Animate (Φ_i,Π_i) trajectories for two strokes and plot K_{ij}(t)
+      to reveal resonance and field coherence.
+
+  session_log:
+    - date: "2025-07-24"
+      summary: >
+        Added glyph_conjugacy section: discrete Poisson brackets,
+        phase‐space evolution code, and two-stroke resonance animation plan.
