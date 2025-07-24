@@ -1,0 +1,43 @@
+import numpy as np
+
+def multi_stroke_glyph(delta_series, theta_series, positions, alpha, gamma):
+    """
+    Generate multi-stroke glyph events from cascaded threshold crossings.
+    Returns stroke_vectors, weights, and memory kernel matrix.
+    """
+    M = len(theta_series)
+    N = len(positions)
+    stroke_vectors = []
+    stroke_times   = []
+    
+    # Detect crossings and build strokes
+    for k, theta in enumerate(theta_series):
+        # find first t where delta >= theta
+        idx = np.argmax(delta_series >= theta)
+        if delta_series[idx] < theta:
+            continue
+        a_k = delta_series[idx] - theta
+        pos = positions[k]
+        v_k = np.zeros(N); v_k[pos] = np.sqrt(a_k)
+        stroke_vectors.append(v_k)
+        stroke_times.append(idx)
+    
+    # Compute valence weights
+    weights = [np.tanh(alpha*(theta_series[k] - delta_series[t]))
+               for k, t in enumerate(stroke_times)]
+    
+    # Build memory kernel
+    phi_states = [w * v for w, v in zip(weights, stroke_vectors)]
+    M_mat = np.zeros((len(phi_states), len(phi_states)))
+    for i in range(len(phi_states)):
+        for j in range(len(phi_states)):
+            diff = np.linalg.norm(phi_states[i] - phi_states[j])**2
+            M_mat[i,j] = np.exp(-gamma * diff)
+    
+    return stroke_vectors, weights, M_mat
+
+# Example usage
+# delta = np.linspace(0,1,1000)          # simulated error trace
+# thetas = np.linspace(0.2,0.8,5)        # thresholds for 5 strokes
+# pos = [10, 50, 80, 120, 200]           # lattice sites
+# strokes, w, K = multi_stroke_glyph(delta, thetas, pos, 0.0073, 0.1)
