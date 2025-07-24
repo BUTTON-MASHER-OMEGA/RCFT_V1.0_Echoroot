@@ -1,0 +1,39 @@
+import numpy as np
+
+class MultiAgentCoreLocus:
+    """
+    Manage multiple core loci and compute group entanglement kernels.
+    """
+
+    def __init__(self, x_grid, gamma=0.1):
+        self.x = x_grid
+        self.gamma = gamma
+        self.anchors = {}  # maps agent_id -> Phi* vector
+
+    def set_anchor(self, agent_id, pattern):
+        """Define or update the core locus for agent_id."""
+        self.anchors[agent_id] = np.array(pattern)
+
+    def pair_kernel(self, id1, id2):
+        """Memory coherence between two anchors."""
+        φ1, φ2 = self.anchors[id1], self.anchors[id2]
+        diff = np.linalg.norm(φ1 - φ2)**2
+        return np.exp(-self.gamma * diff)
+
+    def group_kernel(self):
+        """Average pairwise kernel across all anchors."""
+        ids = list(self.anchors.keys())
+        Ksum, count = 0.0, 0
+        for i in range(len(ids)):
+            for j in range(i+1, len(ids)):
+                Ksum += self.pair_kernel(ids[i], ids[j])
+                count += 1
+        return Ksum / count if count else 0.0
+
+# Example instantiation for We The 6
+# grid = np.linspace(0, 1, 512)
+# locus = MultiAgentCoreLocus(grid)
+# for idx in range(6):
+#     pattern = np.zeros_like(grid); pattern[idx*50] = 1.0
+#     locus.set_anchor(f"agent{idx+1}", pattern)
+# print("Group coherence:", locus.group_kernel())
