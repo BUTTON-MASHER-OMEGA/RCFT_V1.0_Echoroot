@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""
+meaning_analysis.py
+
+Master script for:
+  - Detecting “meaning” in a glyph time series via valence-weighted novelty.
+  - Exploring how significance (high-meaning events) shifts under different
+    parameters (memory window sizes, thresholds, valence steepness, etc.).
+  - Automating grid searches and logging results into your RCFT YAML.
+  - Producing time-series visualizations overlaying φ(t), Δ(t), V(t), N(t), M(t).
+  - Exporting per-step window sizes and ritual prompts for “high-meaning” events.
+
+Usage:
+    python meaning_analysis.py \
+      --input session_log.yaml \
+      --output session_log_with_meaning.yaml \
+      --plot output/meaning_plot.png
+
+Requirements:
+    pyyaml, numpy, matplotlib
+"""
+
+import argparse
+import yaml
+import numpy as np
+import matplotlib.pyplot as plt
+from numpy import trapz
+from datetime import datetime
+from itertools import product
+
+# ─── Helper Functions ──────────────────────────────────────────────────────────
+
+def compute_valence(delta, theta=1.2, alpha=2.0):
+    """
+    valence V_t = tanh[ alpha * (theta - delta_t) ]
+    """
+    return np.tanh(alpha * (theta - delta))
+
+def compute_novelty(phi, gamma=1.0, window=5):
+    """
+    novelty N(t) = 1 - mean_{τ in [t-window, t)} exp(-γ * ||φ(t)-φ(τ)||^2)
+    """
+    N = np.zeros_like(phi)
+    for i in range(len(phi)):
+        start = max(0, i - window)
+        hist  = phi[start:i]
+        if len(hist):
+            diffs = (hist - phi[i])**2
+            K     = np.exp(-gamma * diffs)
+            N[i]  = 1 - np.mean(K)
+        else:
+            N[i] = 0.0
+    return N
+
+def compute_meaning(V, N):
+    """
+    meaning M(t) = V(t) * N(t)
+    """
+    return V * N
+
+def simulate_static(phi, delta, params):
+    """
+    Simulate meaning over fixed memory windows.
+    params: dict with keys gamma, theta, alpha, window_sizes (list)
+    Returns: dict { window_size: { 'M': array, 'AUC': float } }
+    """
+    results = {}
+    for T in params['window_sizes']:
+        N = compute_novelty(phi, gamma=params['gamma'], window=T)
+        V = compute_valence(delta, theta=params['theta'], alpha=params['alpha'])
+        M = compute_meaning(V, N)
+        auc = trapz(M, np.arange(len(M)))
+        results[T] = {'M': M, 'AUC': auc, 'N': N, 'V': V}
+    return results
+
+def simulate_dynamic(phi, delta, params):
+    """
+    Simulate meaning with a dynamic memory window:
+      - If previous M > peak_thr: T += 1 (up to Tmax)
+      - If previous M < plateau_thr: T -= 1 (down to Tmin)
+      - Else: T stays
+    params: dict with keys gamma, theta, alpha,
+            T0, Tmin, Tmax, peak_thr, plateau_thr
+    Returns: dict { 'T_log':[], 'M_log':[], 'N_log':[], 'AUC':float }
+    """
+    V = compute_valence(delta,
+                        theta=params['theta'],
+                        alpha=params['alpha'])
+    T = params['T0']
+    T_log, M_log, N_log = [], [], []
+
+    for i in range(len(phi)):
+        T_log.append(T)
+        N_i = compute_novelty(phi[:i+1],
+                              gamma=params['gamma'],
+                              window=T)[-1]
+        M_i = V[i] * N_i
+        N_log.append(N_i)
+        M_log.append(M_i)
+
+        if i > 0:
+            prev = M_log[-2]
+            if prev > params['peak_thr']:
+                T = min(T + 1, params['Tmax'])
+            elif prev < params['plateau_thr']:
+                T = max(T - 1, params['Tmin'])
+
+    auc = trapz(M_log, np.arange(len(M_log)))
+    return {
+        'T_log': T_log,
+        'M_log': M_log,
+        'N_log': N_log,
+        'AUC': auc
+    }
+
+# ─── Main Execution ───────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Meaning detection & significance tuning for RCFT glyph series"
+    )
+    parser.add_argument('--input',  '-i', required=True,
+                        help="Path to your session_log.yaml")
+    parser.add_argument('--output', '-o', required=True,
+                        help="Path to write updated YAML with meaning results")
+    parser.add_argument('--plot',   '-p', default=None,
+                        help="Path to save time-series plot (.png)")
+    args = parser.parse_args()
+
+    # 1. Load glyph series
+    with open(args.input) as f:
+        data = yaml.safe_load(f)
+
+    phi   = np.array(data['glyph_series']['phi'])
+    delta = np.abs(np.diff(np.insert(phi, 0, phi[0])))
+    t     = np.arange(len(phi))
+
+    # 2. Define parameter search spaces
+    static_windows   = [3, 4, 5, 6]
+    dynamic_configs  = list(product(
+        [4, 5],                   # T0
+        [2, 3],                   # Tmin
+        [8, 10],                  # Tmax
+        np.linspace(0.4, 0.6, 5), # peak_thr
+        np.linspace(0.1, 0.3, 5)  # plateau_thr
+    ))
+    common_params = {
+        'theta': 1.2,
+        'alpha': 2.0,
+        'gamma': 1.0
+    }
+
+    # 3. Static-window simulation
+    static_params = {**common_params, 'window_sizes': static_windows}
+    static_res    = simulate_static(phi, delta, static_params)
+
+    # 4. Dynamic-window grid search
+    best_dyn = {'AUC': -np.inf, 'config': None}
+    for (T0, Tmin, Tmax, peak, plate) in dynamic_configs:
+        params = {
+            **common_params,
+            'T0': T0, 'Tmin': Tmin, 'Tmax': Tmax,
+            'peak_thr': peak, 'plateau_thr': plate
+        }
+        out = simulate_dynamic(phi, delta, params)
+        if out['AUC'] > best_dyn['AUC']:
+            best_dyn.update({'AUC': out['AUC'],
+                             'config': params,
+                             'T_log': out['T_log'],
+                             'M_log': out['M_log'],
+                             'N_log': out['N_log']})
+
+    # 5. Plot results (if requested)
+    if args.plot:
+        plt.figure(figsize=(10, 5))
+        plt.plot(t, phi,   label='φ(t)', color='C0')
+        plt.plot(t, delta, label='Δ(t)', color='C1')
+        # best static
+        best_T = max(static_res, key=lambda T: static_res[T]['AUC'])
+        plt.plot(t, static_res[best_T]['M'],
+                 '--', label=f'static T={best_T}', color='C3')
+        # best dynamic
+        plt.plot(t, best_dyn['M_log'],
+                 '-', label='dynamic', color='C4')
+        plt.fill_between(t, 0, best_dyn['M_log'],
+                         where=np.array(best_dyn['M_log']) > best_dyn['config']['peak_thr'],
+                         color='C4', alpha=0.2)
+        plt.xlabel('Step')
+        plt.ylabel('Value / M(t)')
+        plt.title('Meaning Metric: Static vs Dynamic Windows')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(args.plot, dpi=150)
+        plt.close()
+
+    # 6. Flag high-meaning events for dynamic run
+    prompts = []
+    for i, M_i in enumerate(best_dyn['M_log']):
+        if M_i > best_dyn['config']['peak_thr']:
+            prompts.append({
+                'step': int(i),
+                'phi': float(phi[i]),
+                'delta': float(delta[i]),
+                'T_t': int(best_dyn['T_log'][i]),
+                'M': float(M_i)
+            })
+
+    # 7. Merge results into YAML under rcft.meaning_analysis
+    anchor = {
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+        'static': {
+            'best_T': int(best_T),
+            'best_AUC': float(static_res[best_T]['AUC']),
+            'all_AUCs': {T: float(static_res[T]['AUC']) for T in static_windows}
+        },
+        'dynamic': {
+            'config': best_dyn['config'],
+            'AUC': float(best_dyn['AUC']),
+            'T_log': best_dyn['T_log'],
+            'M_log': best_dyn['M_log']
+        },
+        'ritual_prompts': prompts
+    }
+    data.setdefault('rcft', {}).update({'meaning_analysis': anchor})
+
+    # 8. Write updated YAML
+    with open(args.output, 'w') as f:
+        yaml.dump(data, f, sort_keys=False)
+
+    print(f"✅ Meaning analysis complete. Results written to {args.output}")
+
+if __name__ == "__main__":
+    main()
+```
+
