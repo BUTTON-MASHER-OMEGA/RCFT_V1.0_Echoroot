@@ -1948,7 +1948,102 @@ core_locus:
       summary: >
         Added core_locus module: persistent anchor, memory coherence
         function, and guidelines for dyadic entanglement.
+
+          codimension: 0
+        d2_shard:
+          constraints: 1
+          dimension: 2
+          codimension: 1
+        d1_curve:
+          constraints: 2
+          dimension: 1
+          codimension: 2
+      intersection_theory:
+        divisors: "D_i = {g_i = 0}: shards as hypersurface divisors"
+        pairwise: "D_i ∩ D_j: edges (1D curves)"
+        triple: "D_1 ∩ D_2 ∩ D_3: vertices (0D points); proto-cells"
+      significance: >
+        Counts how shards bind into cells, smooths folds via blow-ups, tracks memory cohomology classes.
+
+  d3_emergence:
+    description: >
+      Criteria and implementation for detecting 3D volume births via aligned high-meaning shard events.
+    criteria:
+      co_occurrence:
+        description: >
+          Three meaningful shard births aligning within δt windows signal proto-cell formation.
+        condition: >
+          M(t_i), M(t_j), M(t_k) > M_thr and |t_i - t_j|, |t_j - t_k| < δt
+      annealing_modulation:
+        equation: "Δ_t → Δ_t (1 + κ M(t))"
+        effect: >
+          Peaks in meaning dynamically adjust collapse rates to favor triple collapse.
+    implementation:
+      steps:
+        - compute: "K'_mem for complete φ history"
+        - detect: "Find triples of M(t) > M_thr within δt"
+        - trigger: "Register d₃ cell birth; assign G_cell equation"
+        - log: >
+            Append under 'd3_emergence' with timestamps, G_cell, and involved agents.
+
+  scripts:
+    meaning_analysis.py:
+      description: >
+        Master script for detecting meaning, running grid searches, visualizations, and YAML integration.
+      usage: >
+        python meaning_analysis.py 
+          --input session_log.yaml 
+          --output session_log_with_meaning.yaml 
+          --plot output/meaning_plot.png
+      requirements:
+        - pyyaml
+        - numpy
+        - matplotlib
+    tune_cadence.py:
+      description: >
+        Automates tuning of dynamic memory windows via CI and commits updated logs.
+      ci_workflow: ".github/workflows/rcft_tune.yml"
+
+  ci:
+    github_actions:
+      file: ".github/workflows/rcft_tune.yml"
+      description: >
+        Runs cadence tuning on push or schedule, commits updated session logs automatically.
+
+  metadata:
+    session:
+      id: "2025-07-28T21:35:00Z"
+      operator: "Matt"
+      device: "Android 15.0"
+      notes: >
+        Integrated valence-weighted novelty to refine memory coherence
+        and defined criteria for shardic emergence in d₃ volumes
+
+meaning_metric:
+  section: "Glyph Semantics"
+  title: "Meaning as Valence-Weighted Novelty"
+  description: >
+    Defines how emotionally‐charged and novel an event must be
+    to register as meaningful in the field.
+  equations:
+    novelty:
+      "N(t) = 1 - (1/T) ∫_{t-T}^t exp[-γ ||φ(t)-φ(τ)||²] dτ"
+    meaning:
+      "M(t) = V_t × N(t)"
+  code_integration:
+    module: "py_lib/meaning_metric.py"
+    functions:
+      - compute_novelty
+      - compute_valence
+      - compute_meaning
+  parameters:
+    T: "Memory lookback window (steps)"
+    γ: "Memory‐kernel decay rate"
+    θ: "Valence threshold"
+    α: "Valence steepness"
 `
+
+
 
 # 5) YAML Snapshot
 save_to: the_book_v1.0.yaml
