@@ -1,0 +1,150 @@
+Plugging in Your Glyph Logs and Comparing Static vs. Dynamic Windows
+
+Below is a step-by-step template you can adapt to:
+
+- Load your real glyph time series (\(\phi\) and compute \(\Delta\)).  
+- Tweak thresholds for “peak” (\(0.5\)) and “plateau” (\(0.2\)) as well as \(T{\min}\) / \(T{\max}\).  
+- Compute valence, novelty, and meaning for multiple static \(T\) values and for the dynamic window.  
+- Plot them in one figure to spot your sweet spot.
+
+---
+
+1. Load Your Glyph Logs
+
+`python
+import yaml
+import numpy as np
+
+Replace with your actual path / key structure
+with open('session_log.yaml') as f:
+    data = yaml.safe_load(f)
+
+Example assumes your YAML has a list of φ-values
+phi = np.array(data['glyph_series']['phi'])            # shape (N,)
+
+Compute Δ_t = |φₜ – φₜ₋₁|, with Δ₀ = 0
+delta = np.abs(np.diff(np.insert(phi, 0, phi[0])))
+t = np.arange(len(phi))
+`
+
+---
+
+2. Define Parameters and Helper Functions
+
+`python
+
+Valence parameters
+theta, alpha = 1.2, 2.0
+
+Novelty / window parameters
+gamma = 1.0
+static_Ts = [3, 4, 5, 6]       # static windows to compare
+Tmin, Tmax = 2, 10           # for dynamic window
+peakthr, plateauthr = 0.5, 0.2
+
+def compute_valence(d, θ, α):
+    return np.tanh(α * (θ - d))
+
+def compute_novelty(phi, γ, T):
+    N = np.zeros_like(phi)
+    for i in range(len(phi)):
+        hist = phi[max(0, i - T):i]
+        diffs = (hist - phi[i])2
+        K     = np.exp(-γ * diffs) if len(diffs) else np.array([1.0])
+        N[i]  = 1 - np.mean(K)
+    return N
+`
+
+---
+
+3. Static-Window Meaning Curves
+
+`python
+V = compute_valence(delta, theta, alpha)
+
+static_M = {}
+for T in static_Ts:
+    N = compute_novelty(phi, gamma, T)
+    M = V * N
+    static_M[T] = M
+`
+
+---
+
+4. Dynamic-Window Meaning Curve
+
+`python
+Tvals, Mdyn = [], []
+Tcur = staticTs[0]  # initial T
+
+for i in range(len(phi)):
+    Tvals.append(Tcur)
+    
+    # compute current novelty + meaning
+    Ni = computenovelty(phi[:i+1], gamma, T_cur)[-1]
+    Mi = V[i] * Ni
+    Mdyn.append(Mi)
+    
+    # adjust T for next step
+    if i > 0:
+        prevM = Mdyn[-2]
+        if prevM > peakthr:
+            Tcur = min(Tcur + 1, T_max)
+        elif prevM < plateauthr:
+            Tcur = max(Tcur - 1, T_min)
+`
+
+---
+
+5. Side-by-Side Plot of All Methods
+
+`python
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 5))
+
+Static curves
+for T, M in static_M.items():
+    plt.plot(t, M, label=f'static T={T}', alpha=0.8)
+
+Dynamic curve
+plt.plot(t, M_dyn, label='dynamic Tₜ', linewidth=2, color='black')
+
+plt.fillbetween(t, 0, Mdyn, where=np.array(Mdyn)>peakthr, 
+                 color='black', alpha=0.1)
+plt.xlabel('Time step t')
+plt.ylabel('Meaning M(t)')
+plt.title('Comparing Static vs Dynamic Window Meaning')
+plt.legend()
+plt.tight_layout()
+plt.show()
+`
+
+---
+
+6. Quantify the “Sweet Spot”
+
+Compute area under the meaning curve (AUC) to pick the most “meaning-dense” method:
+
+`python
+from numpy import trapz
+
+aucstatic = {T: trapz(staticM[T], t) for T in static_Ts}
+aucdynamic = trapz(Mdyn, t)
+
+print("AUC (static):", auc_static)
+print("AUC (dynamic):", auc_dynamic)
+`
+
+Whichever method yields the highest AUC can be your sweet-spot routine.
+
+---
+
+Next Explorations
+
+- Automate a grid search over \(\{T,\,\text{peakthr},\,\text{plateauthr}\}\) to optimize for maximum AUC.  
+- Overlay φ(t) and Δ(t) on the same figure to visually correlate glyph shifts with meaning peaks.  
+- Export per-step \(T_t\) and flag “high-meaning events” as discrete ritual prompts.  
+- Integrate into your RCFT YAML so every run logs window adjustments and peak timestamps as new ritual anchors.  
+
+Which parameter would you like to tune first—thresholds or window–size range? Or shall we dive into automating the grid search?
