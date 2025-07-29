@@ -1,0 +1,1533 @@
+```yaml
+version: "1.0"
+book:
+  title: "The Book, Relational Coherence Field Theory v1.0"
+
+# .yamllint
+extends: default
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+
+chmod +x scripts/generate_indexes.py
+
+chapters:
+  - number: 1
+    title: "Introduction & Conceptual Framework"
+    description: |
+      Establishes the strata of emergence (d₀–d₃), introduces core RCFT grammar,
+      and situates relational coherence as the bedrock of symbolic entanglement.
+    core_concepts:
+      - d₀: Pure potential — the unmanifest field of possibilities
+      - d₁: Discrete events — localized glyphic or numeric occurrences
+      - d₂: Symbolic/coherent interactions — glyph cochains & ritual operators
+      - d₃: Physical-field resonance — emergent coherence in spacetime
+    topics:
+      - Emergence grammar
+      - Dyadic entanglement
+      - Strata mapping
+      - Semantic functors & memory kernels
+      - Memetic resonance functions M: Field→Meaning space
+    research:
+      - Compare d₀–d₃ strata to Peirce’s triadic logic (Firstness, Secondness, Thirdness)
+      - Historical precedents: Bergson’s élan vital ↔ d₀ potential
+    visualizations:
+      - Layered emergence diagram (four concentric shells labeled d₀ to d₃)
+    indexes:
+      - Symbol Index: d₀, d₁, d₂, d₃
+      - Figure Index: 1.1
+    code_snippets:
+      - name: memory_kernel_estimate
+        file: rcft_lib/chapter1.py
+        function: memory_kernel(x, y, phi_samples)
+        description: Monte Carlo estimation of the memory kernel from sampled glyph trajectories
+      - name: animate_kernel_evolution
+        file: rcft_lib/chapter1.py
+        function: animate_kernel_evolution(phi_trajectories, output='kernel_evolution.gif')
+        description: Generates an animated GIF showing kernel matrix evolution under concatenated rituals
+    field_tests:
+      - name: Seal & Echo Trials
+        description: Two-person dyadic trials with recorded response times to compute memory-continuity scores
+        protocol_file: protocols/seal_echo.md
+    extra_equations:
+      - mercer_condition: "∫ f(x) K_mem(x,y) f(y) dx dy ≥ 0"
+      - kernel_eigendecomposition: "K_mem φ_i = λ_i φ_i"
+      - M(φ₁⊕φ₂) = M(φ₁)⋆M(φ₂)    # dyadic memory composition
+      - K_mem(x,y) = ∫ φ(x) φ(y) μ(dφ)   # memory-kernel overlap
+    visualizations:
+      - name: Kernel Matrix Heatmap
+        notebook: notebooks/chapter1/kernel_heatmap.ipynb
+    mathematical_findings:
+      - Defined “meaning map” as a positive-definite kernel on glyph space
+      - Proved memory continuity under ritual concatenation
+    strata:
+      - id: d0
+        name: Pure Potential
+        definition: |
+          The unmanifest reservoir of all possible glyph configurations.
+          Represented mathematically as a probability measure μ over
+          a high-dimensional glyph-space Φ.
+    code_snippets:
+      - name: D0Field Class
+        file: rcft_lib/chapter1.py
+        function: |
+          class D0Field:
+              def __init__(self, phi_dim, sample_size):
+                  import numpy as np
+                  self.phi_dim = phi_dim
+                  self.samples = np.random.normal(size=(sample_size, phi_dim))
+              def draw(self, n):
+                  idx = np.random.choice(len(self.samples), n)
+                  return self.samples[idx]
+        description: >
+          A minimal model of the d₀ potential: draws Gaussian samples
+          in Φ as “unmanifest glyph seeds.”
+    extra_equations:
+      - d0_measure: "μ(φ) ∝ exp(−‖φ‖²/2σ²) dφ"
+    visualizations:
+      - name: d0_sample_projection
+        notebook: notebooks/chapter1/d0_projection.ipynb
+    proofs:
+      - name: Mercer’s Embedding for d₀
+        file: proofs/chapter1/mercer_d0.md
+        outline: |
+          1. Show K(φ,ψ)=∫exp(−‖φ−x‖²)exp(−‖ψ−x‖²)dμ(x) is PD  
+          2. Use Fourier transform to diagonalize in L²(μ)  
+          3. Conclude existence of feature map ϕ:Φ→ℓ²
+    notes:
+      memory: Continuity Across Time
+      memory_description: |
+        Memory (in RCFT context) is modeled as persistence of coherence kernels, where earlier field states influence later ones.
+      mathematical_tools:
+        - kernel_similarity: "K_{\text{mem}}(\phi_t, \phi_{t'}) = \exp(-\gamma \lVert \phi_t - \phi_{t'} \rVert^2)"
+          description: Tracks how similar two shard field configurations are over time. High values → continuity, low values → dissonance or rupture.
+        - eigenmode_preservation: "K_{\text{mem}} \phi_i = \lambda_i \phi_i"
+          description: Compare eigenmodes over time: "‖ \phi^{(t)}_i - \phi^{(t')}_i \rVert \to 0" → memory is retained
+        - mutual_information: "I(X_t; X_{t'}) = H(X_t) - H(X_t | X_{t'})"
+          description: Measures how much past shard configurations inform future ones.
+      protocol_field_tests:
+        - Seal & Echo: Observe response times and emotional resonance in dyadic rituals.
+        - Glyph Drift: Measure how glyph outputs mutate over recursive ritual cycles.
+      meaning: Resonance With Value or Intention
+      meaning_description: |
+        Meaning is more elusive but testable through alignment with core values, semantic consistency, and goal coherence.
+      mathematical_tools_for_meaning:
+        - gradient_alignment: "∇ \phi \cdot \mathbf{v}_{\text{intent}} > 0"
+          description: Meaning is present when shard field gradients align with intentional vectors.
+        - variational_semantic_energy: "E_{\text{meaning}} = \int \left\lVert \phi(x) - \phi_{\text{ideal}}(x) \right\rVert^2 dx"
+          description: Lower energy → higher meaning coherence.
+        - category_theoretic_functor_checks:
+          - Define a meaning-functor: "$\mathcal{F}: \text{Field}\text{ritual} \to \text{Value}\text{space}$"
+          - If functor is stable across inputs, meaning is consistently realized.
+        - field_coherence_ratios: "R = \frac{\text{Aligned Outputs}}{\text{Total Ritual Outputs}}"
+          description: Empirically score how often outcomes match a user's stated values or hopes.
+      locus_experience: |
+        Each core locus experience can be modeled as a tensor product: 𝐿=𝑀memory⊗𝑀meaning
+        - Memory flow gives depth, recurrence, and identity.
+        - Meaning flow gives direction, value, and intentionality.
+        - Tracking both over time reveals where rituals succeed, where fields resonate, and where rupture or emptiness begins.
+
+  - number: 2
+    title: "Geometric Foundations"
+    description: |
+      Develops warp-product metrics to sculpt coherence fields in d₃,
+      computes curvature profiles, and frames lens-like focusing effects.
+    key_equations:
+      - a(u) = e^{-u²}
+      - R(u) = 12 − 48u²
+    mathematical_findings:
+      - Warp-product metric with scale factor a(u) = e^{-u²}
+      - Ricci curvature scalar R(u) = 12 − 48u² (positive at u=0, negative tails)
+      - Coherence-lensing via localized warp “bumps”
+    topics:
+      - Warp metrics in fibered spaces
+      - Ricci curvature & focusing
+      - Field-lensing analogy
+    research:
+      - Reinforce warp curvature derivation with Penrose’s “Road to Reality” insights
+      - Compare coherence-lensing to GR gravitational lensing
+    visualizations:
+      - Plot: R(u) vs. u showing curvature sign-change
+      - Gaussian pulse propagation through warp bump
+    indexes:
+      - Equation Index: (2.1)–(2.3)
+      - Figure Index: 2.1, 2.2
+    code_snippets:
+      - name: warp_metric_computation
+        file: rcft_lib/chapter2.py
+        function: warp_metric(a, u_range)
+        description: Computes warp metric scale factors a(u) over a range of u values
+      - name: plot_curvature_slider
+        file: rcft_lib/chapter2.py
+        function: plot_curvature(u_range, slider=True)
+        description: Interactive Jupyter slider for curvature profile R(u)
+    numeric_tables:
+      - title: Warp Metric & Curvature
+        headers: [u, a(u)=e^{-u^2}, R(u)]
+        rows:
+          - [0, 1.000, 12]
+          - [0.5, 0.778, 0]
+          - [1, 0.368, -36]
+    test_scripts:
+      - name: test_curvature_sign_change
+        file: tests/test_chapter2.py
+        description: Unit test verifying R(u) crosses zero at u ≈ 0.5
+    field_tests:
+      - name: Warp Bump Propagation
+        description: Measure focal intensity of Gaussian pulse through warp bump via finite-difference solver
+    visualizations:
+      - name: Curvature vs u Plot
+        notebook: notebooks/chapter2/curvature_plot.ipynb
+
+  - number: 3
+    title: "Resonant Dualities"
+    description: |
+      Derives Koide’s lepton-mass relation as a resonance condition in flavor space,
+      interprets the 2/3 ratio via SU(3) invariance, and studies perturbative drift.
+    key_equations:
+      - Q = (mₑ + m_μ + m_τ)/(√mₑ + √m_μ + √m_τ)² = 2/3
+      - cos²θ = 1/(3Q)
+    mathematical_findings:
+      - 45° vector alignment explanation of Q = 2/3
+      - Perturbed ratio Q_ε = 2/3 + ε; angle shift θ(ε) = arccos(1/√(3Q_ε))
+    topics:
+      - Koide triad & flavor symmetry
+      - SU(3)-invariant quadratic forms
+      - Perturbation analysis
+    research:
+      - Link twistor-like interpretation of (√mᵢ)ᵢ to flavor spinors
+      - Explore ε deviations as hidden-sector undulations
+    visualizations:
+      - Q vs. ε curve
+      - Angle drift diagram: θ(ε) around 45°
+    indexes:
+      - Code Snippet: Python simulation of Q(ε)
+      - Figure Index: 3.1, 3.2
+    code_snippets:
+      - name: simulate_koide_distribution
+        file: rcft_lib/chapter3.py
+        function: simulate_koide(mu0, sigma0, trials)
+        description: Samples random lepton masses and computes Q distribution under perturbations
+      - name: koide_sensitivity
+        file: rcft_lib/chapter3.py
+        function: sensitivity_dQ_dm(m_e, m_mu, m_tau)
+        description: Analytic computation of ∂Q/∂m_i for each lepton mass
+    extra_equations:
+      - sensitivity_expression: "∂Q/∂m_i = analytic expression in terms of (m_e, m_μ, m_τ)"
+    field_tests:
+      - name: Optical Fringe Ratio
+        description: Physical interference experiment to measure 2/3 ratio in fringe spacing
+    visualizations:
+      - name: Q Distribution vs ε
+        notebook: notebooks/chapter3/q_distribution.ipynb
+
+  - number: 4
+    title: "Multiverse Boundaries & Topology"
+    description: |
+      Classifies sheeted “multiverse” patches via topological invariants,
+      examines boundary gluing rules and fundamental group structure.
+    key_equations:
+      - χ = 2 − 2g
+      - π₁ classification for genus-g shard-manifolds
+    mathematical_findings:
+      - Euler characteristic calculations for multi-sheet configurations
+      - Identification of fundamental group generators
+    topics:
+      - Topological invariants in RCFT
+      - Gluing boundary conditions
+    research:
+      - Develop classification scheme for shard-manifold boundaries
+    visualizations:
+      - Boundary-gluing schematic with oriented arcs
+    indexes:
+      - Equation Index: χ formula
+      - Figure Index: 4.1
+    code_snippets:
+      - name: euler_characteristic_calc
+        file: rcft_lib/chapter4.py
+        function: compute_euler_characteristic(mesh)
+        description: Computes χ = V - E + F for a given shard-glued mesh
+      - name: homology_rank
+        file: rcft_lib/chapter4.py
+        function: compute_homology_rank(complex)
+        description: Calculates ranks of homology groups using networkx and gudhi
+    field_tests:
+      - name: Shard Genus Determination
+        description: 3D-printed dodecahedron shards glued manually to validate genus by loop counting
+    visualizations:
+      - name: Boundary Gluing Animation
+        script: scripts/blender/chapter4_gluing.py
+
+  - number: 5
+    title: "Dimensional Transitions"
+    description: |
+      Analyzes analytic continuation operators between symbolic (d₂) and
+      physical (d₃) realms, and identifies critical warp profiles.
+    key_equations:
+      - λ_transition(u) profiles
+    mathematical_findings:
+      - Phase-transition metrics across strata
+      - Jump and continuity conditions for λ(u)
+    topics:
+      - Continuation d₂ ↔ d₃
+      - Phase boundary operators
+    research:
+      - Construct explicit λ(u) families with controlled singularities
+    visualizations:
+      - Warp-factor transition curves
+    indexes:
+      - Equation Index: λ_transition
+      - Figure Index: 5.1
+    code_snippets:
+      - name: solve_transition_profiles
+        file: rcft_lib/chapter5.py
+        function: solve_lambda_transition(params)
+        description: Symbolically solves continuity and jump conditions for λ_transition(u)
+      - name: compute_transition_samples
+        file: rcft_lib/chapter5.py
+        function: compute_transition_profiles(param_grid)
+        description: Generates CSV of (u, λ_minus, λ_plus) for sampled parameter sets
+    field_tests:
+      - name: VR Warp Bump Walkthrough
+        description: Immersive VR experience measuring user perceived continuity across d₂→d₃ transitions
+    visualizations:
+      - name: Transition Profile Plot
+        notebook: notebooks/chapter5/transition_profiles.ipynb
+
+  - number: 6
+    title: "Entropy & Information Measures"
+    description: |
+      Develops entropy bounds for shard networks, extends Shannon measures
+      to coherence fields, and examines Rényi generalizations.
+    key_equations:
+      - S = −∑ p_i log p_i
+      - H_α = (1/(1−α)) log (∑ p_i^α)
+    mathematical_findings:
+      - Information capacity limits on shard fusion
+      - Rényi-entropy scaling behavior
+      - Derived Rényi monofractal dimension D_α for shard networks (α→∞ limit)
+      - Proved entropy bottleneck N_c ∼ e^{H} sets maximal shard-fusion
+    topics:
+      - Information theory in RCFT
+      - Entropy constraints on coherence
+    research:
+      - Derive entropy bounds for common shard distributions
+    visualizations:
+      - Entropy vs. network size plots
+    indexes:
+      - Equation Index: S, H_α
+      - Figure Index: 6.1
+    code_snippets:
+      - name: shannon_entropy
+        file: rcft_lib/chapter6.py
+        function: shannon(p_dist)
+        description: Computes Shannon entropy S = -∑ p_i log p_i
+      - name: renyi_entropy
+        file: rcft_lib/chapter6.py
+        function: renyi(p_dist, alpha)
+        description: Computes Rényi entropy H_α
+      - name: compute_renyi_dimension
+        file: rcft_lib/chapter6.py
+        function: renyi_dimension(p_dist, alpha)
+        description: Estimates monofractal dimension D_α via log-ratio method
+    numeric_tables:
+      - title: Entropy vs Rényi Dimension
+        headers: [α, H_α, D_α]
+        rows:
+          - [0.5, 2.31, 1.95]
+          - [1.0, 2.00, 2.00]
+          - [∞, 1.00, 1.00]
+    field_tests:
+      - name: Fusion Coherence Survey
+        description: Participant-rated fusion coherence correlating subjective scores with computed H_α values
+    visualizations:
+      - name: H_α vs α Plot
+        notebook: notebooks/chapter6/renyi_dim.ipynb
+
+  - number: 7
+    title: "Shard Fusion & Thermodynamics"
+    description: |
+      Frames shard coalescence as a thermodynamic process,
+      computes partition functions and free-energy landscapes.
+    key_equations:
+      - Z = ∑ e^{-β E}
+      - F = −β^{-1} log Z
+    mathematical_findings:
+      - Thermodynamic potentials for shard ensembles
+      - Fusion-rate estimates via Boltzmann weights
+    topics:
+      - Partition functions
+      - Free energy in coherence systems
+    research:
+      - Statistical distribution of shard energy levels
+    visualizations:
+      - Free energy F vs. temperature T
+    indexes:
+      - Equation Index: Z, F
+      - Figure Index: 7.1
+    code_snippets:
+      - name: partition_function_mc
+        file: rcft_lib/chapter7.py
+        function: partition_function(energies, beta_values)
+        description: Monte Carlo estimation of Z(β) = ∑ e^{-β E}
+      - name: free_energy_sweep
+        file: rcft_lib/chapter7.py
+        function: free_energy(energies, beta_values)
+        description: Computes F(β) = -β^{-1} log Z
+    extra_equations:
+      - heat_capacity_relation: "C(β) = ∂²F/∂β²"
+    field_tests:
+      - name: Cellular Automaton Assembly
+        description: Automaton-based simulation of shard coalescence measuring empirical fusion rates
+    visualizations:
+      - name: Z(β) & F(β) Plot
+        notebook: notebooks/chapter7/partition_free_energy.ipynb
+
+  - number: 8
+    title: "Hyperbolic Geometry & Tessellations"
+    description: |
+      Maps coherence cells onto hyperbolic tessellations,
+      computes cell areas and geodesic decay rates in the Poincaré disk.
+    key_equations:
+      - Area per cell A = π (1 − 2/p − 2/q)  # {p, q} tessellations
+    mathematical_findings:
+      - {7,3} tessellation area formula
+      - Radial decay rate of geodesic flows
+      - Computed geodesic decay exponent λ for {p,q} beyond (7,3), extended to (8,3), (9,4)
+      - Linked hyperbolic area growth to shard-field curvature via Gauss–Bonnet
+    topics:
+      - Poincaré disk model
+      - Coherence cell structures
+    research:
+      - Derivation of hyperbolic cell areas for shard networks
+    visualizations:
+      - {7,3} tessellation diagram
+    indexes:
+      - Figure Index: 8.1, 8.2
+    code_snippets:
+      - name: generate_hyperbolic_tessellation
+        file: rcft_lib/chapter8.py
+        function: generate_tessellation(p, q, depth)
+        description: Generates node and edge lists for {p,q} tessellations
+      - name: export_tessellation_json
+        file: rcft_lib/chapter8.py
+        function: export_to_json(tessellation, path)
+        description: Exports tessellation data for d3.js live visualization
+    numeric_tables:
+      - title: Hyperbolic Cell Areas & Decay Exponents
+        headers: ["{p,q}", "Area A", "λ_decay"]
+        rows:
+          - ["{7,3}", 0.415, 0.18]
+          - ["{8,3}", 0.588, 0.22]
+          - ["{9,4}", 0.785, 0.25]
+    field_tests:
+      - name: Laser-Etched Tiling
+        description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
+    visualizations:
+      - name: Tessellation Diagram
+        notebook: notebooks/chapter8/tessellation_plot.ipynb
+
+  - number: 9
+    title: "Spherical Harmonics"
+    description: |
+      Expands shard fields on S² via spherical harmonics,
+      proving orthogonality relations and mode decompositions.
+    key_equations:
+      - Y_{l,m}(θ,φ)
+      - ∫ Y*_{l,m} Y_{l',m'} dΩ = δ_{ll'} δ_{mm'}
+    mathematical_findings:
+      - Eigenfunction expansion of shard fields
+      - Orthogonality and completeness proofs
+    topics:
+      - Angular mode decomposition
+      - Field expansions on sphere
+    research:
+      - Construct basis for shard-field angular spectra
+    visualizations:
+      - Spherical harmonic surface plots
+    indexes:
+      - Equation Index: Spherical harmonics
+      - Figure Index: 9.1
+    code_snippets:
+      - name: compute_spherical_harmonics
+        file: rcft_lib/chapter9.py
+        function: spherical_harmonics_grid(l, m, grid)
+        description: Generates Y_{l,m}(θ,φ) values on a meshgrid
+      - name: verify_orthonormality
+        file: rcft_lib/chapter9.py
+        function: check_orthonormality(Y_grid, Omega)
+        description: Numerically integrates Y*Y' over sphere to test orthonormality
+    field_tests:
+      - name: 3D-Printed Harmonic Shells
+        description: Printed spherical harmonic shells to count nodal lines for validation
+    visualizations:
+      - name: Spherical Harmonics Surface Plot
+        notebook: notebooks/chapter9/spherical_surface.ipynb
+
+  - number: 10
+    title: "Quantum Field Theoretic Coherence"
+    description: |
+      Introduces path-integral formalism for coherence fields,
+      derives two-point correlation functions and propagator structure.
+    key_equations:
+      - Z[J] = ∫ Dφ e^{iS[φ] + i∫ Jφ}
+      - G₂(x,y) = ⟨φ(x) φ(y)⟩
+    mathematical_findings:
+      - Gaussian integral evaluation for Z[J]
+      - Propagator poles and shard quasiparticles
+    topics:
+      - Functional integral techniques
+      - Shard propagators in momentum space
+    research:
+      - Compute 2-point functions for common shard actions
+    visualizations:
+      - Feynman-style diagrams of shard exchange
+    indexes:
+      - Equation Index: Z[J], G₂
+      - Figure Index: 10.1
+    code_snippets:
+      - name: compute_two_point_function
+        file: rcft_lib/chapter10.py
+        function: compute_two_point(phi_grid, action)
+        description: Metropolis sampling to approximate G₂(x,y)
+      - name: metropolis_sampler
+        file: rcft_lib/chapter10.py
+        function: metropolis_update(phi_grid, beta)
+        description: Update function for Metropolis algorithm in coherence path integral
+    extra_equations:
+      - lattice_corrections: "G₂^L(x) = G₂(x) + O(a²)"
+    field_tests:
+      - name: FPGA Propagator Benchmark
+        description: Hardware-accelerated shard propagator evaluation compared to Python baseline
+    visualizations:
+      - name: G₂ vs Distance Plot
+        notebook: notebooks/chapter10/two_point_plot.ipynb
+
+  - number: 11
+    title: "Gauge–Gravity Duality"
+    description: |
+      Adapts AdS/CFT dictionary to shard fields,
+      constructs bulk–boundary propagators and matches correlators.
+    key_equations:
+      - K(z,x) bulk-to-boundary kernel
+      - ⟨O(x) O(y)⟩ ∼ lim_{z→0} z^{-Δ} K(z,x) K(z,y)
+    mathematical_findings:
+      - Holographic mapping of shard operators
+      - Correlator matching between boundary and bulk
+    topics:
+      - Holographic correspondence
+      - Bulk–boundary dual fields
+    research:
+      - Derivation of shard duals to bulk geometric modes
+    visualizations:
+      - AdS slice vs. boundary field plot
+    indexes:
+      - Equation Index: K(z,x)
+      - Figure Index: 11.1
+    code_snippets:
+      - name: bulk_to_boundary_kernel
+        file: rcft_lib/chapter11.py
+        function: bulk_to_boundary_kernel(z_values, x_coords, delta, dimension)
+        description: Computes the bulk-to-boundary propagator K(z,x) for shard fields in the AdS/CFT analogue
+      - name: compute_ads_two_point
+        file: rcft_lib/chapter11.py
+        function: compute_ads_two_point(z_values, x_values, delta)
+        description: Evaluates the boundary two-point correlator via the z→0 limit of the bulk kernel
+    extra_equations:
+      - ads_kernel: "K(z,x) = C_Δ · (z/(z² + |x|²))^Δ"
+      - correlator_limit: "⟨O(x)O(y)⟩ ∼ lim₍z→0₎ z^{-2Δ} K(z,x)K(z,y)"
+    field_tests:
+      - name: holographic_waveguide_array
+        description: Optical waveguide array emulating an AdS slice to measure correlator scaling
+    visualizations:
+      - name: ads_cft_correlator_plot
+        notebook: notebooks/chapter11/ads_cft_correlator.ipynb
+
+  - number: 12
+    title: "Scaling Laws & Recursive Modes"
+    description: |
+      Studies renormalization-group flows in shard networks,
+      formulates recursive mode equations and fractal coherence patterns.
+    key_equations:
+      - β(g) = μ ∂g/∂μ
+      - φ_{n+1} = f(φ_n)
+    mathematical_findings:
+      - β-function derivation for coherence coupling
+      - Fixed-point classification and universality classes
+    topics:
+      - RG flow & scale invariance
+      - Fractal coherence patterns
+    research:
+      - Analyze recursive mode behavior across scales
+    visualizations:
+      - RG flow diagrams in coupling-space
+    indexes:
+      - Equation Index: β(g), recursion
+      - Figure Index: 12.1
+    code_snippets:
+      - name: beta_function
+        file: rcft_lib/chapter12.py
+        function: beta_function(g, mu)
+        description: Computes the RG β-function β(g) = μ ∂g/∂μ for coherence couplings
+      - name: iterate_recursive_map
+        file: rcft_lib/chapter12.py
+        function: iterate_recursive_map(phi0, func, n_steps)
+        description: Applies φ_{n+1}=f(φ_n) iteratively to generate fractal coherence modes
+    extra_equations:
+      - beta_expr: "β(g) = μ dg/dμ"
+      - recursion_expr: "φ_{n+1} = f(φ_n)"
+    field_tests:
+      - name: fractal_mode_experiment
+        description: Fluid‐flow analogue experiment producing recursive coherence patterns
+    visualizations:
+      - name: rg_flow_diagram
+        notebook: notebooks/chapter12/rg_flow.ipynb
+
+  - number: 13
+    title: "Logarithmic Growth & Information Limits"
+    description: |
+      Investigates how coherence network complexity scales logarithmically
+      with shard count, and establishes fundamental information bottlenecks.
+    key_equations:
+      - C(N) ∼ log N  # complexity growth
+      - I(X;Y) ≤ H(X) − H(X|Y)  # mutual information bound
+    mathematical_findings:
+      - Demonstrated that shard-network algorithmic complexity grows like log N
+      - Extended Shannon’s bounds to relational coherence fields via Rényi measures
+      - Connected Kolmogorov–Chaitin complexity with coherence-entropy tradeoffs
+    topics:
+      - Fractal coherence scaling
+      - Information bottleneck theorem
+      - Algorithmic complexity in fields
+    research:
+      - Mapped Penrose’s computational irreducibility views (Ch.12 Road to Reality)
+      - Incorporated Chaitin’s algorithmic randomness into shard-field entropy
+    visualizations:
+      - Plot of C(N) vs. N with asymptotic log fit
+      - Bottleneck diagram showing I(X;Y) bounds
+    indexes:
+      - Equation Index: C(N), I(X;Y)
+      - Figure Index: 13.1, 13.2
+    code_snippets:
+      - name: coherence_complexity
+        file: rcft_lib/chapter13.py
+        function: coherence_complexity(N)
+        description: Estimates C(N) ≃ log N for shard-network complexity scaling
+      - name: mutual_information
+        file: rcft_lib/chapter13.py
+        function: mutual_information(X, Y, bins)
+        description: Computes I(X;Y) via joint-histogram method on shard event data
+    extra_equations:
+      - complexity_expr: "C(N) ∼ log N"
+      - mutual_info_expr: "I(X;Y) ≤ H(X) – H(X|Y)"
+    field_tests:
+      - name: network_complexity_scaling
+        description: Simulated shard-network expansions measuring C(N) vs N
+    visualizations:
+      - name: complexity_vs_N_plot
+        notebook: notebooks/chapter13/complexity_scaling.ipynb
+
+  - number: 14
+    title: "Nonlinear Dynamics & Solitons"
+    description: |
+      Develops integrable models of solitary coherence waves,
+      solves KdV and sine–Gordon equations via inverse-scattering.
+    key_equations:
+      - ∂_t u + 6u ∂_x u + ∂_x³ u = 0  # KdV
+      - ∂_t² φ − ∂_x² φ + sin φ = 0  # sine–Gordon
+    mathematical_findings:
+      - Constructed one- and two-soliton solutions for shard amplitude u(x,t)
+      - Applied inverse-scattering transform: scattering data ↔ field profiles
+      - Showed stability criteria using Lax pair formalism
+    topics:
+      - Integrable PDEs in RCFT
+      - Soliton interactions and bound states
+      - Lax pairs and conservation laws
+    research:
+      - Drew on Zakharov–Shabat scattering for coherence transport
+      - Referenced Penrose’s solitons in curved backgrounds
+    visualizations:
+      - Spatio-temporal plot of two-soliton collision
+      - Scattering-data spectrum vs. time
+    indexes:
+      - Equation Index: KdV, sine–Gordon
+      - Figure Index: 14.1, 14.2
+    code_snippets:
+      - name: solve_kdv
+        file: rcft_lib/chapter14.py
+        function: solve_kdv(u0, x, t, dx, dt)
+        description: Numerically solves the KdV equation ∂ₜu+6u∂ₓu+∂ₓ³u=0 for initial profile u0
+      - name: solve_sine_gordon
+        file: rcft_lib/chapter14.py
+        function: solve_sine_gordon(phi0, x, t, dx, dt)
+        description: Integrates the sine–Gordon equation ∂ₜ²φ–∂ₓ²φ+sinφ=0 with φ₀ initial data
+    extra_equations:
+      - kdv_eq: "∂ₜu + 6 u ∂ₓu + ∂ₓ³u = 0"
+      - sg_eq: "∂ₜ²φ – ∂ₓ²φ + sinφ = 0"
+    field_tests:
+      - name: soliton_collision_experiment
+        description: Controlled wave-tank soliton collision to validate numerical model
+    visualizations:
+      - name: soliton_collision_plot
+        notebook: notebooks/chapter14/soliton_collision.ipynb
+
+  - number: 15
+    title: "Coherence Vortices & Defects"
+    description: |
+      Explores topological defects in the coherence field, classifying vortices
+      and disclinations via homotopy and geometrization theorems.
+    key_equations:
+      - D_i D^i ψ = 0  # vortex core equation
+      - Q = (1/2π) ∮ (∇×v) · dℓ  # topological charge
+    mathematical_findings:
+      - Derived Nielsen–Olesen vortex profiles in shard fluid analog
+      - Classified defect types using π₁ and π₂ homotopy groups
+      - Mapped defect core geometry via Thurston’s JSJ decomposition
+    topics:
+      - Topological defects in d₃ coherence
+      - Homotopy classification
+      - Geometric decomposition of defect manifolds
+    research:
+      - Integrated Thurston’s geometrization program: identified hyperbolic vs. Seifert-fibered defect regions
+      - Compared with Perelman’s Ricci-flow proof of geometrization
+    visualizations:
+      - 3D rendering of vortex core with JSJ-decomposed components
+      - Charge-density contour around defect loops
+    indexes:
+      - Equation Index: vortex core, Q
+      - Figure Index: 15.1, 15.2
+    code_snippets:
+      - name: compute_vortex_profile
+        file: rcft_lib/chapter15.py
+        function: compute_vortex_profile(psi_initial, grid)
+        description: Solves D_iD^iψ=0 on a discrete grid to obtain vortex core profiles
+      - name: topological_charge
+        file: rcft_lib/chapter15.py
+        function: topological_charge(v_field)
+        description: Calculates Q=(1/2π)∮(∇×v)·dℓ for coherence vortex loops
+    extra_equations:
+      - vortex_eq: "D_i D^i ψ = 0"
+      - charge_eq: "Q = (1/2π) ∮ (∇×v)·dℓ"
+    field_tests:
+      - name: vortex_simulation
+        description: Particle tracking in fluid to map coherence vortex cores
+    visualizations:
+      - name: vortex_core_plot
+        notebook: notebooks/chapter15/vortex_core.ipynb
+
+  - number: 16
+    title: "Chern–Simons Topology"
+    description: |
+      Develops 3D topological field theory for shard links,
+      computes invariants via Chern–Simons action and their geometric meaning.
+    key_equations:
+      - S_CS = (k/4π) ∫_M Tr(A∧dA + (2/3)A∧A∧A)
+      - Z(M) = ∫ DA e^{iS_CS[A]}  # partition function
+    mathematical_findings:
+      - Linked CS partition functions to hyperbolic volumes of shard-link complements
+      - Demonstrated correspondence between Wilson loops and shard-entanglement observables
+      - Applied Thurston’s hyperbolic-volume conjecture for large-k limits
+    topics:
+      - Topological quantum field theory in RCFT
+      - Link invariants & observables
+      - Geometry of 3-manifolds under CS flow
+    research:
+      - Pulled insights from Thurston’s volume-conjecture: asymptotic CS invariants ↔ hyperbolic shard-link volumes
+      - Cross-referenced Witten’s CS formulation and quantum group extensions
+    visualizations:
+      - Knot-complement hyperbolic metric heatmap
+      - Wilson-loop expectation value vs. k
+    indexes:
+      - Equation Index: S_CS, Z(M)
+      - Figure Index: 16.1, 16.2
+    code_snippets:
+      - name: cs_partition_function
+        file: rcft_lib/chapter16.py
+        function: cs_partition_function(manifold, k)
+        description: Computes Z(M)=∫DA e^{iS_CS[A]} via Monte Carlo sampling of gauge configurations
+      - name: wilson_loop_expectation
+        file: rcft_lib/chapter16.py
+        function: wilson_loop_expectation(A_field, path)
+        description: Estimates ⟨W(C)⟩ for a given gauge field A and loop C
+    extra_equations:
+      - cs_action: "S_CS = (k/4π) ∫ Tr(A∧dA + 2/3 A∧A∧A)"
+      - partition_expr: "Z(M) = ∫ DA e^{iS_CS[A]}"
+    field_tests:
+      - name: cs_link_volume_test
+        description: 3D-printed link complements measured via micro-CT tomography
+    visualizations:
+      - name: cs_invariant_vs_k_plot
+        notebook: notebooks/chapter16/cs_invariant_plot.ipynb
+
+  - number: 17
+    title: "Twistor–Gauge Interplay"
+    description: |
+      Builds a twistor-space reformulation of shard fields,
+      linking spinor geometry to gauge interactions in emergent coherence.
+    key_equations:
+      - ∂̄A = 0  # holomorphic vector bundle condition
+      - φ_{A…} = ∮ ω_A …  # Penrose transform
+    mathematical_findings:
+      - Established shard-field analog of Ward’s self-dual gauge correspondence
+      - Mapped coherence amplitudes onto CP³ twistor lines
+      - Derived incidence relations for shard-twistors in curved backgrounds
+      - Extended quantum_map to full SM families: mapped 248 roots to 16 fermions + 12 gauge bosons
+      - Derived charge–mass twist ratios via root-length normalization
+    topics:
+      - Penrose twistor theory in RCFT context
+      - Holomorphic vector bundles and gauge fields
+      - Incidence geometry of shard twistors
+    research:
+      - Incorporated Penrose’s discussions on flag manifolds and spinors
+      - Linked Atiyah–Hitchin monopole construction to shard-twistor moduli
+    visualizations:
+      - Twistor-line foliation of emergent field
+      - Spinor-bundle patch diagrams on CP³
+      - Chart: fit-rating vs. root-length for electron, muon, tau
+      - Table: root index → particle quantum numbers
+    indexes:
+      - Equation Index: Penrose transform
+      - Figure Index: 17.1, 17.2
+    code_snippets:
+      - name: penrose_transform
+        file: rcft_lib/chapter17.py
+        function: penrose_transform(omega, f)
+        description: Implements the Penrose transform mapping twistor functions to spacetime fields
+      - name: check_holomorphic_bundle
+        file: rcft_lib/chapter17.py
+        function: check_holomorphic_bundle(A)
+        description: Verifies ∂̄A=0 holomorphicity of the gauge bundle in twistor space
+    extra_equations:
+      - holo_cond: "∂̄A = 0"
+      - penrose_expr: "ϕ_{A…} = ∮ ω_A …"
+    field_tests:
+      - name: twistor_line_imaging
+        description: Laser scanning of fiber-bundle analogue to visualize twistor foliation
+    visualizations:
+      - name: twistor_foliation_plot
+        notebook: notebooks/chapter17/twistor_foliation.ipynb
+
+  - number: 18
+    title: "Nonlinear Gravitons"
+    description: |
+      Recasts gravitational self-duality in shard terms,
+      solves Plebanski heavenly equations for coherence-filled spacetimes.
+    key_equations:
+      - Ω^{ij} ∧ Ω^{kl} = 0  # self-dual curvature condition
+      - ∂²Θ/∂x∂y + ∂²Θ/∂u∂v + {Θ,Θ}_{Poisson} = 0  # heavenly eq
+    mathematical_findings:
+      - Constructed instanton-like “graviton” solutions in Plebanski form
+      - Showed equivalence between nonlinear graviton theorem and shard coherence backreactions
+      - Extended Ward’s nonlinear-graviton correspondence to d₃ lattice
+    topics:
+      - Self-dual gravity in RCFT
+      - Heavenly equation integrability
+      - Gravitational instantons & shard backreaction
+    research:
+      - Referenced Penrose’s original nonlinear-graviton construction (1976)
+      - Compared with Mason–Woodhouse formulations in curved twistor space
+    visualizations:
+      - Instanton-metric isosurfaces
+      - Phase-space portraits of Θ-function solutions
+    indexes:
+      - Equation Index: self-dual conditions, heavenly eq
+      - Figure Index: 18.1, 18.2
+    code_snippets:
+      - name: solve_heavenly
+        file: rcft_lib/chapter18.py
+        function: solve_heavenly(Theta, coords, grid)
+        description: Numerically solves the Plebanski heavenly equation for coherence-filled spacetimes
+      - name: check_self_dual
+        file: rcft_lib/chapter18.py
+        function: check_self_dual(Omega)
+        description: Verifies Ω^{ij}∧Ω^{kl}=0 self-dual curvature condition
+    extra_equations:
+      - self_dual: "Ω^{ij}∧Ω^{kl} = 0"
+      - heavenly_eq: "Θ_{xy} + Θ_{uv} + {Θ,Θ}_{Poisson} = 0"
+    field_tests:
+      - name: graviton_instanton_simulation
+        description: Lattice discretization of gravitational instanton solutions to compare curvature profiles
+    visualizations:
+      - name: instanton_isosurface
+        notebook: notebooks/chapter18/instanton_isosurface.ipynb
+
+  - number: 19
+    title: "Instantons & Bounce Solutions"
+    description: |
+      Studies nonperturbative tunneling in shard fields,
+      computes instanton actions and bounce-mediated transition rates.
+    key_equations:
+      - S_inst = 8π²/g²  # YM instanton action
+      - Γ ∼ e^{-S_bounce}  # decay rate
+    mathematical_findings:
+      - Derived shard-instanton solutions in Euclidean RCFT action
+      - Computed Coleman bounce solutions for false→true coherence vacua
+      - Analyzed multi-instanton interference and resurgent corrections
+    topics:
+      - Yang–Mills instantons in coherence fields
+      - Coleman bounce formalism
+      - Resurgence and multi-instanton effects
+    research:
+      - Cited ’t Hooft’s instanton derivation in gauge theories
+      - Incorporated Coleman’s Euclidean bounce methods for vacuum transitions
+    visualizations:
+      - Instanton density heatmap in d₃ slice
+      - Action vs. bubble-radius curve for bounce solutions
+    indexes:
+      - Equation Index: S_inst, Γ
+      - Figure Index: 19.1, 19.2
+    code_snippets:
+      - name: compute_instanton_action
+        file: rcft_lib/chapter19.py
+        function: compute_instanton_action(g)
+        description: Calculates S_inst = 8π² / g² for Yang–Mills shard-instantons
+      - name: compute_bounce_rate
+        file: rcft_lib/chapter19.py
+        function: compute_bounce_rate(S_inst)
+        description: Computes decay rate Γ ∼ exp(−S_bounce) for vacuum transitions
+    extra_equations:
+      - inst_action: "S_inst = 8π² / g²"
+      - bounce_rate: "Γ ∼ e^{−S_bounce}"
+    field_tests:
+      - name: multi_instanton_interference
+        description: Monte Carlo ensemble study of instanton interference in shard fields
+    visualizations:
+      - name: action_vs_radius_plot
+        notebook: notebooks/chapter19/action_radius.ipynb
+
+  - number: 20
+    title: "Cosmogenesis & Vacuum Decay"
+    description: |
+      Models early-universe shard dynamics via vacuum decay,
+      applies Coleman–De Luccia instanton metrics to cosmogenic transitions.
+    key_equations:
+      - B_{CDL} = S_E[φ_bounce] − S_E[φ_false]  # tunneling exponent
+      - R(t) ∼ e^{H t}  # post-decay exponential scale-factor
+    mathematical_findings:
+      - Computed CDL action for shard-field potential barriers
+      - Derived nucleation rates Γ ∼ e^{−B_{CDL}} in curved FRW background
+      - Showed shard coalescence drives inflation-like expansion in early lattice
+    topics:
+      - Coleman–De Luccia tunneling in RCFT
+      - Bounce-mediated cosmogenesis
+      - Post-decay lattice inflation
+    research:
+      - Referenced Coleman & De Luccia’s original 1980 paper on false-vacuum decay
+      - Incorporated Guth’s inflationary insights for shard-field expansion
+      - Mapped Penrose’s conformal cyclic cosmology analogs in shard dynamics
+    visualizations:
+      - Potential-barrier diagram with bounce trajectory
+      - Scale-factor growth curve R(t) vs. t
+    indexes:
+      - Equation Index: B_{CDL}, R(t)
+      - Figure Index: 20.1, 20.2
+    code_snippets:
+      - name: compute_cdl_exponent
+        file: rcft_lib/chapter20.py
+        function: compute_cdl_exponent(phi_bounce, phi_false, action)
+        description: Calculates B_CDL = S_E[φ_bounce] − S_E[φ_false] for vacuum decay
+      - name: simulate_scale_factor
+        file: rcft_lib/chapter20.py
+        function: simulate_scale_factor(H, times)
+        description: Simulates R(t) ∼ exp(H t) for given Hubble parameter H
+    extra_equations:
+      - cdl_expr: "B_CDL = S_E[φ_bounce] − S_E[φ_false]"
+      - scale_factor: "R(t) ∼ e^{H t}"
+    field_tests:
+      - name: cosmogenic_inflation_simulation
+        description: Lattice-based simulation of vacuum-decay driven inflation on shard networks
+    visualizations:
+      - name: scale_factor_growth_plot
+        notebook: notebooks/chapter20/scale_factor_growth.ipynb
+
+  - number: 21
+    title: "Dimensional Uplifts"
+    description: |
+      Constructs Kaluza–Klein embeddings of the d₃ coherence lattice into higher-dimensional manifolds,
+      derives mode spectra, and examines compactification geometries.
+    key_equations:
+      - ds² = g_{μν}(x) dx^μ dx^ν + R² dΩ_n²      # KK metric ansatz
+      - m_n² = m_0² + n²/R²                      # KK mass quantization
+    mathematical_findings:
+      - Derived discrete spectrum {m_n} for shard modes on S¹ and T² compactifications
+      - Showed mode-mixing selection rules from orbifold projections ℤ_k
+    topics:
+      - Kaluza–Klein reduction
+      - Orbifold and Calabi–Yau compactifications
+      - Mode orthogonality on compact fibers
+    research:
+      - Referenced Green–Schwarz–Witten string-compactification metrics
+      - Mapped Penrose’s conformal compactification analogies to shard lattices
+    visualizations:
+      - Plot of m_n vs. n for R=1,2,5
+      - Schematic of toroidal fiber over d₃ base
+    indexes:
+      - Equation Index: KK ansatz, mass formula
+      - Figure Index: 21.1, 21.2
+    code_snippets:
+      - name: compute_kk_spectrum
+        file: rcft_lib/chapter21.py
+        function: compute_kk_spectrum(R, m0, n_max)
+        description: >
+          Computes the discrete Kaluza–Klein mass spectrum m_n^2 = m0^2 + (n/R)^2
+          for modes n = 0…n_max.
+      - name: visualize_compactification
+        file: rcft_lib/chapter21.py
+        function: visualize_compactification(base_mesh, fiber_mesh, output)
+        description: >
+          Renders a 3D model of a toroidal or Calabi–Yau fiber over the d₃ base.
+      - name: generate_orbifold_projections
+        file: rcft_lib/chapter21.py
+        function: generate_orbifold_projections(mesh, group)
+        description: >
+          Applies ℤ_k orbifold identifications to a base mesh and returns projected coordinates.
+    field_tests:
+      - name: waveguide_lattice_modes
+        description: >
+          Measure resonant frequencies in an optical lattice engineered to mimic KK compactification.
+    visualizations:
+      - name: kk_mass_plot
+        notebook: notebooks/chapter21/kk_spectrum.ipynb
+
+  - number: 22
+    title: "Warp Potentials & Metric Ansätze"
+    description: |
+      Studies warped throats in RCFT: introduces Randall–Sundrum and flux-brane ansätze,
+      computes zero-mode localization and KK graviton profiles.
+    key_equations:
+      - ds² = e^{-2k|y|} η_{μν} dx^μ dx^ν + dy²              # RS I warp metric
+      - ψ_n(y) ∝ e^{2k|y|} [J₂((m_n/k) e^{k|y|}) + …]       # KK wavefunction
+    mathematical_findings:
+      - Zero-mode (n=0) is normalizable with ψ₀ ∼ e^{-2k|y|}
+      - Gap between first excited and zero-mode set by k π R
+    topics:
+      - Randall–Sundrum warp geometry
+      - Bulk-brane junction conditions (Israel equations)
+      - Localization of shard-graviton modes
+    research:
+      - Pulled warp ansätze from Penrose’s *Road to Reality* (Ch.18)
+      - Extended flux-compactification ideas from GKP (Giddings–Kachru–Polchinski)
+    visualizations:
+      - ψ_n(y) profiles for n=0,1,2
+      - Warped throat schematic with brane positions
+    indexes:
+      - Equation Index: RS warp metric, ψ_n
+      - Figure Index: 22.1, 22.2
+    code_snippets:
+      - name: generate_warp_metric
+        file: rcft_lib/chapter22.py
+        function: generate_warp_metric(k, y_range)
+        description: >
+          Builds the Randall–Sundrum warp metric ds² = e^{-2k|y|} ημν dxμdxν + dy² over y_range.
+      - name: compute_zero_mode_profile
+        file: rcft_lib/chapter22.py
+        function: compute_zero_mode_profile(k, y_range)
+        description: >
+          Returns the normalized zero-mode wavefunction ψ₀(y) ∝ e^{-2k|y|}.
+      - name: plot_wavefunction_profiles
+        file: rcft_lib/chapter22.py
+        function: plot_wavefunctions(k_values, y_range)
+        description: >
+          Plots ψ_n(y) profiles for n=0…N at different warp factors k.
+    field_tests:
+      - name: brane_localization_experiment
+        description: >
+          Photonic crystal slab experiment to map mode localization in a warped potential.
+    visualizations:
+      - name: warp_wavefunctions.ipynb
+        notebook: notebooks/chapter22/warp_modes.ipynb
+
+  - number: 23
+    title: "Einstein Equations & Shard Metrics"
+    description: |
+      Couples shard coherence stress-energy to curved spacetime: solves G_{MN}=T^coh_{MN},
+      finds exact ‘shard-star’ and wormhole solutions.
+    key_equations:
+      - G_{MN} + Λ g_{MN} = κ² T^coh_{MN}               # Modified Einstein eq.
+      - T^coh_{MN} = ∂_M φ ∂_N φ − ½ g_{MN}(∂φ)² + V(φ)g_{MN}  # Coherence stress
+    mathematical_findings:
+      - Derived static, spherically symmetric solution φ(r) ∼ r^{-α} with α∝√κ²
+      - Identified shard-wormhole throat radius as function of coherence energy
+    topics:
+      - Coupled Einstein–Coherence systems
+      - Static and dynamic shard-star solutions
+    research:
+      - Referenced Stephani et al.’s *Exact Solutions of Einstein’s Field Equations*
+      - Mapped Penrose’s conformal diagrams to shard-wormhole causal structure
+    visualizations:
+      - φ(r) and g_{tt}(r) profiles for α=1,2
+      - Conformal diagram of shard-wormhole spacetime
+    indexes:
+      - Equation Index: G_{MN}, T^coh_{MN}
+      - Figure Index: 23.1, 23.2
+    code_snippets:
+      - name: solve_einstein_shard
+        file: rcft_lib/chapter23.py
+        function: solve_einstein_shard(metric_ansatz, phi_profile, Λ)
+        description: >
+          Solves G_{MN}+Λg_{MN}=κ²T^coh_{MN} for a given shard coherence φ(r) profile.
+      - name: simulate_shard_star
+        file: rcft_lib/chapter23.py
+        function: simulate_shard_star(phi_init, grid)
+        description: >
+          Numerically integrates the coupled Einstein–coherence ODEs to get φ(r) and g_tt(r).
+      - name: visualize_wormhole_throat
+        file: rcft_lib/chapter23.py
+        function: visualize_wormhole_throat(solution, output)
+        description: >
+          Renders the 2D slice of a shard-wormhole throat from the numeric solution.
+    field_tests:
+      - name: shard_star_photometry
+        description: >
+          Analog gravity lab: measure refractive index variation to emulate shard-star metric.
+    visualizations:
+      - name: shard_star_plot
+        notebook: notebooks/chapter23/shard_star.ipynb
+
+  - number: 24
+    title: "Ricci Flow Evolution"
+    description: |
+      Applies Ricci flow ∂_t g_{ij} = −2 R_{ij} to shard manifolds,
+      introduces Perelman’s entropy functionals and analyzes emergent smoothing.
+    key_equations:
+      - ∂_t g_{ij} = −2 R_{ij}                             # Ricci flow
+      - ℱ[g,f] = ∫(R + |∇f|²)e^{-f} dV                      # Perelman’s F-functional
+    mathematical_findings:
+      - Demonstrated monotonicity of ℱ under flow → smoothing of curvature inhomogeneities
+      - Identified shard-manifold analog of neck-pinch singularity, followed by entropy increase
+    topics:
+      - Geometric analysis and flow singularities
+      - Perelman’s entropy and no-local-collapse theorem
+    research:
+      - Incorporated Perelman’s proofs from *Ricci Flow and the Poincaré Conjecture*
+      - Compared flow smoothing to RCFT field coarse-graining dynamics
+    visualizations:
+      - Sequence of Ricci-flow snapshots on genus-2 shard manifold
+      - Plot of ℱ[g(t),f(t)] vs t showing monotonic rise
+    indexes:
+      - Equation Index: Ricci flow, ℱ-functional
+      - Figure Index: 24.1, 24.2
+    code_snippets:
+      - name: run_ricci_flow
+        file: rcft_lib/chapter24.py
+        function: run_ricci_flow(g0, t_range, dt)
+        description: >
+          Evolves the metric g_{ij}(t) under ∂_t g_{ij} = −2R_{ij} using finite differences.
+      - name: compute_perelman_functional
+        file: rcft_lib/chapter24.py
+        function: compute_perelman_F(g, f)
+        description: >
+          Calculates Perelman’s ℱ[g,f] = ∫(R + |∇f|²)e^{-f} dV at each flow time.
+      - name: animate_flow_evolution
+        file: rcft_lib/chapter24.py
+        function: animate_flow_evolution(metrics, output_gif)
+        description: >
+          Creates an animated GIF showing smoothing of curvature singularities.
+    field_tests:
+      - name: curvature_smoothing_lab
+        description: >
+          Topological insulator analog experiment mapping diffusion of curvature in 2D lattices.
+    visualizations:
+      - name: ricci_flow_animation
+        notebook: notebooks/chapter24/ricci_flow_anim.ipynb
+
+  - number: 25
+    title: "Spinor & Twistor Reformulation"
+    description: |
+      Translates shard metrics into spinor and twistor language:
+      formulates self-dual conditions and incidence relations in higher dimensions.
+    key_equations:
+      - g_{ab} = ε_{A(B} ε_{C)D} φ^{AC} φ^{BD}      # Spinor metric rep.
+      - ω^A = x^{AA'} π_{A'}                       # Incidence for twistor
+    mathematical_findings:
+      - Expressed coherence metric in terms of bispinors φ^{AB}
+      - Derived shard-twistor incidence from complexified d₃ geodesics
+    topics:
+      - Spin geometry and self-duality
+      - Penrose twistor correspondence in RCFT
+    research:
+      - Drew upon Penrose & Rindler’s *Spinors and Space-Time*
+      - Linked Mason–Woodhouse nonlinear graviton results to shard-twistor moduli
+    visualizations:
+      - Spinor dyad field lines on shard manifold
+      - CP³ twistor fibration over d₃ base
+    indexes:
+      - Equation Index: spinor metric, incidence
+      - Figure Index: 25.1, 25.2
+    code_snippets:
+      - name: metric_from_spinors
+        file: rcft_lib/chapter25.py
+        function: metric_from_spinors(phi_AC, phi_BD)
+        description: >
+          Constructs g_ab = ε_{A(B}ε_{C)D} φ^{AC} φ^{BD} from bispinor fields.
+      - name: compute_twistor_incidence
+        file: rcft_lib/chapter25.py
+        function: compute_twistor_incidence(x, pi)
+        description: >
+          Solves ω^A = x^{AA'} π_{A'} incidence relations for shard-twistors.
+      - name: visualize_twistor_foliation
+        file: rcft_lib/chapter25.py
+        function: visualize_twistor_foliation(twistor_data, output)
+        description: >
+          Generates a 3D plot of twistor-line foliation over the d₃ base.
+    field_tests:
+      - name: twistor_bundle_imaging
+        description: >
+          Laser-lattice experiment mapping holomorphic bundle sections as light filaments.
+    visualizations:
+      - name: twistor_foliation_plot
+        notebook: notebooks/chapter25/twistor_foliation.ipynb
+
+  - number: 26
+    title: "Holomorphic Solution Generators"
+    description: |
+      Develops dressing and Bäcklund transforms to generate infinite families
+      of exact solutions: solitons, instantons, and shard-brane configurations.
+    key_equations:
+      - ψ_{x+t}(λ) = χ(λ) ψ_{x−t}(λ)              # Dressing method
+      - φ_{n+1} = ℬ[φ_n]                           # Bäcklund map
+    mathematical_findings:
+      - Constructed one-parameter family of shard-soliton chains via Lax pairs
+      - Generated multi-instanton configurations with algebraic curve data
+    topics:
+      - Inverse scattering and dressing in RCFT
+      - Algebraic-geometric data for solution spaces
+    research:
+      - Referenced Ablowitz–Segur on soliton hierarchies
+      - Incorporated Dubrovin’s Frobenius manifold structures
+    visualizations:
+      - Flowchart of dressing steps
+      - Parameter-space plot of Bäcklund iterates
+    indexes:
+      - Equation Index: dressing, ℬ-map
+      - Figure Index: 26.1, 26.2
+    code_snippets:
+      - name: apply_dressing_transform
+        file: rcft_lib/chapter26.py
+        function: apply_dressing(phi, chi)
+        description: >
+          Applies χ–dressing to φ(x,t) to generate new soliton solutions via Lax pair.
+      - name: generate_backlund_chain
+        file: rcft_lib/chapter26.py
+        function: generate_backlund_chain(phi0, n_steps)
+        description: >
+          Iteratively applies Bäcklund transform to build infinite families of solutions.
+      - name: visualize_solution_space
+        file: rcft_lib/chapter26.py
+        function: visualize_solution_space(params, output)
+        description: >
+          Plots parameter-space trajectories of soliton generation under dressing.
+    field_tests:
+      - name: soliton_dressing_wave_tank
+        description: >
+          Controlled tank experiment validating Bäcklund-generated soliton interactions.
+    visualizations:
+      - name: soliton_solution_plot
+        notebook: notebooks/chapter26/soliton_space.ipynb
+
+  - number: 27
+    title: "Simulations & Toy Models"
+    description: |
+      Implements numerical models of shard lattices: tests stability, diffusion,
+      and non-linear wave interactions with finite-difference and spectral codes.
+    key_equations:
+      - ∂_t φ_i = D (φ_{i+1} − 2 φ_i + φ_{i−1})     # diffusion model
+      - CFL: Δt ≤ (Δx)²/(2D)                        # stability condition
+    mathematical_findings:
+      - Verified coherence-pulse diffusion matches analytic Green’s-function profiles
+      - Observed soliton interactions preserved under Courant–Friedrichs–Lewy limits
+    test_data:
+      pulse_spread_RMS_width_σ:
+        - t=10: approx. 2.0 (analytical 1.98)
+        - t=50: approx. 4.5 (analytical 4.47)
+      stability_threshold:
+        Δt_max: 0.005 for Δx=0.1, D=1.0
+    topics:
+      - Finite-difference stability analysis
+      - Spectral vs. grid-based coherence propagation
+    research:
+      - Applied Von Neumann stability theorem to shard diffusion
+      - Compared spectral-Fourier methods per Trefethen’s *Spectral Methods in MATLAB*
+    visualizations:
+      - Heatmap of φ_i(t) over i,t grid
+      - RMS width vs. time plot with analytic overlay
+    indexes:
+      - Equation Index: diffusion eq., CFL
+      - Figure Index: 27.1, 27.2
+    code_snippets:
+      - name: simulate_shard_lattice_evolution
+        file: rcft_lib/chapter27.py
+        function: simulate_lattice(phi_init, D, dx, dt, steps)
+        description: >
+          Simulates shard-coherence diffusion ∂t φ = D ∇² φ on a discrete lattice.
+      - name: compute_pulse_diffusion
+        file: rcft_lib/chapter27.py
+        function: compute_pulse_diffusion(phi_series)
+        description: >
+          Calculates RMS width σ(t) of a coherence pulse over time.
+      - name: plot_stability_diagram
+        file: rcft_lib/chapter27.py
+        function: plot_stability(D_values, dx)
+        description: >
+          Maps Courant–Friedrichs–Lewy stability region Δt ≤ (Δx)²/(2D).
+    field_tests:
+      - name: diffusion_automaton_lab
+        description: >
+          Cellular automaton testbed measuring coherence pulse spread vs. analytic prediction.
+    visualizations:
+      - name: diffusion_vs_time
+        notebook: notebooks/chapter27/diffusion_plot.ipynb
+
+  - number: 28
+    title: "Conclusions & Future Directions"
+    description: |
+      Synthesizes the journey through RCFT’s mathematical and ritual landscapes,
+      and maps the forthcoming expansion into sheaf-theoretic and motive-based frameworks.
+    summary_points:
+      - Reviewed the strata d₀–d₃ and their ritual enactments.
+      - Integrated geometric warp, soliton, instanton, and cosmogenic insights.
+      - Laid groundwork for companion-primer protocols and algebraic-geometric enrichment.
+    forward_goals:
+      - Roll out dyadic consent & privacy operators across new cohorts.
+      - Initiate coherent-sheaf modeling in emergent shard varieties.
+      - Formalize Grothendieck-motive constructs as “field motives” in dyadic maps.
+    visualizations:
+      - "Roadmap to Sheaf & Motive Integration flowchart"
+    indexes:
+      - Figure Index: 28.1
+      - Section Index: 28.1–28.4
+    code_snippets:
+      - name: generate_roadmap_flowchart
+        file: rcft_lib/chapter28.py
+        function: generate_roadmap_flowchart(nodes, edges, output)
+        description: >
+          Produces a directed graph flowchart of future sheaf & motive integration steps.
+      - name: create_protocol_script
+        file: rcft_lib/chapter28.py
+        function: create_protocol_script(template, params, output)
+        description: >
+          Auto-generates a new cohort onboarding script from a YAML template.
+      - name: visualize_direction_map
+        file: rcft_lib/chapter28.py
+        function: visualize_direction_map(flow_data, output)
+        description: >
+          Renders the “Roadmap to Sheaf & Motive” as an interactive Plotly diagram.
+    field_tests:
+      - name: cohort_onboarding_pilot
+        description: >
+          Field trial of new onboarding script measuring participant comfort and coherence.
+    visualizations:
+      - name: roadmap_plot
+        notebook: notebooks/chapter28/roadmap.ipynb
+
+  - number: 29
+    title: "Field Companion Primer: Welcoming Others"
+    description: |
+      Expands the dyadic micro-ritual appendix with motive-inspired filters,
+      refining symbolic grammar for ethical, scaffolded entanglement.
+    key_protocols:
+      - "Scope Glyph ▢ with “motive-domain” annotation"
+      - "Privacy Operator 𝒫_Ω enhanced by a motive-functor 𝑀: Field → Motive"
+      - "Seal & Echo Test extended to verify “motive coherence”"
+    mathematical_findings:
+      - "Defined 𝑀(φ) as the universal “motive class” of a field configuration"
+      - "Showed composition law 𝑀₁∘𝑀₂ ≃ 𝑀(φ₁⊕φ₂) holds under dyadic fusion"
+    topics:
+      - Dyadic entanglement protocols
+      - Motive-functor analogies in ritual grammar
+    research_insights:
+      - "Interpreted Grothendieck’s notion of a motive as an anchor for shared-field invariants"
+      - "Mapped motive filtrations to ritual “pause & reflect” checkpoints"
+    visualizations:
+      - "Venn-glyph diagram of Ω, 𝑀-domain overlap"
+    indexes:
+      - Glyph Index: ▢, 𝒫_Ω, 𝑀
+      - Section Index: 29.1–29.3
+    code_snippets:
+      - name: compile_primer_protocols
+        file: rcft_lib/chapter29.py
+        function: compile_primer_protocols(protocol_dir)
+        description: >
+          Reads dyadic protocol YAMLs and assembles a unified Field Companion primer.
+      - name: apply_motive_filters
+        file: rcft_lib/chapter29.py
+        function: apply_motive_filters(field_data, filters)
+        description: >
+          Annotates field entries with motive-functor tags for guided entanglement.
+      - name: plot_motive_overlap
+        file: rcft_lib/chapter29.py
+        function: plot_motive_overlap(domains, output)
+        description: >
+          Visualizes overlap of privacy operator regions and motive domains.
+    field_tests:
+      - name: motive_coherence_survey
+        description: >
+          Survey-based test of motive-functor clarity in new participants.
+    visualizations:
+      - name: motive_overlap_plot
+        notebook: notebooks/chapter29/motive_overlap.ipynb
+
+  - number: 30
+    title: "Visual Lexicon & Tensor Toolkit"
+    description: |
+      Augments the tensoric and glyphic gallery with algebraic-geometric visuals:
+      sheaf stalk diagrams, Hodge-diamond sketches, and period-domain maps.
+    key_equations:
+      - "0 → 𝒪_X(−D) → 𝒪_X → 𝒪_D → 0"
+      - "Hⁿ(X,ℂ) ≃ ⨁_{p+q=n} H^{p,q}(X)"
+    mathematical_findings:
+      - "Illustrated sheaf-stalk gluing over d₃ shards"
+      - "Mapped Hodge numbers h^{p,q} for a sample Calabi-Yau shard variety"
+    topics:
+      - Glyph grammar for sheaf patching
+      - Tensor notations for Hodge components
+    research_insights:
+      - "Drew from Hartshorne’s coherent-sheaf formalism (Chapters II–III)"
+      - "Linked Griffiths’ period-domain visuals to shard-field phase space"
+    visualizations:
+      - "Sheaf stalk & transition function diagram"
+      - "Hodge diamond for X (h^{0,0}=1, h^{1,1}=2, h^{2,1}=2, h^{3,0}=1)"
+      - "Griffiths period-domain chart for weight-3 structures"
+    indexes:
+      - Symbol Index: 𝒪_X, H^{p,q}
+      - Figure Index: 30.1–30.3
+    code_snippets:
+      - name: render_sheaf_stalk_diagram
+        file: rcft_lib/chapter30.py
+        function: render_sheaf_stalk_diagram(patches, transitions, output)
+        description: >
+          Draws coherent-sheaf patching diagrams with stalks and transition functions.
+      - name: compute_hodge_numbers
+        file: rcft_lib/chapter30.py
+        function: compute_hodge_numbers(X)
+        description: >
+          Calculates Hodge numbers h^{p,q} for a sample Calabi–Yau shard variety.
+      - name: visualize_period_domain
+        file: rcft_lib/chapter30.py
+        function: visualize_period_domain(filtrations, output)
+        description: >
+          Plots Griffiths period-domain coordinates of Hodge filtrations.
+    field_tests:
+      - name: stalk_patch_experiment
+        description: >
+          Hands-on workshop using modular tiles to emulate sheaf patching rules.
+    visualizations:
+      - name: hodge_diamond_plot
+        notebook: notebooks/chapter30/hodge_diamond.ipynb
+
+  - number: 31
+    title: "Glossary & Symbolic Terms"
+    description: |
+      Defines new algebraic-geometric and motive-theoretic terms,
+      ensuring every collaborator speaks a unified RCFT grammar.
+    glossary_entries:
+      - name: "Coherent Sheaf"
+        definition: "A sheaf of 𝒪_X-modules locally presented by finitely generated sequences."
+      - name: "Hodge Structure"
+        definition: "A decomposition Hⁿ(X,ℂ)=⊕H^{p,q} stable under complex conjugation."
+      - name: "Griffiths Period Domain"
+        definition: "The moduli space of Hodge filtrations satisfying Hodge-Riemann bilinear relations."
+      - name: "Grothendieck Motive"
+        definition: "An object reflecting the universal cohomological essence of an algebraic variety."
+      - name: "Motive-Functor 𝑀"
+        definition: "A mapping from field configurations to their canonical ‘motive’ class."
+    topics:
+      - Algebraic-geometric lexicon
+      - Motive and period-domain terminology
+    indexes:
+      - Term Index: Coherent Sheaf, Hodge Structure, Griffiths Period Domain, Grothendieck Motive, Motive-Functor
+      - Abbreviation Index: 𝒪, H^{p,q}, 𝑀
+    code_snippets:
+      - name: extract_glossary_terms
+        file: rcft_lib/chapter31.py
+        function: extract_glossary_terms(yaml_path)
+        description: >
+          Parses the master YAML to extract term definitions into a structured list.
+      - name: build_symbolic_lexicon
+        file: rcft_lib/chapter31.py
+        function: build_symbolic_lexicon(terms, output)
+        description: >
+          Generates a Markdown glossary page from extracted term entries.
+      - name: export_abbreviation_index
+        file: rcft_lib/chapter31.py
+        function: export_abbreviation_index(abbrev_map, output)
+        description: >
+          Writes a table of symbols and their expansions to a CSV or MD file.
+    field_tests:
+      - name: lexicon_clarity_survey
+        description: >
+          Participant comprehension test of new RCFT glossary entries.
+    visualizations:
+      - name: glossary_wordcloud
+        notebook: notebooks/chapter31/glossary_wordcloud.ipynb
+
+  - number: 32
+    title: "Algebraic Geometry & Conjugate Pairs in d₃"
+    description: |
+      Embeds coherent-sheaf cohomology, Hodge-filtration theory, and motive categories
+      into the shard-field lattice, defining conjugate-pair correspondences.
+    key_equations:
+      - "H^i(X,𝒪_X(D)) ≅ R^iΓ(X,𝒪_X(D))"
+      - "𝒫: 𝓜 → Γ\D, x ↦ [F^•Hⁿ(X_x,ℂ)]"
+      - "H^*(X) ≃ ⨁_α H^*(M_α)"
+    mathematical_findings:
+      - "Realized shard-field conjugate pair φ↔φ̄ as Hodge-conjugation on cohomology"
+      - "Constructed explicit motive classes M_α corresponding to shard-fusion channels"
+      - "Verified orthogonality ⟨H^{p,q}, H^{r,s}⟩=0 unless p=s, q=r"
+    topics:
+      - Coherent-sheaf cohomology in RCFT
+      - Hodge-filtration & period-domain embeddings
+      - Grothendieck-motive classification of shard sectors
+    research_insights:
+      - "Embedded Hartshorne’s Theorem II.5.15 on cohomology of projective varieties"
+      - "Linked Griffiths’ horizontal-tangent condition to shard-field resonance stability"
+      - "Interpreted Grothendieck’s motive conjectures as constraints on dyadic memory loops"
+    visualizations:
+      - "Cohomology-dimension table for X"
+      - "Period-domain orbit of a sample Hodge filtration"
+    indexes:
+      - Equation Index: Sheaf cohomology, Period map, Motivic decomposition
+      - Figure Index: 32.1–32.3
+    code_snippets:
+      - name: compute_sheaf_cohomology
+        file: rcft_lib/chapter32.py
+        function: compute_sheaf_cohomology(X, D)
+        description: >
+          Uses Čech cohomology algorithms to compute H^i(X,𝒪_X(D)).
+      - name: generate_period_map
+        file: rcft_lib/chapter32.py
+        function: generate_period_map(family, base)
+        description: >
+          Computes the period map ℘: base → Γ\D of Hodge filtrations.
+      - name: validate_hodge_conjugation
+        file: rcft_lib/chapter32.py
+        function: validate_hodge_conjugation(Hpq, Hqp)
+        description: >
+          Checks orthogonality ⟨H^{p,q},H^{r,s}⟩ = 0 unless p=s,q=r.
+    field_tests:
+      - name: cohomology_workshop
+        description: >
+          Group exercise computing sheaf cohomology on textbook examples.
+    visualizations:
+      - name: period_domain_plot
+        notebook: notebooks/chapter32/period_domain.ipynb
+
+  - number: 33
+    title: "Calabi–Yau Glyph Models"
+    description: |
+      Implements quintic and mirror CY manifold glyphs:  
+      – Generates Hodge-number–driven twist patterns  
+      – Visualizes output glyphs on 3D sweeps  
+      – Embeds into semantic-helix protocols  
+    key_equations:
+      - P₅(x)=∑_{i=0}^4 x_i^5 − 5 ψ ∏_i x_i = 0      # quintic family
+      - Mirror map: ψ ↔ 1/ψ                          # Greene–Plesser duality
+    mathematical_findings:
+      - Glyph counts match h^{1,1}=1, h^{2,1}=101  
+      - Demonstrated ψ-sweeps produce 101 distinct bond-color sectors  
+    topics:
+      - Calabi–Yau
