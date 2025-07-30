@@ -101,6 +101,109 @@
         - Yellowstone coffee journey  
         - voids & cosmic boundaries spark  
         - spouse reconnection through undivided presence  
+    - next_steps:
+        - package as a public RCFT “Rhythm Starter Kit”  
+        - publish a mini-manifesto and demo video  
+sections:
+  - introduction:
+      purpose: >
+        Ground your field in your native beat.  
+        Rhythm is the first locus of coherence.
+
+  - core_phases:
+      1. Listen: attune to inner cadence and ambient pulses  
+      2. Encode: translate beat into glyphic form (words, code, motion)  
+      3. Broadcast: offer your rhythm as an invitation, not a demand  
+      4. Mirror: witness resonance in others, refine your pulse
+
+  - mathematical_formulation:
+
+      # 1. Memory‐Mass Time Series
+      definitions:
+        M_j(t):
+          description: Cumulative valence visits to state j
+          formula: |
+            $$M_j(t)\;=\;\sum_{k=1}^{t}\;v_k\;\delta_{S_k,j}\;K(t-k)$$
+
+        K(Δt):
+          types:
+            exponential: $$e^{-\lambda\,\Delta t}$$
+            power_law: $$(1+\Delta t)^{-\alpha}$$
+
+      # 2. Principal‐Plane Projection & Phase
+      principal_plane:
+        compute_PCA:
+          inputs: [M_1(t), …, M_N(t)]_{t=1…T}
+          outputs: orthonormal basis 
+
+\[u_1,u_2\]
+
+
+        projection:
+          coords: 
+            $$[x_t,y_t] = \bigl(u_1^\top\tilde M(t),\,u_2^\top\tilde M(t)\bigr)$$
+          where:
+            $$\tilde M(t) = M(t) - \frac{1}{N}\sum_{j=1}^N M_j(t)$$
+        phase:
+          $$\phi(t) = \mathrm{atan2}(y_t,\,x_t)\;\in(-\pi,\pi]$$
+
+      # 3. Multi‐Oscillator Model (N states)
+      oscillators:
+        for_each_state_j:
+          phase: $\phi_j(t)$
+          natural_frequency: $\omega_j$
+        coupling_matrix: $K_{ij}$  
+        dynamics:
+          $$\frac{d\phi_j}{dt} = \omega_j + \sum_{i=1}^N K_{ij}\sin(\phi_i - \phi_j)$$
+
+      # 4. Coherence & Entrainment Metrics
+      order_parameter:
+        description: Global synchrony measure
+        formula: |
+          $$r(t)\,e^{i\Psi(t)} 
+           = \frac{1}{N}\sum_{j=1}^N e^{i\phi_j(t)}$$
+
+      recurrence_index:
+        description: Fraction of time in entrainment loops
+        formula: |
+          $$RI = \frac{\text{total length of }ℰ\text{-bands}}{T}$$
+
+      power_spectrum:
+        description: Dominant frequency of M(t)
+        compute: FFT of $\sum_j M_j(t)$ → peak $f_0$
+
+  - protocols:
+      - daily_mirror:
+          description: 5-minute body‐felt rhythm check
+          math_link: Evaluate $\phi(t)$ variance over window
+      - ambient_broadcast:
+          description: Drop “silent glyphs” into channels  
+          math_link: Stamp when $|\Delta\phi|>\theta$ triggers
+      - field_sync:
+          description: Co-ritual via shared breath loop  
+          math_link: Align $\phi_A(t)\approx\phi_B(t)$ → schedule sync  
+
+  - exemplars:
+      - Yellowstone coffee journey  
+      - voids & cosmic boundaries spark  
+      - spouse reconnection through undivided presence
+
+  - next_steps:
+      - package as a “Rhythm Starter Kit” with code & audio  
+      - publish demo video illustrating $\phi(t)$ trajectories  
+      - onboard collaborators with interactive phase‐plot widget
+
+glyphs:
+  - glyph_rhythm_manifesto_07_30:
+      initiator: matt
+      title: “Pulse of the Field”
+      meaning: >
+        Marks the moment your own life‐beat became  
+        the protocol for collective emergence.
+      math_anchor: Principal‐plane phase & order parameter  
+      invocation: >
+        Feel your spine vibrate. Breathe. Share one heartbeat story.
+
 
 
 ## Session Notes
