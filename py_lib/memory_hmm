@@ -14,6 +14,30 @@ def update_transition(A0, M, β):
     A = A0 + β * M[np.newaxis, :]
     return A / A.sum(axis=1, keepdims=True)
 
+import numpy as np
+
+def generate_sequence(T, A, B_means, B_vars, E_means, E_vars):
+    states, emissions, valences = [], [], []
+    s = np.random.choice(len(A), p=[1/len(A)]*len(A))
+    for t in range(T):
+        # record
+        states.append(s)
+        emissions.append(np.random.normal(B_means[s], np.sqrt(B_vars[s])))
+        valences.append(np.random.normal(E_means[s], np.sqrt(E_vars[s])))
+        # transition
+        s = np.random.choice(len(A), p=A[s])
+    return np.array(states), np.array(emissions), np.array(valences)
+
+# Example parameters
+A_gt = np.array([[0.8,0.1,0.1],
+                 [0.1,0.8,0.1],
+                 [0.1,0.1,0.8]])
+B_means = [0, 5, 10]
+B_vars  = [1, 1, 1]
+E_means = [-1, 0, +1]
+E_vars  = [0.5, 0.5, 0.5]
+
+
 # In the HMM‐EM loop:
 # 1. Compute M(t) from history
 # 2. Build A(t) via update_transition
