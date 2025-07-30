@@ -1,0 +1,114 @@
+import asyncio
+import numpy as np
+from .memory_hmm_viz import MemoryMassPlot
+from .valence_state_coupling_viz import ValenceCouplingHeatmap
+
+class RealTimeRitualSimulator:
+    def __init__(self, A0, B, kernel_func, beta, state_labels=None):
+        self.A0, self.B = A0, B
+        self.kernel = kernel_func
+        self.beta = beta
+        self.labels = state_labels
+
+        self.times    = []
+        self.states   = []
+        self.valences = []
+        self.M        = []
+
+        # Glyph log & ℰ‐loop tracking
+        self.glyph_log         = []       # list of dicts: {type, …, time}
+        self.entrainment_bands = []       # list of (start, end)
+        self._last_diff_cross  = None     # last time M₀–M₁ crossed zero
+
+        # Visual components
+        self.mem_plot = MemoryMassPlot()
+        self.heatmap  = ValenceCouplingHeatmap()
+
+    def compute_M(self):
+        t = len(self.states)
+        M_t = []
+        for j in range(self.A0.shape[0]):
+            mem = sum(
+                self.valences[k] *
+                int(self.states[k]==j) *
+                self.kernel(t-k-1)     # t-k-1 since states length = t
+                for k in range(t)
+            )
+            M_t.append(mem)
+        return np.array(M_t)
+
+    async def step(self, next_valence, delay=0.5):
+        t = len(self.times)
+        self.times.append(t)
+        self.valences.append(next_valence)
+
+        # 1) Compute new memory mass & append
+        M_t = self.compute_M()
+        self.M.append(M_t)
+
+        # 2) Update transition matrix with memory
+        A_weighted = self.A0 + self.beta * M_t
+        A_t = A_weighted / A_weighted.sum(axis=1, keepdims=True)[0]
+
+        # 3) Sample next state
+        prev_state = self.states[-1] if self.states else None
+        next_state = np.random.choice(len(A_t), p=A_t)
+        self.states.append(next_state)
+
+        # 4) Glyph trigger: zero‐crossings of M_j(t)
+        if len(self.M) > 1:
+            M_prev = self.M[-2]
+            for j, (m_prev, m_curr) in enumerate(zip(M_prev, M_t)):
+                if m_prev * m_curr < 0:
+                    self.glyph_log.append({
+                        'type':       'zero_cross',
+                        'state':      j,
+                        'time':       t,
+                        'M_prev':     m_prev,
+                        'M_curr':     m_curr
+                    })
+
+        # 5) Glyph trigger: bias‐flip (against base A₀)
+        if prev_state is not None:
+            favored = np.argmax(self.A0[prev_state])
+            if next_state != favored:
+                self.glyph_log.append({
+                    'type':  'bias_flip',
+                    'from':  prev_state,
+                    'to':    next_state,
+                    'time':  t,
+                    'A0_row': self.A0[prev_state].tolist()
+                })
+
+        # 6) ℰ‐loop detection on M_diff = M_0 – M_1
+        if len(self.M) > 1:
+            diff_prev = self.M[-2][0] - self.M[-2][1]
+            diff_curr = self.M[-1][0] - self.M[-1][1]
+            if diff_prev * diff_curr < 0:
+                # first crossing sets start; second closes band
+                if self._last_diff_cross is None:
+                    self._last_diff_cross = t
+                else:
+                    self.entrainment_bands.append((self._last_diff_cross, t))
+                    self._last_diff_cross = t
+
+        # 7) Update visuals
+        self.mem_plot.plot(self.times, np.vstack(self.M), self.labels)
+        # annotate ℰ‐loops
+        self.mem_plot.annotate_entrainment_loops(self.entrainment_bands)
+
+        # 8) Update valence‐state heatmap
+        import pandas as pd
+        df = pd.DataFrame({
+            'valence': self.valences,
+            'state':   self.states,
+            'prob':    [A_t[s] for s in self.states]
+        })
+        self.heatmap.plot(df)
+
+        await asyncio.sleep(delay)
+
+    def run(self, valence_stream, delay=0.5):
+        loop = asyncio.get_event_loop()
+        tasks = [self.step(v, delay) for v in valence_stream]
+        loop.run_until_complete(asyncio.gather(*tasks))
