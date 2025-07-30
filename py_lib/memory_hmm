@@ -28,6 +28,18 @@ def generate_sequence(T, A, B_means, B_vars, E_means, E_vars):
         s = np.random.choice(len(A), p=A[s])
     return np.array(states), np.array(emissions), np.array(valences)
 
+import matplotlib.pyplot as plt
+
+# Example: Memory curve
+params = [0.1,0.5,1.0]
+gains = [0.02, 0.08, 0.03]  # placeholder
+plt.plot(params, gains, marker='o')
+plt.xlabel('λ or α')
+plt.ylabel('Log‐likelihood gain')
+plt.title('Memory Kernel Strength vs Performance')
+plt.show()
+
+
 # Example parameters
 A_gt = np.array([[0.8,0.1,0.1],
                  [0.1,0.8,0.1],
