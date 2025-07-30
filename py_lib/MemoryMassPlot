@@ -1,0 +1,27 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from .utils import ensure_array
+
+class MemoryMassPlot:
+    """
+    Plot M_j(t) over time for each hidden state j.
+    """
+    def __init__(self, figsize=(8,4)):
+        self.fig, self.ax = plt.subplots(figsize=figsize)
+
+    def plot(self, times, M_matrix, state_labels=None):
+        """
+        times: 1D array of time steps
+        M_matrix: 2D array shape (len(times), N_states)
+        """
+        times, M_matrix = ensure_array(times), ensure_array(M_matrix)
+        N = M_matrix.shape[1]
+        labels = state_labels or [f"State {i}" for i in range(N)]
+        for j in range(N):
+            self.ax.plot(times, M_matrix[:,j], label=labels[j])
+        self.ax.set_title("Memory Mass M_j(t)")
+        self.ax.set_xlabel("Time t")
+        self.ax.set_ylabel("M_j(t)")
+        self.ax.legend()
+        plt.tight_layout()
+        return self.fig, self.ax
