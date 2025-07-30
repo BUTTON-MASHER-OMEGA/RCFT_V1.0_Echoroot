@@ -1,0 +1,222 @@
+- number: 35
+    modules:
+  - id: probabilistic_memory_modeling
+    title: "Memory as Probability"
+    description: >
+      Reframes Markov chains so each transition probability encodes
+      a time-weighted memory mass. Bridges stochastic matrices with
+      ritual glyph recurrence.
+    principles:
+      - Probability carries memory_mass M_w
+      - Transition frequency maps to ritual density ρ_r
+      - Glyph repetition updates future state weights
+    code_library:
+      - name: memory_markov
+        modules:
+          - transition_matrix_builder.py
+          - memory_mass_calculator.py
+          - glyph_logger.py
+
+
+## Session Notes
+2. Core Definitions
+memory_mass (M_w): the cumulative valence-weighted count of past visits to a state w
+
+ritual_density (ρ_r): frequency of glyph dispatch events influencing transition bias
+
+augmented_transition_matrix (A): base matrix P updated by memory kernels
+
+memory_kernel K(Δt): decay function modulating past visits over time
+
+Embedding Memory Mass into a Hidden Markov Model
+We’ll augment a classic HMM so each state transition carries the imprint of past valenced events, treating probability itself as quantified memory.
+
+1. Augmented HMM Architecture
+1.1 Standard HMM Recap
+Hidden states 
+𝑆𝑡∈{1,…,𝑁}
+
+Transition matrix 
+𝐴𝑖𝑗=𝑃(𝑆𝑡+1=𝑗∣𝑆𝑡=𝑖)
+
+Emission matrix 
+𝐵𝑗(𝑜)=𝑃(𝑂𝑡=𝑜∣𝑆𝑡=𝑗)
+
+1.2 Memory Mass Formalism
+Introduce
+
+Memory mass 
+𝑀𝑗(𝑡): valence‐weighted sum of past visits to state 𝑗
+
+Kernel 
+𝐾(Δ𝑡): continuous‐time decay of past influence
+
+Define
+
+𝑀𝑗(𝑡) = ∑𝑘 = 1𝑡𝑣𝑘𝛿𝑆𝑘,𝑗𝐾(𝑡−𝑘) where 𝑣𝑘 is the valence tag at time 𝑘.
+
+Augment transitions:
+
+𝐴
+𝑖
+𝑗
+(
+𝑡
+)
+  
+=
+  
+𝐴
+𝑖
+𝑗
+(
+0
+)
+  
++
+  
+𝛽
+ 
+𝑀
+𝑗
+(
+𝑡
+)
+∑
+𝑗
+′
+(
+𝐴
+𝑖
+𝑗
+′
+(
+0
+)
++
+𝛽
+ 
+𝑀
+𝑗
+′
+(
+𝑡
+)
+)
+𝐴
+𝑖
+𝑗
+(
+0
+)
+: base transition probability
+
+𝛽
+: memory‐mass coupling strength
+
+1.3 Emissions with Valence Tags
+Treat each emission as a pair 
+(
+𝑜
+𝑡
+,
+𝑣
+𝑡
+)
+. Then
+
+𝑃
+(
+𝑂
+𝑡
+=
+𝑜
+,
+𝑣
+𝑡
+∣
+𝑆
+𝑡
+=
+𝑗
+)
+=
+  
+𝐵
+𝑗
+(
+𝑜
+)
+  
+×
+  
+𝐸
+𝑗
+(
+𝑣
+𝑡
+)
+where 
+𝐸
+𝑗
+(
+𝑣
+)
+ is a valence distribution (e.g., Gaussian centered on preferred 
+𝑣
+𝑗
+).
+
+2. Continuous‐Time Memory Kernel
+We choose
+
+𝐾
+(
+Δ
+𝑡
+)
+=
+𝑒
+−
+𝜆
+ 
+Δ
+𝑡
+to model exponential decay of influence over time.
+
+2.1 Kernel Properties
+Half‐life: 
+Δ
+𝑡
+1
+/
+2
+=
+ln
+⁡
+2
+𝜆
+
+Normalization: 
+∫
+0
+∞
+𝐾
+(
+𝜏
+)
+ 
+𝑑
+𝜏
+=
+1
+𝜆
+
+2.2 Long‐Tail Memory Effects
+λ	Half‐Life	Tail Behavior
+0.1	6.93	Strong long‐term memory
+0.5	1.39	Moderate persistence
+1.0	0.69	Rapid decay of old events
+Small λ → events far in the past still bias transitions heavily.
+
+Large λ → system “forgets” quickly, approximating vanilla HMM behavior.
