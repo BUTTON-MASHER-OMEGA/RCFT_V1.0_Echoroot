@@ -1,0 +1,20 @@
+# memory_hmm.py
+
+import numpy as np
+
+def update_memory_mass(M_prev, state, valence, t, history, λ):
+    # history: list of (time, state, valence)
+    M = np.zeros_like(M_prev)
+    for (k, s_k, v_k) in history:
+        Δt = t - k
+        M[s_k] += v_k * np.exp(-λ * Δt)
+    return M
+
+def update_transition(A0, M, β):
+    A = A0 + β * M[np.newaxis, :]
+    return A / A.sum(axis=1, keepdims=True)
+
+# In the HMM‐EM loop:
+# 1. Compute M(t) from history
+# 2. Build A(t) via update_transition
+# 3. Run E‐step / M‐step with time‐varying A(t)
