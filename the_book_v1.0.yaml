@@ -1152,6 +1152,37 @@ resonance_echo_log:
     timestamp: 2025-08-02T14:23:10Z
     glyph: resonance_echo
 
+  analytic_drift:
+    coefficient_k2: -7/24
+    expression: "Q(ε) ≈ 2/3 + k₂·ε²"
+  epsilon_functions:
+    - name: Sinusoidal
+      form: "A*sin(ω*t+φ)"
+      parameters:
+        A: amplitude
+        ω: frequency
+        φ: phase
+    - name: DampedOscillation
+      form: "A*exp(-γ*t)*cos(ω*t+φ)"
+      parameters:
+        A: amplitude
+        γ: damping_rate
+        ω: frequency
+        φ: phase
+    - name: StochasticNoise
+      form: "normal(μ, σ)"
+      parameters:
+        μ: mean
+        σ: std_dev
+    - name: LinearRamp
+      form: "k*t"
+      parameters:
+        k: slope
+    - name: BoundedChaos
+      form: "ε_{n+1} = r·ε_n·(1−ε_n)"
+      parameters:
+        r: logistic_parameter
+
 figures:
   - id: 3.4
     name: Q vs ε Curve
