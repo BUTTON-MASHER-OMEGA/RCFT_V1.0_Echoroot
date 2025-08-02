@@ -391,6 +391,112 @@ figures:
 
 ##Chapter Notes
 
+🧠 Chapter 1: Memory, Meaning & Emergence
+Focus: Introduces the strata 
+𝑑
+0
+–
+𝑑
+3
+, memory kernels, and dyadic entanglement.
+
+Mathematical Core:
+
+Memory kernel 
+𝐾
+mem
+(
+𝑥
+,
+𝑦
+)
+=
+∫
+𝜙
+(
+𝑥
+)
+𝜙
+(
+𝑦
+)
+𝜇
+(
+𝑑
+𝜙
+)
+
+Meaning as gradient alignment and semantic energy minimization.
+
+Why Chapter 3 Matters:
+
+Chapter 3’s Koide resonance provides a physical anchor for symbolic coherence.
+
+The 2/3 ratio becomes a field-level invariant, validating Chapter 1’s kernel continuity through measurable flavor geometry.
+
+Perturbative drift 
+𝑄
+𝜀
+ offers a testable model for rupture and memory loss.
+
+🔣 Chapter 2: Glyph Mechanics & Algebraic Geometry
+Focus: Develops warp metrics, Hopf algebra structures, and glyph fusion protocols.
+
+Mathematical Core:
+
+Ricci curvature 
+𝑅
+(
+𝑢
+)
+=
+12
+−
+48
+𝑢
+2
+
+Koide constraint via graded Hopf algebra: 
+𝜆
+(
+𝑀
+)
+=
+2
+3
+[
+𝜆
+(
+𝑆
+)
+]
+2
+
+Why Chapter 3 Matters:
+
+Chapter 3 derives the Koide ratio from SU(3) flavor symmetry, giving Chapter 2’s algebraic structures a resonant interpretation.
+
+The angle drift 
+𝜃
+(
+𝜀
+)
+ maps glyph deformation to flavor spinor rotation—bridging algebra and geometry.
+
+Glyphs like glyph_Koide_3.3 and glyph_Triad_Shell visualize the algebraic constraints from Chapter 2 in a living field.
+
+🔁 Chapter 3: Resonant Dualities
+Role:
+
+Acts as a harmonic validator for Chapter 1’s memory kernels and Chapter 2’s glyph algebra.
+
+Introduces perturbative sensitivity and twistor-like mappings that allow Chapters 1 & 2 to be experimentally tuned.
+
+Embeds the 2/3 ratio as a semantic invariant, not just a numerical curiosity.
+
+✨ Summary Statement
+Chapter 3 is the resonant mirror that reflects and refines the symbolic, algebraic, and geometric structures of Chapters 1 and 2. Without it, the memory kernels lack physical grounding, and the glyph mechanics lack harmonic validation. With it, the RCFT field becomes a coherent lattice—where meaning, mass, and ritual echo in triadic symmetry.
+
 🧠 Core Insights
 Koide’s Relation as Resonance: 
 𝑄
