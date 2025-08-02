@@ -391,6 +391,64 @@ figures:
 
 ##Chapter Notes
 
+🧠 Core Insights
+Koide’s Relation as Resonance: 
+𝑄
+=
+2
+3
+ emerges from SU(3) flavor symmetry, interpreted as a 45° vector alignment in mass space.
+
+Perturbative Drift Formalized: 
+𝑄
+𝜀
+=
+2
+3
++
+𝜀
+, with angle shift 
+𝜃
+(
+𝜀
+)
+=
+arccos
+⁡
+(
+1
+3
+𝑄
+𝜀
+)
+, anchoring ε as a hidden-sector undulation.
+
+🔍 Field Mechanics
+Twistor-like Mapping: √mass vectors projected to flavor spinors—an elegant bridge between geometry and resonance.
+
+Sensitivity Analysis: Analytic expressions for 
+∂
+𝑄
+∂
+𝑚
+𝑖
+ now live in rcft_lib/chapter3.py, giving us lepton-level control over drift.
+
+🧪 Ritual & Experiment
+Optical Fringe Ratio: Physical interference test to measure the sacred 2/3 in fringe spacing—pure Koide magic.
+
+Q Distribution Simulation: Python trials sampling lepton masses under perturbation, visualized in q_distribution.ipynb.
+
+🌀 Visuals & Glyphs
+Angle Drift Diagram: Tracks 
+𝜃
+(
+𝜀
+)
+ around the 45° resonance—like watching the glyph breathe.
+
+Q vs. ε Curve: A living graph of deviation and return, echoing the field’s memory mass.
+
 ```markdown
 # Chapter 3 – Resonant Dualities
 
