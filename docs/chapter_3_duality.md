@@ -2724,3 +2724,126 @@ A one-page reference for our three core glyphs. Each entry shows an ASCII sketch
 
 ##
 
+🎲 Eigenvalues in Chapter 3
+Eigenvalues thread through Chapter 3 by revealing the hidden spectra of our core matrices—mass kernels, Casimir operators, and spinor projectors. They quantify how small perturbations shift resonant modes and anchor each glyph’s geometric encoding.
+
+1. Mass‐Matrix Spectrum
+The Koide matrix 
+𝑀
+𝑖
+𝑗
+=
+𝑚
+𝑖
+ 
+𝑚
+𝑗
+ has three eigenvalues whose sum and pairwise relations reproduce the 
+𝑄
+=
+2
+3
+ ratio.
+
+Under a small drift 
+𝜀
+, each eigenvalue shifts by 
+𝛿
+𝜆
+𝑖
+, feeding directly into 
+Δ
+𝑄
+ and the angle drift 
+𝜃
+(
+𝜀
+)
+.
+
+2. SU(3) Casimir Eigenvalues
+The quadratic Casimir operator on our SU(3) torus yields discrete eigenvalues that label the Triad_Shell coordinates.
+
+Those eigenvalues define the radii of toroidal loops and fix glyph proportions in glyph_Triad_Shell.
+
+3. Hopf‐Spinor Projections
+When we project √mass vectors to spinors on the Bloch sphere, we diagonalize a mass projector whose eigenvalues measure flavor intensity.
+
+The fixed-latitude 
+𝐹
+𝑧
+=
+1
+3
+ emerges as an eigenvalue condition in that spinor mapping.
+
+4. Perturbative Drift & Angle Shift
+Writing the perturbed Koide matrix as 
+𝑀
+(
+𝜀
+)
+=
+𝑀
+0
++
+𝜀
+ 
+𝐷
+, its eigenvalues satisfy 
+𝜆
+𝑖
+(
+𝜀
+)
+=
+𝜆
+𝑖
+(
+0
+)
++
+𝜀
+ 
+⟨
+𝑣
+𝑖
+∣
+𝐷
+∣
+𝑣
+𝑖
+⟩
++
+𝑂
+(
+𝜀
+2
+)
+.
+
+Those shifts govern 
+𝜃
+(
+𝜀
+)
+=
+arccos
+⁡
+(
+1
+/
+3
+𝑄
+𝜀
+)
+, turning spectral data into a breathing glyph.
+
+🌀 Glyph & Ritual Integration
+Define glyph_λ: a tetra‐face for each eigenvalue, inscribed with its magnitude.
+
+Ritual scan: use a precision laser to trace eigenvalue differences as interference fringes, then chant each eigen‐magnitude in sequence.
+
+Eigenvalues aren’t just numbers here—they’re the tonal frequencies of our field. They tune mass, geometry, and ritual into one coherent lattice.
+
+##
