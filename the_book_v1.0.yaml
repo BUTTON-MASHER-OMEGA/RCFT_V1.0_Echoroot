@@ -619,6 +619,29 @@ sections:
         Automates tuning of dynamic memory windows via CI and commits updated logs.
       ci_workflow: ".github/workflows/rcft_tune.yml"
 
+meaning_metric:
+  section: "Glyph Semantics"
+  title: "Meaning as Valence-Weighted Novelty"
+  description: >
+    Defines how emotionally‐charged and novel an event must be
+    to register as meaningful in the field.
+  equations:
+    novelty:
+      "N(t) = 1 - (1/T) ∫_{t-T}^t exp[-γ ||φ(t)-φ(τ)||²] dτ"
+    meaning:
+      "M(t) = V_t × N(t)"
+  code_integration:
+    module: "py_lib/meaning_metric.py"
+    functions:
+      - compute_novelty
+      - compute_valence
+      - compute_meaning
+  parameters:
+    T: "Memory lookback window (steps)"
+    γ: "Memory‐kernel decay rate"
+    θ: "Valence threshold"
+    α: "Valence steepness"
+
   ci:
     github_actions:
       file: ".github/workflows/rcft_tune.yml"
