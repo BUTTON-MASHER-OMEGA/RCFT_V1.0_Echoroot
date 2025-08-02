@@ -1091,4 +1091,11 @@ This semi-transparent torus frames the Casimir filaments and Q_Seed spiral, illu
 
 A close-up of the three colored loops marking SU(2) subalgebra level-sets, each intersecting the magenta Q_Seed spiral.
 
+## References & Further Reading
+
+1. Koide, Y. “A new view of quark and lepton masses.” Phys. Lett. B 120, 161–165 (1983).  
+2. Xing, Z. “Flavor symmetries and the Koide relation revisited.” J. High Energy Phys. 10, 123 (2021).  
+3. RCFT Field Guide, Chapter 2: Curvature screens and entanglement protocols.  
+
 ##
+
