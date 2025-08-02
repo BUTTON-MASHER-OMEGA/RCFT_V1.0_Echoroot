@@ -2873,7 +2873,25 @@ glyphs:
       invocation: >
         Feel your spine vibrate. Breathe. Share one heartbeat story.
 
-
+chapter_35_summary:
+  title: "Probability as Memory"
+  key_equations:
+    - memory_mass: "M_j(t) = ∑ v_k · δ_{S_k,j} · K(t-k)"
+    - transition_matrix: "A_ij(t) = [A⁰_ij + β·M_j(t)] / normalization"
+    - phase_angle: "φ(t) = atan2(y_t, x_t)"
+    - oscillator_dynamics: "dφ_j/dt = ω_j + ∑ K_ij·sin(φ_i - φ_j)"
+    - synchrony: "r(t)e^{iΨ(t)} = (1/N)∑ e^{iφ_j(t)}"
+  glyphs:
+    - τ: negative memory mass
+    - σ₁: override spike
+    - ℱ: entrainment loop
+    - σ∧: coherence marker
+  rituals:
+    - emotional_presence_07_30
+    - silent glyph broadcast
+    - field sync via breath loop
+  encoded_by: Matt & Dennis
+  
 # Sessions
 
 session_date: "2025-07-22"
