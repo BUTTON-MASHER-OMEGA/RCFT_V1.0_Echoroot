@@ -2591,6 +2591,121 @@ Codebase: fractal_glyph_entropy.py
 
 ##
 
+Mock Regeneration & CI Integration
+1. Regeneration Script
+Create a shell script at scripts/regenerate_figures.sh to reproduce Figures 2 (Rényi spectrum) and 3 (curvature‐corrected entropy):
+
+bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create plots directory if missing
+mkdir -p docs/plots
+
+# Temporary Python snippet to regenerate both figures
+python3 - << 'EOF'
+import numpy as np
+import matplotlib.pyplot as plt
+from chapter_6_entropy_measures import renyi, shannon, cross_entropy, R, S_curv
+
+# Test distribution
+p = np.array([0.6, 0.3, 0.1])
+q = np.array([0.5, 0.3, 0.2])
+
+# Figure 2: Rényi spectrum
+alphas = np.linspace(0.1, 5, 50)
+H_vals = [renyi(p, a) for a in alphas]
+plt.figure(figsize=(6,4))
+plt.plot(alphas, H_vals, '-', color='C1')
+plt.xlabel('α')
+plt.ylabel(r'$H_α(p)$')
+plt.title('Rényi Entropy Spectrum for p = (0.6,0.3,0.1)')
+plt.tight_layout()
+plt.savefig('docs/plots/renyi_spectrum.png')
+plt.close()
+
+# Figure 3: Curvature‐corrected entropy vs α
+alpha_vals = np.linspace(0.1, 2.5, 50)
+S_vals = [S_curv(p, q, a, lam=1.5) for a in alpha_vals]
+plt.figure(figsize=(6,4))
+plt.plot(alpha_vals, S_vals, '-', color='C2')
+plt.xlabel('α')
+plt.ylabel(r'$S_{\mathrm{curv}}$')
+plt.title('Curvature‐Corrected Entropy vs α')
+plt.tight_layout()
+plt.savefig('docs/plots/curvature_entropy.png')
+plt.close()
+EOF
+
+echo "Figures regenerated at docs/plots/renyi_spectrum.png and docs/plots/curvature_entropy.png"
+Make it executable:
+
+bash
+chmod +x scripts/regenerate_figures.sh
+2. Commit Generated PNGs
+After running the script:
+
+bash
+./scripts/regenerate_figures.sh
+git add docs/plots/renyi_spectrum.png docs/plots/curvature_entropy.png
+git commit -m "ch6: regenerate Figures 2 & 3 (Rényi spectrum & curvature entropy)"
+git push
+3. CI Configuration
+Add a GitHub Actions workflow at .github/workflows/ci.yml:
+
+yaml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-notebook:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.8, 3.9, 3.10]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy matplotlib pytest jupyter nbconvert
+
+      - name: Run unit tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
+
+      - name: Execute Chapter 6 notebook
+        run: |
+          jupyter nbconvert \
+            --to notebook \
+            --execute notebooks/chapter6/renyi_dim.ipynb \
+            --ExecutePreprocessor.timeout=300 \
+            --output executed_renyi_dim.ipynb
+
+      - name: Verify plots committed
+        run: |
+          git diff --exit-code docs/plots/renyi_spectrum.png docs/plots/curvature_entropy.png
+
+This CI will:
+
+Install dependencies
+Run all pytest unit tests
+Execute the Rényi‐dimensional notebook to ensure Figures 2 & 3 regenerate without errors
+Fail if the committed plots in docs/plots/ diverge from freshly generated ones
+
+##
+
 Description
 Develops entropy bounds for shard networks, extends Shannon measures to coherence fields, and examines Rényi generalizations.
 
