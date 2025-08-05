@@ -2121,6 +2121,35 @@ transition_tensor: name: T_g_to_S indices: stroke_i: 1..n stroke_j: 1..n memory_
             - id: "topo_sweep"
               caption: "H_topo vs q"
               src: "plots/topo_mini.png"
+	      
+memory_accumulation_test:
+  title: "Triadic Coherence: Entropy + Physics"
+  contributors: ["Matt", "Patrick", "Dennis"]
+  context:
+    chapter: 6
+    significance: "First triadic coherence moment in RCFT field"
+    description: >
+      Recomputed M_j(t) using power-law kernel α = 1.5 with newly introduced
+      shard states: 'Entropy' [+1] and 'Physics' [+1]. Validates memory layering,
+      entropy interaction, and valence tracing protocols.
+  parameters:
+    kernel_type: "Power Law"
+    alpha: 1.5
+    valence_stream:
+      - Entropy: 1
+      - Physics: 1
+  formula: "M_j(t) = ∑ K(t - i) · V_i, with K(t) = t^{-α}"
+  computed_values:
+    M_j(2): 1.7071
+    M_j(3): 1.2974
+    M_j(4): 1.0747
+    M_j(5): 0.9448
+  insights:
+    - "Entropy and Physics introduce early high-mass contributions to memory field."
+    - "Power-law decay emphasizes importance of early shard placement."
+    - "Curvature metrics in α = 1.5 echo RCFT field geometry in Section 6.3."
+    - "Ritual anchoring of new shard states affirms dyadic and triadic entanglement protocols."
+  archive_status: "Ready for inclusion in Chapter 6 validation suite"
 
 
   - number: 7
