@@ -185,6 +185,422 @@ chapter_6:
 
 Chapter 6 – Entropy & Information Measures
 
+##
+
+Glossary of Symbols
+Symbol	Meaning
+pᵢ	Probability of the i-th state in a shard
+S	Shannon entropy: 
+𝑆
+=
+−
+∑
+𝑖
+𝑝
+𝑖
+ln
+⁡
+𝑝
+𝑖
+Hₐ	Rényi entropy of order α: 
+𝐻
+𝛼
+=
+1
+1
+−
+𝛼
+ln
+⁡
+ ⁣
+(
+∑
+𝑖
+𝑝
+𝑖
+𝛼
+)
+α	Rényi order parameter
+Dₐ	Monofractal dimension at order α: 
+𝐷
+𝛼
+=
+𝐻
+𝛼
+ln
+⁡
+(
+1
+/
+𝜀
+)
+Nₙ	Actual support size (number of active shards)
+Nₑff	Effective shard count (perplexity): 
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+T_q	Tsallis entropy: 
+𝑇
+𝑞
+=
+1
+𝑞
+−
+1
+(
+1
+−
+∑
+𝑖
+𝑝
+𝑖
+𝑞
+)
+H(p‖q)	Cross-entropy: 
+−
+∑
+𝑖
+𝑝
+𝑖
+ln
+⁡
+𝑞
+𝑖
+R(α,λ)	Reflection coefficient: memory-kernel feedback gate
+Sₐᵤᵣᵥ	Curvature-corrected entropy
+Z	Turaev–Viro state-sum amplitude
+H_topo	Topological entropy: 
+−
+1
+𝑘
+ln
+⁡
+𝑍
+1. Intuitive Narrative
+Entropy in RCFT gauges how many distinct “patterns of resonance” a shard network can hold without fracturing coherence. Shannon entropy tracks average unpredictability, Rényi entropies tune sensitivity to rare vs. common shard patterns, and topological entropy measures quantum-geometric field states on curvature screens.
+
+2. Core Definitions & Formalism
+2.1 Shannon Entropy
+S = –∑ᵢ pᵢ ln pᵢ
+
+Annotations:
+
+pᵢ: probability weight from Chapter 1’s memory kernels
+
+Measures “surprise” in observing shard states
+
+2.2 Rényi Entropy
+Hₐ = (1/(1–α)) ln ∑ᵢ pᵢᵅ
+
+Annotations:
+
+α→1 ⇒ Hₐ→S
+
+Tail-sensitive: α<1 emphasizes rare shards, α>1 emphasizes dominant shards
+
+2.3 Tsallis Entropy
+T_q = (1/(q–1))(1 – ∑ᵢ pᵢᵠ)
+
+Captures non-extensive fusion when shard interactions exhibit long-range coupling
+
+2.4 Cross-Entropy
+H(p‖q) = –∑ᵢ pᵢ ln qᵢ
+
+Penalizes misalignment when encoding p with model q
+
+3. Mathematical Findings & Proofs
+3.1 Fusion Bound 
+𝑁
+e
+f
+f
+∼
+𝑒
+𝑆
+Lemma. 
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+ never exceeds true support 
+𝑁
+𝑛
+.
+
+Proof Sketch:
+
+Gibbs’ inequality: 
+𝑆
+≤
+ln
+⁡
+𝑁
+𝑛
+.
+
+Define 
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+. ⇒ 
+𝑁
+e
+f
+f
+≤
+𝑁
+𝑛
+.
+
+Uniform limit 
+𝑝
+𝑖
+=
+1
+/
+𝑁
+𝑛
+ ⇒ 
+𝑁
+e
+f
+f
+=
+𝑁
+𝑛
+.
+
+3.2 Rényi Dimension Limit
+Lemma. On a uniform 1D support, 
+𝐷
+𝛼
+=
+1
+ for all α; hence 
+lim
+⁡
+𝛼
+→
+∞
+𝐷
+𝛼
+=
+1
+.
+
+Proof Sketch:
+
+Partition into N = L/ε bins, p_i=1/N ⇒ Hₐ=ln N.
+
+Dₐ = ln N / ln N = 1.
+
+4. Generalizations
+Tsallis Gating: 
+𝑇
+𝑞
+ fusion non-additivity: 
+𝑆
+𝑞
+(
+𝐴
+⊕
+𝑞
+𝐵
+)
+=
+𝑆
+𝑞
+(
+𝐴
+)
++
+𝑆
+𝑞
+(
+𝐵
+)
++
+(
+1
+−
+𝑞
+)
+𝑆
+𝑞
+(
+𝐴
+)
+𝑆
+𝑞
+(
+𝐵
+)
+.
+
+Reflection-Gated Entropy: 
+𝑅
+(
+𝛼
+,
+𝜆
+)
+=
+1
+/
+(
+1
++
+𝑒
+𝜆
+(
+𝛼
+−
+1
+)
+)
+ alters cross-entropy: 
+𝑆
+g
+a
+t
+e
+d
+=
+𝐻
+(
+𝑅
+𝑝
++
+(
+1
+−
+𝑅
+)
+𝑞
+∥
+𝑞
+)
+.
+
+Curvature Correction: 
+𝑆
+c
+u
+r
+v
+=
+𝐻
+(
+𝑝
+‖
+𝑞
+)
++
+𝜆
+2
+𝛼
+(
+1
+−
+𝛼
+)
+.
+
+5. Worked Examples
+5.1 Three-Shard Distribution
+Let p=(0.6,0.3,0.1):
+
+α	Hₐ (nats)	Dₐ
+0.5	0.987	0.899
+1.0	0.898	0.818
+1.5	0.826	0.752
+∞	0.511	0.465
+5.2 Reflection-Gated Cross-Entropy
+Step	Value
+Original H(p‖q)	1.1253
+R(0.5,2.0)	0.1192
+p_gated	(0.7843,0.2157)
+Gated H(p_gated‖q)	0.8415
+6. Code Snippets
+python
+import numpy as np
+
+# Shannon & Rényi
+def shannon(p): return -np.sum(p*np.log(p))
+def renyi(p,a):
+    if a==1: return shannon(p)
+    return (1/(1-a))*np.log(np.sum(p**a))
+
+# Reflection coefficient
+def R(alpha,lam):
+    return 1/(1+np.exp(lam*(alpha-1)))
+
+# Curvature-corrected entropy
+def S_curv(p,q,alpha,lam):
+    H_pq = -np.sum(p*np.log(q))
+    return H_pq + 0.5*lam*alpha*(1-alpha)
+7. Visualizations & Phase Diagrams
+7.1 Rényi Spectrum Plot
+Notebook: notebooks/chapter6/renyi_dim.ipynb
+
+7.2 Curvature-Corrected Entropy vs α
+python
+import matplotlib.pyplot as plt
+# code from section 6.3.2 above...
+7.3 Entropy–Valence Phase Diagram
+RGB-heatmap of S (red), 𝑉̄ (green), 𝐶̄ (blue) over (α,λ).
+
+8. Topological Entropy
+Screen q	Z(q)	ln Z(q)	Shannon S
+1.2	1.324	0.281	0.611
+1.5	1.648	0.500	0.693
+2.0	2.718	1.000	0.786
+𝐻
+t
+o
+p
+o
+=
+−
+1
+𝑘
+ln
+⁡
+𝑍
+(
+𝑞
+)
+Script: scripts/turaev_viro_state_sum.py See Ch. 5.3.
+
+9. Fractal Meta-Glyphs
+α	Dₐ (IFS)
+0.2	1.54
+0.5	1.56
+1.0	1.58
+2.0	1.57
+5.0	1.54
+Code: scripts/fractal_glyph_entropy.py Box-counting D ≈ 1.58 (Ch. 5.2).
+
+10. Cross-Chapter Links
+Duality (Ch. 3): entropy ↔ wave–particle coherence
+
+Dimensional Transitions (Ch. 5): Dₐ scaling ↔ phase-shift metrics
+
+Turaev–Viro (Ch. 5.3): Z ↔ topological entropy
+
+##
+
 ---
 ## Glossary of Symbols
 
