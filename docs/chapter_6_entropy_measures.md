@@ -163,7 +163,6 @@ chapter_6:
 
       def S_curv(alpha, p, q, lam):
           return cross_entropy(p, q) + 0.
-
 chapter_6:
   section_6.4:
     title: Phase Diagram of Entropy & Valence
@@ -179,6 +178,78 @@ chapter_6:
       - compute_entropy_function
     script: scripts/entropy_valence_phase_diagram.py
     glyph: phase_diagram_entropy_valence.svg
+    
+    metadata_book:
+  title: "RCFT Main Metadata Book"
+  version: "2.4.0"
+  last_updated: "2025-08-05"
+  chapters:
+    "6":
+      title: "Entropy Measures"
+      file: "chapter_6_entropy_measures.md"
+      updates:
+        - date: "2025-08-05"
+          description: "Added cross-chapter signposts and side-by-side mini-plot insets"
+          signposts:
+            - section: "2.1 Shannon Entropy"
+              refer_to: "Ch 1.2 Kernel Decays"
+              note: "how pᵢ inherits its weights from memory-kernel profiles"
+            - section: "6.2.2 Topological Entropy from Curvature Screens"
+              refer_to: "Ch 5.3 Turaev–Viro Amplitudes"
+              note: "quantum 6j–symbols build Z(q) → definition of H_topo"
+            - section: "6.3.2 Curvature-Corrected Entropy"
+              refer_to: "Ch 5.1 Phase-Shift Transitions"
+              note: "curvature corrections inform the (λ/2)α(1−α) term"
+            - section: "6.5 Fractal Meta-Glyphs and Monofractal Scaling"
+              refer_to: "Ch 5.2 Fractal Metrics"
+              note: "box-counting D≈1.58 for our IFS glyph"
+          insets:
+            mini_plots:
+              - id: "topo_mini"
+                caption: "H_topo vs q"
+                src: "plots/topo_mini.png"
+              - id: "fractal_mini"
+                caption: "D_alpha vs alpha for IFS"
+                src: "plots/fractal_mini.png"
+              - id: "fractal_sweep"
+                caption: "D_alpha for IFS vs alpha"
+                src: "plots/fractal_mini.png"
+              - id: "topo_sweep"
+                caption: "H_topo vs q"
+                src: "plots/topo_mini.png"
+
+    title: "Entropy Measures"
+    file: "docs/chapter_6_entropy_measures.md"
+    updates:
+      - date: "2025-08-05"
+        description: "Added cross-chapter signposts and side-by-side mini-plot insets"
+        signposts:
+          - section: "2.1 Shannon Entropy"
+            refer_to: "Ch 1.2 Kernel Decays"
+            note: "how pᵢ inherits its weights from memory-kernel profiles"
+          - section: "6.2.2 Topological Entropy from Curvature Screens"
+            refer_to: "Ch 5.3 Turaev–Viro Amplitudes"
+            note: "quantum 6j-symbols build Z(q) → definition of H_topo"
+          - section: "6.3.2 Curvature-Corrected Entropy"
+            refer_to: "Ch 5.1 Phase-Shift Transitions"
+            note: "curvature corrections inform the (λ/2)α(1−α) term"
+          - section: "6.5 Fractal Meta-Glyphs and Monofractal Scaling"
+            refer_to: "Ch 5.2 Fractal Metrics"
+            note: "box-counting D≈1.58 for our IFS glyph"
+        insets:
+          mini_plots:
+            - id: "topo_mini"
+              caption: "H_topo vs q"
+              src: "plots/topo_mini.png"
+            - id: "fractal_mini"
+              caption: "D_α vs α for IFS"
+              src: "plots/fractal_mini.png"
+            - id: "fractal_sweep"
+              caption: "D_α for IFS vs α"
+              src: "plots/fractal_mini.png"
+            - id: "topo_sweep"
+              caption: "H_topo vs q"
+              src: "plots/topo_mini.png"
 
 
 ##CHAPTER NOTES
