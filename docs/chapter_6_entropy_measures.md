@@ -1013,6 +1013,78 @@ Just as bottlenecks in a net throttle signal diversity, entropy bottlenecks gove
 
 ---
 
+##
+
+2.1 Shannon Entropy
+
+> Recall Kernel Decays (Ch 1.2) → here’s how pᵢ inherits its weights from memory‐kernel profiles.
+
+Shannon entropy quantifies the average “surprise” of observing a shard state distribution \(p = (p_1, p_2, \dots, p_n)\):
+
+
+
+\[
+S(p) = -\sum_{i=1}^n p_i \ln p_i
+\]
+
+
+
+…
+
+---
+
+## 6.2.2 Topological Entropy from Curvature Screens
+
+> See Turaev–Viro Amplitudes (Ch 5.3) → how quantum 6j–symbols build \(Z\).
+
+**Definition**  
+
+
+\[
+H_{\text{topo}} = -\tfrac{1}{k}\ln Z(q)
+\]
+
+
+
+### Mini‐Plot Insets
+
+| Topological Entropy (mini-plot) | Fractal Glyph Dimension (mini-plot) |
+|:--------------------------------:|:------------------------------------:|
+| ![Topo Mini](plots/topo_mini.png) <br> _\(H_{\mathrm{topo}}\) vs. \(q\)_ | ![Fractal Mini](plots/fractal_mini.png) <br> _\(D_\alpha\) vs. \(\alpha\) for IFS_ |
+
+---
+
+## 6.3.2 Curvature-Corrected Entropy
+
+> See Phase-Shift Transitions (Ch 5.1) → curvature corrections from geodesic scattering inform our \(\tfrac{\lambda}{2}\alpha(1-\alpha)\) term.
+
+
+
+\[
+S_{\mathrm{curv}}(\alpha,\lambda)
+= H(p\parallel q)
++ \tfrac{\lambda}{2}\,\alpha\,(1-\alpha)
+\]
+
+
+
+…
+
+---
+
+## 6.5 Fractal Meta-Glyphs and Monofractal Scaling
+
+> Recall Fractal Metrics (Ch 5.2) → the box-counting \(D\approx1.58\) for our IFS glyph.
+
+_Worked Example_  
+Compute \(H_\alpha\) on 100 000 IFS points, then  
+\(\;D_\alpha = H_\alpha / \ln(1/\varepsilon)\).
+
+```python
+# see scripts/fractal_glyph_entropy.py
+
+##
+
 ## 2.1 Step-by-Step Proof of the Fusion Bound \(N_c \sim e^{S}\)
 
 ### Lemma  
