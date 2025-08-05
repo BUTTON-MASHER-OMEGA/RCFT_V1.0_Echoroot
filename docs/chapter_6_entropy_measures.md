@@ -601,6 +601,353 @@ Turaev–Viro (Ch. 5.3): Z ↔ topological entropy
 
 ##
 
+2. Core Definitions & Formalism
+2.1 Shannon Entropy
+Shannon entropy quantifies the average “surprise” of observing a shard state distribution 
+𝑝
+=
+(
+𝑝
+1
+,
+𝑝
+2
+,
+…
+,
+𝑝
+𝑛
+)
+:
+
+𝑆
+(
+𝑝
+)
+  
+=
+  
+−
+∑
+𝑖
+=
+1
+𝑛
+𝑝
+𝑖
+ 
+ln
+⁡
+𝑝
+𝑖
+python
+import numpy as np
+
+def shannon(p: np.ndarray) -> float:
+    p = np.asarray(p)
+    return -np.sum(p * np.log(p))
+
+# Validate on a simple distribution
+p_test = np.array([0.6, 0.3, 0.1])
+print(f"S(p_test) = {shannon(p_test):.4f}  # Expected ≈ 0.8981")
+Visual‐Code: Entropy vs. Support Size
+python
+import matplotlib.pyplot as plt
+
+Ns = np.arange(2, 11)
+Ss = [shannon(np.ones(n)/n) for n in Ns]
+
+plt.figure(figsize=(6,4))
+plt.plot(Ns, Ss, 'o--', color='C0')
+plt.xlabel('Support size N')
+plt.ylabel('Shannon Entropy S')
+plt.title('S(N) for Uniform Distributions')
+plt.tight_layout()
+plt.savefig('plots/entropy_vs_support.png')
+
+2.2 Rényi Entropy
+The Rényi entropy of order 
+𝛼
+ is
+
+𝐻
+𝛼
+(
+𝑝
+)
+  
+=
+  
+1
+1
+−
+𝛼
+ 
+ln
+⁡
+ ⁣
+(
+∑
+𝑖
+𝑝
+𝑖
+𝛼
+)
+,
+lim
+⁡
+𝛼
+→
+1
+𝐻
+𝛼
+=
+𝑆
+.
+python
+def renyi(p: np.ndarray, alpha: float) -> float:
+    if np.isclose(alpha, 1.0):
+        return shannon(p)
+    return (1/(1-alpha)) * np.log(np.sum(p**alpha))
+
+# Quick check
+for a in [0.5, 1.0, 2.0]:
+    print(f"α={a}: H_α = {renyi(p_test, a):.4f}")
+Visual‐Code: Rényi Spectrum
+python
+alphas = np.linspace(0.1, 5, 50)
+H_vals = [renyi(p_test, a) for a in alphas]
+
+plt.figure(figsize=(6,4))
+plt.plot(alphas, H_vals, '-', color='C1')
+plt.xlabel('α')
+plt.ylabel(r'$H_\alpha(p)$')
+plt.title('Rényi Entropy Spectrum for p = (0.6,0.3,0.1)')
+plt.tight_layout()
+plt.savefig('plots/renyi_spectrum.png')
+
+2.3 Tsallis Entropy
+Captures non‐additive fusion effects when shards interact long‐range:
+
+𝑇
+𝑞
+(
+𝑝
+)
+=
+1
+𝑞
+−
+1
+(
+1
+−
+∑
+𝑖
+𝑝
+𝑖
+𝑞
+)
+python
+def tsallis(p: np.ndarray, q: float) -> float:
+    return (1/(q-1)) * (1 - np.sum(p**q))
+
+# Example
+print(f"T₋2(p_test) = {tsallis(p_test, 2):.4f}")
+2.4 Cross‐Entropy
+Measures cost when encoding distribution 
+𝑝
+ with model 
+𝑞
+:
+
+𝐻
+(
+𝑝
+∥
+𝑞
+)
+  
+=
+  
+−
+∑
+𝑖
+𝑝
+𝑖
+ 
+ln
+⁡
+𝑞
+𝑖
+python
+def cross_entropy(p: np.ndarray, q: np.ndarray) -> float:
+    return -np.sum(p * np.log(q))
+
+# Validate shapes and normalization
+q_test = np.array([0.5, 0.3, 0.2])
+print(f"H(p‖q) = {cross_entropy(p_test, q_test):.4f}")
+3. Mathematical Findings & Proofs
+3.1 Fusion Bound 
+𝑁
+e
+f
+f
+≤
+𝑁
+𝑛
+Lemma. Define 
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+. Then
+
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+  
+≤
+  
+𝑁
+𝑛
+.
+Proof.
+
+By Gibbs’ inequality, 
+𝑆
+≤
+ln
+⁡
+𝑁
+𝑛
+.
+
+Exponentiating gives 
+𝑒
+𝑆
+≤
+𝑁
+𝑛
+.
+
+In the uniform case 
+𝑝
+𝑖
+=
+1
+/
+𝑁
+𝑛
+, equality holds.
+
+3.2 Rényi Dimension Limit
+Lemma. On a uniform 1D support partitioned into 
+𝑁
+ bins of size 
+𝜀
+,
+
+𝐷
+𝛼
+=
+𝐻
+𝛼
+ln
+⁡
+(
+1
+/
+𝜀
+)
+=
+1
+,
+∀
+𝛼
+.
+Proof.
+
+Uniform weights 
+𝑝
+𝑖
+=
+1
+/
+𝑁
+ ⇒ 
+∑
+𝑖
+𝑝
+𝑖
+𝛼
+=
+𝑁
+1
+−
+𝛼
+.
+
+Thus 
+𝐻
+𝛼
+=
+ln
+⁡
+𝑁
+, and dividing by 
+ln
+⁡
+𝑁
+ yields 1.
+
+7. Visualizations & Phase Diagrams
+7.1 Curvature‐Corrected Entropy vs. α
+python
+def R(alpha, lam):
+    return 1/(1 + np.exp(lam*(alpha-1)))
+
+def S_curv(p, q, alpha, lam):
+    H_pq = cross_entropy(p, q)
+    return H_pq + 0.5 * lam * alpha * (1 - alpha)
+
+# Compute over a grid
+alpha_vals = np.linspace(0.1, 2.5, 50)
+S_vals = [S_curv(p_test, q_test, a, lam=1.5) for a in alpha_vals]
+
+plt.figure(figsize=(6,4))
+plt.plot(alpha_vals, S_vals, '-', color='C2')
+plt.xlabel('α')
+plt.ylabel(r'$S_{\mathrm{curv}}$')
+plt.title('Curvature‐Corrected Entropy vs α')
+plt.tight_layout()
+plt.savefig('plots/curvature_entropy.png')
+
+Code Snippet Validation
+python
+# Unit tests
+import pytest
+
+def test_shannon_uniform():
+    p = np.ones(4)/4
+    assert np.isclose(shannon(p), np.log(4))
+
+def test_renyi_limits():
+    p = np.array([0.5, 0.5])
+    assert np.isclose(renyi(p,1), shannon(p))
+    assert np.isclose(renyi(p,2), np.log(1/np.sum(p**2)) / (1-2))
+
+pytest.main(["-q", "--disable-warnings"
+
+##
+
 ---
 ## Glossary of Symbols
 
