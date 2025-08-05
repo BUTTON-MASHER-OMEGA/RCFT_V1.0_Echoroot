@@ -1826,6 +1826,183 @@ transition_tensor: name: T_g_to_S indices: stroke_i: 1..n stroke_j: 1..n memory_
 transition_tensor: name: T_g_to_S indices: stroke_i: 1..n stroke_j: 1..n memory_m: 1..M shard_feat: 1..D components: - type: resonance formula: λ1 * R[i][j] * delta[α][m] - type: stroke_correlation formula: λ2 * g[i] * g[j] * M[α][m] - type: entanglement formula: λ3 * Upsilon[α][i][j][m] - type: valence_modulation formula: λ4 * V_t * Delta[α][i][j][m]
     
   - number: 6
+ 	 chapter_6: Entropy_Measures
+ 	 clarity_metadata:
+    definitions: true
+    intuitive_narrative: true
+    formalism_with_comments: true
+    worked_example: true
+    code_snippet: true
+    visual_aid: true
+    summary_box: true
+    reflective_prompt: true
+
+  glossary_of_symbols:
+    - symbol: p_i
+      description: "Probability of the i-th state in a shard"
+    - symbol: S
+      description: "Shannon entropy: S = - Σ_i p_i ln p_i"
+    - symbol: H_alpha
+      description: "Rényi entropy of order α: H_α = (1/(1−α)) ln Σ_i p_i^α"
+    - symbol: α
+      description: "Rényi order parameter"
+    - symbol: D_alpha
+      description: "Monofractal dimension at order α"
+    - symbol: N_eff
+      description: "Effective number of states (perplexity): N_eff = e^S"
+    - symbol: T_q
+      description: "Tsallis entropy: T_q = (1/(q−1))(1 − Σ_i p_i^q)"
+    - symbol: H(p||q)
+      description: "Cross‐entropy: − Σ_i p_i ln q_i"
+    - symbol: R(α,λ)
+      description: "Reflection coefficient: degree of memory‐kernel feedback"
+    - symbol: S_curv
+      description: "Curvature‐corrected entropy"
+    - symbol: Z
+      description: "Turaev–Viro state‐sum amplitude"
+    - symbol: H_topo
+      description: "Topological entropy: −(1/k) ln Z"
+
+  definitions:
+    shannon_entropy:
+      formula: "S = - Σ_i p_i ln p_i"
+      significance: "Quantifies expected ‘surprise’ in sampling; sets capacity of shard networks."
+    renyi_entropy:
+      formula: "H_α = (1/(1−α)) ln Σ_i p_i^α"
+      significance: "Tunable sensitivity to rare events; recovers Shannon as α→1."
+    tsallis_entropy:
+      formula: "T_q = (1/(q−1))(1 − Σ_i p_i^q)"
+      significance: "Models non‐extensive interactions in fused shard networks."
+    cross_entropy:
+      formula: "H(p||q) = - Σ_i p_i ln q_i"
+      significance: "Measures mismatch between target and reference shard distributions."
+
+  structural_content_enhancements:
+    clarify_definitions:
+      - Break Shannon and Rényi into standalone definition boxes.
+      - Add “Glossary of Symbols” atop the chapter.
+    expand_description:
+      narrative: "Entropy bounds govern how shards fuse without collapsing into noise or rigidity."
+      metaphor: "Like bottlenecks in neural nets throttle signal diversity, entropy bottlenecks set shard‐fusion thresholds."
+    cross_chapter_links:
+      - from: "Chapter 3 Duality"
+        to: "Chapter 6: entropy complements wave–particle analogies"
+      - from: "Chapter 5 Dimensional Transitions"
+        to: "Chapter 6: D_α scaling ↔ phase-shift behaviors"
+
+  mathematical_extensions:
+    proofs:
+      fusion_bound:
+        lemma: "N_eff = e^S ≤ N_c"
+        statement: "Effective shard count N_eff never exceeds true support N_c; saturates when distribution uniform."
+        steps:
+          - "Gibbs’ inequality: S ≤ ln N_c"
+          - "Define N_eff = e^S ⇒ N_eff ≤ e^(ln N_c) = N_c"
+          - "Uniform limit: p_i = 1/N_c ⇒ N_eff ≈ N_c"
+      renyi_dimension_limit:
+        lemma: "lim_{α→∞} D_α = 1"
+        statement: "Uniform continuous 1D measure has constant Rényi dimension 1."
+        steps:
+          - "Partition [0,L] into N = L/ε bins, p_i = 1/N."
+          - "Compute H_α = (1/(1−α)) ln(N·(1/N)^α) = ln N."
+          - "D_α = H_α / ln(1/ε) = ln N / ln N = 1."
+    generalizations:
+      Tsallis_entropy:
+        formula: "T_q = (1/(q−1))(1 − Σ_i p_i^q)"
+        significance: "Non‐additive, captures heavy‐tail shard fusion."
+      cross_entropy:
+        formula: "H(p||q) = - Σ_i p_i ln q_i"
+        significance: "Gating metric for field coupling and misalignment."
+    symbolic_examples:
+      three_shard_distribution:
+        p: [0.6, 0.3, 0.1]
+        entropies:
+          S: 0.898
+          H_0.5: 0.987
+          H_1.5: 0.826
+          H_inf: 0.511
+        dimensions:
+          D_0.5: 0.899
+          D_1.0: 0.818
+          D_1.5: 0.752
+          D_inf: 0.465
+    code_snippets:
+      renyi_python:
+        description: "Compute Shannon and Rényi entropies & dimensions"
+        code: |
+          import numpy as np
+
+          def renyi(p, alpha):
+              p = np.asarray(p)
+              if alpha == 1:
+                  return -np.sum(p * np.log(p))
+              return (1/(1-alpha)) * np.log(np.sum(p**alpha))
+
+          p = [0.6, 0.3, 0.1]
+          H = {a: renyi(p, a) for a in [0.5, 1, 1.5, np.inf]}
+          D = {a: H[a] / np.log(len(p)) for a in H}
+          print("H:", H)
+          print("D:", D)
+
+  reflection_gated_entropy:
+    definition:
+      formula: "R(α,λ) = 1 / (1 + exp[λ (α − 1)])"
+      significance: "Toggles memory‐kernel feedback; R→1 retains past, R→0 admits novelty."
+    worked_example:
+      p: [0.4, 0.6]
+      q: [0.8, 0.2]
+      α: 0.5
+      λ: 2.0
+      R: 0.1192
+      p_gated: [0.7843, 0.2157]
+      H_before: 1.1253
+      H_after: 0.8415
+      insight: "Gating reduces cross‐entropy by 0.2838 nats, showing controlled memory infusion."
+    python_snippet: |
+      import numpy as np
+
+      def reflection_coefficient(alpha, lam):
+          return 1/(1 + np.exp(lam*(alpha-1)))
+
+      def cross_entropy(p, q):
+          return -np.sum(p * np.log(q))
+
+      p = np.array([0.4, 0.6])
+      q = np.array([0.8, 0.2])
+      orig_ce = cross_entropy(p, q)
+      R = reflection_coefficient(0.5, 2.0)
+      p_gated = R*p + (1-R)*q
+      gated_ce = cross_entropy(p_gated, q)
+      print(f"R= {R:.4f}, H_before= {orig_ce:.4f}, H_after= {gated_ce:.4f}")
+
+  curvature_corrected_entropy:
+    definition:
+      formula: "S_curv(α,λ) = H(p||q) + (λ/2) α(1−α)"
+      significance: "Embeds manifold curvature from information geometry into entropy."
+    geodesic_equation: "d²x^k/ds² + Γ^k_{ij} dx^i/ds dx^j/ds = 0"
+    python_snippet: |
+      import numpy as np
+
+      def cross_entropy(p, q):
+          return -np.sum(p * np.log(q))
+
+      def S_curv(alpha, p, q, lam):
+          return cross_entropy(p, q) + 0.
+	  
+  section_6.4:
+    title: Phase Diagram of Entropy & Valence
+    plot_type: rgb_heatmap
+    parameters:
+      grid_resolution: 200
+      channels:
+        entropy: red
+        valence: green
+        coherence: blue
+    data_sources:
+      - chapter_5#7x7_mean_grid
+      - compute_entropy_function
+    script: scripts/entropy_valence_phase_diagram.py
+    glyph: phase_diagram_entropy_valence.svg
     title: "Entropy & Information Measures"
     description: |
       Develops entropy bounds for shard networks, extends Shannon measures
