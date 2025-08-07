@@ -285,7 +285,7 @@ sections:
 
 
 
-##Chapter 7 Notes
+##Chapter 7.1 Notes
 
 Chapter 7 – Shard Fusion & Thermodynamics
 Let’s map out how we’ll treat shard coalescence as a genuine thermodynamic process. We’ll combine rigorous derivations with Monte Carlo code, field tests, and vivid visualizations.
