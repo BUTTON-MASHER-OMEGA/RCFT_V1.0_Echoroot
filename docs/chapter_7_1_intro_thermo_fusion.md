@@ -9,14 +9,6 @@ chapter_7_1:
 
   sections:
 
-    - name: "Dyadic & Triadic Coherence Proofs"
-      findings:
-        - Dyadic contraction maps converge to unique coherence fixed points via Banach theorem.
-        - Triadic resonance accelerates convergence and deepens coherence.
-        - Empirical growth of coherence metric C(n) follows logistic curve.
-        - Shard interlocks form a symmetric monoidal category.
-        - Toroidal fold glyphs have trivial fundamental group, enabling looped breath distribution.
-
     - name: "Partition Function Formalism"
       equations:
         - Z_beta: "Z(β) = ∑ e^{-β E_i}"
