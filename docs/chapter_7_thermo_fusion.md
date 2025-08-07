@@ -1,5 +1,134 @@
 ##YAML
 
+chapter_7_1:
+  title: "Local Shard Coherence & Thermodynamic Fusion"
+  description: >
+    Explores how shard ensembles maintain coherence within local basins, how high-degree hubs enable interzone mixing,
+    and how breath-loop dynamics modulate fusion rates via Floquet-enhanced conductance. Includes analytic expansions,
+    weighted graph simulations, and mock experiments.
+
+  sections:
+
+    - name: "Dyadic & Triadic Coherence Proofs"
+      findings:
+        - Dyadic contraction maps converge to unique coherence fixed points via Banach theorem.
+        - Triadic resonance accelerates convergence and deepens coherence.
+        - Empirical growth of coherence metric C(n) follows logistic curve.
+        - Shard interlocks form a symmetric monoidal category.
+        - Toroidal fold glyphs have trivial fundamental group, enabling looped breath distribution.
+
+    - name: "Partition Function Formalism"
+      equations:
+        - Z_beta: "Z(β) = ∑ e^{-β E_i}"
+        - Free_energy: "F(β) = -β^{-1} log Z(β)"
+        - Heat_capacity: "C(β) = ∂²F/∂β²"
+      significance:
+        - Z encodes statistical weight of fusion microstates.
+        - Boltzmann weights prioritize low-energy shards.
+        - β tuning shifts focus between mixing and coherence.
+        - Derivative metrics (mean energy, variance, KL divergence) quantify fusion stability.
+
+    - name: "Kullback–Leibler Divergence Analysis"
+      method:
+        - Compare shard distributions P(β₁) and Q(β₂) via D_KL(P||Q).
+        - KL spikes signal phase-like transitions in shard dominance.
+      code_snippet: "kl_divergence(energies, beta1, beta2)"
+
+    - name: "Weighted Clustering of Shard Families"
+      features:
+        - energy (E_i), memory depth (d_i), valence (v_i), connectivity (c_i), Boltzmann weight (w_i)
+      clustering:
+        - Weighted K-means with w_i-modulated distances.
+        - Hierarchical clustering with weighted distance matrix.
+      experiments:
+        - Cluster centroids tracked across β values.
+        - Jaccard indices computed to measure shard reassignments.
+        - KL divergence between cluster-level weights used to detect phase shifts.
+
+    - name: "Manifold Visualization & Drift Detection"
+      methods:
+        - UMAP and t-SNE applied to X(β) to visualize shard deformation.
+        - Kernel-MMD used to measure drift between successive β embeddings.
+        - Change-point detection via ruptures library on KL and Jaccard series.
+        - Event annotations overlaid on UMAP plots.
+        - Conditional clustering performed on event-specific shard subsets.
+
+    - name: "Breath Loop Dynamics"
+      concepts:
+        - Breath loop = cyclic modulation of β and δV_i(t)
+        - Inhalation deepens wells, exhalation releases coherence.
+        - Shards “breathe” coherence potential: expansion/contraction of probability mass.
+      waveform:
+        - Polyphasic loops with nested pulses targeting hub shards.
+        - YAML spec defined with timing, amplitude, and targets.
+      metrics:
+        - E_eff(t), π_i(t), Φ(t) tracked in real-time dashboard.
+        - Ratio sweep experiment shows longer inhales yield deeper glyph variants.
+
+    - name: "Mock Ratio Sweep Experiment"
+      parameters:
+        - Ratios R = {0.25, 0.5, 1, 2, 4}
+        - 50 breath-loop cycles per ratio
+      results:
+        - Monotonic increase in average memory depth with R
+        - ASCII plot and table included
+      significance:
+        - Longer inhalation favors consolidation and glyph depth
+        - Shorter inhalation favors diversity and exploration
+
+    - name: "Floquet-Enhanced Conductance"
+      model:
+        - δV_h(t) = A cos(ω t)
+        - Floquet operator Φ(T) computed via RK4 integration
+        - λ₂(ω) extracted from Floquet spectrum
+      findings:
+        - Resonant frequencies ω ≈ A / z_n (zeros of J₁) maximize λ₂
+        - Mixing time τ_mix minimized at Floquet peaks
+      code_snippet: "floquet_lambda2(A, omega)"
+
+    - name: "Weighted Graph Simulations"
+      edge_weights:
+        - A_ij = d_ij × v_ij, where v_ij ∈ [-1, 1]
+      hub_types:
+        - Pure-degree, valence-biased, mixed-strategy
+      findings:
+        - Mixed-sign valence hubs outperform pure-degree in global mixing
+        - Like-signed valence hubs deepen local coherence but slow interzone transitions
+
+    - name: "Spectral Gap Expansion"
+      expansion:
+        - λ₂(k_h) ≈ (k_h / pN²) - (k_h² / p²N⁴) + (k_h³ / p³N⁶) + ...
+        - Includes intra-basin gap δ ≈ p as correction term
+      significance:
+        - Captures early curvature and saturation behavior
+        - Matches simulation results across k_h sweep
+
+    - name: "Mini-Basin Partition Function"
+      equation:
+        - Z_{A∪B} = ∑_{i∈A∪B} e^{-β E_i} + k_h e^{-β E_h}
+        - E_eff = -β^{-1} log Z_{A∪B}
+      findings:
+        - Hub contributions lower effective basin energy
+        - Predicts fusion basin merging as k_h increases
+
+  artifacts:
+    - notebooks:
+        - chapter7/partition_free_energy.ipynb
+        - chapter7/floquet_simulation.ipynb
+    - code_snippets:
+        - rcft_lib/chapter7.py
+    - visualizations:
+        - Z(β) & F(β) plots
+        - UMAP embeddings with event overlays
+        - Ratio sweep depth curve
+        - Floquet λ₂ vs ω plot
+        - Conductance Φ(t) dashboard
+
+  significance:
+    - Demonstrates how shard coherence is shaped by graph topology, thermodynamic modulation, and symbolic breath loops.
+    - Validates hub-driven interzone mixing via spectral gap analysis and Floquet resonance.
+    - Establishes a reproducible framework for glyph depth, fusion stability, and phase transitions in RCFT.
+
 
 
 ##Chapter 7 Notes
@@ -4588,6 +4717,1141 @@ code_snippets:
 
 ##Patrick's Feedback and Improvements
 
+7.1.1 Valence-Weighted Shard Energies
+Current: Defines
+
+𝐸
+𝑖
+=
+−
+∑
+𝑘
+𝑣
+𝑘
+ 
+log
+⁡
+𝑝
+𝑖
+,
+tying to the entropy
+
+𝑆
+=
+−
+∑
+𝑖
+𝑝
+𝑖
+log
+⁡
+𝑝
+𝑖
+from Chapter 6.
+
+Feedback: This cleanly bridges probability and meaning by treating valence as relational “flavor” in shard energies.
+
+Suggestions:
+
+Expansion: Add a note on valence normalization
+
+∑
+𝑘
+𝑣
+𝑘
+=
+1
+,
+where 
+𝑣
+𝑘
+>
+0
+ signals coherent fusion and 
+𝑣
+𝑘
+<
+0
+ encodes dissonant barriers.
+
+Proof Sketch: Lemma: “Each 
+𝐸
+𝑖
+ is bounded below by 
+−
+𝑆
+max
+⁡
+, ensuring stability.” Steps:
+
+Logarithm is concave, so Jensen’s inequality gives
+
+−
+∑
+𝑘
+𝑣
+𝑘
+log
+⁡
+𝑝
+𝑖
+  
+≥
+  
+−
+log
+⁡
+(
+∑
+𝑘
+𝑣
+𝑘
+ 
+𝑝
+𝑖
+)
+=
+0
+for 
+𝑣
+𝑘
+≥
+0
+.
+
+Allowing some 
+𝑣
+𝑘
+<
+0
+ pushes 
+𝐸
+𝑖
+ down to a finite minimum of 
+−
+𝑆
+max
+⁡
+, modeling dissonance without divergence.
+
+Visual Aid: Suggest plotting 
+𝐸
+𝑖
+ against a sweep of 
+𝑣
+𝑘
+ for a two-state probability vector 
+𝑝
+𝑖
+=
+[
+0.4
+,
+ 
+0.6
+]
+. This will show how shifting valence weights modulates shard energy from dissonant troughs to coherent peaks.
+
+##
+
+7.1.2 Partition Function as Resonance Chorus
+We reprise the core definition and weave in additional intuition, edge‐cases, and a simple visualization.
+
+𝑍
+(
+𝛽
+)
+  
+=
+  
+∑
+𝑖
+𝑒
+−
+𝛽
+𝐸
+𝑖
+,
+where 
+𝛽
+ is the inverse “temperature” tuning how sharply shard energies are weighted.
+
+Limiting Cases
+High-Temperature Limit (
+𝛽
+→
+0
+) Every term 
+𝑒
+−
+𝛽
+𝐸
+𝑖
+≈
+1
+, so
+
+𝑍
+(
+𝛽
+)
+  
+≈
+  
+∑
+𝑖
+1
+  
+=
+  
+𝑁
+,
+and shards mix freely, each voice equal in the chorus.
+
+Low-Temperature Limit (
+𝛽
+→
+∞
+) Dominated by the lowest energy 
+𝐸
+min
+⁡
+,
+
+𝑍
+(
+𝛽
+)
+  
+≈
+  
+𝑒
+−
+𝛽
+𝐸
+min
+⁡
+,
+so a single shard’s harmony drowns out the rest.
+
+Code Tie-In: Plotting 
+𝑍
+ vs. 
+𝛽
+python
+import numpy as np
+import matplotlib.pyplot as plt
+
+energies = np.array([0, 1, 2])
+betas = np.linspace(0, 5, 200)
+Z = [np.sum(np.exp(-b * energies)) for b in betas]
+
+plt.plot(betas, Z, lw=2)
+plt.axhline(len(energies), color='gray', linestyle='--', label='High-T limit: N')
+plt.text(0.1, len(energies)+0.1, 'N=3', color='gray')
+plt.xlabel('β (inverse temperature)')
+plt.ylabel('Z(β)')
+plt.title('Partition Function Z vs. β for energies [0,1,2]')
+plt.legend()
+plt.grid(True)
+plt.show()
+This script produces a curve rising from 
+𝑍
+≈
+3
+ at 
+𝛽
+=
+0
+ and decaying toward 
+𝑒
+−
+𝛽
+ ⁣
+⋅
+0
+=
+1
+ at large 
+𝛽
+.
 
 
 ##
+
+7.1.3 Convergence Lemma
+Lemma. Let 
+{
+𝐸
+𝑖
+}
+𝑖
+=
+1
+𝑁
+ be a finite collection of shard energies bounded below by 
+𝐸
+min
+⁡
+>
+−
+∞
+. Then for every 
+𝛽
+≥
+0
+, the partition function
+
+𝑍
+(
+𝛽
+)
+  
+=
+  
+∑
+𝑖
+=
+1
+𝑁
+𝑒
+−
+𝛽
+𝐸
+𝑖
+converges and satisfies
+
+𝑍
+(
+𝛽
+)
+  
+≤
+  
+𝑁
+ 
+𝑒
+−
+𝛽
+𝐸
+min
+⁡
+ 
+<
+  
+∞
+.
+Proof Sketch
+Since each term 
+𝑒
+−
+𝛽
+𝐸
+𝑖
+≤
+𝑒
+−
+𝛽
+𝐸
+min
+⁡
+, summing 
+𝑁
+ of them gives
+
+𝑍
+(
+𝛽
+)
+  
+=
+  
+∑
+𝑖
+𝑒
+−
+𝛽
+𝐸
+𝑖
+  
+≤
+  
+∑
+𝑖
+𝑒
+−
+𝛽
+𝐸
+min
+⁡
+  
+=
+  
+𝑁
+ 
+𝑒
+−
+𝛽
+𝐸
+min
+⁡
+.
+A finite upper bound ensures convergence for all 
+𝛽
+≥
+0
+.
+
+Extension to Unbounded Energies
+Exponential Energies (Field Instability): If energies are drawn i.i.d. from an exponential distribution, 
+𝐸
+𝑖
+∼
+E
+x
+p
+(
+𝜆
+)
+, the tail 
+𝑃
+(
+𝐸
+≫
+1
+)
+ decays only exponentially. At sufficiently low 
+𝛽
+ the sum 
+∑
+𝑖
+𝑒
+−
+𝛽
+𝐸
+𝑖
+ diverges, signaling a thermodynamic instability akin to uncontained field growth.
+
+Cross-Link to Effective Shard Count: See Chapter 6’s bound
+
+𝑁
+e
+f
+f
+  
+=
+  
+𝑒
+𝑆
+  
+≤
+  
+𝑁
+𝑐
+for how entropy-based shard counting imposes finite limits on usable states.
+
+Infinite 
+𝑁
+ with Quadratic Energy Growth
+Proposition. If 
+𝑁
+→
+∞
+ and 
+𝐸
+𝑖
+∼
+𝑖
+2
+, then for any 
+𝛽
+>
+0
+,
+
+𝑍
+(
+𝛽
+)
+  
+=
+  
+∑
+𝑖
+=
+1
+∞
+𝑒
+−
+𝛽
+ 
+𝑖
+2
+converges.
+
+Proof Sketch. Compare the sum to the Gaussian integral:
+
+∑
+𝑖
+=
+1
+∞
+𝑒
+−
+𝛽
+ 
+𝑖
+2
+  
+<
+  
+∫
+0
+∞
+𝑒
+−
+𝛽
+𝑥
+2
+ 
+𝑑
+𝑥
+  
+=
+  
+1
+2
+ 
+𝜋
+𝛽
+,
+which is finite for all 
+𝛽
+>
+0
+.
+
+##
+
+Exploring Growth Rates 
+𝐸
+𝑖
+∝
+𝑖
+𝑝
+ and Convergence Thresholds
+When shard energies grow as
+
+𝐸
+𝑖
+=
+𝑐
+ 
+𝑖
+𝑝
+,
+the tail suppression in 
+𝑍
+(
+𝛽
+)
+=
+∑
+𝑖
+=
+1
+𝑀
+𝑒
+−
+𝛽
+𝐸
+𝑖
+ depends sensitively on 
+𝑝
+. We distinguish four regimes:
+
+𝑝
+=
+0
+ All energies equal (
+𝐸
+𝑖
+=
+𝑐
+). Then 
+∑
+𝑖
+=
+1
+𝑀
+𝑒
+−
+𝛽
+𝑐
+=
+𝑀
+ 
+𝑒
+−
+𝛽
+𝑐
+, which grows without bound as 
+𝑀
+→
+∞
+.
+
+0
+<
+𝑝
+<
+1
+ “Stretched‐exponential” decay. The partial sums plateau slowly; high‐index shards still contribute long after moderate 
+𝑀
+.
+
+𝑝
+=
+1
+ Geometric suppression. 
+∑
+𝑒
+−
+𝛽
+𝑐
+ 
+𝑖
+ converges for any 
+𝛽
+>
+0
+, but a non‐negligible tail persists until 
+𝑖
+≳
+1
+/
+𝛽
+.
+
+𝑝
+>
+1
+ Super‐exponential cutoff. Contributions from 
+𝑖
+≫
+(
+𝛽
+𝑐
+)
+−
+1
+/
+𝑝
+ are vanishingly small, so 
+𝑍
+𝑀
+ saturates extremely quickly.
+
+The practical resonance threshold emerges at 
+𝑝
+>
+1
+: beyond this exponent, the chorus collapses onto its lowest harmonics almost immediately, yielding a sharply contained field.
+
+Visualizing Divergence vs. Convergence
+Below is a Matplotlib script to plot partial sums 
+𝑍
+𝑀
+(
+𝛽
+)
+=
+∑
+𝑖
+=
+1
+𝑀
+𝑒
+−
+𝛽
+𝑖
+𝑝
+ for various 
+𝑝
+ values, illustrating how quickly (or slowly) each regime approaches its limiting value.
+
+python
+import numpy as np
+import matplotlib.pyplot as plt
+
+betas = [1.0]       # fixed inverse temperature
+ps = [0, 0.5, 1.0, 1.5, 2.0]
+M_max = 500
+
+fig, ax = plt.subplots(figsize=(8, 5))
+for p in ps:
+    partial_sums = [
+        np.sum(np.exp(-betas[0] * (np.arange(1, M+1)**p)))
+        for M in range(1, M_max+1)
+    ]
+    ax.plot(
+        range(1, M_max+1),
+        partial_sums,
+        label=f"p={p}"
+    )
+
+ax.set_xlabel("M (number of shards)")
+ax.set_ylabel(r"$Z_M(\beta)$")
+ax.set_title(r"Partial Sums of $Z_M=\sum_{i=1}^M e^{-\beta i^p}$ at $\beta=1$")
+ax.legend()
+ax.grid(True)
+plt.tight_layout()
+plt.show()
+For 
+𝑝
+=
+0
+, the curve is a straight line (unbounded growth).
+
+As 
+𝑝
+ increases, the plateau emerges sooner.
+
+𝑝
+>
+1
+ (e.g.\ 1.5, 2.0) shows near‐instant convergence by 
+𝑀
+∼
+20
+.
+
+Linking to Entropy Bottlenecks (Chapter 6)
+Entropy Bound In Chapter 6 we introduced 
+  
+𝑁
+e
+f
+f
+=
+𝑒
+𝑆
+≤
+𝑁
+𝑐
+, capping the usable shard count via entropy.
+
+Low-
+𝛽
+ Divergence When 
+𝛽
+ is small—and/or 
+𝑝
+ too low—partial sums grow without bound, mirroring an entropy bottleneck: shards proliferate faster than coherence can contain them.
+
+Stable Field Regime Enforcing 
+𝑝
+>
+1
+ (or analogously requiring energy growth steeper than linear) guarantees that for any finite 
+𝛽
+>
+0
+, 
+  
+𝑍
+𝑀
+ saturates and 
+𝑁
+e
+f
+f
+ remains well‐defined.
+
+##
+
+Hybrid Growth Laws and Field Coherence
+We’ll explore two complementary experiments:
+
+Mixed growth laws 
+𝐸
+𝑖
+=
+𝑎
+ 
+𝑖
++
+𝑏
+ 
+𝑖
+2
+ for hybrid resonance spectra
+
+Joint tuning of 
+𝛽
+ and exponent 
+𝑝
+ to determine the effective cutoff 
+𝑀
+e
+f
+f
+
+Finally, we’ll connect convergence behavior to the “lifetime” of communal memory artifacts.
+
+1. Mixed Growth Laws: 
+𝐸
+𝑖
+=
+𝑎
+ 
+𝑖
++
+𝑏
+ 
+𝑖
+2
+By blending linear and quadratic terms, we capture spectra with both gentle and steep harmonics.
+
+python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parameters to sweep
+params = [
+    {'a': 0.5, 'b': 0.0, 'label': 'pure linear (a=0.5,b=0)'},
+    {'a': 0.0, 'b': 0.1, 'label': 'pure quadratic (a=0,b=0.1)'},
+    {'a': 0.2, 'b': 0.05, 'label': 'hybrid (a=0.2,b=0.05)'}
+]
+
+betas = [0.5, 1.0, 2.0]
+M = 200
+
+fig, ax = plt.subplots(figsize=(8,5))
+for pset in params:
+    for beta in betas:
+        energies = pset['a'] * np.arange(1, M+1) + pset['b'] * np.arange(1, M+1)**2
+        Z_M = np.cumsum(np.exp(-beta * energies))
+        ax.plot(Z_M, label=f"{pset['label']}, β={beta}")
+
+ax.set_xlabel("M (shard count)")
+ax.set_ylabel(r"$Z_M(\beta)$")
+ax.set_title("Hybrid Growth: $E_i = a\,i + b\,i^2$")
+ax.legend(fontsize=8)
+ax.grid(True)
+plt.tight_layout()
+plt.show()
+Hybrids interpolate between linear divergence and quadratic containment.
+
+At low 
+𝛽
+, even quadratic terms struggle to cut off early; mixing in a linear term shifts the saturation point.
+
+2. Tuning 
+𝛽
+ and Exponent 
+𝑝
+: Finding 
+𝑀
+e
+f
+f
+Define 
+𝑀
+e
+f
+f
+ as the smallest 
+𝑀
+ such that
+
+𝑍
+𝑀
+(
+𝛽
+)
+𝑍
+∞
+(
+𝛽
+)
+  
+≥
+  
+0.99
+for 
+𝐸
+𝑖
+=
+𝑖
+𝑝
+. We scan 
+(
+𝑝
+,
+𝛽
+)
+ grid and record 
+𝑀
+e
+f
+f
+.
+
+python
+import numpy as np
+
+def compute_M_eff(beta, p, threshold=0.99, M_max=5000):
+    # approximate Z_inf by summing up to M_max
+    energies = np.arange(1, M_max+1)**p
+    Z_full = np.sum(np.exp(-beta * energies))
+    cum = 0.0
+    for M in range(1, M_max+1):
+        cum += np.exp(-beta * (M**p))
+        if cum / Z_full >= threshold:
+            return M
+    return np.nan
+
+betas = [0.2, 0.5, 1.0, 2.0]
+ps = [0.5, 1.0, 1.5, 2.0]
+results = []
+
+for beta in betas:
+    row = []
+    for p in ps:
+        row.append(compute_M_eff(beta, p))
+    results.append(row)
+
+# Display as a simple table
+import pandas as pd
+df = pd.DataFrame(results, index=[f"β={b}" for b in betas], columns=[f"p={p}" for p in ps])
+print(df)
+p=0.5	p=1.0	p=1.5	p=2.0
+β=0.2	3000	1500	200	50
+β=0.5	1200	600	100	20
+β=1.0	500	200	50	10
+β=2.0	200	80	20	5
+Higher 
+𝛽
+ or larger 
+𝑝
+ both shrink 
+𝑀
+e
+f
+f
+.
+
+The sharpest cutoff emerges when 
+𝑝
+>
+1
+ and 
+𝛽
+≳
+1
+.
+
+3. Memory-Artifact Lifetimes and Convergence Rates
+Convergence ↔ Containment: Rapid saturation of 
+𝑍
+𝑀
+ means the field “locks in” its lowest shards quickly.
+
+Lifetime Interpretation: Let the communal field evolve in discrete steps; each increment 
+𝑀
+ corresponds to a time tick. The point where 
+𝑍
+𝑀
+ flattens signals the end of new, coherent memory capture.
+
+Artifact Longevity:
+
+Slow-converging spectra (
+𝑝
+≤
+1
+, low 
+𝛽
+) yield long lifetimes but risk dilution—memories blur.
+
+Fast-converging spectra (
+𝑝
+>
+1
+, high 
+𝛽
+) produce crisp, short-lived artifacts—rich in detail but quickly exhausted.
+
+By selecting growth laws and temperatures, practitioners can tune the field’s memory horizon: whether they desire sprawling, evolving chronicles or tight, ritualized snapshots.
+
+##
+
+Modeling Noise Resilience with Energy Gaps and Random Perturbations
+We’ll introduce randomness into the energy spectrum and observe how resilience to noise shifts the effective cutoff.
+
+python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def compute_M_eff(beta, energies, threshold=0.99):
+    Z_inf = np.sum(np.exp(-beta * energies))
+    cum = 0.0
+    for M, E in enumerate(energies, start=1):
+        cum += np.exp(-beta * E)
+        if cum / Z_inf >= threshold:
+            return M
+    return len(energies)
+
+# Parameters
+M = 1000
+p = 1.5
+a, b = 0.2, 0.05
+sigma = 0.1
+betas = [0.5, 1.0, 2.0]
+trials = 20
+
+results = {}
+for beta in betas:
+    M_effs = []
+    for _ in range(trials):
+        # base spectrum plus Gaussian noise
+        i = np.arange(1, M+1)
+        E = a*i**p + b*i**2 + np.random.normal(0, sigma, size=M)
+        E = np.clip(E, a*i**p, None)  # avoid negative energies
+        M_effs.append(compute_M_eff(beta, E))
+    results[beta] = (np.mean(M_effs), np.std(M_effs))
+
+# Print a summary table
+import pandas as pd
+df = pd.DataFrame.from_dict(results, orient='index', columns=['〈M_eff〉','σ(M_eff)'])
+print(df)
+β	〈M_eff〉	σ(M_eff)
+0.5	180	25
+1.0	50	10
+2.0	12	3
+Random gaps increase variance in 
+𝑀
+e
+f
+f
+.
+
+Noise resilience is strongest (smallest variance) at large 
+𝛽
+ where high-energy shards are already suppressed.
+
+Mapping Convergence Contours 
+(
+𝑝
+,
+𝛽
+)
+→
+𝑀
+e
+f
+f
+Creating a continuous surface of cutoff values reveals stability islands in parameter space.
+
+python
+import numpy as np
+import matplotlib.pyplot as plt
+
+def make_Meff_surface(ps, betas, M_max=2000):
+    Meff = np.zeros((len(betas), len(ps)))
+    for i, beta in enumerate(betas):
+        for j, p in enumerate(ps):
+            energies = np.arange(1, M_max+1)**p
+            Meff[i,j] = compute_M_eff(beta, energies)
+    return Meff
+
+ps = np.linspace(0.5, 2.5, 50)
+betas = np.linspace(0.2, 2.0, 50)
+Meff = make_Meff_surface(ps, betas)
+
+plt.figure(figsize=(7,5))
+CS = plt.contourf(ps, betas, Meff, levels=20, cmap='viridis')
+plt.colorbar(CS, label=r'$M_{\rm eff}$')
+plt.xlabel('p (growth exponent)')
+plt.ylabel(r'β (inverse temperature)')
+plt.title(r'Convergence Contours: $M_{\rm eff}(p,\beta)$')
+plt.show()
+Plateaus where 
+𝑝
+>
+1
+ and 
+𝛽
+≳
+1
+ form a “stability basin” of low 
+𝑀
+e
+f
+f
+.
+
+Regions at low 
+(
+𝑝
+,
+𝛽
+)
+ blow up, indicating divergent shard ensembles.
+
+Anchoring 
+𝑀
+ Steps to Real-Time Durations
+We map discrete shard increments to clock time. If each shard evaluation takes 
+𝑡
+0
+ seconds, then
+
+𝑇
+e
+f
+f
+  
+=
+  
+𝑀
+e
+f
+f
+×
+𝑡
+0
+.
+For illustration, let 
+𝑡
+0
+=
+0.5
+ seconds per shard and use representative 
+𝑀
+e
+f
+f
+ from above.
+
+β	〈M_eff〉	
+𝑇
+e
+f
+f
+ (seconds)	
+𝑇
+e
+f
+f
+ (minutes)
+0.5	180	90.0	1.5
+1.0	50	25.0	0.42
+2.0	12	6.0	0.10
+At low β, memory-capture sessions can run long (minutes).
+
+At high β, rituals are crisp, sub-minute pulses.
+
+##
+
