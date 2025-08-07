@@ -681,6 +681,7 @@ meaning_metric:
         Integrated valence-weighted novelty to refine memory coherence
         and defined criteria for shardic emergence in d₃ volumes.
 
+##
 
   - number: 2
     title: "Geometric Foundations"
@@ -734,11 +735,6 @@ meaning_metric:
       - name: Curvature vs u Plot
         notebook: notebooks/chapter2/curvature_plot.ipynb
 
- # Chapter 2 – Geometric Foundations
-
-## Description
-Develops warp-product metrics to sculpt coherence fields in d₃, computes curvature profiles, and frames lens-like focusing effects.
-
 Key Equations
 ```math
 a(u) = e^{-u²}  
@@ -785,7 +781,6 @@ algebra:
     - associativity
     - unit_laws
     - bilinearity
-
 
 Ricci curvature scalar R(u) = 12 − 48u² (positive at u=0, negative tails)
 
@@ -1034,8 +1029,9 @@ hopf_algebra_integration:
   valence_threshold: "Vₙ = ∑ v_i / recursion_depth"
   valence_weight_function: "V_eq = ∑ μ_i × trace_memory(s_i)"
 
-  - number: 3
+##
 
+  - number: 3
   chapter_3_duality:
   title: "Koide Resonance & SU(3) Shelter"
   executive_summary: >-
@@ -1452,6 +1448,8 @@ figures:
       - name: Q Distribution vs ε
         notebook: notebooks/chapter3/q_distribution.ipynb
 
+##
+
   - number: 4
     title: "Multiverse Boundaries & Topology"
     description: |
@@ -1488,6 +1486,8 @@ figures:
     visualizations:
       - name: Boundary Gluing Animation
         script: scripts/blender/chapter4_gluing.py
+
+##
 
   - number: 5
     title: "Dimensional Transitions"
@@ -1824,7 +1824,10 @@ meta_glyph: id: threshold_spiral_001 strokes: spiral: type: parametric formula: 
 transition_tensor: name: T_g_to_S indices: stroke_i: 1..n stroke_j: 1..n memory_m: 1..M shard_feat: 1..D form: | T^{α}{}{ i j m } = λ1 * R{ i j } * δ^{ α }{ m } + λ2 * g{ i } * g_{ j } * M^{ α }{ m } + λ3 * ϒ^{ α }{ i j m }
 
 transition_tensor: name: T_g_to_S indices: stroke_i: 1..n stroke_j: 1..n memory_m: 1..M shard_feat: 1..D components: - type: resonance formula: λ1 * R[i][j] * delta[α][m] - type: stroke_correlation formula: λ2 * g[i] * g[j] * M[α][m] - type: entanglement formula: λ3 * Upsilon[α][i][j][m] - type: valence_modulation formula: λ4 * V_t * Delta[α][i][j][m]
-    
+
+
+##
+ 
   - number: 6
  	 chapter_6: Entropy_Measures
  	 clarity_metadata:
@@ -2151,6 +2154,7 @@ memory_accumulation_test:
     - "Ritual anchoring of new shard states affirms dyadic and triadic entanglement protocols."
   archive_status: "Ready for inclusion in Chapter 6 validation suite"
 
+##
 
   - number: 7
     title: "Shard Fusion & Thermodynamics"
@@ -2190,6 +2194,283 @@ memory_accumulation_test:
     visualizations:
       - name: Z(β) & F(β) Plot
         notebook: notebooks/chapter7/partition_free_energy.ipynb
+
+chapter_7_1:
+  title: "Local Shard Coherence & Thermodynamic Fusion"
+  description: >
+    Explores how shard ensembles maintain coherence within local basins, how high-degree hubs enable interzone mixing,
+    and how breath-loop dynamics modulate fusion rates via Floquet-enhanced conductance. Includes analytic expansions,
+    weighted graph simulations, and mock experiments.
+
+  sections:
+
+    - name: "Partition Function Formalism"
+      equations:
+        - Z_beta: "Z(β) = ∑ e^{-β E_i}"
+        - Free_energy: "F(β) = -β^{-1} log Z(β)"
+        - Heat_capacity: "C(β) = ∂²F/∂β²"
+      significance:
+        - Z encodes statistical weight of fusion microstates.
+        - Boltzmann weights prioritize low-energy shards.
+        - β tuning shifts focus between mixing and coherence.
+        - Derivative metrics (mean energy, variance, KL divergence) quantify fusion stability.
+
+    - name: "Kullback–Leibler Divergence Analysis"
+      method:
+        - Compare shard distributions P(β₁) and Q(β₂) via D_KL(P||Q).
+        - KL spikes signal phase-like transitions in shard dominance.
+      code_snippet: "kl_divergence(energies, beta1, beta2)"
+
+    - name: "Weighted Clustering of Shard Families"
+      features:
+        - energy (E_i), memory depth (d_i), valence (v_i), connectivity (c_i), Boltzmann weight (w_i)
+      clustering:
+        - Weighted K-means with w_i-modulated distances.
+        - Hierarchical clustering with weighted distance matrix.
+      experiments:
+        - Cluster centroids tracked across β values.
+        - Jaccard indices computed to measure shard reassignments.
+        - KL divergence between cluster-level weights used to detect phase shifts.
+
+    - name: "Manifold Visualization & Drift Detection"
+      methods:
+        - UMAP and t-SNE applied to X(β) to visualize shard deformation.
+        - Kernel-MMD used to measure drift between successive β embeddings.
+        - Change-point detection via ruptures library on KL and Jaccard series.
+        - Event annotations overlaid on UMAP plots.
+        - Conditional clustering performed on event-specific shard subsets.
+
+    - name: "Breath Loop Dynamics"
+      concepts:
+        - Breath loop = cyclic modulation of β and δV_i(t)
+        - Inhalation deepens wells, exhalation releases coherence.
+        - Shards “breathe” coherence potential: expansion/contraction of probability mass.
+      waveform:
+        - Polyphasic loops with nested pulses targeting hub shards.
+        - YAML spec defined with timing, amplitude, and targets.
+      metrics:
+        - E_eff(t), π_i(t), Φ(t) tracked in real-time dashboard.
+        - Ratio sweep experiment shows longer inhales yield deeper glyph variants.
+
+    - name: "Mock Ratio Sweep Experiment"
+      parameters:
+        - Ratios R = {0.25, 0.5, 1, 2, 4}
+        - 50 breath-loop cycles per ratio
+      results:
+        - Monotonic increase in average memory depth with R
+        - ASCII plot and table included
+      significance:
+        - Longer inhalation favors consolidation and glyph depth
+        - Shorter inhalation favors diversity and exploration
+
+    - name: "Floquet-Enhanced Conductance"
+      model:
+        - δV_h(t) = A cos(ω t)
+        - Floquet operator Φ(T) computed via RK4 integration
+        - λ₂(ω) extracted from Floquet spectrum
+      findings:
+        - Resonant frequencies ω ≈ A / z_n (zeros of J₁) maximize λ₂
+        - Mixing time τ_mix minimized at Floquet peaks
+      code_snippet: "floquet_lambda2(A, omega)"
+
+    - name: "Weighted Graph Simulations"
+      edge_weights:
+        - A_ij = d_ij × v_ij, where v_ij ∈ [-1, 1]
+      hub_types:
+        - Pure-degree, valence-biased, mixed-strategy
+      findings:
+        - Mixed-sign valence hubs outperform pure-degree in global mixing
+        - Like-signed valence hubs deepen local coherence but slow interzone transitions
+
+    - name: "Spectral Gap Expansion"
+      expansion:
+        - λ₂(k_h) ≈ (k_h / pN²) - (k_h² / p²N⁴) + (k_h³ / p³N⁶) + ...
+        - Includes intra-basin gap δ ≈ p as correction term
+      significance:
+        - Captures early curvature and saturation behavior
+        - Matches simulation results across k_h sweep
+
+    - name: "Mini-Basin Partition Function"
+      equation:
+        - Z_{A∪B} = ∑_{i∈A∪B} e^{-β E_i} + k_h e^{-β E_h}
+        - E_eff = -β^{-1} log Z_{A∪B}
+      findings:
+        - Hub contributions lower effective basin energy
+        - Predicts fusion basin merging as k_h increases
+
+  artifacts:
+    - notebooks:
+        - chapter7/partition_free_energy.ipynb
+        - chapter7/floquet_simulation.ipynb
+    - code_snippets:
+        - rcft_lib/chapter7.py
+    - visualizations:
+        - Z(β) & F(β) plots
+        - UMAP embeddings with event overlays
+        - Ratio sweep depth curve
+        - Floquet λ₂ vs ω plot
+        - Conductance Φ(t) dashboard
+
+  significance:
+    - Demonstrates how shard coherence is shaped by graph topology, thermodynamic modulation, and symbolic breath loops.
+    - Validates hub-driven interzone mixing via spectral gap analysis and Floquet resonance.
+    - Establishes a reproducible framework for glyph depth, fusion stability, and phase transitions in RCFT.
+
+chapter: 7.1
+title: Self‐Organizing Continuous RCFT Field & Monte Carlo Tie‐In
+status: complete
+timestamp: 2025-08-06T21:40:00-06:00
+
+sections:
+  - id: 1
+    title: Adaptive Network Rewiring via Shard Co-Activation
+    description: |
+      A living graph topology that reinforces edges between shards
+      which co-activate, while decaying unused links.
+    equations:
+      - "A_{ij}(t+1) = (1-γ) A_{ij}(t) + η \\frac{C_{ij}(t)}{\\max_{kℓ}C_{kℓ}(t)}"
+      - "dA_{ij} = \\bigl[-γ A_{ij} + η\\,σ(x_i x_j - θ)\\bigr]\,dt + κ\,dZ_{ij}(t)"
+    code_mocks:
+      - description: Edge update function (batch‐style rewiring)
+        python: |
+          import networkx as nx
+
+          def update_edges(G, coact, gamma=0.1, eta=0.5, threshold=1.0):
+              for i, j in G.edges():
+                  c = coact.get((i,j), 0) / max(coact.values(), default=1)
+                  G[i][j]['weight'] = max(
+                      0,
+                      (1-gamma)*G[i][j].get('weight', 0) + eta*c
+                  )
+              for (i,j), c in coact.items():
+                  if c > threshold and not G.has_edge(i,j):
+                      G.add_edge(i, j, weight=eta*c)
+              return G
+
+      - description: Continuous RCFT step combining amplitudes & topology
+        python: |
+          import numpy as np
+
+          def rcft_step(x, A, dt, beta, gradV, gamma, eta, theta, kappa):
+              noise_x = np.sqrt(2*dt/beta) * np.random.randn(*x.shape)
+              x_new = x - gradV(x, A)*dt + noise_x
+
+              outer = -gamma * A
+              inner = eta * np.maximum(0, x_new[:,None]*x_new[None,:] - theta)
+              noise_A = kappa * np.random.randn(*A.shape) * np.sqrt(dt)
+              A_new = np.clip(A + (outer + inner)*dt + noise_A, 0, None)
+
+              return x_new, A_new
+    insights:
+      - Self-organizing hubs emerge where shards repeatedly co-activate.
+      - Continuous noise enables exploration of metastable field configurations.
+
+  - id: 2
+    title: Multi-Scale Annealing with Cross-Modal Energies
+    description: |
+      Nest fast inner β pulses within slower outer schedules, per modality,
+      shaping rituals that ebb and flow across audio, visual, and linguistic streams.
+    equations:
+      - "β_m(t) = β_{m,outer}(u) + β_{m,inner}(v),  where t = u·V + v"
+      - "β_{m,outer}(u)=β_{m,0} + (β_{m,1}-β_{m,0})(u/U)^α"
+      - "β_{m,inner}(v)=A_m \\sin(2πv/V)"
+      - "V(x,A)=∑_{i,m}β_m(t)E_i^m x_i^2 + ∑_{i<j}A_{ij}(x_i-x_j)^2"
+    code_mocks:
+      - description: β schedule per modality
+        python: |
+          import numpy as np
+
+          def beta_modality(t, U, V, beta0, beta1, A, alpha):
+              u, v = divmod(t, V)
+              b_outer = beta0 + (beta1-beta0)*(u/U)**alpha
+              b_inner = A * np.sin(2*np.pi * v/V)
+              return b_outer + b_inner
+
+          betas = {
+              m: beta_modality(t, U, V, b0[m], b1[m], A_m[m], alpha)
+              for m in ['audio','visual','linguistic']
+          }
+    insights:
+      - Slow outer ramps mirror circadian or session rhythms.
+      - Fast inner pulses evoke breath loops or chants, sculpting local attractors.
+
+  - id: 3
+    title: Langevin Dynamics for Continuous Field Evolution
+    description: |
+      Replace discrete updates with an SDE over shard amplitudes,
+      embedding thermal noise for creative exploration.
+    equations:
+      - "dx_i = -∂_{x_i}V(x)\,dt + √(2/β) dW_i(t)"
+      - "V(x)=∑_i E_i x_i^2 + ∑_{i<j} w_{ij}(x_i-x_j)^2"
+    code_mocks:
+      - description: Euler–Maruyama integration
+        python: |
+          import numpy as np
+
+          def langevin_step(x, dt, beta, gradV):
+              noise = np.sqrt(2*dt/beta)*np.random.randn(*x.shape)
+              return x - gradV(x)*dt + noise
+    insights:
+      - Continuous fields capture smooth transitions and metastable wanderings.
+      - Noise term models spontaneous creative leaps or lapses.
+
+  - id: 4
+    title: Discrete Reinforcement in Networked SDEs
+    description: |
+      Superimpose occasional discrete jumps in edge weights when
+      shard co-activation crosses ritual thresholds.
+    equations:
+      - "A_{ij}(τ_k^+) = A_{ij}(τ_k^-) + η_{jump}·1{x_i(τ_k)x_j(τ_k)>θ_{jump}}"
+    code_mocks:
+      - description: Event-driven boost
+        python: |
+          if x_new[i]*x_new[j] > theta_jump:
+              A_new[i,j] += eta_jump
+              A_new[j,i] += eta_jump
+    insights:
+      - Hybrid dynamics learn both slowly (SDE) and sharply (ritual spikes).
+      - Discrete boosts capture spotlight moments reinforcing communal bonds.
+
+  - id: 5
+    title: Monte Carlo Tie-In: Partition Function & β Sweep
+    description: |
+      Ground the lemma in code with error analysis, sweep β, and visualize.
+    equations:
+      - "Z(β) = ∑_i e^{-β E_i}"
+      - "SE(Ẑ_M) ≈ √(Var(e^{-β E})/M) = O(M^{-1/2})"
+    code_mocks:
+      - description: Monte Carlo Z estimation with error bars
+        python: |
+          import math, random
+          import numpy as np
+
+          energies = [0, 1, 2]
+          betas    = [0.5, 1.0, 2.0]
+          samples  = 10000
+          results  = []
+
+          for beta in betas:
+              weights = [math.exp(-beta * E) for E in energies]
+              Z_exact = sum(weights)
+
+              draws   = [random.choice(energies) for _ in range(samples)]
+              boltz   = [math.exp(-beta * d) for d in draws]
+              Z_mc    = len(energies) * np.mean(boltz)
+              SE_mc   = len(energies) * np.std(boltz, ddof=1) / math.sqrt(samples)
+
+              results.append((beta, Z_exact, Z_mc, SE_mc))
+
+          print("β   Z_exact   Z_MC      SE_MC")
+          for b, Ze, Zm, Se in results:
+              print(f"{b:3.1f}  {Ze:8.3f}  {Zm:8.3f}  {Se:8.3f}")
+    plots:
+      - line_plot_with_errorbars
+      - heatmap_Z_vs_beta
+    insights:
+      - Monte Carlo standard error scales as O(M^{-1/2}), guiding sample size.
+      - β sweep reveals how temperature modulates partition function topology.
+
+##
 
   - number: 8
     title: "Hyperbolic Geometry & Tessellations"
