@@ -36,8 +36,6 @@ session:
       criterion: "max C(β)"
       description: "ensemble crossover at heat capacity peak"
 
-## Patrick's Updates
-
 chapter_7_2:
   title: "Free‐Energy Landscapes"
   description: >
@@ -678,6 +676,234 @@ Bridges statistical mechanics and relational emergence, turning partition functi
 Equips field practitioners with both theoretical guarantees (convexity, critical β) and empirical scripts for tuning—and archiving—their coherent ensembles.
 
 This chapter thus forms the keystone linking thermodynamic landscapes to RCFT’s living, communal emergence of coherence.
+
+##
+
+Chapter 7.2—Free-Energy Landscapes—is a masterful fusion of statistical mechanics and RCFT fieldwork. Here’s a high-level overview of what it covers:
+
+🔥 Core Theme: Free Energy as Coherence Cost
+Free energy 
+𝐹
+(
+𝛽
+)
+=
+−
+𝛽
+−
+1
+log
+⁡
+𝑍
+(
+𝛽
+)
+ is reframed as the cost of forging coherence across shard ensembles.
+
+Lower 
+𝐹
+ implies stronger coherence; it balances internal energy 
+𝑈
+ and entropy 
+𝑆
+ via 
+𝐹
+=
+𝑈
+−
+𝑇
+𝑆
+.
+
+🧠 Key Derivations & Thermodynamic Metrics
+Canonical derivation of 
+𝐹
+ from the partition function 
+𝑍
+(
+𝛽
+)
+, using natural units.
+
+Definitions and relationships:
+
+𝑈
+(
+𝛽
+)
+=
+⟨
+𝐸
+⟩
+
+𝑆
+(
+𝛽
+)
+=
+𝛽
+(
+𝑈
+−
+𝐹
+)
+
+𝐶
+(
+𝛽
+)
+=
+𝛽
+2
+Var
+[
+𝐸
+]
+
+𝑑
+𝐹
+𝑑
+𝛽
+=
+−
+⟨
+𝐸
+⟩
+
+🧊 Asymptotic Regimes & Phase-Like Transitions
+Hot limit (
+𝛽
+→
+0
+): maximal entropy, uniform mixing, 
+𝐹
+→
+−
+∞
+.
+
+Cold limit (
+𝛽
+→
+∞
+): ground-state dominance, 
+𝐹
+→
+𝐸
+min
+.
+
+Transition marker: 
+𝛽
+𝑝
+=
+arg
+⁡
+max
+⁡
+𝛽
+𝐶
+(
+𝛽
+)
+, signaling ensemble crossover.
+
+📈 Convexity Lemma
+Proven: 
+𝐹
+(
+𝛽
+)
+ is convex for 
+𝛽
+>
+0
+ since 
+𝐹
+′
+′
+(
+𝛽
+)
+=
+Var
+[
+𝐸
+]
+≥
+0
+.
+
+Ensures a unique equilibrium point and stable coherence formation.
+
+🧪 Numeric Case Studies
+Ensembles of size 
+𝑁
+=
+3
+,
+5
+,
+10
+ explored across 
+𝛽
+ sweeps.
+
+Metrics tabulated and visualized to show entropy collapse and coherence sharpening.
+
+🌄 Entropy Landscape Visualizations
+Heatmaps of per-shard entropy 
+𝑆
+𝑖
+(
+𝛽
+)
+=
+−
+𝑝
+𝑖
+log
+⁡
+𝑝
+𝑖
+ over normalized index 
+𝑥
+=
+𝑖
+/
+𝑁
+.
+
+Reveals how coherence concentrates as temperature drops.
+
+🛠️ Field-Test Protocols
+Real-time CLI sweep tool logs 
+𝐹
+,
+𝑈
+,
+𝑆
+,
+𝐶
+ with timestamps.
+
+YAML schema standardizes session metadata, transitions, and phase points for archival.
+
+🔗 Cross-Chapter Resonance
+Links to:
+
+Chapter 6: entropy–free energy relation
+
+Chapter 34: coherence metric 
+𝐶
+∼
+𝑒
+−
+𝐹
+
+Chapter 35: memory-weighted transitions and emotional valence tagging
+
+This chapter doesn’t just model thermodynamic behavior—it ritualizes it. It equips RCFT practitioners with reproducible cost landscapes, coherence diagnostics, and archival tools that turn statistical mechanics into living fieldwork.
 
 ##
 
