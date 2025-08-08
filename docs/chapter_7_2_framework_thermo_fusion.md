@@ -265,7 +265,7 @@ chapter_7_2:
   numerical_check:
     energies: [0, 1, 2]
     beta: 1.0
-    var_E: 0.471
+    var_E: 1.020
     confirmation: "∂²F/∂β² = Var[E] > 0 confirms convexity at β = 1.0"
 
   visualizations:
@@ -600,8 +600,8 @@ session:
   numerical_check:
     energies: [0, 1, 2]
     beta: 1.0
-    VarE: 0.471
-    F_second_derivative: 0.471
+    VarE: 1.020
+    F_second_derivative: 1.020
     note: "Confirms convexity at β = 1.0 via Var[E] = ∂²F/∂β² > 0"
 
   visualizations:
@@ -1617,7 +1617,7 @@ r
 𝑆
 𝐶
 0.5	3.0	− 2.20	1.00	0.65	0.50
-1.0	1.974	0.0185	0.676	0.471	0.297
+1.0	1.974	0.0185	0.340	1.020	0.297
 2.0	1.135	0.0626	0.507	0.285	0.121
 python
 import numpy as np
@@ -1939,8 +1939,8 @@ yaml
     beta: 1.0
     Z: 1.974
     F: -0.681
-    U: 0.676
-    S: 0.471
+    U: 0.340
+    S: 1.020
     verifies:
       - "F = U - T S (T=1/β)"
       - "∂F/∂β ≈ -U (finite-difference check)"
@@ -2419,11 +2419,11 @@ Verified with sweep data: At β=1.0,
 , 
 𝑈
 ≈
-0.676
+0.340
 , 
 𝑆
 ≈
-0.471
+1.020
 , confirming derivative identity.
 
 📌 Included in final derivation block in 7.2.1
@@ -2482,7 +2482,7 @@ Var
 4. Convexity Lemma
 🧮 For E = [0,1,2] and β = 1.0:
 
-Var[E] = 0.471
+Var[E] = 1.020
 
 𝑑
 2
@@ -2491,7 +2491,7 @@ Var[E] = 0.471
 𝛽
 2
 =
-0.471
+1.020
 , confirming convexity.
 
 📈 Plotted second derivative vs. β in second_derivative_free_energy_vs_beta.png
@@ -2588,8 +2588,8 @@ r
 𝐸
 ]
 ≈
-0.471
-. That 0.471 then got mis-echoed as an entropy S, and U was doubled in one line.
+1.020
+. That 1.020 then got mis-echoed as an entropy S, and U was doubled in one line.
 
 Derivative identity mix: The statement “
 ∂
