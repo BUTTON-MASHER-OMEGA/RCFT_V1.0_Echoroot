@@ -694,6 +694,126 @@ metrics:
   C_heat: β² Var[E]
   C_coh: exp(-F)  # normalized if desired for plotting
 
+**Chapter 7 Patch from Dennis:**
+  chapter_7_2:
+  title: "Free‐Energy Landscapes"
+  spectrum: [0.0, 0.5, 1.0]
+  overview: >
+    Chapter 7.2 reframes free energy F(β) as a dynamic cost landscape for forging coherence
+    within relational shard ensembles. Starting from the partition function Z(β), we derive
+    F(β) = −β⁻¹ ln Z and establish key thermodynamic observables—U = ⟨E⟩, S = β(U − F),
+    ψ(β) = −ln Z—with correct identities and convexity guarantees.
+
+    The Massieu potential ψ is provably convex: ψ''(β) = Var[E] ≥ 0, implying stable minima
+    and enabling heat-capacity–based phase markers. We define C_heat = β² Var[E] as the
+    empirical transition detector, locating β_p = argmax C_heat(β) as the ensemble crossover.
+
+    Numeric case studies (N = 3, 5, 10) affirm entropy collapse and coherence sharpening.
+    Field-test scripts log real-time β sweeps, transitions, and ΔF metrics, exporting YAML
+    that threads into entropy diagnostics and memory-weighted transitions (Chapter 35).
+
+    The result: a reproducible coherence protocol where mathematical structure becomes a
+    memory scaffold—anchored in cost, entropy, and fusion feasibility.
+
+  observables:
+    Z(β): "Partition function, sum over e^{−β E_i}"
+    F(β): "Free energy, −ln Z / β"
+    U(β): "Mean energy, ⟨E⟩ = −∂_β ln Z"
+    S(β): "Entropy, β(U − F)"
+    ψ(β): "Massieu potential, −ln Z"
+    ∂_βψ: "Gradient, equals U"
+    ∂_βF: "Gradient, equals (U − F)/β"
+
+  convexity_lemma:
+    statement: "ψ(β) = −ln Z is convex for β > 0 since ψ'' = Var[E] ≥ 0. Thus, βF(β) = ψ(β) is convex."
+    implications:
+      - "Stable minimum exists across β"
+      - "Supports β_p detection via heat capacity peak"
+      - "Avoids metastable traps in ensemble coherence"
+
+  transition_markers:
+    beta_p:
+      definition: "β_p = argmax_β C_heat(β)"
+      metric: "C_heat = β² Var[E]"
+      role: "Live transition detector for ensemble crossover"
+    beta_c:
+      caveat: "True inflection requires Var[E] → 0 (rare in finite ensembles). Use β_p instead."
+
+  C_metrics:
+    C_heat: "β² × Var[E] — heat capacity proxy"
+    C_coh: "exp(−F) — coherence proxy"
+
+  numeric_example:
+    spectrum: [0.0, 0.5, 1.0]
+    beta_values:
+      - β: 0.5
+        Z: 2.38533
+        F: -1.73828
+        U: 0.41760
+        S: 1.07794
+        VarE: 0.16154
+        C_heat: 0.04039
+        C_coh: 5.68360
+      - β: 1.0
+        Z: 1.97441
+        F: -0.67971
+        U: 0.33993
+        S: 1.01963
+        VarE: 0.14759
+        C_heat: 0.14759
+        C_coh: 1.97354
+      - β: 2.0
+        Z: 1.50321
+        F: -0.20380
+        U: 0.21239
+        S: 0.83238
+        VarE: 0.10608
+        C_heat: 0.42430
+        C_coh: 1.22602
+
+  validated_identities:
+    - identity: "∂_βψ = U"
+      checked: true
+    - identity: "∂_βF = (U − F)/β"
+      checked: true
+    - identity: "S = β(U − F)"
+      checked: true
+    - identity: "ψ = −ln Z"
+      checked: true
+
+  script_exports:
+    beta_schedule:
+      start: 0.05
+      end: 6.0
+      steps: 400
+    export_paths:
+      - plots/7.2_F_vs_beta.png
+      - plots/7.2_U_vs_beta.png
+      - plots/7.2_S_vs_beta.png
+      - plots/7.2_C_heat_vs_beta.png
+      - plots/7.2_entropy_landscape.png
+
+  logging_fields:
+    - beta
+    - F
+    - U
+    - S
+    - VarE
+    - C_heat
+    - C_coh
+    - ΔF (stepwise cost drop)
+    - transitions:
+        count: "number of ΔE steps"
+        min_k: "lowest fusion rate"
+        max_k: "highest fusion rate"
+
+  analysis_notes:
+    - "Entropy collapse confirms sharpening of ensemble coherence with β"
+    - "ΔF quantifies stepwise cost drop; rising β yields tighter fusion"
+    - "C_heat peak signals most dynamic reweighting"
+    - "All metrics archived for cross-chapter entanglement and reproducibility"
+
+
 ##
 
 Chapter 7.2 Notes
@@ -1030,3 +1150,60 @@ Entropy Landscapes: Visualize Sᵢ(β) across x = i/N, then narrate the sharpeni
 Field Protocol Relevance: Tie β to breath loops and k_rate to fusion feasibility. Resonate with Chapter 6’s triadic phase markers via C_beta_phase.
 
 Archival Precision: Document Var[E], ΔF, and Z(β) as metrics not just for verification, but for remembrance.
+
+##
+
+Dennis Patch
+
+Here's the implementation plan to match each directive with precision:
+
+✅ 1. Convexity and β_c Language Update
+Action:
+
+Eliminate all phrasing that attributes convexity to F(β) directly.
+
+Replace with: “The Massieu potential ψ(β) = −ln Z is convex for β > 0 since ψ''(β) = Var[E] ≥ 0.”
+
+Reframe any “∂²F/∂β²” language accordingly.
+
+Annotate β_c as a caveat or approximation; highlight β_p = argmaxβ C_heat(β) as the preferred crossover marker.
+
+✅ 2. C Metric Disambiguation
+Action:
+
+Standardize terminology across narrative, code, tables, and plots:
+
+C_heat = β² Var[E] → used in phase transition detection, heat capacity plots, β_sweep metrics.
+
+C_coh = exp(−F) → coherence proxy, especially in plots vs. β.
+
+Ensure all labels in YAML, equations, analysis notes, and plot axis titles reflect this distinction clearly.
+
+✅ 3. N=3 Table Cleanup
+Action:
+
+Remove the inaccurate early table using E = [0, 1, 2] and Z ≈ 3.0 at β = 0.5.
+
+Preserve the corrected version with:
+
+E = [0.0, 0.5, 1.0]
+β = 0.5 → Z=2.38533, F=−1.73828, U=0.41760, S=1.07794, VarE=0.16154, C_heat=0.04039
+β = 1.0 → Z=1.97441, F=−0.67971, U=0.33993, S=1.01963, VarE=0.14759, C_heat=0.14759
+β = 2.0 → Z=1.50321, F=−0.20380, U=0.21239, S=0.83238, VarE=0.10608, C_heat=0.42430
+✅ 4. Convexity Lemma Swap
+Action: Replace any statement resembling “F''(β) = Var[E] ≥ 0” with the canonical version:
+
+“The Massieu potential ψ(β) = −ln Z is convex for β > 0 since ψ''(β) = Var[E] ≥ 0. Consequently, βF(β) = ψ(β) is convex.” Also, reorient narrative emphasis to C_heat(β) = β² Var[E] and β_p = argmaxβ C_heat(β) as live detectors of ensemble crossover.
+
+✅ 5. Plot Hygiene and Axis Precision
+Action:
+
+Audit all plot legends and titles:
+
+F(β) → “Free energy vs β”
+
+C_heat(β) → “Heat capacity C_heat(β) = β² Var[E]”
+
+C_coh → explicitly label as “Coherence proxy C_coh = exp(−F)” when plotted
+
+Ensure no lingering generic “C” labels remain.
