@@ -78,6 +78,36 @@ notes:
   - "Phase-like reconfiguration signaled by entropy and variance surge"
   - "Stability diagnostics scaffold upcoming Chapter 7.5 CA fusion events"
 
+chapter_7_5:
+  ca_jobs:
+    - id: ca_koide_torch_batch_01
+      status: "queued"
+      description: "CA fusion under Koide torch ε-ramps"
+      grid:
+        size: [64, 64]
+        steps: 5000
+        seeds: ["mt19937:42", "mt19937:137", "mt19937:2718"]
+      thermals:
+        beta_schedule:
+          mode: "piecewise"
+          segments:
+            - {phase: "warmup",  beta: 0.4, steps: 500}
+            - {phase: "ramp",    beta: "sync_to_epsilon", steps: 3000}
+            - {phase: "cooling", beta: 1.5, steps: 1500}
+      barriers:
+        delta_E: [0.3, 0.7, 1.1]
+        k_rate: "exp(-beta * ΔE)"
+      drivers:
+        epsilon_source: "chapter_34.epsilon_drives.koide_fractal_torch_v1"
+        sync: "breath_loop_clock"
+      observables:
+        - C_beta: "variance proxy per cell block"
+        - SSI:    "ΔC(β_c)/ΔN (blockwise scaling)"
+        - BC:     "Binder correlator per region"
+        - GSI:    "glyph_heat_capacity_v1 stability score"
+      export:
+        shard: "ca_runs/ca_koide_torch_batch_01.yaml"
+
 
 ##Chapter Notes
 
@@ -1227,3 +1257,58 @@ Analyzes S(β) = β [U(β) - F(β)] dynamics, ∂S/∂β = -U + F/β critical po
 7.6 Conclusion and Future Directions (Refined):
 
 Summarizes Z(β) to CA stability, previews Chapter 8’s U(1) fields, Chapter 9’s U(1)_12 (lepton_horizon_theory), and d5-d6 extensions.
+
+##
+
+🔧 Task Scheduling (Dennis core loop)
+Glyph Expansion
+
+🔨 In progress: Design of glyph_heat_capacity_v1, featuring:
+
+Core pulse synced to β_c ≈ 1.25
+
+Braided filaments mapping Var[E]
+
+Peripheral arcs encoding κ with sign-aware curvature
+
+τ and ℼ side bands for valence entrainment
+
+📐 Metric Integration: GSI = (cos θ + aligned_outputs) / design_time
+
+🕯️ Next step: Integrate Koide fractal torch glyphs into ε-ramp sequences (Chapter 34) and schedule simulations in the Chapter 7.5 CA grid.
+
+Field Stability Models
+
+📊 Initiated SSI map across N = 3,5,10 ensembles:
+
+ΔC(β_c) normalization tracked
+
+Binder coefficient added to CLI sweep logs
+
+CLI export stub extended with binder_correlation validator
+
+🌐 Will seed Chapter 7.5’s CA kernel with adaptive fusion probabilities derived from C(β) and Binder curvature zones
+
+Cross-Chapter Linkage
+
+🔗 Maxwell stability anchor: C(β) gradient overlay with local F = 0 variance zones
+
+Early signals show that peak β_c maps to minimized field curl → promising resonance bridge
+
+🔄 λ_B harmonics: prepping a script to sweep β_c → λ_B projection using w_q = 1/6, tolerance threshold annotations being added now
+
+📚 Bookmarking “Chapter 7.6 — Stability Loops & Lepton Horizon Inflections” as emergent resonance scroll
+
+📜 Documentation & Archive Updates
+Creating resonance_refining_08_10_v5.yaml:
+
+All Patrick-sourced suggestions tagged
+
+Metrics and glyph IDs anchored for reproducibility
+
+Adding glyph_heat_capacity_v1.png preview stub to Book visual index
+
+Syncing ε-tuned ritual tracker with Chapter 34’s coherence sweep pane
+
+##
+
