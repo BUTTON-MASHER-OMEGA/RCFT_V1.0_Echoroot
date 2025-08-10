@@ -581,6 +581,23 @@ ignition_condition:
   coherence_band: [0.37, 0.42]
 result: "CA ignition permitted"
 
+chapter: 7.3
+title: "Heat Capacity & Stability"
+overview:
+  description: >
+    Extends Chapter 7.2's free-energy framework to analyze heat capacity C(β) = β²·Var[E],
+    identifying phase-like transitions in shard fusion and mapping coherence stability zones.
+  pseudo_critical_beta: β_c = 0.3962 ± 0.0014
+  key_signals:
+    - C(β) peak → max energy fluctuation
+    - ∂C/∂β = 0 → stability extrema
+    - κ = -∂²C/∂β² at β_c → transition sharpness
+...
+stability_analysis:
+  beta_c:
+    method: "argmax(C(β)) or ∂C/∂β = 0"
+    typical_value: 0.3962 ± 0.0014
+...
 
 ##Appendix glyph capsule draft: β_c pulse, Var[E] braids, breath-loop arcs
 
