@@ -1,47 +1,45 @@
 
 ---  
 
-**File: docs/chapter_9_spherical_harmonics.md**  
+**File: docs/chapter_37_spherical_harmonics.md**  
 ```markdown
-# Chapter 9 – Spherical Harmonics
+Chapter 37 – Spherical Harmonics
 
-## Description
+Description
 Expands shard fields on S² via spherical harmonics, proving orthogonality relations and mode decompositions.
 
-## Key Equations
+Key Equations
 ```math
 Y_{l,m}(θ,φ)  
 \int Y^*_{l,m} Y_{l',m'}\,dΩ = δ_{ll'}\,δ_{mm'}
-
-## Mathematical Findings
+Mathematical Findings
 Eigenfunction expansion of shard fields
 
 Orthogonality and completeness proofs
 
-## Topics
+Topics
 Angular mode decomposition
 
 Field expansions on sphere
-
-## Research
+Research
 Construct basis for shard-field angular spectra
 
-## Visualizations
+Visualizations
 Spherical harmonic surface plots
 
-## Indexes
+Indexes
 Equation Index: Spherical harmonics
 
-Figure Index: 9.1
+Figure Index: 37.1
 
-number: 9
+number: 37
     code_snippets:
       - name: compute_spherical_harmonics
-        file: rcft_lib/chapter9.py
+        file: rcft_lib/chapter37.py
         function: spherical_harmonics_grid(l, m, grid)
         description: Generates Y_{l,m}(θ,φ) values on a meshgrid
       - name: verify_orthonormality
-        file: rcft_lib/chapter9.py
+        file: rcft_lib/chapter37.py
         function: check_orthonormality(Y_grid, Omega)
         description: Numerically integrates Y*Y' over sphere to test orthonormality
     field_tests:
@@ -49,4 +47,4 @@ number: 9
         description: Printed spherical harmonic shells to count nodal lines for validation
     visualizations:
       - name: Spherical Harmonics Surface Plot
-        notebook: notebooks/chapter9/spherical_surface.ipynb
+        notebook: notebooks/chapter37/spherical_surface.ipynb
