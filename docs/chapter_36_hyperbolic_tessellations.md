@@ -1,9 +1,9 @@
 
 ---  
 
-**File: docs/chapter_8_hyperbolic_tessellations.md**  
+**File: docs/chapter_36_hyperbolic_tessellations.md**  
 ```markdown
-# Chapter 8 – Hyperbolic Geometry & Tessellations
+# Chapter 36 – Hyperbolic Geometry & Tessellations
 
 ## Description
 Maps coherence cells onto hyperbolic tessellations, computes cell areas and geodesic decay rates in the Poincaré disk.
@@ -33,15 +33,15 @@ Visualizations
 {7,3} tessellation diagram
 
 ## Indexes
-Figure Index: 8.1, 8.2
+Figure Index: 36.1, 36.2
 
 code_snippets:
       - name: generate_hyperbolic_tessellation
-        file: rcft_lib/chapter8.py
+        file: rcft_lib/chapter36.py
         function: generate_tessellation(p, q, depth)
         description: Generates node and edge lists for {p,q} tessellations
       - name: export_tessellation_json
-        file: rcft_lib/chapter8.py
+        file: rcft_lib/chapter36.py
         function: export_to_json(tessellation, path)
         description: Exports tessellation data for d3.js live visualization
     numeric_tables:
@@ -55,4 +55,4 @@ code_snippets:
         description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
     visualizations:
       - name: Tessellation Diagram
-        notebook: notebooks/chapter8/tessellation_plot.ipynb
+        notebook: notebooks/chapter36/tessellation_plot.ipynb
