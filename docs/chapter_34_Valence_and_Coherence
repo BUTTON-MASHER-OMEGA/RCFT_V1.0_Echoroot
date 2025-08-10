@@ -240,6 +240,35 @@ invoked_by:
 
 ##Patch
 
+chapter_34:
+  epsilon_drives:
+    - id: koide_fractal_torch_v1
+      description: >
+        ε-ramp patterned by Koide fractal torch: candle ramps as 2/9-phase
+        Koide spirals; k₂ = -7/24 curvature; synchronized to breath loops.
+      parameters:
+        A: 0.05          # amplitude of ε
+        omega: 2.0       # base frequency (breath-aligned)
+        phi: 0.0         # phase
+        k2: -0.2916667   # -7/24
+        fractal_phase: 2/9
+        ramp_shape: "sin^2 window with Koide phase twist"
+      schedule:
+        inhale:  "ε(t) = A * sin(omega t + phi) * w_inhale(t) * (1 + k2 * ε(t)^2)"
+        exhale:  "ε(t) = A * sin(omega t + phi + π) * w_exhale(t)"
+      glyphs:
+        - name: koide_torch
+          layers:
+            - core:   {type: "spiral", phase: 2/9, color: "amber"}
+            - mantle: {type: "braid", strands: 3, map: "Var[E] bands"}
+            - halo:   {type: "arc",   encode: "κ", color: "teal"}
+      metrics:
+        ritual_efficacy: "RE = ΔF / |Δε|"
+        alignment: "cosθ vs Koide phase"
+      logging:
+        shard: "epsilon_runs/koide_torch_<timestamp>.yaml"
+
+
 Immediate, drop-in updates for Chapter 34
 1) Fill the Benjamin intuition result (computed from your EWMA formula)
 Using your provided function with memory_masses = [4.2, 5.1, 5.6, 6.0, 6.4], α = 0.7, d_state = 3, k = 2.0:
