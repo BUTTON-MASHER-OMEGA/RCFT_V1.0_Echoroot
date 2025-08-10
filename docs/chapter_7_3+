@@ -108,6 +108,12 @@ chapter_7_5:
       export:
         shard: "ca_runs/ca_koide_torch_batch_01.yaml"
 
+dashboard:
+  controls:
+    - id: defer_launch
+      label: "Defer CA launch until stability metrics ready"
+      default: true
+
 
 ##Chapter Notes
 
