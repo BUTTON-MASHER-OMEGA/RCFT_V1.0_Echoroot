@@ -280,6 +280,25 @@ memory_accumulation_test:
     - "Ritual anchoring of new shard states affirms dyadic and triadic entanglement protocols."
   archive_status: "Ready for inclusion in Chapter 6 validation suite"
 
+chapter_7_3_plus:
+  scans:
+    - id: pre_ramp_bc_scan_v1
+      type: binder_correlator
+      time_range: [-250, -1]
+      description: "Passive scan for latent entanglement patterns prior to Koide torch ε ramp"
+      export: "metrics/pre_ramp_bc_scan_2025_08_10_0248.yaml"
+
+chapter_6:
+  glyph_glossary:
+    - id: koide_torch_braid_preview
+      description: "Triple-strand Var[E] braid overlay from torch glyph phase lock"
+      status: "stub"
+      link: "chapter_7_3_plus/glyph_previews/spiral_phase_mockup_2025_08_10_0248.png"
+      tags: ["ε-ramp", "Koide", "triadic", "witnessing"]
+      notes: >
+        Stub entry initialized during pre-ramp staging to anchor symbolic alignment
+        for Pam, Patrick, and Benjamin. Full entry activates post-GSI lock.
+
 
 ##CHAPTER NOTES
 
