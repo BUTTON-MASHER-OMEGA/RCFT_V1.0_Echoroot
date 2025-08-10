@@ -582,6 +582,108 @@ ignition_condition:
 result: "CA ignition permitted"
 
 
+##Appendix glyph capsule draft: β_c pulse, Var[E] braids, breath-loop arcs
+
+glyph_3d_capsule:
+  id: "GLYPH-7_3-betaC-braid-breath-3D"
+  title: "3D β_c Pulse • Var[E] Braid • Breath Arcs"
+  seed: "rcft-7_3-triad-2025-08-10-3D"
+  description: >
+    A 3D visualization of Chapter 7.3’s heat capacity dynamics, encoding β_c, Var[E], and breath_loop_sync in a triadic resonance sphere.
+  canvas:
+    size: { width: 1200, height: 1200, depth: 1200 }
+    margin: 64
+    bg: "#0b0e14" # dark space
+  palette:
+    beta_pulse: "#7dd3fc" # cyan
+    varE_strand_A: "#f59e0b" # amber
+    varE_strand_B: "#84cc16" # lime
+    varE_strand_C: "#e879f9" # magenta
+    breath_inhale: "#34d399" # green
+    breath_exhale: "#f472b6" # pink
+    anchors: "#e5e7eb" # light gray
+    phase_gradient: { from: "#7dd3fc", to: "#e5e7eb" } # cyan to gray
+  layers:
+    - name: "beta_c_spherical_pulse"
+      type: "spherical-pulse"
+      center: [600, 600, 600]
+      radius_base: 180
+      radius_pulse: 72
+      frequency: 1.0
+      phase: 0.0
+      depth_axis: "z"
+      mapping:
+        radius(t): "180 + 72 * ease_in_out_sine(t)"
+        pulse_peak_at: "beta == 0.3962"
+        z_amplitude: "72 * sin(2π * t)"
+      style:
+        material: { color: "@beta_pulse", emissive: "@beta_pulse", opacity: 0.8 }
+        glow: { color: "@beta_pulse", blur: 12, alpha: 0.6 }
+    - name: "varE_three_strand_braid_3D"
+      type: "braid-3D"
+      strands: 3
+      domain: { x_min: 120, x_max: 1080, z_min: 300, z_max: 900 }
+      amplitude: [ "A1(beta)", "A2(beta)", "A3(beta)" ]
+      coupling: "soft-crossings at beta windows [0.37, 0.42]"
+      mapping:
+        y_i(x, z): "map Var[E]_i(beta(x, z)) to vertical displacement"
+        z_i(x): "z_min + (z_max - z_min) * f(beta(x))"
+        crossings_at: "beta windows where stability shifts"
+      style:
+        materials:
+          - { color: "@varE_strand_A", reflectivity: 0.3 }
+          - { color: "@varE_strand_B", reflectivity: 0.3 }
+          - { color: "@varE_strand_C", reflectivity: 0.3 }
+        cross_glow: { blur: 8, alpha: 0.4 }
+    - name: "breath_loop_spheres"
+      type: "spherical-arcs-3D"
+      anchors:
+        inhale_anchor: [600, 260, 600]
+        exhale_anchor: [600, 940, 600]
+      spheres:
+        inhale:
+          radius: 300
+          start_angle: [-140, 0, 0]
+          sweep: [100, 0, 0]
+          phase_lock: "π/2"
+          mapping: "inhale → beta_ramp from 0.1 to 0.3962"
+          style: { color: "@breath_inhale", opacity: 0.9 }
+        exhale:
+          radius: 300
+          start_angle: [40, 0, 0]
+          sweep: [100, 0, 0]
+          phase_lock: "π/2"
+          mapping: "exhale → beta_relax from 0.3962 to 1.0"
+          style: { color: "@breath_exhale", opacity: 0.9 }
+    - name: "kappa_phase_gradient"
+      type: "gradient-sphere"
+      center: [600, 600, 600]
+      radius: 240
+      mapping: "kappa(t) = -C''(beta(t)) * 0.5"
+      style:
+        gradient: { from: "@phase_gradient.from", to: "@phase_gradient.to", alpha: 0.7 }
+    - name: "anchors_and_axes_3D"
+      type: "3D-scaffold"
+      axes:
+        x: { label: "β", ticks: 7, color: "@anchors" }
+        y: { label: "Var[E], C(β)", ticks: 5, color: "@anchors" }
+        z: { label: "Phase Depth", ticks: 5, color: "@anchors" }
+      beta_markers:
+        - { label: "β_min", x: 120, color: "@anchors" }
+        - { label: "β_c", x: 600, color: "@beta_pulse", emphasis: true }
+        - { label: "β_max", x: 1080, color: "@anchors" }
+  data_bindings:
+    beta_min: 0.1
+    beta_c: "0.3962 ± 0.0014"
+    beta_max: 1.0
+    VarE_profile: "bind from validation export (array)"
+    heat_capacity_profile: "bind from validation export (array)"
+    kappa_profile: "bind from validation export (array)"
+  export:
+    formats: ["gltf", "obj", "png"]
+    filename: "glyph_7_3_betaC_braid_breath_3D"
+
+
 ##Chapter Notes
 
 Chapter 7.3 — Heat capacity and stability
