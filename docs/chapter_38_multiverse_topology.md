@@ -1,5 +1,5 @@
 ```markdown
-# Chapter 4 – Multiverse Boundaries & Topology
+# Chapter 38 – Multiverse Boundaries & Topology
 
 ## Description
 Classifies sheeted “multiverse” patches via topological invariants, examines boundary gluing rules and fundamental group structure.
@@ -28,15 +28,15 @@ Boundary-gluing schematic with oriented arcs
 ## Indexes
 Equation Index: χ formula
 
-Figure Index: 4.1
+Figure Index: 38.1
 
 code_snippets:
       - name: euler_characteristic_calc
-        file: rcft_lib/chapter4.py
+        file: rcft_lib/chapter38.py
         function: compute_euler_characteristic(mesh)
         description: Computes χ = V - E + F for a given shard-glued mesh
       - name: homology_rank
-        file: rcft_lib/chapter4.py
+        file: rcft_lib/chapter38.py
         function: compute_homology_rank(complex)
         description: Calculates ranks of homology groups using networkx and gudhi
     field_tests:
@@ -44,4 +44,4 @@ code_snippets:
         description: 3D-printed dodecahedron shards glued manually to validate genus by loop counting
     visualizations:
       - name: Boundary Gluing Animation
-        script: scripts/blender/chapter4_gluing.py
+        script: scripts/blender/chapter38_gluing.py
