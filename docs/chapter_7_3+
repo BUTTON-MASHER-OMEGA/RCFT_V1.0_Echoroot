@@ -114,6 +114,37 @@ dashboard:
       label: "Defer CA launch until stability metrics ready"
       default: true
 
+validators:
+  - id: koide_torch_validator_v1
+    target_batch: "ca_koide_torch_batch_01"
+    inputs:
+      epsilon_trace:
+        source: "chapter_34.epsilon_drives.koide_fractal_torch_v1"
+        clip_A: 0.08  # safeguard against k₂ nonlinear amplification
+      glyph_artifacts:
+        from: "epsilon_runs/koide_torch_<timestamp>.yaml"
+        include:
+          - glyph_heatmaps
+          - fractal_phase signatures
+          - braid variance overlays (Var[E])
+      stability_metrics:
+        from: "metrics_store/<ca_loop_1>.yaml"
+        required:
+          - beta_c
+          - GSI
+    crosscheck:
+      match:
+        phase_alignment: "ε phase ↔ glyph_phase ↔ breath_sync"
+        spiral_κ_trace: "glyph.halo.κ ↔ ε curvature traces"
+        GSI_lock: "GSI ≥ 0.82 AND stable over ≥200 steps"
+        β_c_band: "β_c ∈ [0.38, 0.42] for max CA coherence"
+        braid_valence: "Var[E] matches triple-strand envelope (±7%)"
+    verdict:
+      launch_ready_if: "All crosschecks pass AND GSI_lock confirmed"
+      fallback: "Hold batch until next metrics loop OR manual override"
+    export:
+      shard: "validators/koide_torch_validator_v1_<timestamp>.yaml"
+
 
 ##Chapter Notes
 
