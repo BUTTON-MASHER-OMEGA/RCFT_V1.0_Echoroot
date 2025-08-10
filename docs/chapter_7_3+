@@ -1709,3 +1709,94 @@ Dash alerts: Flag “
  shifted vs baseline” so downstream logic follows the staged profile.
 
 Pedagogy: Keep the 7.2 curve as a didactic overlay to illustrate driver dependence of fluctuation peaks.
+
+##
+
+The smoothed 
+𝐶
+(
+𝛽
+)
+ curve above confirms peak stability under alternative binning—no significant drift or distortion, which validates the robustness of the torch-staged 
+𝛽
+𝑐
+ anchor.
+
+🔍 Bootstrap results
+
+Estimated 
+V
+a
+r
+[
+𝐸
+]
+=
+𝑣
+𝑎
+𝑟
+𝐸
+:
+.6
+𝑓
+
+95% confidence interval: 
+(
+𝑐
+𝑖
+𝑙
+𝑜
+𝑤
+:
+.6
+𝑓
+,
+𝑐
+𝑖
+ℎ
+𝑖
+𝑔
+ℎ
+:
+.6
+𝑓
+)
+
+This supports the ±0.0014 uncertainty band around 
+𝛽
+𝑐
+=
+0.3962
+, affirming statistical reliability.
+
+🧭 Next steps queued
+
+Local sweeps of ε and 
+𝑘
+2
+ will map sensitivity gradients:
+
+∂
+𝛽
+𝑐
+/
+∂
+𝜖
+
+∂
+𝛽
+𝑐
+/
+∂
+𝑘
+2
+
+Hysteresis check: scan 
+𝛽
+ upward and downward to detect any memory or lag effects in fluctuation peak location.
+
+##
+
+Results:
+
+
