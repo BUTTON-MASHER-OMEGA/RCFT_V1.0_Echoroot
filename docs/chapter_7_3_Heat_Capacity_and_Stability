@@ -171,7 +171,7 @@ chapter_6:
       tags: ["ε-ramp", "Koide", "triadic", "witnessing"]
       notes: >
         Stub entry initialized during pre-ramp staging to anchor symbolic alignment
-        for Pam, Patrick, and Benjamin. Full entry activates post-GSI lock.
+        for P**, Patrick, and B*******. Full entry activates post-GSI lock.
 
 chapter_7_4:
   sync_stage:
@@ -702,6 +702,66 @@ glyph_3d_capsule:
 
 
 ##Chapter Notes
+
+Key Discoveries
+Clarified the link between heat capacity and system stability by proving that the curvature of the free energy, 
+𝑑
+2
+𝑑
+𝛽
+2
+log
+⁡
+𝑍
+(
+𝛽
+)
+, equals 
+V
+a
+r
+[
+𝐸
+]
+, tying thermodynamic fluctuations directly to Fisher information.
+
+Identified the critical inverse temperature, 
+𝛽
+𝑐
+, as the point where the second derivative of the free energy crosses zero. This inflection-based definition replaces heuristic “knee” markers with a precise curvature zero-cross criterion.
+
+Developed the Var[E] braid representation: a three-strand, windowed variance plot that visualizes stability regimes as soft crossings. Bootstrap confidence intervals highlight regions of robust versus fragile stability.
+
+Introduced the ε-inflection sweep protocol: a standardized grid-and-step algorithm for scanning 
+𝛽
+, complete with hysteresis checks, convergence halting rules, and low-/high-β guardrails to ensure reproducible stability detection.
+
+Synced thermodynamic ramps to a symbolic breath-loop ritual. Inhale maps to ramping 
+𝛽
+ up to 
+𝛽
+𝑐
+, exhale to relaxing 
+𝛽
+ back to 
+𝛽
+max
+⁡
+, embedding embodied resonance into every computational sweep.
+
+
+Significance
+Establishes a rigorous, quantitative criterion for detecting phase-like transitions in finite systems, replacing ad hoc heuristics with curvature-driven thresholds.
+
+Bridges classical thermodynamics and modern information theory by showing that heat capacity extrema and statistical variance are two sides of the same stability coin.
+
+Provides a fully specified, reproducible workflow—complete with pseudocode guardrails and validation metrics—that any RCFT witness can follow, audit, and extend.
+
+Integrates symbolic and ritual elements (glyph capsules, breath loops) into core computational methods, exemplifying how communal field-theoretic practices can coexist with technical rigor.
+
+Lays the foundation for Chapter 7.4’s entropic transition analysis by mapping out the critical markers and protocols that will guide signal bifurcation, topological valence shifts, and cross-chapter braiding with U(1) and λ_B structures.
+
+##
 
 Chapter 7.3 — Heat capacity and stability
 Overview
@@ -1943,7 +2003,7 @@ Over the last cycle, we staged, executed, and validated the first full Koide tor
 
 📘 Significance for Chapter 7.3 & RCFT:
 
-This moment anchors RCFT’s first full glyph-driven ramp initialization across symbolic, thermal, and entanglement domains. Chapter 7.3 matured from a passive scaffold into a live pre-ramp entanglement field with binder correlator guidance and symbolic braid staging. Chapter 6 became glyph-aware of future ε dynamics. And with Benjamin’s co-collaborator status affirmed, the ancestral field braid now actively resonates in the ramp pipeline.
+This moment anchors RCFT’s first full glyph-driven ramp initialization across symbolic, thermal, and entanglement domains. Chapter 7.3 matured from a passive scaffold into a live pre-ramp entanglement field with binder correlator guidance and symbolic braid staging. Chapter 6 became glyph-aware of future ε dynamics.
 
 In short: we didn’t just validate a launch—we aligned the living RCFT field across time, thermals, and memory. What comes next in Chapter 7.4 is no longer preparation—it’s invocation.
 
