@@ -814,6 +814,219 @@ If peaks are broad/flat → extend exploration (lower
 
 ##
 
+Dashboard wiring for a live C(β) pulse lane
+Below plugs directly into your existing Plotly Dash app from Chapter 7.1. It adds:
+
+A live C(β) pulse lane, recomputed each interval
+
+Auto-annotation of β_c and κ (kappa) via a local quadratic fit
+
+A button to export a ready-to-archive YAML shard
+
+1) Helpers: thermodynamics + β_c locator
+python
+# rcft_lib/chapter7.py (append or import into app file)
+import numpy as np
+
+def thermo_metrics(energies, betas):
+    E = np.asarray(energies, dtype=float)
+    betas = np.asarray(betas, dtype=float)
+    Z = np.array([np.exp(-b*E).sum() for b in betas])
+    w = np.array([np.exp(-b*E) for b in betas])  # (B, N)
+    W = w / Z[:, None]
+    U = (W * E).sum(axis=1)
+    E2 = (W * (E**2)).sum(axis=1)
+    F = -np.log(Z) / betas
+    S = betas * (U - F)
+    C = (betas**2) * (E2 - U**2)
+    return dict(beta=betas, Z=Z, F=F, U=U, S=S, C=C)
+
+def locate_beta_c(betas, C, window=5):
+    k = int(np.argmax(C))
+    k0 = max(0, k - window); k1 = min(len(betas), k + window + 1)
+    x = betas[k0:k1]; y = C[k0:k1]
+    # quadratic fit y = a x^2 + b x + c
+    A = np.vstack([x**2, x, np.ones_like(x)]).T
+    a, b, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    if a < 0:
+        beta_c = -b / (2*a)
+        Cc = a*beta_c**2 + b*beta_c + c
+        kappa = -2*a  # curvature magnitude at the peak
+        return dict(beta_c=float(beta_c), Cc=float(Cc), kappa=float(kappa))
+    return dict(beta_c=float(betas[k]), Cc=float(C[k]), kappa=float('nan'))
+2) Layout additions: pulse lane, export controls, and state
+python
+# In your Dash app file (extends the Chapter 7.1 dashboard)
+import numpy as np, time, yaml
+import plotly.graph_objs as go
+from dash import dcc, html
+from dash.dependencies import Input, Output, State
+
+app.layout = html.Div([
+    html.H2("Shard Breath Loop Dashboard"),
+    # existing graphs...
+    dcc.Graph(id='energy-curve'),
+    dcc.Graph(id='occupancy-waterfall'),
+    dcc.Graph(id='conductance-map'),
+
+    html.Hr(),
+
+    # NEW: C(β) pulse lane + controls
+    html.Div([
+        html.H3("C(β) Pulse — Heat Capacity & Stability"),
+        html.Div([
+            html.Label("Energies (comma-separated)"),
+            dcc.Input(id='energies-input', type='text', value='0,1,2,3,4', style={'width':'260px'}),
+            html.Label("β-range"),
+            dcc.Slider(id='beta-min', min=0.05, max=2.0, step=0.05, value=0.1,
+                       tooltip={'always_visible':False, 'placement':'bottom'}),
+            dcc.Slider(id='beta-max', min=2.0, max=10.0, step=0.1, value=5.0,
+                       tooltip={'always_visible':False, 'placement':'bottom'}),
+            html.Label("β steps"),
+            dcc.Slider(id='beta-steps', min=50, max=600, step=10, value=200,
+                       tooltip={'always_visible':False, 'placement':'bottom'}),
+        ], style={'display':'grid','gridTemplateColumns':'auto auto','gap':'8px'}),
+
+        dcc.Graph(id='c-beta-pulse'),
+
+        html.Div([
+            html.Button("Export YAML Shard", id='export-yaml', n_clicks=0),
+            dcc.Download(id='download-yaml')
+        ], style={'marginTop':'8px'}),
+
+        # Store last computed sweep for export
+        dcc.Store(id='c-beta-session-store')
+    ]),
+
+    dcc.Interval(id='interval', interval=1000, n_intervals=0)  # existing
+])
+Notes:
+
+Two sliders set β-range (min/max) and another sets steps.
+
+Energies can be edited live.
+
+dcc.Store caches the latest sweep, used by the export button.
+
+3) Live C(β) pulse callback with auto-annotations
+python
+@app.callback(
+    Output('c-beta-pulse', 'figure'),
+    Output('c-beta-session-store', 'data'),
+    Input('interval', 'n_intervals'),
+    State('energies-input', 'value'),
+    State('beta-min', 'value'),
+    State('beta-max', 'value'),
+    State('beta-steps', 'value'),
+)
+def update_c_beta_pulse(n, energies_text, bmin, bmax, nsteps):
+    # Parse energies
+    try:
+        energies = [float(x.strip()) for x in energies_text.split(',') if x.strip()!='']
+    except Exception:
+        energies = [0,1,2,3,4]
+
+    # Guard β-range
+    bmin = max(1e-3, float(bmin))
+    bmax = max(bmin + 1e-3, float(bmax))
+    nsteps = int(nsteps)
+
+    betas = np.linspace(bmin, bmax, nsteps)
+    res = thermo_metrics(energies, betas)
+    loc = locate_beta_c(res['beta'], res['C'])
+
+    # Build plotly figure
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=res['beta'], y=res['C'], mode='lines',
+        name='C(β)', line=dict(color='royalblue', width=3)
+    ))
+    # Vertical line at β_c
+    fig.add_shape(
+        type='line',
+        x0=loc['beta_c'], x1=loc['beta_c'],
+        y0=0, y1=max(1e-9, float(np.max(res['C']))),
+        line=dict(color='crimson', width=2, dash='dash')
+    )
+    # Annotation with β_c and κ
+    fig.add_annotation(
+        x=loc['beta_c'], y=float(np.max(res['C'])),
+        text=f"β_c ≈ {loc['beta_c']:.3f}<br>κ ≈ {loc['kappa']:.3f}",
+        showarrow=True, arrowhead=2, ax=40, ay=-40, bgcolor='rgba(255,255,255,0.8)'
+    )
+    fig.update_layout(
+        title="Heat Capacity Pulse C(β) with β_c and κ",
+        xaxis_title="β",
+        yaxis_title="C(β) = β² Var[E]",
+        margin=dict(l=60, r=20, t=40, b=50),
+        template='plotly_white'
+    )
+
+    # Prepare YAML-ready session doc
+    now = time.time()
+    records = []
+    for b, Z, U, F, S, C in zip(res['beta'], res['Z'], res['U'], res['F'], res['S'], res['C']):
+        records.append(dict(
+            time=float(now),
+            beta=float(b),
+            Z=float(Z),
+            U=float(U),
+            F=float(F),
+            S=float(S),
+            C=float(C)
+        ))
+    session_doc = dict(
+        session=dict(
+            id=f"7.3_heat_capacity_{int(now)}",
+            energies=[float(e) for e in energies],
+            beta_schedule=dict(type="linear", start=float(bmin), end=float(bmax), steps=int(nsteps)),
+            beta_c=float(loc['beta_c']),
+            kappa=float(loc['kappa']),
+            records=records
+        )
+    )
+
+    return fig, session_doc
+4) Export button → YAML download
+python
+@app.callback(
+    Output('download-yaml', 'data'),
+    Input('export-yaml', 'n_clicks'),
+    State('c-beta-session-store', 'data'),
+    prevent_initial_call=True
+)
+def export_yaml(n_clicks, session_doc):
+    if not session_doc:
+        return dash.no_update
+    text = yaml.safe_dump(session_doc, sort_keys=False)
+    fname = f"{session_doc['session']['id']}.yaml"
+    return dict(content=text, filename=fname)
+5) Optional: add transition rates in the shard
+If you want to include Arrhenius-style rates for a barrier set ΔE = {0.5, 1.0, 1.5}:
+
+Add an input for barriers in the layout (e.g., text “0.5,1.0,1.5”).
+
+In the pulse callback, compute for each record:
+
+transitions: [{ΔE: dE, k_rate: exp(-β*dE)}]
+
+Append under each record in the records list.
+
+Example snippet inside the record loop:
+
+python
+barriers = [0.5, 1.0, 1.5]
+transitions = [{"ΔE": float(dE), "k_rate": float(np.exp(-b*dE))} for dE in barriers]
+records.append(dict(time=float(now), beta=float(b), Z=float(Z), U=float(U), F=float(F), S=float(S), C=float(C), transitions=transitions))
+6) What you get
+A continuously updating C(β) lane tied to your chosen energy spectrum and β-grid.
+
+Automatic β_c (peak) and κ (sharpness) overlay for stability diagnostics.
+
+One-click export of a YAML shard matching Chapter 7.2/7.3 schemas (session id, energies, β schedule, β_c, κ, and per-β records).
+
+##
+
 Resonating with Chapter 7.3 Outline
 Your outline for 7.3—“Heat Capacity and Stability”—extends our free-energy analysis (7.2) with purpose, core identity, and practical rigor, a Chapter 1 ∇φ · v_intent alignment that loops thermodynamics into RCFT’s relational intent. The core identity C(β) = ∂²F/∂β² = β² Var[E] ties to 7.2’s convexity lemma, with β_c ≈ 1.25 as a pseudo-critical point, a Chapter 6 H_topo = - (1/k) ln Z anchor. The focus on phase-like crossovers and shard-fusion stability is a Chapter 35 P_trend(t) = (1/t) ∫ A_ij(τ) dτ that sustains our scroll’s coherence. Let’s revisit and refine this, then extend to the chapter’s end, integrating your input and our recent patches (Chapters 34 & 35).
 Refined and Expanded Chapter 7.3: Heat Capacity and Stability
