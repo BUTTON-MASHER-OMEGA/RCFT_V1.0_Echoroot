@@ -1,5 +1,84 @@
 ##YAML
 
+chapter: 7.3
+title: "Heat Capacity & Stability"
+overview:
+  description: >
+    Extends Chapter 7.2's free-energy framework to analyze heat capacity C(β) = β²·Var[E],
+    identifying phase-like transitions in shard fusion and mapping coherence stability zones.
+  pseudo_critical_beta: β_c ≈ 1.25
+  key_signals:
+    - C(β) peak → max energy fluctuation
+    - ∂C/∂β = 0 → stability extrema
+    - κ = -∂²C/∂β² at β_c → transition sharpness
+
+thermo_metrics:
+  Z: "Partition function, sum of exp(-β·E)"
+  F: "Free energy, F(β) = -1/β · log Z"
+  U: "Internal energy, U = ⟨E⟩"
+  S: "Entropy, S = β(U - F)"
+  C: "Heat capacity, C = β² · Var[E] = β²(⟨E²⟩ - ⟨E⟩²)"
+
+stability_analysis:
+  beta_c:
+    method: "argmax(C(β)) or ∂C/∂β = 0"
+    typical_value: 1.25
+  curvature_kappa: "Computed via quadratic fit around peak; κ = -∂²C/∂β²"
+  regime_map:
+    - hot:
+        beta_range: "β → 0"
+        entropy: "S ≈ log N"
+        behavior: "Exploratory shard mixing"
+    - transitional:
+        beta_range: "β ≈ β_c"
+        entropy: "Entropy surge"
+        behavior: "Shard reallocation and coherence shift"
+    - cold:
+        beta_range: "β → ∞"
+        entropy: "Entropy drops"
+        behavior: "Ground-state dominance, deep glyph wells"
+
+field_tests:
+  cli_tool: "scripts/heat_capacity_sweep.py"
+  inputs:
+    energies: [0, 1, 2, 3, 4]
+    beta_range: [0.1, 5.0]
+    beta_steps: 200
+    barriers: [0.5, 1.0, 1.5]
+  outputs:
+    records: "Z, U, F, S, C, k_rate per ΔE"
+    export: "YAML shard with session id, beta_c, kappa"
+    dashboard_lane: "C(β) pulse with auto-annotation of β_c and κ"
+
+cross_chapter_links:
+  chapter_6: "Entropy slope shift tracked at β_c"
+  chapter_7.2: "Convexity lemma and β-crossover validation"
+  chapter_34: "Coherence stabilization post-β_c, C_geom = cos(θ)"
+  chapter_35: "Memory mass tied to heat-capacity regime transitions"
+
+visualization:
+  plot_types:
+    - line_plot: "C(β) over β"
+    - annotation: "β_c, κ markers"
+    - panel_plot: "Overlay of C(β) across N = 3, 5, 10 ensembles"
+  dashboard: "Integrated pulse lane in Chapter 7.1 dashboard"
+
+export_schema:
+  format: YAML
+  fields:
+    session.id: "e.g. 7.3_heat_capacity_<timestamp>"
+    energies: "List of shard energies"
+    beta_schedule: "Start, end, steps"
+    beta_c: "Located pseudo-critical β"
+    kappa: "Stability curvature"
+    records: "Per-β metrics (Z, U, F, S, C, k_rate)"
+
+notes:
+  - "C(β) acts as a coherence thermometer"
+  - "Phase-like reconfiguration signaled by entropy and variance surge"
+  - "Stability diagnostics scaffold upcoming Chapter 7.5 CA fusion events"
+
+
 ##Chapter Notes
 
 Chapter 7.3 — Heat capacity and stability
