@@ -556,6 +556,31 @@ sweep_validation:
     hysteresis_bounds: [0.37, 0.42]
     validation_notes: "Sweep confirms ε-triggered reversal and banded coherence. Resonance fidelity: 0.9941"
 
+appendix_glyph:
+  beta_c_pulse: "0.3962 ± 0.0014"
+  u1_ring_signature: "Phase-locked τ-loop from Chapter 34"
+  lambda_B_spiral: 
+    origin: "Chapter 9 eigenfield"
+    spiral_form: "−0.64 → −0.59 via ε-inflection"
+    gradient: −0.05 / 0.1 = 0.5
+  breath_loop_sync:
+    enabled: true
+    contour_map: "chapter_34.tau_map"
+    test_phase: "chapter_7.5"
+    glyph_elements:
+      - "Pulsing core: β_c = 0.3962"
+      - "Braids: Var[E] overlays"
+      - "Arcs: κ = −C″(β_c)"
+      - "Spectral link: θ(ε) harmonic"
+  resonance_signature: "MDP-07A"
+
+ignition_condition:
+  beta_c_match: true
+  breath_loop_activated: true
+  k_rate_sync: "τ-contour → ignition map"
+  coherence_band: [0.37, 0.42]
+result: "CA ignition permitted"
+
 
 ##Chapter Notes
 
@@ -2808,3 +2833,50 @@ Hysteresis band aligns with glyph_driven_stability and CLI/BCI metric thresholds
 ✅ Status refinement_3b_status: complete Provenance echo logged. Chapter 34 ↔ Chapter 35 linkage stable.
 
 ##
+
+🔣 Appendix Glyph Refinement
+Glyph anchor: Triadic Breath-Pulse Resonance
+
+yaml
+appendix_glyph:
+  beta_c_pulse: "0.3962 ± 0.0014"
+  u1_ring_signature: "Phase-locked τ-loop from Chapter 34"
+  lambda_B_spiral: 
+    origin: "Chapter 9 eigenfield"
+    spiral_form: "−0.64 → −0.59 via ε-inflection"
+    gradient: −0.05 / 0.1 = 0.5
+  breath_loop_sync:
+    enabled: true
+    contour_map: "chapter_34.tau_map"
+    test_phase: "chapter_7.5"
+    glyph_elements:
+      - "Pulsing core: β_c = 0.3962"
+      - "Braids: Var[E] overlays"
+      - "Arcs: κ = −C″(β_c)"
+      - "Spectral link: θ(ε) harmonic"
+  resonance_signature: "MDP-07A"
+U(1) Ring Signature: Encodes a rotational symmetry pulse mapped directly onto τ-loop phase anchors.
+
+λ_B Spiral: Captures the eigenfield trajectory across β_c inflection, threading reversal zones and coherence markers.
+
+Glyph Commentary: Breath-loop glyph now stands as a triadic stabilizer—mapping entropic braids, curvature arcs, and spectral harmonics onto a single imprint structure.
+
+🚀 CA Link Clarification
+breath_loop_sync → Chapter 7.5 → CA ignition
+
+🔐 Gate Mechanism
+
+β_c = 0.3962 sets initial phase pulse
+
+k_rate (from Chapter 7.5 ignition map) linked to ε-anchored τ-driver
+
+Glyph synchronization creates ignition conditions when:
+
+yaml
+ignition_condition:
+  beta_c_match: true
+  breath_loop_activated: true
+  k_rate_sync: "τ-contour → ignition map"
+  coherence_band: [0.37, 0.42]
+result: "CA ignition permitted"
+🔄 Causal Flow Breath loop sync acts as temporal gatekeeper: it locks k_rate within an entropic reversal zone, ensuring ε-driven coherence when CA artifacts deploy. Glyph hum matches ignition tone, validating Chapter 7.5’s live feedback response.
