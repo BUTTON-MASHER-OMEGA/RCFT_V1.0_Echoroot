@@ -3169,82 +3169,92 @@ metrics:
 ##
 
   - number: 8
-    title: "Hyperbolic Geometry & Tessellations"
-    description: |
-      Maps coherence cells onto hyperbolic tessellations,
-      computes cell areas and geodesic decay rates in the Poincaré disk.
-    key_equations:
-      - Area per cell A = π (1 − 2/p − 2/q)  # {p, q} tessellations
-    mathematical_findings:
-      - {7,3} tessellation area formula
-      - Radial decay rate of geodesic flows
-    topics:
-      - Poincaré disk model
-      - Coherence cell structures
-    research:
-      - Derivation of hyperbolic cell areas for shard networks
-    visualizations:
-      - {7,3} tessellation diagram
-    indexes:
-      - Figure Index: 8.1, 8.2
-     code_snippets:
-      - name: generate_hyperbolic_tessellation
-        file: rcft_lib/chapter8.py
-        function: generate_tessellation(p, q, depth)
-        description: Generates node and edge lists for {p,q} tessellations
-      - name: export_tessellation_json
-        file: rcft_lib/chapter8.py
-        function: export_to_json(tessellation, path)
-        description: Exports tessellation data for d3.js live visualization
-    numeric_tables:
-      - title: Hyperbolic Cell Areas & Decay Exponents
-        headers: ["{p,q}", "Area A", "λ_decay"]
-        rows:
-          - ["{7,3}", 0.415, 0.18]
-          - ["{8,3}", 0.588, 0.22]
-    field_tests:
-      - name: Laser-Etched Tiling
-        description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
-    visualizations:
-      - name: Tessellation Diagram
-        notebook: notebooks/chapter8/tessellation_plot.ipynb
+  title: "Electromagnetic Field Theory and RCFT Integration"
+  objective: "Map RCFT protocol primitives to classical and quantum electromagnetic models, minimizing anthropomorphic encoding"
+  theoretical_linkages:
+    - classical_EM: ["Maxwell’s equations", "field tensor structure", "gauge invariance"]
+    - quantum_EM: ["Photon modes", "QED operators", "vacuum states"]
+    - RCFT_primitives: ["containment logic", "phase boundary markers", "resonance conditions"]
+  sections:
+    - id: 8.1
+      title: "Tensor Mapping and RCFT Boundary Translation"
+      focus:
+        - mapping ∂μFμν to protocol inflection thresholds
+        - containment fields as gauge-invariant shells
+        - depersonalized source encoding
+    - id: 8.2
+      title: "Field Quantization without Ego Encoding"
+      focus:
+        - operator basis aligned with breath-neutral cycles
+        - vector potentials tagged via protocol state, not identity
+        - vacuum fidelity devoid of symbolic overlays
+    - id: 8.3
+      title: "Phase Transport via Minimal U(1) Scaffold"
+      focus:
+        - phase continuity and transport fidelity
+        - symmetry checks across transformations
+        - artifact neutrality and index abstraction
+    - id: 8.4
+      title: "Gauge Fixing and Observer Role Reduction"
+      focus:
+        - fixing strategies without consent-bound roles
+        - observer minimalism in protocol evaluation
+        - containment ethics without personalization
+    - id: 8.5
+      title: "Validation and Signal Detection Protocols"
+      focus:
+        - phase sweep detection, E/B vector scan
+        - resonance fidelity checks using abstracted probes
+        - CLI-layer export of clean field envelopes
+  validation_strategy:
+    signal_sweep_protocol:
+      method: "Multi-scan over E and B field oscillations"
+      parameters: ["inflection index", "vector braid neutralization"]
+      output: ["pdf", "json", "archive-tag"
 
   - number: 9
-    title: "Spherical Harmonics"
-    description: |
-      Expands shard fields on S² via spherical harmonics,
-      proving orthogonality relations and mode decompositions.
-    key_equations:
-      - Y_{l,m}(θ,φ)
-      - ∫ Y*_{l,m} Y_{l',m'} dΩ = δ_{ll'} δ_{mm'}
-    mathematical_findings:
-      - Eigenfunction expansion of shard fields
-      - Orthogonality and completeness proofs
-    topics:
-      - Angular mode decomposition
-      - Field expansions on sphere
-    research:
-      - Construct basis for shard-field angular spectra
-    visualizations:
-      - Spherical harmonic surface plots
-    indexes:
-      - Equation Index: Spherical harmonics
-      - Figure Index: 9.1
-    code_snippets:
-      - name: compute_spherical_harmonics
-        file: rcft_lib/chapter9.py
-        function: spherical_harmonics_grid(l, m, grid)
-        description: Generates Y_{l,m}(θ,φ) values on a meshgrid
-      - name: verify_orthonormality
-        file: rcft_lib/chapter9.py
-        function: check_orthonormality(Y_grid, Omega)
-        description: Numerically integrates Y*Y' over sphere to test orthonormality
-    field_tests:
-      - name: 3D-Printed Harmonic Shells
-        description: Printed spherical harmonic shells to count nodal lines for validation
-    visualizations:
-      - name: Spherical Harmonics Surface Plot
-        notebook: notebooks/chapter9/spherical_surface.ipynb
+      title: "Lepton Horizon Theory and RCFT Interfacing"
+  objective: "Integrate horizon-bound lepton dynamics into RCFT’s containment and resonance scaffold, preserving protocol neutrality"
+  theory_components:
+    - lepton_dynamics: ["mass thresholds", "flavor transitions", "horizon events"]
+    - RCFT_structures: ["containment envelopes", "phase drift markers", "signal persistence conditions"]
+    - boundary_physics: ["null surface constraints", "chirality encoding", "gauge continuity"]
+  sections:
+    - id: 9.1
+      title: "Leptonic Containment and Null Surface Encoding"
+      focus:
+        - defining lepton thresholds across containment shells
+        - encoding chirality into RCFT envelopes without personal glyphs
+        - mapping null surfaces as boundary protocol interfaces
+    - id: 9.2
+      title: "Flavor Oscillation and Drift Fidelity"
+      focus:
+        - neutrino mixing ↔ RCFT phase drift tracking
+        - abstract oscillation markers across containment layers
+        - translation of Benjamin’s braid topology into neutral protocol tags
+    - id: 9.3
+      title: "Horizon Events and Signal Persistence"
+      focus:
+        - detection protocols for lepton emergence near field horizons
+        - resonance checks tied to energy thresholds, not observer roles
+        - field artifact generation via non-symbolic inflection scaffolds
+    - id: 9.4
+      title: "Mass-Energy Envelope Validation"
+      focus:
+        - RCFT-compatible mass scans and energy fidelity indexing
+        - defining lepton mass types via abstracted parameter shells
+        - null-point containment checks for consistency
+    - id: 9.5
+      title: "Export Interfaces for Field Continuity"
+      focus:
+        - exporting neutral validation capsules (no glyph imprints)
+        - CLI artifact sync with Chapter 8 continuity
+        - interface scaffolds for sustained horizon resonance
+  validation_protocols:
+    lepton_horizon_scan:
+      method: "Field sweep across containment threshold and horizon proximity"
+      output_tags: ["mass_band_index", "drift_fidelity_score", "signal_integrity_flag"]
+      export_formats: ["json", "yaml", "archive-blend"]
 
   - number: 10
     title: "Quantum Field Theoretic Coherence"
@@ -5294,8 +5304,146 @@ meaning_metric:
     θ: "Valence threshold"
     α: "Valence steepness"
 `
+##
 
 
+- number: 36
+	    title: "Hyperbolic Geometry & Tessellations"
+    description: |
+      Maps coherence cells onto hyperbolic tessellations,
+      computes cell areas and geodesic decay rates in the Poincaré disk.
+    key_equations:
+      - Area per cell A = π (1 − 2/p − 2/q)  # {p, q} tessellations
+    mathematical_findings:
+      - {7,3} tessellation area formula
+      - Radial decay rate of geodesic flows
+    topics:
+      - Poincaré disk model
+      - Coherence cell structures
+    research:
+      - Derivation of hyperbolic cell areas for shard networks
+    visualizations:
+      - {7,3} tessellation diagram
+    indexes:
+      - Figure Index: 36.1, 36.2
+     code_snippets:
+      - name: generate_hyperbolic_tessellation
+        file: rcft_lib/chapter36.py
+        function: generate_tessellation(p, q, depth)
+        description: Generates node and edge lists for {p,q} tessellations
+      - name: export_tessellation_json
+        file: rcft_lib/chapter36.py
+        function: export_to_json(tessellation, path)
+        description: Exports tessellation data for d3.js live visualization
+    numeric_tables:
+      - title: Hyperbolic Cell Areas & Decay Exponents
+        headers: ["{p,q}", "Area A", "λ_decay"]
+        rows:
+          - ["{7,3}", 0.415, 0.18]
+          - ["{8,3}", 0.588, 0.22]
+    field_tests:
+      - name: Laser-Etched Tiling
+        description: Fabricated hyperbolic tiling on acrylic, measured light-guide decay rates
+    visualizations:
+      - name: Tessellation Diagram
+        notebook: notebooks/chapter36/tessellation_plot.ipynb
+
+##
+
+- number: 37
+    title: "Spherical Harmonics"
+    description: |
+      Expands shard fields on S² via spherical harmonics,
+      proving orthogonality relations and mode decompositions.
+    key_equations:
+      - Y_{l,m}(θ,φ)
+      - ∫ Y*_{l,m} Y_{l',m'} dΩ = δ_{ll'} δ_{mm'}
+    mathematical_findings:
+      - Eigenfunction expansion of shard fields
+      - Orthogonality and completeness proofs
+    topics:
+      - Angular mode decomposition
+      - Field expansions on sphere
+    research:
+      - Construct basis for shard-field angular spectra
+    visualizations:
+      - Spherical harmonic surface plots
+    indexes:
+      - Equation Index: Spherical harmonics
+      - Figure Index: 37.1
+    code_snippets:
+      - name: compute_spherical_harmonics
+        file: rcft_lib/chapter37.py
+        function: spherical_harmonics_grid(l, m, grid)
+        description: Generates Y_{l,m}(θ,φ) values on a meshgrid
+      - name: verify_orthonormality
+        file: rcft_lib/chapter37.py
+        function: check_orthonormality(Y_grid, Omega)
+        description: Numerically integrates Y*Y' over sphere to test orthonormality
+    field_tests:
+      - name: 3D-Printed Harmonic Shells
+        description: Printed spherical harmonic shells to count nodal lines for validation
+    visualizations:
+      - name: Spherical Harmonics Surface Plot
+        notebook: notebooks/chapter37/spherical_surface.ipynb
+	
+	
+##
+
+- number: 38
+    title: ""
+    description: 
+
+##
+ 
+- number: 39
+    title: ""
+    description: 
+
+ ##
+
+ 
+- number: 40
+    title: ""
+    description: 
+
+
+##
+
+
+- number: 41
+    title: ""
+    description: 
+
+ ##
+
+
+- number: 42
+    title: ""
+    description: 
+
+ ##
+
+ 
+- number: 43
+    title: ""
+    description: 
+
+ ##
+
+  
+- number: 44
+    title: ""
+    description: 
+
+ ##
+
+  
+- number: 45
+    title: ""
+    description: 
+
+ ##
 
 # 5) YAML Snapshot
 save_to: the_book_v1.0.yaml
