@@ -567,7 +567,47 @@ chap8:
       bootstrap_CI: [0.68, 0.95]
       seed_alignment: true
 
+##
 
+chapter_7_4_entropy_ca_ready.yaml:
+  manifest:
+    version: "1.0"
+    timestamp: "2025-08-11T17:07:00Z"
+    authors: ["Matt", "Dennis", "Patrick"]
+    status: "ready_for_CA_ignition"
+
+  metrics:
+    beta_c: 0.3962
+    error_band_beta_c: 0.0014
+    delta_beta: 0.0028
+    critical_band:
+      window: [0.3934, 0.3990]
+      ε_sensitivity:
+        d_beta_c_d_epsilon: -6.24
+        shift_equation: "β_c − 6.24·ε"
+    d_T_c_d_epsilon: 39.8
+
+  thermo_dynamics:
+    S(β): "β² · ∂F/∂β"
+    S'(β): "-C(β)/β"
+    S''(β): "-C'(β)/β + C(β)/β²"
+    inflection_criteria: "S''(β) = 0 ↔ β · C'(β) ≈ C(β)"
+    scaling:
+      local_exponent: "S(β) ≈ B · |β − β_c|^p"
+      fit: "log|S − S_c| ≈ p · log|β − β_c| + log B"
+
+  ca_ignition:
+    beta_window: [0.3934, 0.3990]
+    k_rate_equation: "e^{-β ΔE}"
+    update_scheduler: "f(β) ∝ |S′(β)|"
+    stability_gates:
+      - curvature_guard: "|S″(β)| < threshold"
+      - variance_ceiling: "C(β) < max"
+    time_step_scaling: "Δt ∝ 1 / f(β)"
+
+  links:
+    chapter_7_3: "Derivatives of S(β), C(β) grid, inflection analysis"
+    chapter_7_5: "CA ignition using β_c and entropy-scheduled update gates"
 
 
 
