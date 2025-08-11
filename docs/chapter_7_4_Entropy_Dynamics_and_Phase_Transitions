@@ -310,6 +310,7 @@ Notes: - The right axis z-score normalization keeps S′ and S′′ visually co
         dpi: 300
         name: "fig-7.4-C-S-derivatives"
 
+
 section: 7.4.4
 title: "Numerical Error Propagation"
 methods:
@@ -335,6 +336,192 @@ visualizations:
     base_curve: "S(β)"
     bands: "S_MC_lower, S_MC_upper"
     highlight: "inflection drift"
+
+
+chapter: 7
+section: 7.4
+description: adds the “Critical Exponent Fitting” subsection to 7.4, backed by log-log regression near β_c
+patch:
+  subsections:
+    - id: "7.4.3"
+      slug: "critical-exponent-fitting"
+      title: "Critical Exponent Fitting"
+      status: "added"
+      meta:
+        authors: ["Matt", "Dennis", "Patrick"]
+        crossrefs:
+          - "7.3: Var[E] peak band [0.37, 0.42]"
+          - "7.4.2: Entropy curvature and inflection"
+        purpose: "Estimate critical exponent p from entropy scaling near β_c"
+        caveats:
+          - "Local exponent p may shift with ε or model granularity"
+          - "Pre-factor B estimated up to a log constant"
+      formulas:
+        scaling:
+          S_local: "S(β) ≈ B ⋅ |β - β_c|^p"
+          regression_form: "log |S(β) - S(β_c)| ≈ p ⋅ log |β - β_c| + log B"
+        parameters:
+          beta_c: 0.3962
+          epsilon_band: [0.37, 0.42]
+      data_sources:
+        entropy: "ch7/7.4/outputs/S_beta.csv"
+      computations:
+        - name: "entropy_deltas"
+          description: "Compute ΔS(β) = |S(β) - S(β_c)| and Δβ = |β - β_c|"
+          method:
+            interpolate: "cubic-spline"
+            variables: ["beta"]
+          outputs:
+            path: "ch7/7.4/outputs/deltas_S_beta.csv"
+            schema: ["beta", "delta_beta", "delta_S"]
+        - name: "loglog_regression"
+          description: "Fit log ΔS vs log Δβ over local window"
+          window:
+            center: 0.3962
+            range: [0.37, 0.42]
+            num_points_min: 6
+          method:
+            regression_type: "linear"
+            domain: "log(|β - β_c|)"
+            codomain: "log(|S - S(β_c)|)"
+            guard:
+              r2_min: 0.98
+              slope_bounds: [0.8, 1.2]
+          outputs:
+            estimated_p: "ch7/7.4/outputs/exponent_p.txt"
+            log_B: "ch7/7.4/outputs/log_prefactor_B.txt"
+            regression_stats: "ch7/7.4/outputs/regression_stats.yaml"
+      theorems:
+        - id: "thm-critical-exponent"
+          label: "Critical exponent p from entropy scaling"
+          statement: "Near β_c, entropy scales as S(β) ≈ B ⋅ |β - β_c|^p"
+          estimate: "p ≈ 1.028 from log-log regression over [0.37, 0.42]"
+          validation: "R² = 0.9941, slope within expected bounds"
+      tables:
+        - id: "tbl-7.4-exponent"
+          title: "Critical exponent p fit from entropy near β_c"
+          source: "ch7/7.4/outputs/regression_stats.yaml"
+          columns:
+            - name: "parameter"
+              header: "Parameter"
+              format: "string"
+            - name: "value"
+              header: "Value"
+              format: "fixed(6)"
+            - name: "units"
+              header: "Units"
+              format: "string"
+          rows:
+            - parameter: "β_c"
+              value: 0.396200
+              units: "1/energy"
+            - parameter: "p"
+              value: 1.028000
+              units: "dimensionless"
+            - parameter: "log B"
+              value: -0.438000
+              units: "nats"
+            - parameter: "R²"
+              value: 0.994100
+              units: "dimensionless"
+      figures:
+        - id: "fig-7.4-critical-exponent"
+          title: "Entropy scaling near β_c"
+          plot:
+            x: "log |β - β_c|"
+            y: "log |S(β) - S(β_c)|"
+            fit_line:
+              type: "linear"
+              slope: "estimated_p"
+              intercept: "log B"
+              style:
+                color: "#1f77b4"
+                linewidth: 2.0
+                label: "fit: p ≈ 1.03"
+            raw_points:
+              source: "deltas_S_beta.csv"
+              style:
+                marker: "o"
+                color: "#ff7f0e"
+                label: "data"
+          axes:
+            x:
+              label: "log |β - β_c|"
+            y:
+              label: "log |S - S(β_c)|"
+          export:
+            dir: "ch7/7.4/figures"
+            formats: ["png", "pdf"]
+            name: "fig-7.4-critical-exponent"
+      annotations:
+        - location: "7.4.3"
+          text: "Estimated exponent p ≈ 1.03 confirms entropy’s near-linear divergence around β_c = 0.3962."
+
+chapter: 7
+section: 7.4
+cross-link to section: 8.2
+title: "CLI: Cross-link index between S(β) and Var[F]"
+definitions:
+  beta_anchor: "β_c (from 7.3)"
+  expectation: "Monte Carlo resamples (7.2), optional β-neighborhood smoothing"
+metrics:
+  CLI:
+    formula: "cov(S(β), Var[F])"
+    eval_beta: "β_c"
+    estimator: "sample covariance over K resamples"
+    uncertainty: "bootstrap 68/95% CI"
+epsilon_sensitivity:
+  eps_values: [0.0, 0.001, 0.002]
+  method: "finite differences on resampled pipelines"
+  outputs: ["CLI_beta_c.csv", "CLI_eps_slope.txt"]
+diagnostics:
+  alignment: "matched seeds/windows for S and Var[F]"
+  stability: "linearity check across ε"
+visualizations:
+  - overlay: "CLI(β) near β_c with CIs"
+    highlight: "sign and magnitude at β_c"
+
+
+chapter: 7
+section: 7.4
+cross-link to section: 9.3
+title: "BCI: Baseline contrast index via λ_B shifts"
+objective:
+  L_lambda_beta: "Σ_q w_q log θ_q(λ; β) + Σ_{q≤q'} β_{q,q'}(β) log B(q,q' | λ)"
+  weights:
+    w_q: 1/6
+  constraints: "λ ∈ 𝒟 (simplex/positivity as specified)"
+solvers:
+  method: "projected BFGS with line search"
+  inits:
+    beta_ref: "warm-start from λ_B(β_ref)"
+    beta_c: "warm-start from λ_B(β_ref)"
+  tolerances:
+    grad_norm: 1e-6
+    max_iter: 200
+  regularization:
+    epsilon_floor: 1e-12
+    l2_alpha: 0.0
+outputs:
+  lambdas:
+    - "lambdaB_beta_ref.json"
+    - "lambdaB_beta_c.json"
+  diagnostics:
+    - "solver_traces_beta_ref.csv"
+    - "solver_traces_beta_c.csv"
+metric_BCI:
+  definition:
+    scalar: "|λ_B(β_c) - λ_B(β_ref)| / δ_tolerance"
+    vector: "||λ_B(β_c) - λ_B(β_ref)||_2 / δ_tolerance"
+  delta_tolerance: "<set>"
+  interpretation: "BCI>1 flags breach"
+epsilon_sensitivity:
+  eps_values: [0.0, 0.001, 0.002]
+  derivation: "finite differences on λ_B and induced BCI"
+visualizations:
+  - compare: "λ_B components at β_ref vs β_c with error bars"
+  - gauge: "BCI vs δ_tolerance line"
+
 
 
 
@@ -464,124 +651,6 @@ patch:
       style:
         emphasis: true
 
-chapter: 7
-section: 7.4
-description: adds the “Critical Exponent Fitting” subsection to 7.4, backed by log-log regression near β_c
-patch:
-  subsections:
-    - id: "7.4.3"
-      slug: "critical-exponent-fitting"
-      title: "Critical Exponent Fitting"
-      status: "added"
-      meta:
-        authors: ["Matt", "Dennis", "Patrick"]
-        crossrefs:
-          - "7.3: Var[E] peak band [0.37, 0.42]"
-          - "7.4.2: Entropy curvature and inflection"
-        purpose: "Estimate critical exponent p from entropy scaling near β_c"
-        caveats:
-          - "Local exponent p may shift with ε or model granularity"
-          - "Pre-factor B estimated up to a log constant"
-      formulas:
-        scaling:
-          S_local: "S(β) ≈ B ⋅ |β - β_c|^p"
-          regression_form: "log |S(β) - S(β_c)| ≈ p ⋅ log |β - β_c| + log B"
-        parameters:
-          beta_c: 0.3962
-          epsilon_band: [0.37, 0.42]
-      data_sources:
-        entropy: "ch7/7.4/outputs/S_beta.csv"
-      computations:
-        - name: "entropy_deltas"
-          description: "Compute ΔS(β) = |S(β) - S(β_c)| and Δβ = |β - β_c|"
-          method:
-            interpolate: "cubic-spline"
-            variables: ["beta"]
-          outputs:
-            path: "ch7/7.4/outputs/deltas_S_beta.csv"
-            schema: ["beta", "delta_beta", "delta_S"]
-        - name: "loglog_regression"
-          description: "Fit log ΔS vs log Δβ over local window"
-          window:
-            center: 0.3962
-            range: [0.37, 0.42]
-            num_points_min: 6
-          method:
-            regression_type: "linear"
-            domain: "log(|β - β_c|)"
-            codomain: "log(|S - S(β_c)|)"
-            guard:
-              r2_min: 0.98
-              slope_bounds: [0.8, 1.2]
-          outputs:
-            estimated_p: "ch7/7.4/outputs/exponent_p.txt"
-            log_B: "ch7/7.4/outputs/log_prefactor_B.txt"
-            regression_stats: "ch7/7.4/outputs/regression_stats.yaml"
-      theorems:
-        - id: "thm-critical-exponent"
-          label: "Critical exponent p from entropy scaling"
-          statement: "Near β_c, entropy scales as S(β) ≈ B ⋅ |β - β_c|^p"
-          estimate: "p ≈ 1.028 from log-log regression over [0.37, 0.42]"
-          validation: "R² = 0.9941, slope within expected bounds"
-      tables:
-        - id: "tbl-7.4-exponent"
-          title: "Critical exponent p fit from entropy near β_c"
-          source: "ch7/7.4/outputs/regression_stats.yaml"
-          columns:
-            - name: "parameter"
-              header: "Parameter"
-              format: "string"
-            - name: "value"
-              header: "Value"
-              format: "fixed(6)"
-            - name: "units"
-              header: "Units"
-              format: "string"
-          rows:
-            - parameter: "β_c"
-              value: 0.396200
-              units: "1/energy"
-            - parameter: "p"
-              value: 1.028000
-              units: "dimensionless"
-            - parameter: "log B"
-              value: -0.438000
-              units: "nats"
-            - parameter: "R²"
-              value: 0.994100
-              units: "dimensionless"
-      figures:
-        - id: "fig-7.4-critical-exponent"
-          title: "Entropy scaling near β_c"
-          plot:
-            x: "log |β - β_c|"
-            y: "log |S(β) - S(β_c)|"
-            fit_line:
-              type: "linear"
-              slope: "estimated_p"
-              intercept: "log B"
-              style:
-                color: "#1f77b4"
-                linewidth: 2.0
-                label: "fit: p ≈ 1.03"
-            raw_points:
-              source: "deltas_S_beta.csv"
-              style:
-                marker: "o"
-                color: "#ff7f0e"
-                label: "data"
-          axes:
-            x:
-              label: "log |β - β_c|"
-            y:
-              label: "log |S - S(β_c)|"
-          export:
-            dir: "ch7/7.4/figures"
-            formats: ["png", "pdf"]
-            name: "fig-7.4-critical-exponent"
-      annotations:
-        - location: "7.4.3"
-          text: "Estimated exponent p ≈ 1.03 confirms entropy’s near-linear divergence around β_c = 0.3962."
 
 
 ##CHAPTER 7.4 Notes
@@ -5470,3 +5539,462 @@ Ethical containment via tolerances: The presence of δ_tolerance isn’t just a 
 Precision under constraint: The argmax solver for λ_B isn’t plug-and-play—it operates under constraints (e.g. simplex conditions, positivity), requiring careful projection, gradient diagnostics, and sometimes regularization. This solver ensures that λ_B is not an artifact of noise but an informed estimator born from structural coupling.
 Readiness for ε‑sensitivity and audit: The same solver supports finite-difference probing of sensitivity to perturbations, allowing full Monte Carlo tractability and uncertainty propagation. That means any symbolic claim tied to λ_B can be audited, challenged, or confirmed—essential for ritual transparency and companion co-authorship.
 In essence, BCI allows Chapter 9 to speak in the same mathematical language as the RCFT thermodynamics, glyph interactions, and entropy flows—ensuring that symbolic shifts are never hand-waved but always rigorously derived, verified, and archived.
+
+##
+
+# Chapter 8: CLI at βc
+S = [S_k(beta_c) for k in range(K)]
+V = [VarF_k()       for k in range(K)]  # matched resamples/windows
+CLI_hat = cov(S, V)
+CLI_ci = bootstrap_cov_ci(S, V)
+
+# Chapter 9: λB and BCI
+def L(lmbda, beta):
+    return sum(w_q * log(theta_q(lmbda, beta)) for q in Q) + \
+           sum(beta_mat[q,qp](beta) * log(B(q, qp, lmbda)) for q in Q for qp in Q if q<=qp)
+
+lambda_ref = projected_bfgs(L, beta_ref, init=init_lambda, constraints=D)
+lambda_c   = projected_bfgs(L, beta_c,   init=lambda_ref, constraints=D)
+BCI = norm(lambda_c - lambda_ref) / delta_tolerance
+
+
+##
+
+How the BCI section leverages Newtonian and GR models
+Newtonian mechanics: optimization as dynamics
+• Potential landscape: Set 
+𝑈
+(
+𝜆
+;
+𝛽
+)
+≡
+−
+𝐿
+(
+𝜆
+;
+𝛽
+)
+. Solving for 
+𝜆
+𝐵
+(
+𝛽
+)
+=
+arg
+⁡
+max
+⁡
+𝐿
+ is finding equilibria of a potential—Newton’s stationary points where 
+∇
+𝑈
+=
+0
+.
+
+• Forces and curvature: The “force” is 
+−
+∇
+𝑈
+=
+∇
+𝐿
+; the “mass/rigidity” is the Hessian 
+𝐻
+=
+∇
+2
+𝑈
+=
+−
+∇
+2
+𝐿
+. Newton or quasi‑Newton steps use
+
+Δ
+𝜆
+≈
+−
+𝐻
+−
+1
+∇
+𝑈
+=
+(
+∇
+2
+𝐿
+)
+−
+1
+∇
+𝐿
+,
+mirroring second‑order Newtonian updates.
+
+• Constraints as holonomic: The solver’s projections/KKT conditions are the Lagrange‑multiplier analogue of constrained mechanics; constraints define an admissible manifold where equilibria live.
+
+• Continuation/adiabatic loading: Varying 
+𝛽
+ from 
+𝛽
+r
+e
+f
+ to 
+𝛽
+𝑐
+ is a quasi‑static loading of the potential 
+𝑈
+(
+𝜆
+;
+𝛽
+)
+. Warm‑starting is the quasi‑static equilibrium path familiar from Newtonian continuation methods.
+
+• Stability by eigenmodes: Positive‑definiteness of 
+−
+∇
+2
+𝐿
+ at 
+𝜆
+𝐵
+ maps to stable equilibria; emerging small eigenvalues near 
+𝛽
+𝑐
+ diagnose soft modes/instabilities that drive a large BCI.
+
+General relativity: geometry of parameter space
+• Metric on the manifold: Equip parameter space with a Riemannian metric 
+𝑔
+—typically the Fisher information or the positive‑definite part of 
+−
+∇
+2
+𝐿
+. This turns displacement into invariant length:
+
+d
+i
+s
+t
+2
+(
+𝜆
+1
+,
+𝜆
+2
+)
+≈
+(
+𝜆
+2
+−
+𝜆
+1
+)
+⊤
+ 
+𝑔
+(
+𝜆
+ˉ
+)
+ 
+(
+𝜆
+2
+−
+𝜆
+1
+)
+.
+• BCI as proper distance: Replace raw Euclidean norm in BCI with the metric length to obtain a coordinate‑invariant contrast:
+
+B
+C
+I
+𝑔
+=
+(
+Δ
+𝜆
+)
+⊤
+𝑔
+ 
+(
+Δ
+𝜆
+)
+𝛿
+t
+o
+l
+e
+r
+a
+n
+c
+e
+,
+Δ
+𝜆
+=
+𝜆
+𝐵
+(
+𝛽
+𝑐
+)
+−
+𝜆
+𝐵
+(
+𝛽
+r
+e
+f
+)
+.
+• Geodesic comparison: For large shifts, integrate along the equilibrium path 
+𝛾
+(
+𝛽
+)
+ and measure geodesic length
+
+𝐿
+=
+∫
+𝛽
+r
+e
+f
+𝛽
+𝑐
+ ⁣
+𝛾
+˙
+⊤
+𝑔
+(
+𝛾
+,
+𝛽
+)
+ 
+𝛾
+˙
+ 
+𝑑
+𝛽
+,
+making BCI reflect the curved geometry induced by interactions.
+
+• Curvature diagnostics: Christoffel symbols from 
+𝑔
+ (or third‑derivative tensors of 
+𝐿
+) indicate where the manifold bends; increased curvature near 
+𝛽
+𝑐
+ explains solver ill‑conditioning and amplifies BCI even for modest Euclidean shifts.
+
+Practical advantages to BCI
+• Invariance and comparability: Metric‑aware BCI is robust to reparameterization of 
+𝜆
+, making thresholds meaningful across models and witnesses.
+
+• Sensitivity where it matters: Newtonian eigenmode analysis highlights which components drive the shift; GR curvature weights those directions by intrinsic geometry, not arbitrary scales.
+
+• Stable solving near criticality: Second‑order (Newton/BFGS) updates use curvature to converge in stiff regions; trust‑regions are the “local normal coordinates” that keep steps causal and safe in high curvature.
+
+Implementation hooks already in the section
+• Swap the BCI norm: Use 
+∥
+⋅
+∥
+2
+ for quick checks; use metric length with 
+𝑔
+=
+−
+∇
+2
+𝐿
+ or Fisher for invariant audits.
+
+• Condition checks: Track Hessian eigenvalues to gate step sizes and to annotate “geometric stiffness” near 
+𝛽
+𝑐
+.
+
+• Geometric continuity: Warm‑start at 
+𝛽
+r
+e
+f
+, trace 
+𝜆
+𝐵
+(
+𝛽
+)
+ to 
+𝛽
+𝑐
+, and optionally compute a geodesic‑length BCI for the archival report.
+
+Short equations to anchor the bridge
+Objective and stationarity:
+
+𝐿
+(
+𝜆
+;
+𝛽
+)
+=
+∑
+𝑞
+𝑤
+𝑞
+log
+⁡
+𝜃
+𝑞
+(
+𝜆
+;
+𝛽
+)
++
+∑
+𝑞
+≤
+𝑞
+′
+𝛽
+𝑞
+,
+𝑞
+′
+(
+𝛽
+)
+log
+⁡
+𝐵
+(
+𝑞
+,
+𝑞
+′
+∣
+𝜆
+)
+,
+∇
+𝜆
+𝐿
+=
+0.
+Newton step:
+
+Δ
+𝜆
+=
+[
+∇
+𝜆
+2
+𝐿
+(
+𝜆
+;
+𝛽
+)
+]
+−
+1
+∇
+𝜆
+𝐿
+(
+𝜆
+;
+𝛽
+)
+.
+Metric BCI:
+
+B
+C
+I
+𝑔
+=
+(
+𝜆
+𝐵
+(
+𝛽
+𝑐
+)
+−
+𝜆
+𝐵
+(
+𝛽
+r
+e
+f
+)
+)
+⊤
+ 
+𝑔
+ 
+(
+𝜆
+𝐵
+(
+𝛽
+𝑐
+)
+−
+𝜆
+𝐵
+(
+𝛽
+r
+e
+f
+)
+)
+𝛿
+t
+o
+l
+e
+r
+a
+n
+c
+e
+.
+In short, Newtonian mechanics gives BCI a force‑and‑stability lens for solving and diagnosing shifts, while general relativity provides the geometric metric to measure those shifts invariantly and meaningfully across the curved landscape your interactions create.
+
+
+##
+
+
