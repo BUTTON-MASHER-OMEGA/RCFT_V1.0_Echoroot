@@ -523,6 +523,51 @@ visualizations:
   - gauge: "BCI vs δ_tolerance line"
 
 
+chap9:
+  params:
+    Q:
+      items: ["audio", "visual", "text", "kinesthetic", "temporal", "relational"]
+      w_q: 1/6
+    lambda:
+      domain: "simplex"
+      constraints:
+        nonnegativity: true
+        sum_to_one: true
+      regularization:
+        l2_alpha: 1e-3
+        l1_alpha: 0.0
+      projection:
+        method: "euclidean-simplex"
+        tol: 1e-10
+    bci:
+      norm: "L2"          # options: L2, metric
+      metric: "Fisher"     # used if norm=metric
+      delta_tolerance: 0.15
+      beta_ref: 0.2800
+    logs:
+      epsilon_floor: 1e-12
+    solver:
+      method: "projected-BFGS"
+      step_cap: 0.2
+      grad_tol: 1e-6
+      rel_improve_tol: 1e-8
+      max_iter: 200
+chap8:
+  params:
+    varF:
+      window:
+        type: "beta-local"
+        size_grid_points: 7
+        smoothing: "lowess"
+        bandwidth_beta: 0.02
+      resamples: 500
+      shrinkage: "none"    # "ledoit-wolf" if F is vector
+    cli:
+      eval_beta: "beta_c"
+      bootstrap_CI: [0.68, 0.95]
+      seed_alignment: true
+
+
 
 
 
@@ -5998,3 +6043,625 @@ In short, Newtonian mechanics gives BCI a force‑and‑stability lens for solvi
 ##
 
 
+Q, weights, and λ constraints
+Index set Q:
+
+|Q| = 6 with uniform weights w_q = 1/6.
+
+Recommended semantic mapping (renameable): Q = {audio, visual, text, kinesthetic, temporal, relational}.
+
+λ domain and constraints:
+
+λ ∈ Δ^d (probability simplex) with d = |Q| or d = |Q| + interaction terms.
+
+Constraints:
+
+λ_i ≥ 0 for all i
+
+∑_i λ_i = 1
+
+Optional sparsity prior: L1 penalty α∥λ∥_1 with small α to encourage interpretable components.
+
+If interactions are modeled separately in B(q,q′), keep λ on the simplex to avoid overparameterization.
+
+Var[F] construction for CLI
+Observable F:
+
+Choose a consistent scalar free-energy statistic per β (e.g., sample mean free energy per replicate).
+
+Windowing:
+
+β-local window W(β): symmetric, 5–9 grid points centered at β (expand near edges).
+
+Within W(β), compute F_t per sample t and VarF as sample variance across replicates.
+
+Resample scheme:
+
+K Monte Carlo replicates (K = 500 default) matched to 7.2/7.3.
+
+Keep seeds aligned between S and F to maintain covariance fidelity.
+
+Shrinkage preference:
+
+For scalar Var[F], no shrinkage needed.
+
+If F is vector-valued, use Ledoit–Wolf shrinkage on covariance; store only the scalar variance along a chosen projection (e.g., first principal component) to keep CLI definition scalar.
+
+Smoothing:
+
+Optional moving-average or LOWESS across β with bandwidth covering the [0.37, 0.42] critical band; report both raw and smoothed Var[F].
+
+BCI norm and δ_tolerance
+Norm choice:
+
+Default: L2 norm for λ_B shifts, ∥Δλ∥_2.
+
+Invariant option: metric norm with g = Fisher information or −∇²ℒ at λ̄; enable as advanced audit.
+
+δ_tolerance:
+
+Numeric default: 0.15 (dimensionless on simplex), justified by:
+
+Typical thermal drift of λ components ≤ 0.05 each in non-transition regimes.
+
+With d=6, random jitter RMS ≈ sqrt(6)*0.05 ≈ 0.122; 0.15 sets a conservative breach threshold.
+
+Feel free to set project-wise; include in YAML so it’s explicit.
+
+β_ref definition
+Baseline inverse temperature:
+
+β_ref = 0.2800 by default, chosen in the pre-critical regime where C(β) is low and S′ is shallow.
+
+Alternatives:
+
+Use the β at which S″ first crosses zero on the hot side.
+
+Or the Chapter 7 canonical “operating β” used for training/warm-starts.
+
+Archive the choice and rationale; downstream results (BCI) will reference β_ref explicitly.
+
+Log floors and solver regularization
+Log floors:
+
+For any log θ_q or log B(q,q′), clamp arguments by ε_floor = 1e−12 to avoid −∞.
+
+Record actual min values encountered to audit numerical health.
+
+Regularization:
+
+L2 ridge on λ: add −(α/2)∥λ∥_2² to ℒ with α = 1e−3 default; improves Hessian conditioning.
+
+Trust-region or line-search safeguards with Wolfe conditions; cap step norm at 0.2 in L2.
+
+Projection: after each step, project to simplex via Euclidean projection; tolerance 1e−10.
+
+Convergence criteria:
+
+∥∇ℒ∥_2 ≤ 1e−6, relative improvement in ℒ ≤ 1e−8 over 5 iterations, max_iter = 200.
+
+
+##
+
+
+
+
+Conclusion and transition to 7.5
+Summary: Entropy dynamics and phase transitions
+Canonical backbone: with 
+𝑘
+𝐵
+=
+1
+, 
+𝑇
+=
+1
+/
+𝛽
+,
+
+𝑍
+(
+𝛽
+)
+=
+∑
+𝑖
+𝑒
+−
+𝛽
+𝐸
+𝑖
+, 
+𝐹
+(
+𝛽
+)
+=
+−
+𝛽
+−
+1
+ln
+⁡
+𝑍
+,
+
+𝑈
+(
+𝛽
+)
+=
+∂
+𝛽
+[
+𝛽
+𝐹
+(
+𝛽
+)
+]
+,
+
+𝑆
+(
+𝛽
+)
+=
+𝛽
+[
+𝑈
+(
+𝛽
+)
+−
+𝐹
+(
+𝛽
+)
+]
+=
+𝛽
+2
+𝐹
+′
+(
+𝛽
+)
+.
+
+Derivative structure (replicable from 7.3’s 
+𝐶
+(
+𝛽
+)
+):
+
+𝑆
+′
+(
+𝛽
+)
+=
+−
+𝐶
+(
+𝛽
+)
+𝛽
+,
+
+𝑆
+′
+′
+(
+𝛽
+)
+=
+−
+𝐶
+′
+(
+𝛽
+)
+𝛽
++
+𝐶
+(
+𝛽
+)
+𝛽
+2
+,
+
+Inflection criterion: 
+𝑆
+′
+′
+(
+𝛽
+)
+=
+0
+  
+⟺
+  
+𝛽
+ 
+𝐶
+′
+(
+𝛽
+)
+≈
+𝐶
+(
+𝛽
+)
+.
+
+Critical point and sensitivity:
+
+𝛽
+𝑐
+=
+0.3962
+±
+0.0014
+,
+
+∂
+𝛽
+𝑐
+∂
+𝜀
+≈
+−
+6.24
+, hence 
+∂
+𝑇
+𝑐
+∂
+𝜀
+≈
+6.24
+𝛽
+𝑐
+2
+≈
+39.8
+.
+
+Scaling near the boundary (local exponent):
+
+𝑆
+(
+𝛽
+)
+≈
+𝐵
+ 
+∣
+𝛽
+−
+𝛽
+𝑐
+∣
+𝑝
+,
+
+Log–log fit: 
+log
+⁡
+∣
+𝑆
+(
+𝛽
+)
+−
+𝑆
+(
+𝛽
+𝑐
+)
+∣
+≈
+𝑝
+ 
+log
+⁡
+∣
+𝛽
+−
+𝛽
+𝑐
+∣
++
+log
+⁡
+𝐵
+.
+
+Cross‑chapter links (formal, non‑relational):
+
+CLI at 
+𝛽
+𝑐
+: 
+c
+o
+v
+ ⁣
+(
+𝑆
+(
+𝛽
+)
+,
+Var
+⁡
+[
+𝐹
+]
+)
+.
+
+BCI: shift magnitude of 
+𝜆
+𝐵
+ between 
+𝛽
+r
+e
+f
+ and 
+𝛽
+𝑐
+, with solver grounded in 
+𝐿
+(
+𝜆
+;
+𝛽
+)
+ and constrained optimization.
+
+Next steps for 7.5: Cellular automaton ignition (entropy‑driven stability)
+Ignition temperature band:
+
+Operate CA in the critical window 
+𝛽
+∈
+[
+𝛽
+𝑐
+−
+𝛿
+𝛽
+,
+ 
+𝛽
+𝑐
++
+𝛿
+𝛽
+]
+ with 
+𝛿
+𝛽
+=
+2
+𝜎
+𝛽
+=
+2
+×
+0.0014
+=
+0.0028
+.
+
+Transition kinetics (detailed balance compatible):
+
+Base rate for a local energy change 
+Δ
+𝐸
+:
+
+𝑘
+r
+a
+t
+e
+(
+𝛽
+,
+Δ
+𝐸
+)
+=
+𝑒
+−
+𝛽
+ 
+Δ
+𝐸
+.
+Metropolis acceptance for discrete updates:
+
+𝐴
+=
+min
+⁡
+ ⁣
+(
+1
+,
+ 
+𝑒
+−
+𝛽
+ 
+Δ
+𝐸
+)
+.
+Entropy‑aware scheduling and stability gates:
+
+Update frequency scale: 
+𝑓
+(
+𝛽
+)
+∝
+∣
+𝑆
+′
+(
+𝛽
+)
+∣
+=
+𝐶
+(
+𝛽
+)
+𝛽
+ to concentrate dynamics near the response peak.
+
+Curvature guard: pause or thin updates where 
+∣
+𝑆
+′
+′
+(
+𝛽
+)
+∣
+ exceeds a threshold (to avoid runaway near sharp non‑analyticity).
+
+Variance gate: require 
+𝛽
+2
+Var
+⁡
+[
+𝐸
+]
+(
+𝛽
+)
+=
+𝐶
+(
+𝛽
+)
+ below a ceiling for stable post‑critical consolidation.
+
+Parameter defaults for CA runs:
+
+Critical band: 
+[
+0.3934
+,
+ 
+0.3990
+]
+.
+
+Time step scaling: 
+Δ
+𝑡
+∝
+1
+/
+𝑓
+(
+𝛽
+)
+.
+
+Energy normalization: set 
+Δ
+𝐸
+ in the same units as 7.x so that 
+𝑘
+r
+a
+t
+e
+ is dimensionless and consistent.
+
+ε‑sensitivity provisioning:
+
+Shift 
+𝛽
+𝑐
+(
+𝜀
+)
+≈
+𝛽
+𝑐
+−
+6.24
+ 
+𝜀
+.
+
+Recenter the ignition band around 
+𝛽
+𝑐
+(
+𝜀
+)
+ and reuse the same gates on 
+𝑆
+′
+ and 
+𝑆
+′
+′
+.
+
+Mathematical closure and 7.5 preview
+Closure: 7.4 delivers a complete, cross‑validated entropy landscape with first and second derivatives tied to heat‑capacity data, precise localization of 
+𝛽
+𝑐
+, critical scaling, and quantified uncertainty.
+
+Preview: 7.5 will instantiate these thermodynamic results as CA dynamics via 
+𝑘
+r
+a
+t
+e
+=
+𝑒
+−
+𝛽
+Δ
+𝐸
+ under entropy‑driven scheduling, with stability guarded by 
+𝑆
+′
+(
+𝛽
+)
+, 
+𝑆
+′
+′
+(
+𝛽
+)
+, and 
+𝐶
+(
+𝛽
+)
+. No relational assumptions are required—only the thermodynamic metrics already established.
+
+##
