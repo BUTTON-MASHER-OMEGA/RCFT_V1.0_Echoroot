@@ -3199,6 +3199,92 @@ Interpretation: a negative
 
 ##
 
+🧮 Calculus Capsule: Derivative Derivation
+Add a subsection explicitly deriving:
+
+𝑆
+′
+(
+𝛽
+)
+=
+−
+𝐶
+(
+𝛽
+)
+𝛽
+
+𝑆
+′
+′
+(
+𝛽
+)
+=
+−
+𝐶
+′
+(
+𝛽
+)
+𝛽
++
+𝐶
+(
+𝛽
+)
+𝛽
+2
+
+Include:
+
+Chain rule application showing how 
+𝑆
+=
+−
+log
+⁡
+𝛽
+⋅
+𝐶
+(
+𝛽
+)
+ maps to the above
+
+Notation for functional vs parametric derivation if that’s part of your glyph semantics
+
+📉 Error Propagation Patch
+Tag the omission from Chapter 7.3:
+
+Propagate ±0.0014 through:
+
+Peak localization of 
+𝛽
+𝑐
+
+Derivatives impacting ε-sensitivity
+
+Insert:
+
+Δ
+𝛽
+𝑐
+ and 
+Δ
+(
+𝑑
+𝛽
+𝑐
+𝑑
+𝜀
+)
+ error bands
+
+How uncertainty affects curvature and visualization fidelity
+
+
 
 🔍 Derivative Derivation Expansion
 Previously, the YAML referenced the forms of the first and second derivatives of entropy 
