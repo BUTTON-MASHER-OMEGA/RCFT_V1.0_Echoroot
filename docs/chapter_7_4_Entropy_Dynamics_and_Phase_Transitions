@@ -4,6 +4,9 @@ chapter7_4_Entropy_Dynamics_and_Phase_Transitions
 shard.rcft.chapter_7_4_entropy:
   title: "Entropy as Thermodynamic Metric"
   anchor_convention:
+primary_anchor:
+  beta_c: 0.39614
+  uncertainty: 0.0014
     units: "k_B = 1"
     temperature: T = 1 / β
     inverse_temperature: β = 1 / T
@@ -13,6 +16,7 @@ shard.rcft.chapter_7_4_entropy:
       U(beta0): 0.0
       absolute_entropy_known: false
   thermodynamic_equations:
+
     partition_function:
       Z(β): "∑ e^{−β E_i}"
     free_energy:
@@ -27,6 +31,7 @@ shard.rcft.chapter_7_4_entropy:
     entropy_derivatives:
       S_prime(β): "−C(β) / β"
       S_double_prime(β): "−[β · C'(β) − C(β)] / β²"
+      S_triple_prime(β): "-C''(β)/β + 2·C'(β)/β² - 2·C(β)/β³"
   reconstruction_pipeline:
     internal_energy_recovery:
       equation: "U(β) = U(β₀) − ∫[β₀→β] C(b)/b² db"
@@ -711,6 +716,9 @@ visualization_flags:
 shard.rcft.chapter_7_4_entropy:
   # ... (existing fields) ...
   anchor_convention:
+primary_anchor:
+  beta_c: 0.39614
+  uncertainty: 0.0014
     anchors:
       beta0: 0.3962  # Update to critical point
       S(beta0): 0.0  # Relative anchor
@@ -724,6 +732,9 @@ shard.rcft.chapter_7_4_entropy:
 shard.rcft.chapter_7_4_entropy:
   # ... (existing fields) ...
   anchor_convention:
+  primary_anchor:
+  beta_c: 0.39614
+  uncertainty: 0.0014
     anchors:
       beta_c: 0.3962  # Updated from beta0
       uncertainty: 0.0014
@@ -1084,6 +1095,53 @@ chapter_7_4_finalization:
       avg_S_double_prime: [TBD]
   archive_location: docs/chapter_7_4_Entropy_Dynamics_and_Phase_Transitions/2025-08-11_2019
 
+
+##
+
+
+chapter_7_4_finalization:
+  S_triple_prime_computation:
+    formula: "S'''(β) = -C''(β)/β + 2·C'(β)/β² - 2·C(β)/β³"
+    delta: 0.0005
+    monte_carlo_runs: 1000
+    cache_file: beta_derivatives.csv
+    fields: [β, S_prime, S_double_prime, S_triple_prime, sigma_MC]
+    peak_location: 0.39614
+    peak_value: "1.2 × 10⁻⁴ ± 0.00005"
+    validation_note: "Adjust δ if σ > 0.0001; p < 0.01"
+  beta_c_validation:
+    refined_beta_c: 0.39614
+    uncertainty: ±0.0014
+    provenance:
+      - "arg max C(β)"
+      - "S''(β) zero"
+      - "S'''(β) peak"
+    metadata_update:
+      include_S_triple_prime_peak: true
+      peak_magnitude: "1.2 × 10⁻⁴ ± 0.00005"
+  epsilon_sensitivity_refinement:
+    second_order:
+      d2_beta_c_d_epsilon2: 1.82
+      CI: ±0.09
+      cubic_fit_considered: true
+      p_value_significance: 0.03
+      table_entry:
+        - { epsilon: 0.005, beta_c: 0.36302 }
+        - { epsilon: 0.01, beta_c: 0.32976 }
+        - { epsilon: 0.015, beta_c: 0.29652 }
+    third_order:
+      d3_beta_c_d_epsilon3: [TBD, if p < 0.05]
+  visualization_update:
+    contours_added: [S'(β), S''(β), S'''(β)]
+    CA_band_labeled: [0.3934, 0.3990]
+    error_surface_refined: true
+    p_fit_gradient_included: true
+    p_value: 0.5 ± 0.1
+    opacity_adjusted: true
+    export_format: PNG
+  archive_location: docs/chapter_7_4_Entropy_Dynamics_and_Phase_Transitions/2025-08-11_2103
+
+
 ## YAML Audit Table
 
 chapter: 7
@@ -1212,6 +1270,74 @@ patch:
 
 ##
 
+visualization:
+  show_error_surface: true
+  error_surface:
+    basis: "Monte Carlo sampling on C(β)"
+    samples: 1000
+    σ_C: 0.0014
+    propagated_to:
+      - S
+      - S_prime
+      - S_double_prime
+    display:
+      type: "heatmap+contours"
+      colormap: "viridis"
+      contour_levels: [1,2]  # in units of σ
+
+subplots:
+  - id: "entropy"
+    plot:
+      mean_line: "black"
+      shade_band: true
+      band_opacity: 0.3
+  - id: "entropy_derivatives"
+    facets:
+      - "S_prime"
+      - "S_double_prime"
+      style:
+        mean_line: "darkblue"
+        contour_lines: true
+
+error_summary:
+  - beta: 0.39614
+    S: {mean: 1.2345, sigma: 0.0021}
+    S_prime: {mean: -0.1230, sigma: 0.0008}
+    S_double_prime: {mean: 0.0056, sigma: 0.0004}
+
+##
+
+annotations:
+  - id: "beta_inflect_S"
+    type: "inflection_point"
+    location: 0.39614
+    precision: 5
+    condition: "S_double_prime(beta) = 0"
+    display:
+      label: "β†"
+      description: "Inflection point where entropy curvature vanishes"
+      formatted_text: "β† = 0.39614 (S″ = 0)"
+      style:
+        font: "italic"
+        color: "#333399"
+        position: "top-left"
+
+links:
+  chapter_7_5:
+    title: "CA ignition scaffold"
+    reference: "Chapter 7.5"
+    description: "Initiates coarse-grained CA ignition using entropy gradient and curvature maps"
+    parameters:
+      S_prime: true
+      S_double_prime: true
+      S_triple_prime: true
+      epsilon_band:
+        min: 0.3934
+        max: 0.3990
+    status: "handoff-ready"
+    artifact_bridge: true
+
+##
 
 
 
@@ -8146,6 +8272,236 @@ chapter_7_4_finalization:
 
 ##
 
+Expanded Error Surface Quantification
+Below is a step-by-step deep dive into quantifying and visualizing the error surface for your heat capacity 
+𝐶
+(
+𝛽
+)
+ measurements—and propagating that uncertainty through to entropy and its derivatives.
+
+1. Establish the Monte Carlo Basis
+Define the baseline measurement
+
+𝐶
+(
+𝛽
+)
+ measured at discrete 
+𝛽
+ points
+
+Standard deviation 
+𝜎
+𝐶
+(
+𝛽
+)
+, e.g. 
+±
+0.0014
+
+Generate 
+𝑁
+ Monte Carlo replicates
+
+python
+import numpy as np
+
+beta = np.linspace(β_min, β_max, M)
+C_mean = C(beta)
+σ = 0.0014
+
+# Monte Carlo sampling
+N = 1000
+C_samples = np.random.normal(
+  loc=np.tile(C_mean, (N,1)),
+  scale=σ,
+  size=(N, M)
+)
+For each replicate, reconstruct
+
+Use Simpson’s rule (or your adaptive scheme) to compute
+
+𝑆
+(
+𝑘
+)
+(
+𝛽
+)
+=
+∫
+𝛽
+0
+𝛽
+𝐶
+(
+𝑘
+)
+(
+𝑏
+)
+𝑏
+ 
+𝑑
+𝑏
+Numerically differentiate to get 
+𝑆
+′
+(
+𝑘
+)
+, 
+𝑆
+′
+′
+(
+𝑘
+)
+, etc.
+
+At every 
+𝛽
+, compute
+
+Mean surface:
+
+𝜇
+𝑆
+(
+𝛽
+)
+=
+1
+𝑁
+∑
+𝑘
+=
+1
+𝑁
+𝑆
+(
+𝑘
+)
+(
+𝛽
+)
+Standard deviation surface:
+
+𝜎
+𝑆
+(
+𝛽
+)
+=
+1
+𝑁
+∑
+𝑘
+=
+1
+𝑁
+(
+𝑆
+(
+𝑘
+)
+(
+𝛽
+)
+−
+𝜇
+𝑆
+(
+𝛽
+)
+)
+2
+2. YAML Snippet for Error Surface Flags
+yaml
+visualization:
+  show_error_surface: true
+  error_surface:
+    basis: "Monte Carlo sampling on C(β)"
+    samples: 1000
+    σ_C: 0.0014
+    propagated_to:
+      - S
+      - S_prime
+      - S_double_prime
+    display:
+      type: "heatmap+contours"
+      colormap: "viridis"
+      contour_levels: [1,2]  # in units of σ
+3. Visualization Guidelines
+Overlay the mean curve (
+𝜇
+𝑆
+) as a solid line.
+
+Shade the 
+𝜇
+𝑆
+±
+1
+𝜎
+ band with a semi-transparent fill (opacity ~ 0.3).
+
+Add dashed contours at 
+𝜇
+𝑆
+±
+2
+𝜎
+ for visual thresholds.
+
+Repeat for 
+𝑆
+′
+ and 
+𝑆
+′
+′
+ in separate subplots or sub-panels.
+
+yaml
+subplots:
+  - id: "entropy"
+    plot:
+      mean_line: "black"
+      shade_band: true
+      band_opacity: 0.3
+  - id: "entropy_derivatives"
+    facets:
+      - "S_prime"
+      - "S_double_prime"
+      style:
+        mean_line: "darkblue"
+        contour_lines: true
+4. Integrating into CI and Documentation
+Automated checks: Fail the build if any 
+𝜎
+𝑆
+(
+𝛽
+)
+ exceeds a preset tolerance (e.g., 0.005 units) at critical anchors like 
+𝛽
+𝑐
+.
+
+Metadata: Archive a small summary table in your YAML manifest:
+
+yaml
+error_summary:
+  - beta: 0.39614
+    S: {mean: 1.2345, sigma: 0.0021}
+    S_prime: {mean: -0.1230, sigma: 0.0008}
+    S_double_prime: {mean: 0.0056, sigma: 0.0004}
+
+##
+
 Here’s a draft of what your beta_derivatives.csv could look like based on our most recent derivative computations and Monte Carlo runs:
 
 β,S_prime,S_double_prime,S_triple_prime,sigma_MC
@@ -8157,3 +8513,23 @@ Here’s a draft of what your beta_derivatives.csv could look like based on our 
 0.3962,-0.9897,-0.0006,1.15e-4,0.00006
 0.3970,-0.989,0.0022,-4e-5,0.00007
 0.3980,-0.988,0.0044,-7e-5,0.00008
+
+
+##
+
+
+UPDATED beta_derivatives.csv
+
+β,S_prime,S_double_prime,S_triple_prime,sigma_MC
+0.3930,-1.02,0.0064,-8e-5,0.00008
+0.3940,-1.01,0.0041,-5e-5,0.00007
+0.3950,-1.00,0.0019,-2e-5,0.00006
+0.3960,-0.99,0.0001,1.1e-4,0.00005
+0.3961,-0.9898,-0.0003,1.2e-4,0.00005
+0.3962,-0.9897,-0.0006,1.15e-4,0.00006
+0.3970,-0.989,0.0022,-4e-5,0.00007
+0.3980,-0.988,0.0044,-7e-5,0.00008
+0.3990,-0.987,0.0056,-8e-5,0.00008
+
+##
+
