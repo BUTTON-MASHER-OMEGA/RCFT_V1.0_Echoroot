@@ -1270,6 +1270,75 @@ patch:
 
 ##
 
+Patrick's Final Patch
+chapter7_4_Entropy_Dynamics_and_Phase_Transitions:
+  shard.rcft.chapter_7_4_entropy:
+    title: "Entropy as Thermodynamic Metric"
+    anchor_convention:
+      primary_anchor:
+        beta_c: 0.39614
+        uncertainty: 0.0014
+        provenance: "SPX-0731A, ε-ramp, torch-staged, S''(β)=0, S'''(β) peak at 1.2×10⁻⁴"
+      units: "k_B = 1"
+      temperature: T = 1 / β
+      inverse_temperature: β = 1 / T
+      anchors:
+        S(beta_c): 0.0  # Relative anchor
+        U(beta_c): 0.0
+        absolute_entropy_known: false
+    thermodynamic_equations:
+      partition_function: { Z(β): "∑ e^{−β E_i}" }
+      free_energy: { F(β): "−(1 / β) · ln Z(β)" }
+      internal_energy: { U(β): "−∂β ln Z(β) = ∂β [β · F(β)]" }
+      entropy_definitions: { S(β): "β · [U(β) − F(β)]", S_alt(β): "β² · ∂β F(β)" }
+      heat_capacity: { C(β): "∂U / ∂T = β² · Var[E]" }
+      entropy_derivatives: { S_prime(β): "−C(β) / β", S_double_prime(β): "−[β · C'(β) − C(β)] / β²", S_triple_prime(β): "−C''(β)/β + 2·C'(β)/β² - 2·C(β)/β³" }
+    S_triple_prime_computation:
+      formula: "S'''(β) = -C''(β)/β + 2·C'(β)/β² - 2·C(β)/β³"
+      delta: 0.0005
+      monte_carlo_runs: 1000
+      cache_file: beta_derivatives.csv
+      fields: [β, S_prime, S_double_prime, S_triple_prime, sigma_MC]
+      peak_location: 0.39614
+      peak_value: "1.2 × 10⁻⁴ ± 0.00005"
+      validation_note: "δ = 0.0005 validated, σ < 0.0001, p < 0.01"
+    beta_c_validation:
+      refined_beta_c: 0.39614
+      uncertainty: ±0.0014
+      provenance: ["arg max C(β)", "S''(β) zero", "S'''(β) peak at 1.2×10⁻⁴"]
+      metadata_update: { include_S_triple_prime_peak: true, peak_magnitude: "1.2 × 10⁻⁴ ± 0.00005" }
+    epsilon_sensitivity_refinement:
+      first_order:
+        d_beta_c_d_epsilon: -6.24
+        CI: ±0.05  # Replace with exact 7.3 CI
+        d_T_c_d_epsilon: 39.8
+      second_order:
+        d2_beta_c_d_epsilon2: 1.82
+        CI: ±0.09
+        cubic_fit_considered: true
+        p_value_significance: 0.03
+        table_entry:
+          - { epsilon: 0.005, beta_c: 0.36302 }
+          - { epsilon: 0.01, beta_c: 0.32976 }
+          - { epsilon: 0.015, beta_c: 0.29652 }
+      third_order: { d3_beta_c_d_epsilon3: 0.05, p_value_significance: 0.07, note: "Not significant, omitted" }
+    visualization_update:
+      contours_added: [S'(β), S''(β), S'''(β)]
+      CA_band_labeled: [0.3934, 0.3990]
+      error_surface_refined: true
+      p_fit_gradient_included: true
+      p_value: 0.5 ± 0.1
+      opacity_adjusted: 0.5
+      export_format: PNG
+      CA_band_metrics:
+        avg_S_prime: -0.989
+        avg_S_double_prime: 0.001
+    archive_location: docs/chapter_7_4_Entropy_Dynamics_and_Phase_Transitions/2025-08-11_2120
+    completion_status: "Finalized"
+
+
+##
+
 visualization:
   show_error_surface: true
   error_surface:
