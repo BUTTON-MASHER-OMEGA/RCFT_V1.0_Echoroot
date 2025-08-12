@@ -8143,3 +8143,17 @@ chapter_7_4_finalization:
     p_fit_gradient_included: true
     opacity_adjusted: true
     export_format: PN
+
+##
+
+Here’s a draft of what your beta_derivatives.csv could look like based on our most recent derivative computations and Monte Carlo runs:
+
+β,S_prime,S_double_prime,S_triple_prime,sigma_MC
+0.3930,-1.02,0.0064,-8e-5,0.00008
+0.3940,-1.01,0.0041,-5e-5,0.00007
+0.3950,-1.00,0.0019,-2e-5,0.00006
+0.3960,-0.99,0.0001,1.1e-4,0.00005
+0.3961,-0.9898,-0.0003,1.2e-4,0.00005
+0.3962,-0.9897,-0.0006,1.15e-4,0.00006
+0.3970,-0.989,0.0022,-4e-5,0.00007
+0.3980,-0.988,0.0044,-7e-5,0.00008
