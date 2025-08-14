@@ -1,0 +1,1588 @@
+##YAML
+
+
+config:
+  # Critical band and uncertainty
+  beta:
+    band: [0.3934, 0.3990]
+    beta_c: 0.39614
+    beta_c_uncertainty: 0.0014        # 1σ, to be propagated
+    sweep:
+      delta_beta: 0.0001              # narrow sweep step
+  lattice:
+    dimensions: 2                     # default (3 optional)
+    size_L: 128
+    boundary: periodic
+    neighborhood: moore_radius_1      # options: moore_radius_1 | von_neumann_radius_1
+  state_space:
+    K: 2                              # 2 (binary); 3 reserved for §8.1
+  energy:
+    J: 1.0
+    h: 0.0
+  updates:
+    family: metropolis                # options: metropolis | heat_bath
+    throttle:
+      type: smooth_band
+      width_half: 0.0028              # ≈ (band_width)/2
+      lambda: 0.0005                  # outside-band decay scale
+  scheduling:
+    gamma:
+      a0: 0.0
+      a1: 1.0
+      min: 0.1
+      max: 2.0
+    curvature_guard_tau: 0.001
+    epsilon_sensitivity:
+      enabled: true
+      d_beta_c_d_epsilon: 0.0         # set if ε is present; else 0
+      max_abs_drift_per_1k_sweeps: 0.0003
+  runs:
+    sweeps:
+      warmup: 2000
+      measure: 8000                   # total ~1e4 sweeps typical
+    seeds: [101, 202, 303, 404, 505]  # example; extend for ensemble stats
+  observables:
+    measure_every_sweeps: 5
+    corr_length_kmin: [2*pi/size_L, 0]  # for ξ via second-moment (2D)
+  output:
+    record: [e_t, m_t, C_L_beta, U4_beta, xi_beta, tau_int_beta]
+    formats: [csv, parquet]
+
+
+
+##Chapter 7_5 Notes
+
+Chapter 7.5: Entropy‑driven cellular automaton (ED‑CA)
+A compact, execution‑ready specification that extends the thermodynamic results of 7.1–7.4 into a cellular automaton for stability, ignition, and phase‑transition mapping. All thresholds and constants below are tunable via the YAML preamble.
+
+yaml
+config:
+  # Critical band and uncertainty
+  beta:
+    band: [0.3934, 0.3990]
+    beta_c: 0.39614
+    beta_c_uncertainty: 0.0014        # 1σ, to be propagated
+    sweep:
+      delta_beta: 0.0001              # narrow sweep step
+  lattice:
+    dimensions: 2                     # default (3 optional)
+    size_L: 128
+    boundary: periodic
+    neighborhood: moore_radius_1      # options: moore_radius_1 | von_neumann_radius_1
+  state_space:
+    K: 2                              # 2 (binary); 3 reserved for §8.1
+  energy:
+    J: 1.0
+    h: 0.0
+  updates:
+    family: metropolis                # options: metropolis | heat_bath
+    throttle:
+      type: smooth_band
+      width_half: 0.0028              # ≈ (band_width)/2
+      lambda: 0.0005                  # outside-band decay scale
+  scheduling:
+    gamma:
+      a0: 0.0
+      a1: 1.0
+      min: 0.1
+      max: 2.0
+    curvature_guard_tau: 0.001
+    epsilon_sensitivity:
+      enabled: true
+      d_beta_c_d_epsilon: 0.0         # set if ε is present; else 0
+      max_abs_drift_per_1k_sweeps: 0.0003
+  runs:
+    sweeps:
+      warmup: 2000
+      measure: 8000                   # total ~1e4 sweeps typical
+    seeds: [101, 202, 303, 404, 505]  # example; extend for ensemble stats
+  observables:
+    measure_every_sweeps: 5
+    corr_length_kmin: [2*pi/size_L, 0]  # for ξ via second-moment (2D)
+  output:
+    record: [e_t, m_t, C_L_beta, U4_beta, xi_beta, tau_int_beta]
+    formats: [csv, parquet]
+Scope and objectives
+Goal: Extend the entropy/heat‑capacity framework to a CA that (i) stabilizes near ignition, (ii) maps the phase behavior, and (iii) produces convergence diagnostics with uncertainty propagation.
+
+Ignition window: 
+𝛽
+∈
+[
+0.3934
+,
+ 
+0.3990
+]
+ with 
+𝛽
+𝑐
+=
+0.39614
+±
+0.0014
+. Simulations must treat 
+±
+0.0014
+ as a first‑class uncertainty in scheduling, acceptance throttling, and analysis.
+
+Primary outputs: Phase map: 
+𝛽
+↦
+(
+𝑚
+,
+𝐶
+𝐿
+,
+𝑈
+4
+)
+. Stability: 
+𝜉
+,
+ 
+𝜏
+int
+. Convergence: seed‑wise and size‑wise agreement within prescribed tolerances.
+
+1. Model definition
+1.1 Cellular automaton lattice
+Lattice: d‑dimensional grid 
+Λ
+; default 
+𝑑
+=
+2
+, optional 
+𝑑
+=
+3
+.
+
+Sites and states: 
+𝑖
+∈
+Λ
+, base states 
+𝑠
+𝑖
+(
+𝑡
+)
+∈
+{
+0
+,
+1
+}
+, extensible to 
+{
+0
+,
+1
+,
+…
+,
+𝐾
+−
+1
+}
+.
+
+Neighborhood: Default Moore radius 1; switchable to von Neumann radius 1.
+
+Boundary conditions: Periodic.
+
+Mathematical form
+Indexing:
+
+Λ
+=
+{
+1
+,
+…
+,
+𝐿
+}
+𝑑
+,
+𝑁
+𝑖
+=
+{
+𝑗
+∈
+Λ
+:
+∥
+𝑗
+−
+𝑖
+∥
+∞
+=
+1
+}
+1.2 Local energy functional
+Definition (binary base): Pairwise Ising‑like with external field 
+ℎ
+.
+
+𝐸
+𝑖
+(
+𝑡
+)
+=
+−
+𝐽
+∑
+𝑗
+∈
+𝑁
+𝑖
+1
+[
+𝑠
+𝑗
+(
+𝑡
+)
+=
+𝑠
+𝑖
+(
+𝑡
+)
+]
++
+ℎ
+⋅
+1
+[
+𝑠
+𝑖
+(
+𝑡
+)
+=
+1
+]
+Δ
+𝐸
+𝑖
+=
+𝐸
+𝑖
+′
+(
+𝑡
+)
+−
+𝐸
+𝑖
+(
+𝑡
+)
+Defaults: 
+𝐽
+=
+1
+, 
+ℎ
+=
+0
+. Non‑zero 
+ℎ
+ reserved for perturbation tests.
+
+Extension (multi‑state): Replace indicator with Kronecker 
+𝛿
+𝑠
+𝑗
+,
+𝑠
+𝑖
+ for Potts‑like generalization (see §8.1).
+
+1.3 Thermodynamic link
+Partition function:
+
+𝑍
+(
+𝛽
+)
+=
+∑
+configs
+𝑒
+−
+𝛽
+𝐸
+Free energy:
+
+𝐹
+(
+𝛽
+)
+=
+−
+𝛽
+−
+1
+ln
+⁡
+𝑍
+(
+𝛽
+)
+Internal energy:
+
+𝑈
+(
+𝛽
+)
+=
+−
+∂
+∂
+𝛽
+ln
+⁡
+𝑍
+(
+𝛽
+)
+Entropy:
+
+𝑆
+(
+𝛽
+)
+=
+𝛽
+ 
+[
+𝑈
+(
+𝛽
+)
+−
+𝐹
+(
+𝛽
+)
+]
+Heat capacity and derivatives (for gating/scheduling):
+
+𝐶
+(
+𝛽
+)
+=
+𝛽
+2
+ 
+V
+a
+r
+[
+𝐸
+]
+,
+𝑆
+′
+(
+𝛽
+)
+=
+−
+𝐶
+(
+𝛽
+)
+𝛽
+𝑆
+′
+′
+(
+𝛽
+)
+=
+−
+𝐶
+′
+(
+𝛽
+)
+𝛽
++
+𝐶
+(
+𝛽
+)
+𝛽
+2
+2. Update rule family
+2.1 Metropolis‑type local acceptance
+Proposal: 
+𝑠
+𝑖
+′
+=
+1
+−
+𝑠
+𝑖
+ (binary flip).
+
+Acceptance:
+
+𝑝
+acc
+(
+𝑖
+,
+𝑡
+)
+=
+min
+⁡
+(
+1
+,
+ 
+𝑒
+−
+𝛽
+ 
+Δ
+𝐸
+𝑖
+(
+𝑡
+)
+)
+⋅
+𝑔
+(
+𝛽
+)
+Throttle 
+𝑔
+(
+𝛽
+)
+: Smooth, band‑aware multiplier.
+
+Definition (smooth_band): Let 
+𝑤
+=
+(
+𝛽
+max
+⁡
+−
+𝛽
+min
+⁡
+)
+/
+2
+ and 
+𝛿
+=
+∣
+𝛽
+−
+𝛽
+𝑐
+∣
+.
+
+𝑔
+(
+𝛽
+)
+=
+{
+1
+,
+𝛿
+≤
+𝑤
+exp
+⁡
+ ⁣
+(
+−
+(
+𝛿
+−
+𝑤
+)
+/
+𝜆
+)
+,
+𝛿
+>
+𝑤
+Defaults: 
+𝑤
+=
+0.0028
+, 
+𝜆
+=
+0.0005
+.
+
+2.2 Heat‑bath (Glauber) variant
+Flip probability:
+
+𝑃
+(
+𝑠
+𝑖
+(
+𝑡
++
+1
+)
+=
+1
+ 
+∣
+ 
+neighbors
+)
+=
+1
+1
++
+exp
+⁡
+(
+𝛽
+ 
+Δ
+𝐸
+𝑖
+(
+1
+→
+0
+)
+)
+Note: Use either Metropolis or heat‑bath per config; do not mix within a run.
+
+2.3 Global constraints (thermodynamic gating)
+Curvature guard: Freeze or down‑weight updates if
+
+∣
+𝑆
+′
+′
+(
+𝛽
+)
+∣
+>
+𝜏
+,
+𝜏
+=
+0.001
+Action: If violated, set 
+𝑔
+(
+𝛽
+)
+←
+0
+ and/or reduce scheduler cadence (see §5).
+
+3. Parameterization and initialization
+3.1 Critical band and uncertainty propagation
+Band: 
+𝛽
+∈
+[
+0.3934
+,
+ 
+0.3990
+]
+; baseline 
+𝛽
+𝑐
+=
+0.39614
+.
+
+Propagation: For each experiment, construct ensembles that:
+
+Uniform grid: 
+𝛽
+𝑘
+=
+𝛽
+min
+⁡
++
+𝑘
+ 
+Δ
+𝛽
+, 
+Δ
+𝛽
+=
+10
+−
+4
+.
+
+Randomized offsets: Sample 
+𝛽
+~
+∼
+𝑁
+(
+𝛽
+𝑐
+,
+ 
+𝜎
+2
+)
+ with 
+𝜎
+=
+0.0014
+ to assess sensitivity.
+
+Requirement: Report metrics aggregated over both grid and stochastic 
+𝛽
+~
+ ensembles.
+
+3.2 Couplings
+Defaults: 
+𝐽
+=
+1
+, 
+ℎ
+=
+0
+.
+
+Bias tests: Include 
+ℎ
+∈
+{
+±
+0.01
+,
+±
+0.02
+}
+ in §6.4 to quantify symmetry breaking effects.
+
+3.3 Lattice and boundary conditions
+Sizes: 
+𝐿
+∈
+{
+64
+,
+128
+,
+256
+}
+ for finite‑size scaling.
+
+Boundary: Periodic in all dimensions.
+
+3.4 Initialization
+Random Bernoulli: 
+𝑠
+𝑖
+(
+0
+)
+∼
+B
+e
+r
+n
+o
+u
+l
+l
+i
+(
+𝑝
+0
+)
+, default 
+𝑝
+0
+=
+0.5
+.
+
+Structured: Checkerboard initialization for worst‑case relaxation tests.
+
+Seeds: Fix PRNG seeds per run for reproducibility.
+
+4. Observables and diagnostics
+4.1 Thermodynamic observables
+Energy density:
+
+𝑒
+(
+𝑡
+)
+=
+𝐸
+(
+𝑡
+)
+∣
+Λ
+∣
+Magnetization (binary spin map 
+𝑥
+𝑖
+=
+2
+𝑠
+𝑖
+−
+1
+):
+
+𝑚
+(
+𝑡
+)
+=
+1
+∣
+Λ
+∣
+∑
+𝑖
+𝑥
+𝑖
+(
+𝑡
+)
+Finite‑size heat capacity estimate:
+
+𝐶
+𝐿
+(
+𝛽
+)
+=
+𝛽
+2
+ 
+∣
+Λ
+∣
+ 
+V
+a
+r
+𝑡
+[
+𝑒
+(
+𝑡
+)
+]
+Validation: Compare 
+𝐶
+𝐿
+(
+𝛽
+)
+ peak location versus 
+𝛽
+𝑐
+ band and Binder crossings (§4.3).
+
+4.2 Stability metrics
+Correlation length (second‑moment, using structure factor 
+𝑆
+(
+𝑘
+)
+):
+
+𝜉
+=
+1
+2
+sin
+⁡
+(
+𝑘
+min
+⁡
+/
+2
+)
+𝑆
+(
+0
+)
+𝑆
+(
+𝑘
+min
+⁡
+)
+−
+1
+Notes: Use 
+𝑘
+min
+⁡
+=
+(
+2
+𝜋
+/
+𝐿
+,
+0
+)
+ in 2D; compute 
+𝑆
+(
+𝑘
+)
+=
+⟨
+∣
+𝑥
+^
+(
+𝑘
+)
+∣
+2
+⟩
+.
+
+Integrated autocorrelation time (for 
+𝑚
+ and 
+𝑒
+):
+
+𝜏
+int
+=
+1
+2
++
+∑
+𝑡
+=
+1
+𝑇
+′
+𝜌
+(
+𝑡
+)
+Notes: Window 
+𝑇
+′
+ via standard self‑consistent cutoff; require 
+𝜏
+int
+≪
+ total measured sweeps.
+
+4.3 Phase‑transition mapping
+Heat‑capacity peak: Locate 
+arg
+⁡
+max
+⁡
+𝛽
+𝐶
+𝐿
+(
+𝛽
+)
+ per 
+𝐿
+.
+
+Binder cumulant:
+
+𝑈
+4
+(
+𝛽
+)
+=
+1
+−
+⟨
+𝑚
+4
+⟩
+3
+⟨
+𝑚
+2
+⟩
+2
+Crossing test: Plot 
+𝑈
+4
+(
+𝛽
+)
+ for 
+𝐿
+∈
+{
+64
+,
+128
+,
+256
+}
+; estimate 
+𝛽
+𝑐
+ from common crossing and compare with uncertainty band.
+
+Convergence criterion: Seed‑wise variability in peak 
+𝛽
+ and 
+𝑈
+4
+ crossing < 
+3
+ 
+Δ
+𝛽
+.
+
+5. Scheduling and control
+5.1 Entropy‑derivative scheduler
+Cadence: Number of update attempts per sweep scales with 
+∣
+𝑆
+′
+(
+𝛽
+)
+∣
+.
+
+Γ
+(
+𝛽
+)
+=
+c
+l
+a
+m
+p
+(
+𝑎
+0
++
+𝑎
+1
+∣
+𝑆
+′
+(
+𝛽
+)
+∣
+,
+ 
+Γ
+min
+⁡
+,
+ 
+Γ
+max
+⁡
+)
+Defaults: 
+𝑎
+0
+=
+0
+, 
+𝑎
+1
+=
+1
+, 
+Γ
+min
+⁡
+=
+0.1
+, 
+Γ
+max
+⁡
+=
+2.0
+.
+
+5.2 Curvature guard
+Freeze condition: If 
+∣
+𝑆
+′
+′
+(
+𝛽
+)
+∣
+>
+𝜏
+ with 
+𝜏
+=
+0.001
+, suspend updates (set 
+𝑔
+(
+𝛽
+)
+=
+0
+) and log event.
+
+Soft‑guard option: Alternatively halve 
+Γ
+(
+𝛽
+)
+ until 
+∣
+𝑆
+′
+′
+(
+𝛽
+)
+∣
+≤
+𝜏
+.
+
+5.3 ε‑sensitivity (drift handling)
+Adjustment:
+
+𝛽
+(
+𝑡
++
+Δ
+𝑡
+)
+←
+𝛽
+(
+𝑡
+)
++
+(
+∂
+𝛽
+𝑐
+∂
+𝜖
+)
+Δ
+𝜖
+Bounds: Cap 
+∣
+Δ
+𝛽
+∣
+ by max_abs_drift_per_1k_sweeps; default 
+3
+×
+10
+−
+4
+ per 1000 sweeps.
+
+6. Experiments
+6.1 Baseline stability at 
+𝛽
+𝑐
+Setup: 
+𝛽
+=
+𝛽
+𝑐
+; 
+𝐿
+∈
+{
+64
+,
+128
+,
+256
+}
+; seeds from config.
+
+Measure: Means/variances of 
+𝑒
+,
+𝑚
+; 
+𝜏
+int
+; 
+𝜉
+.
+
+Acceptance: 
+𝜏
+int
+<
+1
+10
+ of measured sweeps and consistent 
+𝜉
+/
+𝐿
+ across seeds.
+
+6.2 Narrow sweep within ignition band
+Grid: 
+Δ
+𝛽
+=
+10
+−
+4
+ over 
+[
+0.3934
+,
+0.3990
+]
+.
+
+Record: 
+𝐶
+𝐿
+(
+𝛽
+)
+,
+ 
+𝑚
+(
+𝛽
+)
+,
+ 
+𝜉
+(
+𝛽
+)
+,
+ 
+𝑈
+4
+(
+𝛽
+)
+.
+
+Goal: Pinpoint 
+𝐶
+𝐿
+ peak and Binder crossings; compare to 
+𝛽
+𝑐
+±
+0.0014
+.
+
+6.3 Finite‑size scaling
+Sizes: 
+𝐿
+=
+{
+64
+,
+128
+,
+256
+}
+.
+
+Analysis: Peak heights of 
+𝐶
+𝐿
+ vs 
+𝐿
+; 
+𝑈
+4
+ crossings; trend of 
+𝜉
+/
+𝐿
+.
+
+Extrapolation: Estimate thermodynamic‑limit 
+𝛽
+𝑐
+ and compare with prior chapters.
+
+6.4 Perturbation response
+Perturbations: 
+𝛽
+→
+𝛽
+±
+𝛿
+𝛽
+ with 
+𝛿
+𝛽
+=
+0.0005
+; optional 
+ℎ
+∈
+{
+±
+0.01
+,
+±
+0.02
+}
+.
+
+Metric: Relaxation time back to steady statistics; change in 
+𝜏
+int
+ and 
+𝜉
+.
+
+Criterion: Stability if metrics return within 5% of baseline within 2
+×
+𝜏
+int
+.
+
+7. Computational notes
+7.1 Complexity
+Per sweep: 
+𝑂
+(
+∣
+Λ
+∣
+)
+.
+
+Typical run: 
+10
+3
+–
+10
+4
+ sweeps per 
+𝛽
+, per seed, per 
+𝐿
+.
+
+7.2 Randomness
+PRNG: Fix and log seed; use independent substreams for warmup and measurement to reduce bias.
+
+Documentation: Persist seeds and configuration hash with outputs.
+
+7.3 Data products
+Time series: 
+𝑒
+(
+𝑡
+)
+,
+ 
+𝑚
+(
+𝑡
+)
+ at cadence; autocorrelation estimates; 
+𝑆
+(
+𝑘
+)
+ samples for 
+𝜉
+.
+
+Aggregates: 
+𝐶
+𝐿
+(
+𝛽
+)
+,
+ 
+𝑈
+4
+(
+𝛽
+)
+,
+ 
+𝜉
+(
+𝛽
+)
+,
+ 
+𝜏
+int
+(
+𝛽
+)
+.
+
+Formats: CSV for quick plots; Parquet for large ensembles.
+
+8. Extensions (appendix)
+8.1 Multi‑state CA (Potts‑like)
+States: 
+𝑠
+𝑖
+∈
+{
+0
+,
+…
+,
+𝑞
+−
+1
+}
+ with 
+𝑞
+=
+𝐾
+.
+
+Energy:
+
+𝐸
+𝑖
+(
+𝑡
+)
+=
+−
+𝐽
+∑
+𝑗
+∈
+𝑁
+𝑖
+𝛿
+𝑠
+𝑖
+,
+𝑠
+𝑗
++
+∑
+𝑎
+=
+0
+𝑞
+−
+1
+ℎ
+𝑎
+ 
+1
+[
+𝑠
+𝑖
+=
+𝑎
+]
+Updates: Metropolis/heat‑bath generalized to 
+𝑞
+‑ary flips.
+
+8.2 Anisotropic/decaying couplings
+Definition:
+
+𝐸
+𝑖
+(
+𝑡
+)
+=
+−
+∑
+𝑗
+∈
+𝑁
+𝑖
+𝐽
+𝑖
+𝑗
+ 
+1
+[
+𝑠
+𝑖
+=
+𝑠
+𝑗
+]
+,
+𝐽
+𝑖
+𝑗
+∝
+𝑓
+(
+∥
+𝑖
+−
+𝑗
+∥
+)
+Kernels: Exponential or power‑law decay; ensure normalization for comparability.
+
+8.3 Direct coupling to 
+𝑆
+(
+𝛽
+)
+,
+𝐶
+(
+𝛽
+)
+Driven updates: Make 
+𝐽
+ and/or 
+𝑔
+(
+𝛽
+)
+ explicit functions of measured 
+𝑆
+,
+𝐶
+ to maintain a target 
+∣
+𝑆
+′
+′
+∣
+ band.
+
+9. Consistency with prior chapters
+Thermodynamic continuity: 
+𝑍
+,
+𝐹
+,
+𝑈
+,
+𝑆
+,
+𝐶
+ definitions match 7.1–7.4; 
+𝑆
+′
+(
+𝛽
+)
+,
+𝑆
+′
+′
+(
+𝛽
+)
+ are used as live gates.
+
+Critical region: All core experiments occur within 
+[
+0.3934
+,
+0.3990
+]
+ and report sensitivity to 
+±
+0.0014
+ around 
+𝛽
+𝑐
+.
+
+Validation checks:
+
+Agreement: 
+𝐶
+𝐿
+ peak and 
+𝑈
+4
+ crossing estimates of 
+𝛽
+𝑐
+ lie within the ignition band and within the propagated uncertainty.
+
+Robustness: Results stable across seeds and sizes; curvature guard rarely triggered near 
+𝛽
+𝑐
+.
+
+Traceability: Every plot/table links to a configuration hash and seed list.
+
+Pseudocode sketch (single sweep, Metropolis)
+text
+for sweep in 1..S:
+  for attempt in 1..(Gamma(beta) * |Λ|):
+    pick site i uniformly
+    propose s_i' = 1 - s_i
+    compute ΔE_i
+    if |S''(beta)| > tau: continue  # curvature guard
+    accept with prob min(1, exp(-beta * ΔE_i)) * g(beta)
+  if sweep % measure_every == 0:
+    record e(t), m(t); update autocorr; sample S(k_min)
