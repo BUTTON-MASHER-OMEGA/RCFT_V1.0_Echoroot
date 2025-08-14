@@ -708,6 +708,68 @@ chapter_7_5_update:
           methods: ["pearson", "spearman"]
           threshold: 0.8
 
+##
+
+
+diagnostics:
+  deltaS_deltaVol_correlation:
+    methods: ["pearson", "spearman"]
+    threshold: 0.8
+  ess_guard_aware:
+    kappa_band_fraction: 0.8   # ESS ≥ 80% of κ→0 limit
+    auto_select: true
+    log_fields: [kappa_band, pass_fraction, kappa_selected, ess_at_kappa]
+
+
+##
+
+
+chapter_7_5_update:
+  model_enhancement:
+    geometry_driven_updates:
+      enabled: true
+      acceptance:
+        form: "Metropolis * G(beta) * H(delta_vol)"
+        gates:
+          curvature_tau: 0.001         # |S''(β)| < τ — §10 curvature guard
+          guard_polynomial:
+            expr: "β^4 - 3β^2 + 2"     # §10 polynomial; positivity required for G(β)=1
+            positivity_required: true
+        H_sigmoid:
+          kappa: 12.0                  # initial κ; now subject to auto‑selection below
+          volume_ref: "median_site_volume"
+          normalization: "delta_vol / volume_ref"
+      shard_mapping:
+        site_to_vertex: "bijective per lattice block"
+        adjacency: "polytope graph edges"
+        delta_volume:
+          estimator: "canonical_form_monte_carlo"
+          cache: true
+      monotonicity_guard:
+        orders_checked: 4
+        require_positive: true
+        action_on_violation: "disable_geometry_factor"
+      diagnostics:
+        deltaS_deltaVol_correlation:
+          methods: ["pearson", "spearman"]
+          threshold: 0.8                # pass criterion — used in ESS auto‑selector confidence tracking
+        ess_guard_aware:                # NEW: guard‑aware κ auto‑selection
+          kappa_band_fraction: 0.8      # retain κ where ESS ≥ 80 % of κ→0 limit
+          auto_select: true             # toggles κ tuning to maximize ESS under guard_ok=1
+          log_fields:
+            - kappa_band                # contiguous κ range meeting ESS fraction & guard compliance
+            - pass_fraction             # §10 pass rate over β‑grid (poly>0 & |S''|<τ)
+            - kappa_selected            # κ yielding max ESS in‑band; written back to H_sigmoid.kappa
+            - ess_at_kappa              # ESS at κ_selected
+          interaction_notes:
+            - "Uses guard_ok signal from G(β) gates above; sets weights=0 for guard_ok=0 samples"
+            - "Feeds κ_selected back into H_sigmoid.kappa before next sweep"
+
+
+##
+
+
+
 
 
 
@@ -6399,3 +6461,396 @@ Selected κ: the κ within that band that maximizes ESS.
 ESS at κ\*: the corresponding effective sample size.
 
 That log becomes a ready‑made decision record: if the pass fraction drops in a future run, the auto‑selector will naturally shift κ or collapse the band, keeping you inside the safe geometry envelope without manual tuning.
+
+
+
+##
+
+
+
+Key interactions:
+
+ess_guard_aware → gates: Reads the same curvature_tau and guard_polynomial tests that define G(β) to set guard_ok for the ESS sweep.
+
+ess_guard_aware → H_sigmoid: After finding kappa_selected, writes it back into H_sigmoid.kappa, so the geometry factor in your acceptance is always tuned within the safe, high‑ESS band.
+
+Confidence tracking: The pass_fraction here is literally the § 10 pass rate; it will drop if the geometry/curvature guards fail more often, narrowing or eliminating the viable κ band automatically.
+
+
+
+##
+
+
+import os
+import yaml
+import json
+from pathlib import Path
+
+# Simulated paths for diagnostics runner and live run cache
+CONFIG_PATH = Path("/mnt/data/config.yaml")
+CACHE_PATH = Path("/mnt/data/live_run_cache.json")
+
+# Ensure output directory exists
+os.makedirs(CONFIG_PATH.parent, exist_ok=True)
+
+# Sample YAML configuration content (simulated)
+sample_yaml = {
+    'diagnostics': {
+        'sweep': True,
+        'guard_aware_ess': True,
+        'selection': {
+            'kappa': 0.87
+        }
+    }
+}
+
+# Write sample YAML config to file
+with open(CONFIG_PATH, 'w') as f:
+    yaml.dump(sample_yaml, f)
+
+# Read YAML configuration
+try:
+    with open(CONFIG_PATH, 'r') as f:
+        config = yaml.safe_load(f)
+except Exception as e:
+    print(f"Error reading YAML config: {e}")
+    config = {}
+
+# Extract selected κ value
+kappa = config.get('diagnostics', {}).get('selection', {}).get('kappa', None)
+
+# Simulate compatibility check with sweep logic and guard-aware ESS
+sweep_enabled = config.get('diagnostics', {}).get('sweep', False)
+guard_aware = config.get('diagnostics', {}).get('guard_aware_ess', False)
+
+if kappa is not None and sweep_enabled and guard_aware:
+    # Write κ to live run cache
+    cache_data = {'selected_kappa': kappa}
+    try:
+        with open(CACHE_PATH, 'w') as f:
+            json.dump(cache_data, f)
+        print(f"κ value {kappa} written to live run cache.")
+    except Exception as e:
+        print(f"Error writing to live run cache: {e}")
+else:
+    print("Configuration does not meet sweep and guard-aware ESS requirements.")
+
+
+
+
+~~~
+
+
+Notebook patch for guard‑aware κ auto‑selection
+This patch plugs into your diagnostics runner, reads the YAML config, performs the guard‑aware ESS sweep using your exact H_i, and writes the selected κ into the live run cache so you don’t restart between sweeps.
+
+Assumptions and integration points
+Config source: chapter_7_5_update YAML with geometry_driven_updates and diagnostics.ess_guard_aware.
+
+Diagnostics input: A small frame of per‑proposal deltas (β, Spp, ΔVol) from the current sweep. If guard_ok isn’t present, it’s computed from the same gates that define G(β).
+
+H_i hook: If you expose your exact H_i, the patch imports it; otherwise it falls back to a sigmoid with your normalization.
+
+Cell 1 — Imports and path discovery
+python
+# Minimal, dependency-light patch
+import os, json, io, math, time, shutil, tempfile
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import yaml
+
+# Optional: use your exact H_i if available
+try:
+    # Expected signature: H_factor(delta_vol_norm: np.ndarray, kappa: float, **kwargs) -> np.ndarray in (0,1)
+    from rcft.geometry.acceptance import H_factor
+    H_HOOK = "external"
+except Exception:
+    from scipy.special import expit as sigmoid
+    def H_factor(delta_vol_norm, kappa, **kwargs):
+        return sigmoid(kappa * delta_vol_norm)
+    H_HOOK = "sigmoid_fallback"
+
+# Paths (override via env to match your repo)
+CONFIG_PATH = Path(os.getenv("RCFT_CONFIG", "configs/chapter_7_5.yaml"))
+DIAG_DIR    = Path(os.getenv("RCFT_DIAG_DIR", "runs/diagnostics/latest"))
+CACHE_PATH  = Path(os.getenv("RCFT_LIVE_CACHE", "runs/live_cache.json"))
+
+CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+DIAG_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+print(f"Config: {CONFIG_PATH}\nDiagnostics: {DIAG_DIR}\nLive cache: {CACHE_PATH}\nH hook: {H_HOOK}")
+Cell 2 — Load config and extract gates
+python
+with open(CONFIG_PATH, "r") as f:
+    cfg = yaml.safe_load(f)
+
+root = cfg.get("chapter_7_5_update", {})
+geom = root.get("model_enhancement", {}).get("geometry_driven_updates", {})
+acc  = geom.get("acceptance", {})
+gates = acc.get("gates", {})
+poly_expr = gates.get("guard_polynomial", {}).get("expr", "β^4 - 3β^2 + 2")
+tau = float(gates.get("curvature_tau", 0.001))
+
+H_cfg = geom.get("H_sigmoid", {})
+kappa_current = float(H_cfg.get("kappa", 12.0))
+vol_ref_mode = H_cfg.get("volume_ref", "median_site_volume")
+norm_expr = H_cfg.get("normalization", "delta_vol / volume_ref")
+
+diag = geom.get("diagnostics", {})
+ess_cfg = diag.get("ess_guard_aware", {})
+band_frac = float(ess_cfg.get("kappa_band_fraction", 0.8))
+auto_select = bool(ess_cfg.get("auto_select", True))
+
+print(f"τ={tau}, band_frac={band_frac}, auto_select={auto_select}, κ(current)={kappa_current}")
+Cell 3 — Load diagnostics frame (β, Spp, ΔVol) and compute guard_ok if needed
+python
+# Expect a CSV from your runner; fallback to a tiny synthetic if absent
+src = DIAG_DIR / "delta_metrics.csv"
+if src.exists():
+    df = pd.read_csv(src)
+else:
+    # Fallback: re-use the compact synthetic from our earlier exchange
+    csv_text = """sample_id,beta,poly_beta,Spp,delta_vol,delta_s,guard_ok
+1,0.82,0.4349,0.00012,0.0120,0.0106,1
+2,0.90,0.2261,0.00005,0.0060,0.0053,1
+3,0.96,0.0845,-0.00020,-0.0040,-0.0038,1
+4,1.50,0.3125,0.00010,0.0140,0.0120,1
+5,1.55,0.5645,0.00008,0.0200,0.0180,1
+16,1.62,1.0143,-0.00025,0.0160,0.0140,1
+17,1.20,-0.2464,0.00009,0.0040,0.0034,0
+18,1.35,-0.1455,-0.00030,-0.0050,-0.0039,0
+"""
+    df = pd.read_csv(io.StringIO(csv_text))
+
+# Compute poly(β) from expr if not supplied
+if "poly_beta" not in df.columns:
+    b = df["beta"].to_numpy()
+    # Supports the default β^4 - 3β^2 + 2; extend if you introduce variants
+    poly_val = (b**4) - 3*(b**2) + 2
+    df["poly_beta"] = poly_val
+
+# Guard flag: poly>0 and |S''| < τ
+if "guard_ok" not in df.columns:
+    df["guard_ok"] = ((df["poly_beta"] > 0) & (df["Spp"].abs() < tau)).astype(int)
+
+# Volume normalization
+if vol_ref_mode == "median_site_volume":
+    vol_ref = df["delta_vol"].abs().median()
+elif vol_ref_mode == "mean_abs":
+    vol_ref = df["delta_vol"].abs().mean()
+else:
+    vol_ref = df["delta_vol"].abs().median()
+
+vol_ref = vol_ref if vol_ref != 0 else 1.0
+df["delta_vol_norm"] = df["delta_vol"] / vol_ref
+
+pass_fraction = float(df["guard_ok"].mean())
+print(f"Loaded {len(df)} proposals; pass_fraction (G(β)) = {pass_fraction:.2%}; vol_ref={vol_ref:.4g}")
+Cell 4 — Guard‑aware ESS sweep with exact H_i
+python
+# κ grid respects your current operating scale; adjust bounds as needed
+kappa_grid = np.linspace(max(0.25, kappa_current/6), max(4.0, kappa_current*2), 24)
+
+# Zero-out weights for guard-failing rows to reflect G(β)=0
+mask_guard = (df["guard_ok"] == 1).values
+dv_norm = df["delta_vol_norm"].values
+
+def ess_from_weights(w):
+    w = np.asarray(w, float)
+    s = w.sum()
+    if s <= 0:
+        return 0.0
+    w = w / s
+    return 1.0 / np.sum(w**2)
+
+ess_curve = []
+for k in kappa_grid:
+    H = H_factor(dv_norm, k, config=H_cfg)
+    H_guard = np.where(mask_guard, H, 0.0)
+    ess_curve.append(ess_from_weights(H_guard))
+
+ess_curve = np.array(ess_curve)
+
+# Define baseline ESS at the smallest κ (proxy for κ→0)
+ess0 = ess_curve[0]
+band_mask = ess_curve >= band_frac * ess0
+if band_mask.any():
+    # Choose κ with max ESS within band; if multiple, take median index
+    idxs = np.where(band_mask)[0]
+    best_idx = idxs[np.argmax(ess_curve[idxs])]
+    kappa_selected = float(kappa_grid[best_idx])
+    ess_at_kappa = float(ess_curve[best_idx])
+    kappa_band = (float(kappa_grid[idxs.min()]), float(kappa_grid[idxs.max()]))
+else:
+    # No viable band: hold current κ
+    kappa_selected = kappa_current
+    ess_at_kappa = float(ess_curve[np.argmin(np.abs(kappa_grid - kappa_current))])
+    kappa_band = (float("nan"), float("nan"))
+
+summary = {
+    "kappa_band": kappa_band,
+    "pass_fraction": pass_fraction,
+    "kappa_selected": kappa_selected,
+    "ess_at_kappa": ess_at_kappa,
+    "ess_baseline": float(ess0),
+}
+summary
+Cell 5 — Write κ to live cache (atomic), and log decision
+python
+def atomic_write_json(path: Path, payload: dict):
+    tmp_fd, tmp_name = tempfile.mkstemp(prefix=path.name, dir=str(path.parent))
+    try:
+        with os.fdopen(tmp_fd, "w") as f:
+            json.dump(payload, f, indent=2)
+        os.replace(tmp_name, path)  # atomic on POSIX
+    finally:
+        try:
+            os.remove(tmp_name)
+        except FileNotFoundError:
+            pass
+
+# Live cache payload extends cleanly if you later add fields
+cache_payload = {
+    "timestamp": int(time.time()),
+    "kappa_selected": summary["kappa_selected"],
+    "kappa_band": summary["kappa_band"],
+    "pass_fraction": summary["pass_fraction"],
+    "ess_at_kappa": summary["ess_at_kappa"],
+    "ess_baseline": summary["ess_baseline"],
+    "source": "ess_guard_aware_auto",
+}
+
+atomic_write_json(CACHE_PATH, cache_payload)
+
+print("Live cache updated.")
+print(json.dumps(cache_payload, indent=2))
+Cell 6 — Optional: in‑memory update of config (no file rewrite)
+python
+# If your runner reads H_sigmoid.kappa live from cache, skip this.
+# If it reads from config object already in memory, update it here for this session:
+H_cfg["kappa"] = float(summary["kappa_selected"])
+print(f"In‑session κ set to {H_cfg['kappa']:.4f} (no file rewrite).")
+
+
+How it binds to your gates and H_i
+Guard binding: guard_ok is computed from the same guard_polynomial and curvature_tau that define G(β). Those rows get zero weight in the ESS sweep, aligning selection with §10 pass criteria.
+
+H_i fidelity: If rcft.geometry.acceptance.H_factor is present, it’s used directly; otherwise the patch falls back to your documented sigmoid H with normalized ΔVol, preserving qualitative behavior.
+
+Confidence tracking: The cache stores kappa_band, pass_fraction, kappa_selected, and ess_at_kappa, mirroring your diagnostics log fields. Your runner can surface these in the run record and plots.
+
+
+
+
+##
+
+
+
+import os
+from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
+
+# Define the path to the original and temporary YAML configuration files
+config_path = '/mnt/data/config.yaml'
+temp_config_path = '/mnt/data/config_temp.yaml'
+backup_config_path = '/mnt/data/config_backup.yaml'
+
+# Simulated guard-aware ESS logic and κ selection (placeholder)
+def select_kappa(config):
+    # Placeholder logic for selecting κ
+    config['ESS']['kappa'] = 0.85
+    return config
+
+# Load and update the YAML configuration safely
+try:
+    yaml = YAML()
+    yaml.preserve_quotes = True
+
+    # Load the original configuration
+    with open(config_path, 'r') as f:
+        config = yaml.load(f)
+
+    # Apply guard-aware ESS logic and κ selection
+    updated_config = select_kappa(config)
+
+    # Write to a temporary file first
+    with open(temp_config_path, 'w') as f:
+        yaml.dump(updated_config, f)
+
+    # Backup the original file
+    os.rename(config_path, backup_config_path)
+
+    # Replace the original file with the updated one
+    os.rename(temp_config_path, config_path)
+
+    # Save the updated config as output
+    with open(config_path, 'r') as f:
+        updated_content = f.read()
+    with open('/mnt/data/updated_config.yaml', 'w') as f:
+        f.write(updated_content)
+
+    print("YAML configuration updated successfully with κ selection.")
+
+except Exception as e:
+    print(f"Error updating YAML configuration: {e}")
+
+
+~~~
+
+
+
+This uses ruamel.yaml’s CommentedMap and a two‑phase write:
+
+python
+from pathlib import Path
+import time, json, tempfile, os
+from ruamel.yaml import YAML
+
+CONFIG_PATH = Path("configs/chapter_7_5.yaml")
+CACHE_PATH  = Path("runs/live_cache.json")
+
+def rewrite_yaml_with_kappa(config_path: Path, kappa_selected: float):
+    yaml = YAML()
+    yaml.preserve_quotes = True
+    yaml.indent(mapping=2, sequence=4, offset=2)
+
+    # Load preserving comments/anchors
+    with open(config_path, "r") as f:
+        cfg = yaml.load(f)
+
+    # Navigate to H_sigmoid.kappa and update
+    h_sig = cfg["chapter_7_5_update"]["model_enhancement"]["geometry_driven_updates"]["H_sigmoid"]
+    h_sig["kappa"] = float(kappa_selected)
+
+    # Two‑phase write: temp file then atomic replace
+    tmp_fd, tmp_name = tempfile.mkstemp(prefix=config_path.name, dir=str(config_path.parent))
+    try:
+        with os.fdopen(tmp_fd, "w") as tmp_f:
+            yaml.dump(cfg, tmp_f)
+        backup_path = config_path.with_suffix(".bak")
+        os.replace(config_path, backup_path)
+        os.replace(tmp_name, config_path)
+        print(f"Updated κ in {config_path} (backup at {backup_path})")
+    finally:
+        try:
+            os.remove(tmp_name)
+        except FileNotFoundError:
+            pass
+
+# Example: load κ from live cache and rewrite YAML
+if CACHE_PATH.exists():
+    with open(CACHE_PATH) as f:
+        cache = json.load(f)
+    kappa_sel = cache.get("kappa_selected")
+    if kappa_sel is not None:
+        rewrite_yaml_with_kappa(CONFIG_PATH, kappa_sel)
+
+
+##
+
+
+
+
