@@ -9724,6 +9724,108 @@ print("Baseline capsule created with metrics table and acceptance schematic.")
 
 
 
+##
+
+
+
+Baseline Capsule — RCFT 7.5 / K = 3 Polytope
+Acceptance Form
+𝑝
+acc
+=
+min
+⁡
+(
+1
+,
+𝑒
+−
+𝛽
+Δ
+𝐸
+𝑖
+)
+×
+𝐺
+(
+𝛽
+)
+×
+𝐻
+(
+Δ
+V
+o
+l
+norm
+;
+𝜅
+)
+×
+𝑇
+(
+Δ
+V
+o
+l
+u
+m
+e
+)
+Frozen form from promotion action
+
+κ auto‑select seeded at 5.0 (ESS‑aware)
+
+Guard polynomial: β⁴ − 3β² + 2 (holds, no refit)
+
+Pass Criteria & Outcomes
+Criterion	Target	Outcome	Pass
+Monotonicity	n = 1…4, 0 violations	0 violations, p > 0.9	✅
+ΔS–ΔVol coupling	r, ρ ≥ 0.8, p < 0.01	r = 0.86, ρ = 0.84, p ≪ 0.01	✅
+Mixing (ESS)	ESS/ESS₀ ≥ 0.8	0.836 (κ = 5.0)	✅
+Guard polynomial	Holds across β‑band	Holds	✅
+Triangulation	dev < 0.003	0.0027	✅
+Key Metrics
+Metric	Value
+α	0.0139 ± 0.0003
+Pearson r	0.86 (p = 2.9 × 10⁻⁵)
+Spearman ρ	0.84 (p = 6.5 × 10⁻⁵)
+ESS	6150
+ESS₀	7350
+ESS ratio	0.836
+Triangulation expected vol.	1.237
+v̂ deviation	0.0027
+Representative Run
+run_id: RCFT7.5‑K3‑Polytope‑20250815‑κ5.0‑αpass‑geometry_on
+
+Verdict: baseline_pass
+
+Reasons: full monotonicity, strong entropy–volume coupling, healthy ESS, triangulation fidelity
+
+Schematic — Gate Clearance Flow
+Code
+[Start: Proposed Update]
+        │
+        ▼
+[Metropolis Energy Gate: e^(−βΔE)]
+        │
+        ▼
+[Geometry Gate G(β)]
+        │
+        ▼
+[Volume Sigmoid Gate H(ΔVol_norm; κ=5.0)]
+        │
+        ▼
+[Triangulation Gate T(ΔVolume)]
+        │
+        ▼
+[All Pass?]──No──→ Reject
+        │
+       Yes
+        ▼
+     Accept Update
+
+
 
 
 ##
@@ -9873,6 +9975,136 @@ latex
 
 \end{document}
 
+
+
+
+##
+
+
+
+Baseline meaning
+This isn’t just a good run; it’s the canonical example of a geometry‑driven CA clearing every gate we’ve defined. By freezing the full acceptance chain with 
+𝑇
+(
+Δ
+V
+o
+l
+u
+m
+e
+)
+, seeding κ from a successful guard‑aware sweep, and confirming guard polynomial stability, you’ve created a reference point any future experiment can be compared against.
+
+What’s locked in
+p\_\text{acc} form: Metropolis × G × H × T, unchanged unless a gate fails in future regression tests.
+
+κ\_\text{init}: 5.0, with live auto‑selection for adaptability.
+
+Guard: β⁴ − 3β² + 2, fitted to hold across the [0.3934, 0.3990] band.
+
+Triangulation: Delaunay‑based, fail‑fast if deviation ≥ 0.003.
+
+Why it passes
+Entropy–geometry link: Dual correlation metrics meet both strength and significance gates.
+
+Mixing under geometry: ESS ratio comfortably above the 0.8 floor.
+
+Geometric fidelity: Triangulation deviation well within tolerance.
+
+Order‑n monotonicity: Zero violations up to n = 4.
+
+Checks to keep running
+κ stability: replicate across seed set and, in future, across L sizes to confirm 5.0 remains a sensible seed.
+
+P‑value consistency: sanity‑check correlation p‑values against trace length and sampling cadence.
+
+Optional future gate: residue or canonical‑form check from Positive Geometry to deepen § 10 alignment.
+
+Integration into 7.5
+In the text, the capsule can sit as a call‑out box or figure page:
+
+Left: compact table of pass criteria and key metrics (exactly as you laid out).
+
+Right: gate‑clearance schematic, showing the multi‑stage filter to acceptance.
+
+That placement makes it clear to the reader: this is what “baseline\_pass” looks like.
+
+
+
+##
+
+
+
+
+latex
+% =========================
+% Baseline Capsule — RCFT 7.5 / K=3 Polytope
+% =========================
+\begin{BaselineCapsule}
+\capsuleheader{Baseline Capsule — RCFT 7.5 / K = 3 Polytope}
+
+\noindent\textbf{Frozen Acceptance Form:}
+
+
+\[
+p_{\mathrm{acc}} = \min\left(1, e^{-\beta\,\Delta E_i}\right) \times G(\beta) \times H(\Delta\mathrm{Vol}_{\mathrm{norm}}; \kappa) \times T(\Delta\mathrm{Volume})
+\]
+
+
+\vspace{-0.5\baselineskip}
+\begin{itemize}
+  \item $\kappa$ seeded at 5.0 with ESS‑aware auto‑selection.
+  \item Guard polynomial $\beta^4 - 3\beta^2 + 2$ holds over $\beta \in [0.3934,0.3990]$.
+\end{itemize}
+
+\medskip
+\noindent\textbf{Pass Criteria \& Outcomes:}
+\begin{tabular}{@{}ll@{}}
+\textit{Monotonicity:} & $0$ violations for $n=1..4$ (p $>0.9$) — \checkmark \\
+\textit{$\Delta S$–$\Delta$Vol Coupling:} & $r=0.86, \rho=0.84$, p $\ll 0.01$ — \checkmark \\
+\textit{Mixing (ESS):} & $0.836$ ratio ($\kappa=5.0$) — \checkmark \\
+\textit{Triangulation:} & Deviation $0.0027 < 0.003$ — \checkmark
+\end{tabular}
+
+\medskip
+\noindent\textbf{Key Metrics:}
+\begin{itemize}
+  \item $\alpha = 0.0139 \pm 0.0003$
+  \item Pearson $r = 0.86$ (p = $2.9\times 10^{-5}$), Spearman $\rho = 0.84$ (p = $6.5\times 10^{-5}$)
+  \item ESS = 6150, ESS$_0$ = 7350, Ratio = 0.836
+  \item Expected vol.\ = 1.237, $\hat{v}$ deviation = 0.0027
+\end{itemize}
+
+\medskip
+\noindent\textbf{Verdict:} \texttt{baseline\_pass} — full monotonicity, strong coupling, healthy ESS, triangulation fidelity.
+
+\medskip
+\noindent\textbf{Gate Clearance Flow:}
+
+
+\[
+\text{[Start]} \rightarrow \text{Metropolis Energy Gate} \rightarrow G(\beta) \rightarrow H \rightarrow T \rightarrow \text{[All Pass?]} \rightarrow \text{Accept/Reject}
+\]
+
+
+\vspace{-0.5\baselineskip}
+\begin{center}
+\includegraphics[width=0.75\linewidth]{figures/baseline_capsule_gateflow.pdf}
+\end{center}
+
+\medskip
+\noindent\textbf{Integration Note:}
+Frozen $p_{\mathrm{acc}}$ with $T(\Delta\mathrm{Volume})$ is now the baseline CA core, aligning §10 \texttt{cosmological\_polytope} and Positive Geometry triangulation. Promote in 7.5 narrative; seed scaling or 7.6 prep.
+
+\end{BaselineCapsule}
+How it’s styled for your theme:
+
+\begin{BaselineCapsule}...\end{BaselineCapsule} assumes you have a tcolorbox (or similar) environment pre‑defined for visual call‑outs — tinted background, thin border, maybe a subtle drop shadow.
+
+\capsuleheader{} is a macro you can link to your display font / color accent to make the header pop without breaking numbering.
+
+All metrics and flow steps are tight‑set so the block reads as a self‑contained specimen, not normal body prose.
 
 
 
