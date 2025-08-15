@@ -1401,6 +1401,60 @@ chapter_7_5_update:
 ##
 
 
+# === PATCH: RCFT 7.5 / K = 3 Polytope Baseline Capsule ===
+adjustments:
+  acceptance_form:
+    frozen: "p_acc = min(1, exp(-β * ΔE_i)) × G(β) × H(ΔVol_norm; κ) × T(ΔVolume)"
+    notes:
+      - "Locks in validated update rule from promotion action"
+      - "Triangulation gate T enhances geometric–entropy alignment"
+  kappa:
+    seed: 5.0
+    auto_select: "ESS-aware"
+    stability_check:
+      seeds: "pending verification"
+      status: "required"
+  guard_polynomial:
+    form: "β^4 - 3β^2 + 2"
+    beta_band: [0.3934, 0.3990]
+    refit_needed: false
+  pass_criteria:
+    monotonicity:
+      n_range: [1, 4]
+      target_violations: 0
+      outcome_violations: 0
+      p_value: "> 0.9"
+    deltaS_deltaVol_coupling:
+      pearson_r: 0.86
+      spearman_rho: 0.84
+      p_value: "<< 0.01"
+    mixing:
+      ess_ratio: 0.836
+      ess: 6150
+      ess0: 7350
+    triangulation:
+      deviation_target: 0.003
+      deviation_observed: 0.0027
+  verdict:
+    tag: "baseline_pass"
+    run_id: "RCFT7.5-K3-Polytope-20250815-κ5.0-αpass-geometry_on"
+    justification:
+      - "Full monotonicity"
+      - "Strong entropy–volume coupling"
+      - "Healthy ESS mixing"
+      - "Triangulation fidelity"
+  integration:
+    chapter_section: "§10_geometry_diagnostics"
+    notes:
+      - "Promote frozen p_acc form to baseline CA core"
+      - "Plan scaling or transition to 7.6"
+    future_gates:
+      - "Residue check from Positive Geometry"
+
+
+
+##
+
 
 
 
@@ -10109,6 +10163,22 @@ All metrics and flow steps are tight‑set so the block reads as a self‑contai
 
 
 ##
+
+
+Frozen p_acc and Triangulation gate are now explicit in the acceptance_form block.
+
+κ seed and auto‑selection logic separated for clarity, with a hook for seed‑set verification.
+
+Pass criteria outcomes are codified with observed values, not just targets — a clear audit trail.
+
+verdict and run_id make the capsule self‑identifying in your archive.
+
+integration keys bridge the capsule into the §10 geometry narrative, plus a slot for a future Positive Geometry gate.
+
+
+
+##
+
 
 
 
