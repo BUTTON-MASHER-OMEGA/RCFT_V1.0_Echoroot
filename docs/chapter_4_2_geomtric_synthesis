@@ -162,6 +162,31 @@ chapter_4:
 ##
 
 
+
+chapter_4:
+  section_4_2:
+    embedding:
+      backend: "simplex"   # options: simplex | sphere | grassmann | poincare
+      params:
+        weights: {s: 1.0, mem: 1.0, M: 1.0}
+        k: 1                # for grassmann
+        dim: 3              # for sphere/poincare
+        alpha: 0.9          # for hyperbolic tanh scaling
+    merge:
+      scheme: "auto"        # convex | slerp | karcher | mobius (auto chooses by backend)
+    antipode:
+      scheme: "axis_reflect"  # axis_reflect | negate | complement (grassmann)
+    degeneracy:
+      epsilon: 1.0e-8
+      fallback_vertex: [0, 1, 0]
+      sign_lift: true
+
+
+
+
+##
+
+
 ##Chapter 4.2 Notes
 
 
@@ -1279,6 +1304,851 @@ def assemble_complex(glyphs, boolean_mask):
 ##
 
 
+Geometric carriers and embeddings
+This section deepens the choice of embedding spaces for glyphs and provides drop‑in coordinate transforms, invariants preserved, merge/branch laws, and degenerate case handling. The goal is to let you swap manifolds without re‑deriving the pipeline or breaking Hopf compatibility and stability diagnostics.
+
+Why the simplex as a default
+Interpretability: A 2‑simplex in ℝ³ encodes nonnegative, comparative salience among components. Barycentric coordinates map directly to “how much of s, Mem, M” a glyph carries.
+
+Positivity and convexity: Boolean and polynomial gates yield nonnegative scores; merges are convex sums; comultiplication is duplication — all naturally realized in a simplex.
+
+Hopf‑friendliness: m is convex combination, Δ is diagonal embedding, S is a reflection/involution (with a sign‑bit lift if needed).
+
+Embedding map (barycentric):
+
+Define the nonnegative feature vector
+
+𝑣
+𝑖
+=
+[
+ 
+∣
+𝑠
+𝑖
+∣
+,
+ 
+M
+e
+m
+𝑖
+,
+ 
+∥
+𝑀
+𝑖
+∥
+ 
+]
+∈
+𝑅
+≥
+0
+3
+,
+𝑍
+𝑖
+=
+1
+⊤
+𝑣
+𝑖
+.
+If 
+𝑍
+𝑖
+>
+0
+, map to the vertex
+
+𝑥
+𝑖
+=
+𝑣
+𝑖
+𝑍
+𝑖
+∈
+Δ
+2
+=
+{
+𝑥
+∈
+𝑅
+≥
+0
+3
+ 
+∣
+ 
+1
+⊤
+𝑥
+=
+1
+}
+.
+Optional weights: apply per‑component scaling 
+𝑣
+𝑖
+←
+𝑊
+𝑣
+𝑖
+ with 
+𝑊
+=
+d
+i
+a
+g
+(
+𝑤
+𝑠
+,
+𝑤
+M
+e
+m
+,
+𝑤
+𝑀
+)
+ to reflect 4.1 salience.
+
+Geometric operations:
+
+Merge (multiplication):
+
+𝑚
+(
+𝑥
+,
+𝑦
+)
+=
+𝜋
+(
+𝜆
+𝑥
++
+(
+1
+−
+𝜆
+)
+𝑦
+)
+,
+  
+𝜆
+∈
+[
+0
+,
+1
+]
+,
+  
+𝜋
+(
+𝑧
+)
+=
+𝑧
+1
+⊤
+𝑧
+.
+Branch (comultiplication): 
+Δ
+(
+𝑥
+)
+=
+(
+𝑥
+,
+𝑥
+)
+.
+
+Antipode (reflection): 
+𝑆
+(
+𝑥
+)
+=
+𝑅
+𝑥
+ with 
+𝑅
+ flipping the axes corresponding to signed components (see “sign lift” under degenerate handling).
+
+Invariants preserved:
+
+Order of component ratios 
+𝑥
+𝑎
+/
+𝑥
+𝑏
+ (up to the weight matrix W).
+
+Convexity under merges; positivity under gates; incidence under Boolean masks.
+
+Tradeoffs:
+
+Pro: Interpretable, convex, simple Hopf geometry. Con: Ignores directions of 
+𝑀
+ (only 
+∥
+𝑀
+∥
+); sign of 
+𝑠
+ or directional 
+𝑀
+ needs a lift if critical.
+
+Alternative embeddings (swap‑ready)
+Use these when different invariants matter (angles, subspaces, hierarchies). Each includes a forward map, a merge law consistent with Hopf structure, and a distance/similarity for edge formation.
+
+1) Sphere 
+𝑆
+2
+ (angle‑preserving)
+When to use: You care about cosine similarity and rotational invariance; directions of 
+𝑀
+ matter more than magnitudes.
+
+Map:
+
+𝑢
+𝑖
+=
+[
+ 
+𝜎
+𝑠
+ 
+𝑠
+𝑖
+,
+ 
+𝜎
+M
+e
+m
+ 
+M
+e
+m
+𝑖
+,
+ 
+𝜎
+𝑀
+ 
+∥
+𝑀
+𝑖
+∥
+ 
+]
+,
+𝑦
+𝑖
+=
+𝑢
+𝑖
+∥
+𝑢
+𝑖
+∥
+∈
+𝑆
+2
+⊂
+𝑅
+3
+.
+Similarity/distance: 
+cos
+⁡
+𝜃
+𝑖
+𝑗
+=
+𝑦
+𝑖
+⊤
+𝑦
+𝑗
+; geodesic distance 
+𝑑
+𝑖
+𝑗
+=
+arccos
+⁡
+(
+𝑦
+𝑖
+⊤
+𝑦
+𝑗
+)
+.
+
+Merge (slerp — spherical linear interpolation):
+
+𝑚
+(
+𝑦
+𝑖
+,
+𝑦
+𝑗
+)
+=
+sin
+⁡
+[
+(
+1
+−
+𝜆
+)
+𝜃
+]
+sin
+⁡
+𝜃
+𝑦
+𝑖
++
+sin
+⁡
+(
+𝜆
+𝜃
+)
+sin
+⁡
+𝜃
+𝑦
+𝑗
+,
+𝜃
+=
+arccos
+⁡
+(
+𝑦
+𝑖
+⊤
+𝑦
+𝑗
+)
+.
+Branch: 
+Δ
+(
+𝑦
+)
+=
+(
+𝑦
+,
+𝑦
+)
+. Antipode: 
+𝑆
+(
+𝑦
+)
+=
+−
+𝑦
+ or axis reflection 
+𝑅
+𝑦
+ if only some axes flip.
+
+Preserved invariants: Angular relations (cosine), rotational symmetries.
+
+2) Grassmannian 
+𝐺
+(
+𝑘
+,
+𝑛
+)
+ (subspace‑preserving)
+When to use: 
+𝑀
+𝑖
+ is high‑dimensional and you care about subspace alignment (principal angles) rather than just norms.
+
+Map (k‑dimensional subspace of ℝⁿ):
+
+Extract 
+𝑈
+𝑖
+∈
+𝑅
+𝑛
+×
+𝑘
+ with orthonormal columns (e.g., top‑k left singular vectors of 
+𝑀
+𝑖
+).
+
+Represent point by projector 
+𝑃
+𝑖
+=
+𝑈
+𝑖
+𝑈
+𝑖
+⊤
+ or its Plücker coordinates.
+
+Similarity/distance: Principal angles 
+{
+𝜃
+ℓ
+}
+ via SVD of 
+𝑈
+𝑖
+⊤
+𝑈
+𝑗
+; chordal distance 
+𝑑
+𝑖
+𝑗
+=
+(
+∑
+ℓ
+sin
+⁡
+2
+𝜃
+ℓ
+)
+1
+/
+2
+=
+∥
+𝑃
+𝑖
+−
+𝑃
+𝑗
+∥
+𝐹
+2
+.
+
+Merge (Karcher mean in 
+𝐺
+(
+𝑘
+,
+𝑛
+)
+):
+
+Iterate on the manifold: 
+𝑈
+(
+𝑡
++
+1
+)
+=
+exp
+⁡
+𝑈
+(
+𝑡
+)
+(
+𝜆
+log
+⁡
+𝑈
+(
+𝑡
+)
+(
+𝑈
+𝑖
+)
++
+(
+1
+−
+𝜆
+)
+log
+⁡
+𝑈
+(
+𝑡
+)
+(
+𝑈
+𝑗
+)
+)
+, re‑orthonormalize.
+
+Branch: 
+Δ
+(
+𝑈
+)
+=
+(
+𝑈
+,
+𝑈
+)
+. Antipode: choose an involution on subspaces (e.g., complement if 
+𝑘
+→
+𝑛
+ ⁣
+−
+ ⁣
+𝑘
+, or a fixed symmetry 
+𝑄
+𝑈
+).
+
+Preserved invariants: Subspace geometry (principal angles), projection energies.
+
+3) Hyperbolic (Poincaré ball 
+𝐵
+𝑑
+) (hierarchy‑preserving)
+When to use: The glyph graph is tree‑like or hierarchical; you want exponential volume growth and fine resolution near the boundary.
+
+Map (from Euclidean feature 
+𝑤
+𝑖
+∈
+𝑅
+𝑑
+):
+
+𝑝
+𝑖
+=
+tanh
+⁡
+(
+𝛼
+∥
+𝑤
+𝑖
+∥
+)
+ 
+𝑤
+𝑖
+∥
+𝑤
+𝑖
+∥
+ 
+∈
+𝐵
+𝑑
+,
+∥
+𝑝
+𝑖
+∥
+<
+1.
+Distance (Poincaré):
+
+𝑑
+𝐵
+(
+𝑝
+𝑖
+,
+𝑝
+𝑗
+)
+=
+arcosh
+⁡
+ ⁣
+(
+1
++
+2
+∥
+𝑝
+𝑖
+−
+𝑝
+𝑗
+∥
+2
+(
+1
+−
+∥
+𝑝
+𝑖
+∥
+2
+)
+(
+1
+−
+∥
+𝑝
+𝑗
+∥
+2
+)
+)
+.
+Merge (gyrovector addition, Möbius scaling):
+
+Möbius addition 
+⊕
+ and scalar mult. 
+⊗
+: 
+𝑚
+(
+𝑝
+𝑖
+,
+𝑝
+𝑗
+)
+=
+𝜆
+⊗
+𝑝
+𝑖
+⊕
+(
+1
+−
+𝜆
+)
+⊗
+𝑝
+𝑗
+, then project if needed.
+
+Branch: 
+Δ
+(
+𝑝
+)
+=
+(
+𝑝
+,
+𝑝
+)
+. Antipode: 
+𝑆
+(
+𝑝
+)
+=
+−
+𝑝
+ (isometry).
+
+Preserved invariants: Hierarchical proximities; boundary encodes “depth”.
+
+Quick comparison
+Manifold	Key invariant preserved	Merge law	Pros	Cons
+Simplex Δ²	Nonnegativity, ratios, convexity	Convex/minkowski + renormalize	Interpretable, Hopf‑simple, gate‑friendly	Ignores M direction; sign needs a lift
+Sphere S²	Angles (cosine similarity)	Slerp (geodesic)	Rotation‑invariant, reflects spectra cleanly	Nonconvex; magnitudes compressed
+Grassmann G(k,n)	Subspace (principal angles)	Karcher mean on manifold	Captures M structure; robust to noise	Heavier numerics; needs manifold ops
+Poincaré ball	Hierarchy (hyperbolic distance)	Möbius/gyro convex combination	Great for trees; boundary encodes scale	Non‑Euclidean algebra; merge is non‑linear
+Degenerate case handling
+Zero norm / collapsed glyph:
+
+If 
+𝑍
+𝑖
+=
+1
+⊤
+𝑣
+𝑖
+=
+0
+ (simplex) or 
+∥
+𝑢
+𝑖
+∥
+=
+0
+ (sphere): define a neutral fallback
+
+𝑥
+𝑖
+⋆
+=
+[
+0
+,
+1
+,
+0
+]
+  or  
+𝑦
+𝑖
+⋆
+=
+𝑒
+^
+M
+e
+m
+,
+and tag “collapsed” for downstream filtering. In Grassmann, if 
+𝑀
+𝑖
+ rank < k, reduce k or pad; in hyperbolic, map to origin 
+𝑝
+𝑖
+=
+0
+.
+
+Boundary collisions (simplex edges/vertices):
+
+If a glyph lies on an edge/vertex (e.g., Mem≈1), merges remain valid; prevent numerical stickiness by adding 
+𝜀
+‑jitter before normalization and reproject.
+
+Sign information for 
+𝑠
+, 
+𝑀
+:
+
+Sign‑bit lift: augment the space with a discrete label (e.g., an auxiliary 
+±
+ edge color) or lift to a double‑cover simplex 
+Δ
+2
+×
+{
+±
+}
+. For continuous treatment, switch to sphere or a signed simplex (two joined simplices).
+
+Metric ill‑conditioning:
+
+Sphere: guard 
+arccos
+⁡
+ domain with clip; Grassmann: re‑orthonormalize after each step; Hyperbolic: clip norms 
+∥
+𝑝
+∥
+≤
+1
+−
+𝜖
+.
+
+
+Practical guidance
+Choose Δ² when you need maximum interpretability, tight Hopf compliance, and easy gating — this is the default.
+
+Switch to S² if your coherence hinges on angular relations (e.g., cosine similarities from 4.1 inner products).
+
+Use 
+𝐺
+(
+𝑘
+,
+𝑛
+)
+ when the structure of 
+𝑀
+𝑖
+ (not just magnitude) is the signal — principal angles track coherence robustly.
+
+Use 
+𝐵
+𝑑
+ when hierarchy is the geometry — e.g., CA‑induced trees, multi‑scale shard phases.
+
+All backends maintain the same assembly and validation logic: edges from gated similarity, faces from gated cliques, merges as the manifold’s convex/geodesic averages, 
+Δ
+ as duplication, and 
+𝑆
+ as an involution. Degenerate cases are caught early with consistent fallbacks and tags, preserving both numerical stability and semantic clarity.
+
+
+##
+
+
+class Embed:
+    def __init__(self, backend="simplex", **kw): self.b=backend; self.kw=kw
+    def vertex(self, g):
+        if self.b=="simplex":
+            v = np.array([abs(g.s), g.mem, np.linalg.norm(g.M)])
+            z = v.sum()
+            return v/z if z>0 else np.array(self.kw.get("fallback_vertex",[0,1,0]))
+        if self.b=="sphere":
+            w = np.array([self.kw.get("ws",1)*g.s,
+                          self.kw.get("wm",1)*g.mem,
+                          self.kw.get("wM",1)*np.linalg.norm(g.M)])
+            n = np.linalg.norm(w); 
+            return w/n if n>self.kw.get("eps",1e-12) else np.array([0,1,0])
+        if self.b=="grassmann":
+            U,_ = np.linalg.qr(g.M)   # or SVD top-k
+            return U[:,:self.kw.get("k",1)]
+        if self.b=="poincare":
+            w = np.array([g.s, g.mem, np.linalg.norm(g.M)])[:self.kw.get("dim",3)]
+            n = np.linalg.norm(w); alpha=self.kw.get("alpha",0.9)
+            return np.tanh(alpha*n)*(w/(n+1e-12))
+        raise ValueError("unknown backend")
+
+    def merge(self, a, b, lam):
+        if self.b=="simplex":
+            z = lam*a+(1-lam)*b; return z/np.sum(z)
+        if self.b=="sphere":
+            dot = np.clip(np.dot(a,b), -1.0, 1.0); th = np.arccos(dot); 
+            if th < 1e-9: return a
+            return (np.sin((1-lam)*th)/np.sin(th))*a + (np.sin(lam*th)/np.sin(th))*b
+        if self.b=="grassmann":
+            # one Karcher step (conceptual)
+            return grassmann_geodesic(a, b, lam)
+        if self.b=="poincare":
+            return mobius_add(mobius_scale(a, lam), mobius_scale(b, 1-lam))
 
 
 
