@@ -165,6 +165,56 @@ chapter_4:
 
 chapter_4:
   section_4_2:
+    embedding_comparison:
+      - manifold: "Simplex Δ²"
+        key_invariant_preserved: "Nonnegativity, component ratios, convexity"
+        merge_law: "Convex/Minkowski combination with renormalization"
+        pros:
+          - "Highly interpretable barycentric coordinates"
+          - "Hopf operations map directly to convex geometry"
+          - "Boolean/Polynomial gating is straightforward"
+        cons:
+          - "Ignores direction of M (uses only norm)"
+          - "Sign of s or M requires a lift or auxiliary encoding"
+      - manifold: "Sphere S²"
+        key_invariant_preserved: "Angles (cosine similarity), rotational symmetry"
+        merge_law: "Spherical linear interpolation (slerp) along geodesic"
+        pros:
+          - "Rotation‑invariant representation"
+          - "Preserves angular relations from inner products"
+          - "Good for spectral/eigenmode visualization"
+        cons:
+          - "Non‑convex; merges are geodesic not linear"
+          - "Magnitude information compressed into direction"
+      - manifold: "Grassmannian G(k,n)"
+        key_invariant_preserved: "Subspace geometry (principal angles)"
+        merge_law: "Karcher mean on the Grassmann manifold"
+        pros:
+          - "Captures structure of high‑dimensional M_i"
+          - "Robust to noise in individual components"
+          - "Preserves projection energies and principal angles"
+        cons:
+          - "Computationally heavier; requires manifold operations"
+          - "Choice of k affects resolution and complexity"
+      - manifold: "Poincaré ball 𝔹ᵈ"
+        key_invariant_preserved: "Hierarchical proximities, hyperbolic distance"
+        merge_law: "Möbius/gyrovector convex combination"
+        pros:
+          - "Ideal for tree‑like or hierarchical glyph graphs"
+          - "Boundary encodes scale/depth naturally"
+          - "Exponential volume growth for fine resolution near boundary"
+        cons:
+          - "Non‑Euclidean algebra; merge is non‑linear"
+          - "Requires careful numerical handling near boundary"
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2:
     embedding:
       backend: "simplex"   # options: simplex | sphere | grassmann | poincare
       params:
@@ -184,10 +234,915 @@ chapter_4:
 
 
 
+
 ##
 
 
+
+chapter_4:
+  section_4_2:
+    title: "Geometric Synthesis"
+    version: "0.1.2"
+    subsections:
+      - title: "Geometric Carriers and Embeddings"
+        version: "0.1.0"
+        overview:
+          purpose: "Deepen the embedding spaces for glyphs g_i = [s_i, Mem_i, M_i] from 4.1, providing coordinate transforms, preserved invariants, merge/branch laws, and degenerate case handling. Enable manifold swaps without disrupting 4.1’s Hopf compatibility or 7.5 stability diagnostics."
+          objective: "Establish a flexible geometric framework for glyphs, aligning with ⟨g_i,g_j⟩ = α s_i s_j + β |Mem_i ∩ Mem_j| + γ tr(M_iᵀ M_j) (α=1, β=0.5, γ=0.1), Boolean gates (0.88 match), and T-spectra (1.09, 0.99, 0.91, 1.01)."
+          dependencies:
+            - "4.1.1 glyph basis and Hopf axioms (m ∘ (S ⊗ id) ∘ Δ = η ∘ ε)"
+            - "4.1.2 Boolean/Polynomial gating (B1, P1)"
+            - "7.5 ED-CA data: L=256, 500 sweeps/sec, β_c=0.39614 ± 0.0014"
+        default_embedding:
+          title: "Simplex Δ² as Default"
+          rationale:
+            - "Interpretability": "2-simplex in ℝ³ maps nonnegative salience (|s_i|, Mem_i, ||M_i||) to barycentric coordinates, reflecting 4.1’s component balance."
+            - "Positivity and Convexity": "Boolean gates (0.88 match) and polynomial scores (R²=0.93) yield nonnegative weights; merges are convex sums; Δ is duplication."
+            - "Hopf-Friendliness": "m as convex combination, Δ as diagonal embedding, S as reflection, validated with 7.5’s T."
+          embedding_map:
+            definition: "v_i = [|s_i|, Mem_i, ||M_i||] ∈ ℝ^3_{\geq 0}, Z_i = 1^\top v_i; x_i = v_i / Z_i ∈ Δ² if Z_i > 0"
+            normalization: "Z_i normalizes to unit simplex, preserving 4.1’s ⟨g_i,g_j⟩ ratios"
+            optional_weights: "v_i ← W v_i, W = diag(w_s, w_Mem, w_M), reflecting 4.1 salience"
+          geometric_operations:
+            - multiplication: "m(x,y) = π(λ x + (1-λ) y), λ ∈ [0,1], π(z) = z / 1^\top z, extends 4.1’s m"
+            - comultiplication: "Δ(x) = (x,x) ∈ Δ² × Δ², mirrors 4.1’s Δ"
+            - antipode: "S(x) = R x, R flips s and M axes, S² = id, validated with 7.5"
+          preserved_invariants:
+            - "Order of component ratios x_a / x_b (up to W)"
+            - "Convexity under merges, positivity under gates, incidence under Boolean masks"
+          tradeoffs:
+            - pro: "Interpretable, Hopf-compliant, gate-friendly"
+            - con: "Ignores M direction (||M_i|| only); sign of s or M needs lift"
+        alternative_embeddings:
+          title: "Swap-Ready Alternatives"
+          description: "Options for different invariants, each with forward map, merge law, and distance/similarity."
+          options:
+            - sphere_s2:
+              title: "Sphere S² (Angle-Preserving)"
+              use_case: "Prioritize cosine similarity and rotational invariance, e.g., 4.1’s ⟨g_i,g_j⟩ angles"
+              map: "u_i = [σ_s s_i, σ_Mem Mem_i, σ_M ||M_i||], y_i = u_i / ||u_i|| ∈ S² ⊂ ℝ³"
+              similarity: "cos θ_ij = y_i^\top y_j, d_ij = arccos(y_i^\top y_j)"
+              merge: "m(y_i,y_j) = [sin((1-λ)θ)/sin(θ)] y_i + [sin(λθ)/sin(θ)] y_j, θ = arccos(y_i^\top y_j)"
+              branch: "Δ(y) = (y,y)"
+              antipode: "S(y) = -y or R y (axis reflection)"
+              invariants: "Angular relations, rotational symmetries"
+              tradeoffs:
+                - pro: "Reflects spectral properties"
+                - con: "Compresses magnitudes"
+            - grassmann_gkn:
+              title: "Grassmann G(k,n) (Subspace-Preserving)"
+              use_case: "Focus on M_i’s subspace alignment, e.g., high-dimensional coherence"
+              map: "U_i ∈ ℝ^{n×k} (top-k singular vectors of M_i), P_i = U_i U_i^\top or Plücker coordinates"
+              similarity: "Principal angles {θ_ℓ} via SVD(U_i^\top U_j), d_ij = (∑ sin²θ_ℓ)^{1/2}"
+              merge: "Karcher mean: U^{(t+1)} = exp_{U^{(t)}}(λ log_{U^{(t)}}(U_i) + (1-λ) log_{U^{(t)}}(U_j))"
+              branch: "Δ(U) = (U,U)"
+              antipode: "Involution (e.g., complement if k → n-k)"
+              invariants: "Subspace geometry, projection energies"
+              tradeoffs:
+                - pro: "Robust to noise"
+                - con: "Heavier numerics"
+            - poincare_ball:
+              title: "Hyperbolic Poincaré Ball (Hierarchy-Preserving)"
+              use_case: "Hierarchical glyph graphs, e.g., CA-induced trees"
+              map: "w_i = [s_i, Mem_i, ||M_i||], p_i = tanh(α ||w_i||) w_i / ||w_i|| ∈ ℝ^d, ||p_i|| < 1"
+              distance: "d_B(p_i,p_j) = arcosh(1 + 2 ||p_i-p_j||² / ((1-||p_i||²)(1-||p_j||²)))"
+              merge: "m(p_i,p_j) = λ ⊗ p_i ⊕ (1-λ) ⊗ p_j, project if needed"
+              branch: "Δ(p) = (p,p)"
+              antipode: "S(p) = -p"
+              invariants: "Hierarchical proximities, boundary depth"
+              tradeoffs:
+                - pro: "Encodes scale"
+                - con: "Non-linear merge"
+        degenerate_case_handling:
+          title: "Handling Edge Cases"
+          scenarios:
+            - zero_norm_collapsed:
+              condition: "Z_i = 1^\top v_i = 0 or ||u_i|| = 0"
+              solution: "Fallback x_i^\star = [0,1,0] or y_i^\star = e_Mem, tag ‘collapsed’"
+              grassmann: "Reduce k or pad if M_i rank < k"
+              poincare: "Map to origin p_i = 0"
+            - boundary_collisions:
+              condition: "Glyph on edge/vertex (e.g., Mem ≈ 1)"
+              solution: "Merges valid; add ε-jitter before normalization"
+            - sign_information:
+              condition: "Sign of s or M matters"
+              solution: "Sign-bit lift (Δ² × {±}) or switch to S²/G(k,n)"
+            - metric_ill_conditioning:
+              solution: "Sphere: clip arccos domain; Grassmann: re-orthonormalize; Hyperbolic: clip ||p|| ≤ 1-ε"
+        swap_ready_interface:
+          title: "Configurable Backend"
+          yaml_patch:
+            embedding:
+              backend: "simplex"  # options: simplex | sphere | grassmann | poincare
+              params:
+                weights: {s: 1.0, mem: 1.0, M: 1.0}
+                k: 1
+                dim: 3
+                alpha: 0.9
+            merge:
+              scheme: "auto"  # convex | slerp | karcher | mobius
+            antipode:
+              scheme: "axis_reflect"  # axis_reflect | negate | complement
+            degeneracy:
+              epsilon: 1.0e-8
+              fallback_vertex: [0, 1, 0]
+              sign_lift: true
+          python_stub:
+            class Embed:
+              def __init__(self, backend="simplex", **kw): self.b = backend; self.kw = kw
+              def vertex(self, g):
+                  if self.b == "simplex":
+                      v = np.array([abs(g['s']), g['mem'], np.linalg.norm(g['M'])])
+                      z = v.sum()
+                      return v/z if z > self.kw.get("epsilon", 1e-8) else np.array(self.kw.get("fallback_vertex", [0,1,0]))
+                  if self.b == "sphere":
+                      w = np.array([self.kw.get("ws",1)*g['s'], self.kw.get("wm",1)*g['mem'], self.kw.get("wM",1)*np.linalg.norm(g['M'])])
+                      n = np.linalg.norm(w)
+                      return w/n if n > self.kw.get("epsilon", 1e-8) else np.array([0,1,0])
+                  if self.b == "grassmann":
+                      U, _ = np.linalg.qr(g['M'])
+                      return U[:, :self.kw.get("k", 1)]
+                  if self.b == "poincare":
+                      w = np.array([g['s'], g['mem'], np.linalg.norm(g['M'])])[:self.kw.get("dim", 3)]
+                      n = np.linalg.norm(w)
+                      alpha = self.kw.get("alpha", 0.9)
+                      return np.tanh(alpha * n) * (w / (n + 1e-12)) if n > 0 else np.zeros(self.kw.get("dim", 3))
+                  raise ValueError("unknown backend")
+              def merge(self, a, b, lam):
+                  if self.b == "simplex":
+                      z = lam * a + (1 - lam) * b
+                      return z / np.sum(z)
+                  if self.b == "sphere":
+                      dot = np.clip(np.dot(a, b), -1.0, 1.0)
+                      theta = np.arccos(dot)
+                      if theta < 1e-9: return a
+                      return (np.sin((1-lam)*theta)/np.sin(theta))*a + (np.sin(lam*theta)/np.sin(theta))*b
+                  if self.b == "grassmann":
+                      return grassmann_geodesic(a, b, lam)  # Placeholder
+                  if self.b == "poincare":
+                      return mobius_add(mobius_scale(a, lam), mobius_scale(b, 1-lam))  # Placeholder
+        practical_guidance:
+          title: "Embedding Selection Guide"
+          recommendations:
+            - simplex: "Default for interpretability, Hopf compliance, gating (use when maximizing 4.1’s ⟨g_i,g_j⟩)"
+            - sphere: "For angular coherence, e.g., spectral alignment with 7.5’s T"
+            - grassmann: "For M_i structure, robust to noise in 7.5 sweeps"
+            - poincare: "For hierarchical glyphs, e.g., CA trees"
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2:
+    embedding:
+      backend: "simplex"   # options: simplex | sphere | grassmann | poincare
+      params:
+        weights: {s: 1.0, mem: 1.0, M: 1.0}
+        k: 1                # for grassmann
+        dim: 3              # for sphere/poincare
+        alpha: 0.9          # for hyperbolic tanh scaling
+    merge:
+      scheme: "auto"        # convex | slerp | karcher | mobius (auto chooses by backend)
+    antipode:
+      scheme: "axis_reflect"  # axis_reflect | negate | complement (grassmann)
+    degeneracy:
+      epsilon: 1.0e-8
+      fallback_vertex: [0, 1, 0]
+      sign_lift: true
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2:
+    additional_topics:
+      - title: "Dimensionality & Embedding Fidelity"
+        description: >
+          The dimensionality of an embedding manifold determines how much of the original glyph’s
+          structure can be preserved without distortion.
+          Low-dimensional embeddings (e.g., Δ², S²) offer high interpretability and straightforward
+          visualization but may collapse distinct glyphs into overlapping coordinates when invariants
+          exceed the space’s capacity.
+          High-dimensional embeddings (e.g., G(k,n) with large n) preserve more invariants — angles,
+          norms, subspace relations — but at the cost of computational complexity and reduced visual
+          intuition.
+          In RCFT, dimensionality is parameterized to match the minimum sufficient space for the
+          invariants under study.
+        trade_offs:
+          - "Higher dimensions increase fidelity but also computational cost."
+          - "Lower dimensions improve interpretability but risk invariant loss."
+      - title: "Metric vs. Topological Constraints"
+        description: >
+          Not all manifolds preserve the same aspects of glyph relationships.
+          Metric preservation means distances between glyphs are meaningful and consistent with the
+          source space (e.g., Euclidean, hyperbolic).
+          Topological preservation means only the connectivity or ordering of glyphs is preserved,
+          not exact distances (e.g., certain graph embeddings).
+          Hybrid cases occur when a manifold preserves one metric (e.g., angular distance) but
+          distorts another (e.g., Euclidean norm).
+        implications:
+          - "Merge laws assuming metric fidelity will fail if only topology is preserved."
+          - "Translation between carriers must account for which constraints are preserved."
+      - title: "Glyph Representation Alignment"
+        description: >
+          Every glyph in RCFT carries parameters — scalar s, matrix/vector M, and diagrammatic
+          arrows/loops — that must be mapped consistently into the embedding manifold.
+          Coordinate mapping functions f_s(s) and f_M(M) place glyph components into manifold
+          coordinates without ambiguity.
+          Diagram semantics: arrows correspond to directional vectors or geodesics; loops correspond
+          to closed geodesics or holonomy in the manifold.
+          The operational meaning of each arrow/loop in diagrams must remain invariant under
+          projection between manifolds.
+        alignment_rules:
+          - "Maintain consistent mapping from glyph parameters to manifold coordinates."
+          - "Preserve diagram semantics under projection or embedding changes."
+      - title: "Error Propagation in Merges"
+        description: >
+          Merging glyphs in a manifold is not error-neutral — uncertainty in parameters propagates
+          differently depending on the merge law.
+          Linear merges (e.g., Δ² convex combination) propagate uncertainty proportionally to weights.
+          Geodesic merges (e.g., S² slerp, G(k,n) Karcher mean) can amplify or dampen uncertainty
+          depending on curvature.
+          Non-linear merges (e.g., Möbius addition in 𝔹ᵈ) can warp uncertainty regions, making them
+          anisotropic.
+          For reproducibility, each merge operation in RCFT should be accompanied by an uncertainty
+          transformation rule — a mapping from input covariance to output covariance in the chosen
+          manifold.
+        uncertainty_guidelines:
+          - "Define covariance transformation rules for each merge law."
+          - "Track anisotropy introduced by non-linear merges."
+
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2:
+    title: "Carriers & Embeddings"
+    embedding_comparison:
+      - manifold: "Simplex Δ²"
+        key_invariant_preserved: "Nonnegativity, component ratios, convexity"
+        merge_law: "Convex/Minkowski combination with renormalization"
+        pros:
+          - "Highly interpretable barycentric coordinates"
+          - "Hopf operations map directly to convex geometry"
+          - "Boolean/Polynomial gating is straightforward"
+        cons:
+          - "Ignores direction of M (uses only norm)"
+          - "Sign of s or M requires a lift or auxiliary encoding"
+        use_cases:
+          - "Probability distributions over discrete states"
+          - "Mixture models and compositional data analysis"
+          - "Glyphs where proportions matter more than orientation"
+        complexity: "O(n) vector arithmetic with normalization"
+        interoperability: "Can be projected to Euclidean space via affine map; lift to sphere for directional encoding"
+      - manifold: "Sphere S²"
+        key_invariant_preserved: "Angles (cosine similarity), rotational symmetry"
+        merge_law: "Spherical linear interpolation (slerp) along geodesic"
+        pros:
+          - "Rotation‑invariant representation"
+          - "Preserves angular relations from inner products"
+          - "Good for spectral/eigenmode visualization"
+        cons:
+          - "Non‑convex; merges are geodesic not linear"
+          - "Magnitude information compressed into direction"
+        use_cases:
+          - "Directional glyphs and phase‑encoded states"
+          - "Spectral embeddings and normalized vector fields"
+        complexity: "O(n) with trigonometric ops; requires normalization"
+        interoperability: "Project to plane via stereographic projection; embed in higher spheres for multi‑angle encoding"
+      - manifold: "Grassmannian G(k,n)"
+        key_invariant_preserved: "Subspace geometry (principal angles)"
+        merge_law: "Karcher mean on the Grassmann manifold"
+        pros:
+          - "Captures structure of high‑dimensional M_i"
+          - "Robust to noise in individual components"
+          - "Preserves projection energies and principal angles"
+        cons:
+          - "Computationally heavier; requires manifold operations"
+          - "Choice of k affects resolution and complexity"
+        use_cases:
+          - "Subspace tracking in dynamic systems"
+          - "Dimensionality‑reduced glyph representations"
+        complexity: "O(n³) for SVD‑based ops; manifold optimization for merges"
+        interoperability: "Project to Euclidean via orthonormal basis; lift from sphere by stacking orthogonal vectors"
+      - manifold: "Poincaré ball 𝔹ᵈ"
+        key_invariant_preserved: "Hierarchical proximities, hyperbolic distance"
+        merge_law: "Möbius/gyrovector convex combination"
+        pros:
+          - "Ideal for tree‑like or hierarchical glyph graphs"
+          - "Boundary encodes scale/depth naturally"
+          - "Exponential volume growth for fine resolution near boundary"
+        cons:
+          - "Non‑Euclidean algebra; merge is non‑linear"
+          - "Requires careful numerical handling near boundary"
+        use_cases:
+          - "Hierarchical clustering and taxonomy embeddings"
+          - "Multi‑scale glyph layouts with depth encoding"
+        complexity: "O(n) with Möbius ops; stability checks near boundary"
+        interoperability: "Project to Euclidean via conformal map; lift from tree metrics via hyperbolic embedding"
+
+    bridge_paragraph: >
+      In RCFT, an embedding manifold is more than a mathematical backdrop — it is the carrier space
+      for our invariants. Each choice of geometry encodes a philosophy of what must be preserved:
+      ratios, angles, subspaces, or hierarchies. The merge laws, error propagation, and even the
+      visual grammar of our glyphs are shaped by this choice. In the next sections, we will descend
+      from these curved and abstract carriers into the foundational geometries — Plane, Analytic,
+      and Euclidean — not as a retreat to simplicity, but as a way to see them as special cases or
+      limiting forms of the richer spaces above. This shift will let us formalize merge laws in
+      coordinates, anchor intuition in flat space, and then re‑project into curved carriers without
+      losing the invariants that matter.
+
+    additional_topics:
+      - title: "Dimensionality & Embedding Fidelity"
+        description: >
+          The dimensionality of an embedding manifold determines how much of the original glyph’s
+          structure can be preserved without distortion.
+          Low-dimensional embeddings (e.g., Δ², S²) offer high interpretability and straightforward
+          visualization but may collapse distinct glyphs into overlapping coordinates when invariants
+          exceed the space’s capacity.
+          High-dimensional embeddings (e.g., G(k,n) with large n) preserve more invariants — angles,
+          norms, subspace relations — but at the cost of computational complexity and reduced visual
+          intuition.
+          In RCFT, dimensionality is parameterized to match the minimum sufficient space for the
+          invariants under study.
+        trade_offs:
+          - "Higher dimensions increase fidelity but also computational cost."
+          - "Lower dimensions improve interpretability but risk invariant loss."
+      - title: "Metric vs. Topological Constraints"
+        description: >
+          Not all manifolds preserve the same aspects of glyph relationships.
+          Metric preservation means distances between glyphs are meaningful and consistent with the
+          source space (e.g., Euclidean, hyperbolic).
+          Topological preservation means only the connectivity or ordering of glyphs is preserved,
+          not exact distances (e.g., certain graph embeddings).
+          Hybrid cases occur when a manifold preserves one metric (e.g., angular distance) but
+          distorts another (e.g., Euclidean norm).
+        implications:
+          - "Merge laws assuming metric fidelity will fail if only topology is preserved."
+          - "Translation between carriers must account for which constraints are preserved."
+      - title: "Glyph Representation Alignment"
+        description: >
+          Every glyph in RCFT carries parameters — scalar s, matrix/vector M, and diagrammatic
+          arrows/loops — that must be mapped consistently into the embedding manifold.
+          Coordinate mapping functions f_s(s) and f_M(M) place glyph components into manifold
+          coordinates without ambiguity.
+          Diagram semantics: arrows correspond to directional vectors or geodesics; loops correspond
+          to closed geodesics or holonomy in the manifold.
+          The operational meaning of each arrow/loop in diagrams must remain invariant under
+          projection between manifolds.
+        alignment_rules:
+          - "Maintain consistent mapping from glyph parameters to manifold coordinates."
+          - "Preserve diagram semantics under projection or embedding changes."
+      - title: "Error Propagation in Merges"
+        description: >
+          Merging glyphs in a manifold is not error-neutral — uncertainty in parameters propagates
+          differently depending on the merge law.
+          Linear merges (e.g., Δ² convex combination) propagate uncertainty proportionally to weights.
+          Geodesic merges (e.g., S² slerp, G(k,n) Karcher mean) can amplify or dampen uncertainty
+          depending on curvature.
+          Non-linear merges (e.g., Möbius addition in 𝔹ᵈ) can warp uncertainty regions, making them
+          anisotropic.
+          For reproducibility, each merge operation in RCFT should be accompanied by an uncertainty
+          transformation rule — a mapping from input covariance to output covariance in the chosen
+          manifold.
+        uncertainty_guidelines:
+          - "Define covariance transformation rules for each merge law."
+          - "Track anisotropy introduced by non-linear merges."
+
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2:
+    title: "Geometric Synthesis"
+    version: "0.1.3"
+    subsections:
+      - title: "Geometric Carriers and Embeddings"
+        version: "0.1.2"
+        overview:
+          purpose: "Deepen embedding spaces for glyphs g_i = [s_i, Mem_i, M_i] from 4.1, providing coordinate transforms, preserved invariants, merge/branch laws, and degenerate case handling. Enable manifold swaps without disrupting 4.1’s Hopf compatibility or 7.5 stability diagnostics."
+          objective: "Establish a flexible geometric framework aligning with ⟨g_i,g_j⟩ = α s_i s_j + β |Mem_i ∩ Mem_j| + γ tr(M_iᵀ M_j) (α=1, β=0.5, γ=0.1), Boolean gates (0.88 match), and T-spectra (1.09, 0.99, 0.91, 1.01), with cross-validation against established geometric principles."
+          dependencies:
+            - "4.1.1 glyph basis and Hopf axioms (m ∘ (S ⊗ id) ∘ Δ = η ∘ ε)"
+            - "4.1.2 Boolean/Polynomial gating (B1: s_out = (s_i ∧ s_j) ∨ (¬s_k ∧ s_m), P1: P(g_i,g_j) = α s_i s_j + β |Mem_i ∩ Mem_j| + γ tr(M_iᵀ M_j))"
+            - "7.5 ED-CA data: L=256, 500 sweeps/sec, β_c=0.39614 ± 0.0014"
+          cross_validation:
+            title: "Cross-Validation with Established Geometry"
+            description: "Align embeddings with differential geometry principles (e.g., manifold smoothness) to ensure compatibility with broader frameworks."
+            objective: "Validate with 7.5 data, leveraging 4.1’s Hopf structure"
+        default_embedding:
+          title: "Simplex Δ² as Default"
+          rationale:
+            - "Interpretability": "2-simplex maps |s_i|, Mem_i, ||M_i|| to barycentric coordinates, reflecting component balance."
+            - "Positivity and Convexity": "Boolean gates (0.88 match) and polynomial scores (R²=0.93) yield nonnegative weights; merges are convex sums; Δ is duplication."
+            - "Hopf-Friendliness": "m as convex combination, Δ as diagonal embedding, S as reflection, validated with 7.5’s T."
+          embedding_map:
+            definition: "v_i = [|s_i|, Mem_i, ||M_i||] ∈ ℝ^3_{\geq 0}, Z_i = 1^\top v_i; x_i = v_i / Z_i ∈ Δ² if Z_i > 0"
+            normalization: "Z_i normalizes to unit simplex, preserving 4.1’s ⟨g_i,g_j⟩ ratios"
+            optional_weights: "v_i ← W v_i, W = diag(w_s, w_Mem, w_M)"
+          geometric_operations:
+            - multiplication: "m(x,y) = π(λ x + (1-λ) y), λ ∈ [0,1], π(z) = z / 1^\top z"
+            - comultiplication: "Δ(x) = (x,x) ∈ Δ² × Δ²"
+            - antipode: "S(x) = R x, R flips s and M axes, S² = id"
+          preserved_invariants:
+            - "Order of ratios x_a / x_b (up to W)"
+            - "Convexity under merges, positivity under gates, incidence under Boolean masks"
+          validation:
+            hopf_commutation_residual: "<= 1e-8"
+            boolean_match_rate: "0.88"
+            polynomial_r_squared: "0.93"
+          tradeoffs:
+            - pro: "Interpretable, Hopf-compliant, gate-friendly"
+            - con: "Ignores M direction; sign lift needed"
+        alternative_embeddings:
+          title: "Swap-Ready Alternatives"
+          options:
+            - sphere_s2:
+              title: "Sphere S²"
+              use_case: "Prioritize angular coherence, e.g., spectral alignment"
+              map: "u_i = [σ_s s_i, σ_Mem Mem_i, σ_M ||M_i||], y_i = u_i / ||u_i||"
+              similarity: "cos θ_ij = y_i^\top y_j, d_ij = arccos(y_i^\top y_j)"
+              merge: "m(y_i,y_j) = [sin((1-λ)θ)/sin(θ)] y_i + [sin(λθ)/sin(θ)] y_j"
+              branch: "Δ(y) = (y,y)"
+              antipode: "S(y) = -y or R y"
+              invariants: "Angular relations"
+            - grassmann_gkn:
+              title: "Grassmann G(k,n)"
+              use_case: "Focus on M_i subspace alignment"
+              map: "U_i (top-k singular vectors of M_i), P_i = U_i U_i^\top"
+              similarity: "d_ij = (∑ sin²θ_ℓ)^{1/2}"
+              merge: "Karcher mean"
+              branch: "Δ(U) = (U,U)"
+              antipode: "Involution"
+              invariants: "Subspace geometry"
+            - poincare_ball:
+              title: "Hyperbolic Poincaré Ball"
+              use_case: "Hierarchical glyph graphs"
+              map: "p_i = tanh(α ||w_i||) w_i / ||w_i||"
+              distance: "d_B(p_i,p_j) = arcosh(1 + 2 ||p_i-p_j||² / ((1-||p_i||²)(1-||p_j||²)))"
+              merge: "m(p_i,p_j) = λ ⊗ p_i ⊕ (1-λ) ⊗ p_j"
+              branch: "Δ(p) = (p,p)"
+              antipode: "S(p) = -p"
+              invariants: "Hierarchical proximities"
+        degenerate_case_handling:
+          scenarios:
+            - zero_norm_collapsed: "Fallback x_i^\star = [0,1,0], tag ‘collapsed’"
+            - boundary_collisions: "Add ε-jitter"
+            - sign_information: "Sign-bit lift or switch manifold"
+            - metric_ill_conditioning: "Clip domains, re-orthonormalize"
+        swap_ready_interface:
+          yaml_patch:
+            embedding:
+              backend: "simplex"
+              params:
+                weights: {s: 1.0, mem: 1.0, M: 1.0}
+                k: 1
+                dim: 3
+                alpha: 0.9
+            merge:
+              scheme: "auto"
+            antipode:
+              scheme: "axis_reflect"
+            degeneracy:
+              epsilon: 1e-8
+              fallback_vertex: [0, 1, 0]
+              sign_lift: true
+          python_stub:
+            class Embed:
+              def __init__(self, backend="simplex", **kw): self.b = backend; self.kw = kw
+              def vertex(self, g):
+                  if self.b == "simplex":
+                      v = np.array([abs(g['s']), g['mem'], np.linalg.norm(g['M'])])
+                      z = v.sum()
+                      return v/z if z > self.kw.get("epsilon", 1e-8) else np.array(self.kw.get("fallback_vertex", [0,1,0]))
+                  if self.b == "sphere":
+                      w = np.array([self.kw.get("ws",1)*g['s'], self.kw.get("wm",1)*g['mem'], self.kw.get("wM",1)*np.linalg.norm(g['M'])])
+                      n = np.linalg.norm(w)
+                      return w/n if n > self.kw.get("epsilon", 1e-8) else np.array([0,1,0])
+                  if self.b == "grassmann":
+                      U, _ = np.linalg.qr(g['M'])
+                      return U[:, :self.kw.get("k", 1)]
+                  if self.b == "poincare":
+                      w = np.array([g['s'], g['mem'], np.linalg.norm(g['M'])])[:self.kw.get("dim", 3)]
+                      n = np.linalg.norm(w)
+                      alpha = self.kw.get("alpha", 0.9)
+                      return np.tanh(alpha * n) * (w / (n + 1e-12)) if n > 0 else np.zeros(self.kw.get("dim", 3))
+                  raise ValueError("unknown backend")
+              def merge(self, a, b, lam):
+                  if self.b == "simplex":
+                      z = lam * a + (1 - lam) * b
+                      return z / np.sum(z)
+                  if self.b == "sphere":
+                      dot = np.clip(np.dot(a, b), -1.0, 1.0)
+                      theta = np.arccos(dot)
+                      if theta < 1e-9: return a
+                      return (np.sin((1-lam)*theta)/np.sin(theta))*a + (np.sin(lam*theta)/np.sin(theta))*b
+                  if self.b == "grassmann":
+                      return grassmann_geodesic(a, b, lam)  # Placeholder
+                  if self.b == "poincare":
+                      return mobius_add(mobius_scale(a, lam), mobius_scale(b, 1-lam))  # Placeholder
+        practical_guidance:
+          recommendations:
+            - simplex: "Default for maximizing ⟨g_i,g_j⟩ and ensuring Hopf compliance"
+            - sphere: "For spectral alignment with 7.5’s T"
+            - grassmann: "For M_i structure robustness"
+            - poincare: "For hierarchical glyph encoding"
+
+
+
+##
+
+
+
+chapter_4:
+  section_4_2_1:
+    title: "Plane, Analytic, and Euclidean Geometry"
+    concept: >
+      In the Euclidean frame, glyphs gᵢ are positioned using a fixed, orthonormal coordinate system
+      that serves as the baseline carrier for all subsequent geometric reasoning.
+      Each glyph is decomposed into:
+        • sᵢ — a scalar or discrete index, treated as a point coordinate along one axis.
+        • Memᵢ — a memory‑encoded vector component, capturing historical or contextual state.
+        • Mᵢ — a structural or operational vector component, encoding the glyph’s active parameters.
+      These components are concatenated into a single coordinate vector:
+        x_g = [ sᵢ , Memᵢ , Mᵢ ]
+      which is embedded in ℝ³ for the simplest case, or ℝⁿ for higher‑dimensional analytic work.
+    equation:
+      embedding: "x_g = [ sᵢ , Memᵢ , Mᵢ ] ∈ ℝ³"
+      distance: "d(gᵢ, gⱼ) = √[ (sᵢ − sⱼ)² + (Memᵢ − Memⱼ)² + (Mᵢ − Mⱼ)² ]"
+      note: >
+        This is the standard Euclidean metric, ensuring that distances are symmetric, satisfy the
+        triangle inequality, and are directly interpretable as straight‑line separations in the
+        coordinate frame.
+    tie_in_4_1: >
+      This construction aligns with the inner product structure ⟨gᵢ, gⱼ⟩ introduced in §4.1:
+        ⟨gᵢ, gⱼ⟩ = sᵢ sⱼ + Memᵢ·Memⱼ + Mᵢ·Mⱼ
+      The Euclidean distance can be expressed in terms of these inner products, making the plane
+      geometry a natural linearization of the more abstract carrier spaces.
+    rcft_role: >
+      Within RCFT, the Euclidean frame acts as the *reference manifold* — a flat, linear baseline
+      against which curvature, distortion, and embedding fidelity can be measured.
+      It supports:
+        • Direct correlation testing (e.g., §7.5’s correlation coefficient of 0.83 for glyph placement).
+        • Rapid prototyping of merge laws in a space where vector addition and scalar multiplication
+          behave predictably.
+        • Visual inspection of glyph constellations without the interpretive overhead of curved spaces.
+    forward_path: >
+      While the Euclidean frame offers clarity and computational simplicity, it cannot capture
+      curvature‑dependent phenomena such as geodesic deviation, hyperbolic expansion, or spherical
+      closure.
+      The next step is to extend these coordinate assignments into non‑Euclidean carriers:
+        • Spherical embeddings to preserve angular invariants.
+        • Hyperbolic embeddings to model hierarchical depth.
+        • Grassmannian embeddings to preserve subspace relations.
+      This progression allows RCFT to quantify how invariants deform under curvature and to design
+      merge laws that remain stable across manifold transitions.
+    implementation_notes:
+      - "Use ℝ³ for minimal working examples; generalize to ℝⁿ for higher‑order glyph parameters."
+      - "Maintain consistent ordering of [sᵢ, Memᵢ, Mᵢ] across all glyphs to ensure reproducibility."
+      - "When comparing with curved carriers, project or lift coordinates using the same mapping
+         functions defined in §4.2’s carrier interoperability notes."
+
+
+
+
+##
+
+
+YAML: backend choice and parameters
+yaml
+chapter_4:
+  section_4_2:
+    hyperbolic_backend:
+      compute: "hyperboloid"         # stable Riemannian ops for merges/error
+      visualize: "poincare"          # conformal, intuitive plots
+      tiling_aux: "klein"            # optional for straight-edge tilings
+    params:
+      alpha_radial: 0.9              # Euclid→Poincaré radial scaling
+      epsilon_clip: 1.0e-6           # boundary safety margin
+      curvature_K: -1.0              # can rescale metrics if needed
+
+
+
+##
+
+
+chapter_4:
+  section_4_2:
+    hyperbolic_hybrid_guide:
+      title: "Hybrid Hyperbolic Geometry: Hyperboloid (compute) + Poincaré (viz) + Klein (tilings)"
+      rationale: >
+        Use a three-model relay to maximize stability, clarity, and constructive power:
+        hyperboloid for numerically stable Riemannian computation (exp/log, merges, error propagation),
+        Poincaré for conformal visualization and intuitive inspection,
+        Klein for exact straight-edge tilings and constructive geometry.
+      roles_in_pipeline:
+        compute_backend: "hyperboloid"
+        visualize_backend: "poincare"
+        tiling_aux_backend: "klein"
+
+      models:
+        poincare_ball:
+          manifold: "Unit ball 𝔹ᵈ = { p ∈ ℝᵈ : ||p|| < 1 }"
+          metric_conformal: "ds² = (2 / (1 - ||p||²))² ||dp||²"
+          distance: "d_𝔹(p,q) = arcosh(1 + 2||p-q||² / ((1-||p||²)(1-||q||²)))"
+          geodesic_merge_mobius:
+            mobius_add: "p ⊕ q = ((1+2⟨p,q⟩+||q||²)p + (1-||p||²)q) / (1 + 2⟨p,q⟩ + ||p||²||q||²)"
+            mobius_scale: "t ⊗ p = tanh(t·arctanh(||p||))·(p/||p||)"
+            merge: "m(p,q;λ) = (λ ⊗ p) ⊕ ((1-λ) ⊗ q)"
+          notes:
+            conformal: true
+            boundary_depth: "||p|| → 1 encodes hierarchical ‘depth’"
+            stability: "clip norms: ||p|| ≤ 1 - ε"
+
+        hyperboloid:
+          manifold: "Upper sheet 𝕳ᵈ = { x ∈ ℝ^{d+1} : ⟨x,x⟩_L = -1, x₀ > 0 }"
+          lorentz_inner: "⟨x,y⟩_L = -x₀y₀ + ∑_{i=1}^d x_i y_i"
+          distance: "d_𝕳(x,y) = arcosh(-⟨x,y⟩_L)"
+          exp_log_maps:
+            log_x: "log_x(y) = (arcosh(-⟨x,y⟩_L)/√⟨v,v⟩_L)·v,  v = y + ⟨x,y⟩_L x"
+            exp_x: "exp_x(ξ) = cosh(||ξ||_L) x + sinh(||ξ||_L) (ξ/||ξ||_L)"
+            merge: "m(x,y;λ) = exp_x(λ·log_x(y))"
+          notes:
+            numerically_stable: true
+            riemannian_ops: "clean exp/log for merges, parallel transport, uncertainty propagation"
+
+        klein_ball:
+          manifold: "Open unit ball Kᵈ = { k ∈ ℝᵈ : ||k|| < 1 }"
+          geodesics: "Euclidean straight segments"
+          distance: >
+            d_K(k,ℓ) = 0.5·ln(((1+σ₊)(1-σ₋))/((1-σ₊)(1+σ₋))),
+            σ_{±} = (⟨k,ℓ⟩ ± √(⟨k,ℓ⟩² - (1-||k||²)(1-||ℓ||²))) / (1 - ||k||²)
+          notes:
+            straight_geodesics: true
+            not_conformal: true
+            use_case: "exact {p,q} tilings and constructive straight-edge layouts"
+
+      inter_model_transforms:
+        hyperboloid_to_poincare:
+          formula: "p = x_{1:d} / (x₀ + 1)"
+        poincare_to_hyperboloid:
+          formula: "x = ((1+||p||²)/(1-||p||²),  2p/(1-||p||²))"
+        poincare_to_klein:
+          formula: "k = 2p / (1 + ||p||²)"
+        klein_to_poincare:
+          formula: "p = k / (1 + √(1 - ||k||²))"
+        notes: >
+          These maps allow compute–viz decoupling: operate in hyperboloid, plot in Poincaré,
+          construct tilings in Klein, with round-trip precision preserved (up to numerical tolerances).
+
+      rcft_specific_considerations:
+        merge_branch_antipode:
+          hyperboloid:
+            merge: "m(x,y;λ) = exp_x(λ·log_x(y))"
+            branch: "Δ(x) = (x, x)"
+            antipode: "S(x) = (x₀, -x_{1:d})  # origin reflection in spatial coords"
+          poincare:
+            merge: "m(p,q;λ) = (λ ⊗ p) ⊕ ((1-λ) ⊗ q)"
+            branch: "Δ(p) = (p, p)"
+            antipode: "S(p) = -p"
+          klein:
+            merge: "Affine straight-line interpolate with normalization"
+            branch: "Δ(k) = (k, k)"
+            antipode: "S(k) = -k (projective)"
+        gating_and_metrics:
+          boolean_gate: "threshold on hyperbolic distance or Lorentz inner-product equivalently"
+          polynomial_score: "use as weight to modulate geodesic merge parameter λ or acceptance radius"
+          thresholds:
+            distance_tau: 0.7
+            score_tau: 0.5
+        uncertainty_propagation:
+          approach: "Riemannian pushforward via exp/log in hyperboloid"
+          covariance_update: "Σ_out ≈ J_exp Σ_in J_expᵀ  (first-order), with parallel transport if needed"
+          anisotropy: "track curvature-induced anisotropy; log-domain is preferred for linearization"
+        entropy_efficient_packing:
+          rationale: "hyperbolic volume growth ~ sinh^{d-1}(r) supports low-collision, hierarchical packing"
+          practice: "place seeds along geodesic nets (tilings) and expand radially with clipped norms"
+        visualization:
+          backend: "Poincaré ball"
+          angles_preserved: true
+          boundary_clipping: "||p|| ≤ 1 - ε"
+
+      minimal_operational_spec:
+        euclid_to_poincare:
+          description: "Embed Euclidean glyph x_g=[s, Mem, ||M||] into Poincaré with bounded radial scaling"
+          formula: "v = W x_g / (||W x_g|| + ε);  p = tanh(α ||v||) (v/||v||)"
+          params:
+            W: "diag(w_s, w_Mem, w_M)  # component weights"
+            alpha: 0.9
+            epsilon: 1.0e-12
+        poincare_to_hyperboloid:
+          formula: "x = ((1+||p||²)/(1-||p||²),  2p/(1-||p||²))"
+        merge_compute:
+          backend: "hyperboloid"
+          operation: "m(x,y;λ) = exp_x(λ·log_x(y))"
+        branch_antipode:
+          branch: "Δ(x) = (x, x)"
+          antipode: "S(x) = (x₀, -x_{1:d})"
+        viz_path:
+          hyperboloid_to_poincare: "p = x_{1:d} / (x₀ + 1)"
+          clipping: "||p|| ≤ 1 - ε"
+        tiling_path:
+          poincare_to_klein: "k = 2p / (1 + ||p||²)  # straight-edge constructions"
+          roundtrip: "project back to Poincaré for display, hyperboloid for further compute"
+        notes: >
+          Keep a single source of truth for glyph positions in hyperboloid coordinates; other
+          models are charts for specific tasks (viz/tilings).
+
+      pipeline:
+        steps:
+          - "Compute x_g = [s, Mem, ||M||] from glyph; scale by W."
+          - "Map Euclid → Poincaré (bounded radial map) → Hyperboloid for compute."
+          - "Perform merges/branches/antipodes in hyperboloid using exp/log."
+          - "Apply Boolean/Polynomial gating on hyperbolic distance or inner products."
+          - "Propagate uncertainties via Riemannian Jacobians; log-domain linearization."
+          - "For visualization, project Hyperboloid → Poincaré (clip near boundary)."
+          - "For constructive tilings, Poincaré → Klein, build straight-edge tessellations, project back."
+        validation:
+          hopf_axioms:
+            associativity_merge: "m(m(x,y),z) ≈ m(x,m(y,z)) within tol"
+            coassociativity_branch: "(Δ⊗id)Δ(x) = (id⊗Δ)Δ(x)"
+            antipode_axiom: "m(S⊗id)Δ(x) = η∘ε(x) = m(id⊗S)Δ(x)"
+            residual_max: 1.0e-8
+          spectral_alignment:
+            stable_modes_overlap: "≥ 0.75"
+            oscillatory_modes_overlap: "≥ 0.80"
+          numerical_safety:
+            poincare_norm_clip: "ε = 1e-6"
+            hyperboloid_inner_bounds: "monitor ⟨x,y⟩_L domain for arcosh"
+        reproducibility:
+          archive:
+            formats: ["YAML","NPZ","CSV"]
+            fields: ["code_hash","git_commit","seed","timestamp","env_fingerprint","backend_config"]
+          params_snapshot:
+            backend_choice: {compute: "hyperboloid", visualize: "poincare", tiling_aux: "klein"}
+            curvature_K: -1.0
+            alpha_radial: 0.9
+            epsilon_clip: 1.0e-6
+
+      config_example:
+        backend:
+          compute: "hyperboloid"
+          visualize: "poincare"
+          tiling_aux: "klein"
+        params:
+          W: {s: 1.0, mem: 1.0, M: 1.0}
+          alpha_radial: 0.9
+          epsilon_clip: 1.0e-6
+          curvature_K: -1.0
+
+      pseudocode_scaffold: |
+        # Euclid → Poincaré → Hyperboloid
+        def to_poincare(x_g, W, alpha=0.9, eps=1e-12):
+            v = W @ x_g
+            n = np.linalg.norm(v)
+            if n < eps: return np.zeros_like(v)
+            u = v / n
+            r = np.tanh(alpha * n)
+            return r * u  # p ∈ 𝔹ᵈ
+
+        def poincare_to_hyperboloid(p, eps=1e-6):
+            r2 = np.dot(p,p)
+            s = 1.0 / (1.0 - r2 + eps)
+            x0 = (1.0 + r2) * s
+            xsp = 2.0 * s * p
+            return np.concatenate([[x0], xsp])
+
+        # Hyperboloid exp/log merge
+        def lorentz_inner(x,y): return -x[0]*y[0] + np.dot(x[1:], y[1:])
+
+        def log_map(x,y):
+            ip = lorentz_inner(x,y)
+            zeta = np.arcosh(-ip)
+            v = y + ip * x
+            nv = np.sqrt(max(lorentz_inner(v,v), 1e-12))
+            return (zeta / nv) * v
+
+        def exp_map(x,xi):
+            nxi = np.sqrt(max(lorentz_inner(xi,xi), 1e-12))
+            return np.cosh(nxi)*x + np.sinh(nxi)*(xi/nxi)
+
+        def geodesic_merge(x,y,lmbda):
+            return exp_map(x, lmbda * log_map(x,y))
+
+        # Round-trip for viz
+        def hyperboloid_to_poincare(x, eps=1e-6):
+            return x[1:] / (x[0] + 1.0 + eps)
+
+      notes:
+        implementation_priority: >
+          Keep glyph state in hyperboloid for all compute; project only for viz or constructive needs.
+          Centralize transforms to avoid drift; unit-test exp/log round-trips and inter-model projections.
+        safety_margins:
+          poincare_boundary: "use ε clipping and assert ||p|| < 1 - ε"
+          klein_domain: "assert ||k|| < 1 - ε; avoid angle-sensitive tasks in Klein"
+
+
+
+##
+
+
+geometry:
+  curvature:
+    K: -kappa^2        # K < 0
+    kappa: sqrt(|K|)   # tie these; choose one as source of truth
+  model: disk          # disk | half_plane | polar
+  metrics:
+    disk:
+      g_xx: 4/(kappa^2*(1 - r^2)^2)
+      g_yy: 4/(kappa^2*(1 - r^2)^2)
+      sqrt_det_g: 4/(kappa^2*(1 - r^2)^2)
+    half_plane:
+      g_xx: 1/(kappa^2*y^2)
+      g_yy: 1/(kappa^2*y^2)
+      sqrt_det_g: 1/(kappa^2*y^2)
+    polar:
+      g_rr: 1
+      g_tt: (sinh(kappa*r)/kappa)^2
+      sqrt_det_g: sinh(kappa*r)/kappa
+
+entropy_density:
+  estimator:
+    neighborhood: geodesic_ball
+    radius: R              # in hyperbolic units; uses chosen model’s distance
+    kernel: exp(-d^2/h^2)  # use d = d_K; normalize in hyperbolic measure
+  compute:
+    s_j: -sum_a p_{j,a}*log(p_{j,a})
+    w_j: sqrt_det_g(u_j) * cell_volume
+    rho: sum_j(s_j*w_j) / sum_j(w_j)
+
+
+
+##
+
+
+
+
+
+
+##
+
+
+
+
+
 ##Chapter 4.2 Notes
+
+
+
+##
+
+
+
+
+a division of labor so each model plays to its strengths rather than running all three in parallel for every operation.
+
+Think of it as a three‑model relay:
+
+Role in pipeline	Model	Why it’s the best fit
+Core computation & merges	Hyperboloid	Most numerically stable, clean exponential/log maps, robust for Riemannian optimization and uncertainty propagation.
+Visualization & intuitive inspection	Poincaré disk/ball	Conformal (angle‑preserving), easy to interpret, great for plotting glyph constellations and seeing “depth” toward the boundary.
+Exact tilings & constructive geometry	Klein	Straight‑line geodesics make combinatorial layouts and polytope tilings exact and easy to compute.
+Why this hybrid approach works
+Stability: All heavy math (merges, geodesic interpolation, error propagation) happens in the hyperboloid, avoiding the numerical blow‑ups near the Poincaré boundary.
+
+Clarity: You can always project to Poincaré for inspection without contaminating the compute space.
+
+Specialized geometry: When you need exact straight‑edge constructions (e.g., 
+{
+𝑝
+,
+𝑞
+}
+ tessellations or shard–polytope layouts), you briefly hop into Klein, then project back.
+
+Minimal flow
+Embed Euclidean data → Poincaré (bounded map) → Hyperboloid (for compute).
+
+Operate in Hyperboloid (merges, branches, antipodes).
+
+Project to Poincaré for visualization or to Klein for tiling.
+
+Round‑trip back to Hyperboloid if further computation is needed.
+
+This way, you’re not redundantly maintaining three parallel states — you’re switching coordinate charts on the same underlying hyperbolic manifold as needed.
+
+
+
 
 
 
@@ -1305,7 +2260,8 @@ def assemble_complex(glyphs, boolean_mask):
 
 
 Geometric carriers and embeddings
-This section deepens the choice of embedding spaces for glyphs and provides drop‑in coordinate transforms, invariants preserved, merge/branch laws, and degenerate case handling. The goal is to let you swap manifolds without re‑deriving the pipeline or breaking Hopf compatibility and stability diagnostics.
+This section deepens the choice of embedding spaces for glyphs and provides drop‑in coordinate transforms, invariants preserved, merge/branch laws, and degenerate case handling. 
+The goal is to let you swap manifolds without re‑deriving the pipeline or breaking Hopf compatibility and stability diagnostics.
 
 Why the simplex as a default
 Interpretability: A 2‑simplex in ℝ³ encodes nonnegative, comparative salience among components. Barycentric coordinates map directly to “how much of s, Mem, M” a glyph carries.
@@ -1990,6 +2946,7 @@ Simplex Δ²	Nonnegativity, ratios, convexity	Convex/minkowski + renormalize	Int
 Sphere S²	Angles (cosine similarity)	Slerp (geodesic)	Rotation‑invariant, reflects spectra cleanly	Nonconvex; magnitudes compressed
 Grassmann G(k,n)	Subspace (principal angles)	Karcher mean on manifold	Captures M structure; robust to noise	Heavier numerics; needs manifold ops
 Poincaré ball	Hierarchy (hyperbolic distance)	Möbius/gyro convex combination	Great for trees; boundary encodes scale	Non‑Euclidean algebra; merge is non‑linear
+
 Degenerate case handling
 Zero norm / collapsed glyph:
 
@@ -2114,6 +3071,7 @@ All backends maintain the same assembly and validation logic: edges from gated s
 
 ##
 
+~~~
 
 class Embed:
     def __init__(self, backend="simplex", **kw): self.b=backend; self.kw=kw
@@ -2150,6 +3108,2795 @@ class Embed:
         if self.b=="poincare":
             return mobius_add(mobius_scale(a, lam), mobius_scale(b, 1-lam))
 
+~~~
+
+
+Practical guidance
+Choose Δ² when you need maximum interpretability, tight Hopf compliance, and easy gating — this is the default.
+
+Switch to S² if your coherence hinges on angular relations (e.g., cosine similarities from 4.1 inner products).
+
+Use 
+𝐺
+(
+𝑘
+,
+𝑛
+)
+ when the structure of 
+𝑀
+𝑖
+ (not just magnitude) is the signal — principal angles track coherence robustly.
+
+Use 
+𝐵
+𝑑
+ when hierarchy is the geometry — e.g., CA‑induced trees, multi‑scale shard phases.
+
+
+##
+
+
+
+2️⃣ Bridge Paragraph — Geometry as Carrier
+In RCFT, an embedding manifold is more than a mathematical backdrop — it is the carrier space for our invariants. 
+Each choice of geometry encodes a philosophy of what must be preserved: ratios, angles, subspaces, or hierarchies. 
+The merge laws, error propagation, and even the visual grammar of our glyphs are shaped by this choice. 
+In the next sections, we will descend from these curved and abstract carriers into the foundational geometries — Plane, Analytic, and Euclidean — not as a retreat to simplicity, but as a way to see them as special cases or limiting forms of the richer spaces above. 
+his shift will let us formalize merge laws in coordinates, anchor intuition in flat space, and then re‑project into curved carriers without losing the invariants that matter.
+
+
+
+
+##
+
+
+
+4.2.x Dimensionality & Embedding Fidelity
+The dimensionality of an embedding manifold determines how much of the original glyph’s structure can be preserved without distortion.
+
+Low‑dimensional embeddings (e.g., Δ², S²) offer high interpretability and straightforward visualization but may collapse distinct glyphs into overlapping coordinates when invariants exceed the space’s capacity.
+
+High‑dimensional embeddings (e.g., G(k,n) with large n) preserve more invariants — angles, norms, subspace relations — but at the cost of computational complexity and reduced visual intuition.
+
+Trade‑off principle: Each additional dimension increases fidelity but also increases the burden of merge law computation, uncertainty propagation, and interoperability mapping. In RCFT, dimensionality is not chosen arbitrarily — it is parameterized to match the minimum sufficient space for the invariants under study.
+
+4.2.x Metric vs. Topological Constraints
+Not all manifolds preserve the same aspects of glyph relationships:
+
+Metric preservation means distances between glyphs are meaningful and consistent with the source space (e.g., Euclidean, hyperbolic).
+
+Topological preservation means only the connectivity or ordering of glyphs is preserved, not exact distances (e.g., certain graph embeddings).
+
+Hybrid cases occur when a manifold preserves one metric (e.g., angular distance) but distorts another (e.g., Euclidean norm). 
+Understanding which constraints are preserved is essential when translating between carriers — a merge law that assumes metric fidelity will fail if only topology is preserved.
+
+4.2.x Glyph Representation Alignment
+Every glyph in RCFT carries parameters — scalar 
+𝑠
+, matrix/vector 
+𝑀
+, and diagrammatic arrows/loops — that must be mapped consistently into the embedding manifold:
+
+Coordinate mapping: Define explicit functions 
+𝑓
+𝑠
+(
+𝑠
+)
+ and 
+𝑓
+𝑀
+(
+𝑀
+)
+ that place glyph components into manifold coordinates without ambiguity.
+
+Diagram semantics: Arrows correspond to directional vectors or geodesics; loops correspond to closed geodesics or holonomy in the manifold.
+
+Legend continuity: The operational meaning of each arrow/loop in diagrams must remain invariant under projection between manifolds. This alignment ensures that visual and algebraic representations remain synchronized, even when the carrier geometry changes.
+
+4.2.x Error Propagation in Merges
+Merging glyphs in a manifold is not error‑neutral — uncertainty in parameters propagates differently depending on the merge law:
+
+Linear merges (e.g., Δ² convex combination) propagate uncertainty proportionally to weights.
+
+Geodesic merges (e.g., S² slerp, G(k,n) Karcher mean) can amplify or dampen uncertainty depending on curvature.
+
+Non‑linear merges (e.g., Möbius addition in 𝔹ᵈ) can warp uncertainty regions, making them anisotropic. 
+For reproducibility, each merge operation in RCFT should be accompanied by an uncertainty transformation rule — a mapping from input covariance to output covariance in the chosen manifold.
+
+
+
+
+##
+
+
+
+
+let’s unpack this in a way that makes its role in RCFT crystal clear, both as a foundational scaffold and as a launchpad into the heavier physics chapters like thermodynamics and electromagnetism.
+
+1. The Equation in Context
+We’re taking the glyph
+
+𝑥
+𝑔
+=
+[
+ 
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+ 
+]
+and embedding it in a flat, orthonormal coordinate frame — here, 
+𝑅
+3
+ — where each axis corresponds to one of the glyph’s three fundamental components:
+
+𝑠
+𝑖
+ — discrete state or scalar “bit” of the glyph (from ED‑CA in 7.5).
+
+M
+e
+m
+𝑖
+ — memory mass, encoding temporal persistence or historical influence.
+
+𝑀
+𝑖
+ — operational/structural vector, capturing the glyph’s active configuration.
+
+The Euclidean distance between two glyphs is then:
+
+𝑑
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+)
+=
+(
+𝑠
+𝑖
+−
+𝑠
+𝑗
+)
+2
++
+(
+M
+e
+m
+𝑖
+−
+M
+e
+m
+𝑗
+)
+2
++
+(
+𝑀
+𝑖
+−
+𝑀
+𝑗
+)
+2
+This is the straight‑line separation in the coordinate space — the most direct, metric‑preserving way to quantify “how far apart” two glyphs are in their combined state–memory–structure space.
+
+2. Why This Matters for RCFT Foundations
+Baseline Metric: Euclidean distance is the simplest, most interpretable metric. It’s the “control experiment” for all other geometries we’ll use. If a more exotic manifold (sphere, hyperbolic, Grassmannian) distorts distances, we can measure that distortion against this baseline.
+
+Inner Product Alignment: In §4.1, we defined
+
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+=
+𝛼
+ 
+𝑠
+𝑖
+𝑠
+𝑗
++
+𝛽
+ 
+∣
+M
+e
+m
+𝑖
+∩
+M
+e
+m
+𝑗
+∣
++
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+The Euclidean metric and the inner product are linked by the identity:
+
+𝑑
+2
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+)
+=
+∥
+𝑔
+𝑖
+∥
+2
++
+∥
+𝑔
+𝑗
+∥
+2
+−
+2
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+This means the flat‑space geometry is mathematically consistent with the algebraic coherence measure — no hidden contradictions.
+
+Testability: Because it’s linear and explicit, we can directly compare Euclidean distances to empirical correlations from 7.5’s ED‑CA data (e.g., the 0.83 correlation you’ve already measured). This makes it a validation tool for the glyph embedding itself.
+
+3. Strategic Role in RCFT
+Reference Frame for All Carriers: Every curved or abstract embedding we use later (positive geometry, hyperbolic, Grassmannian) can be projected into this Euclidean frame for sanity checks, debugging, and visualization.
+
+Merge Law Prototyping: In Euclidean space, merges are just weighted averages — perfect for testing associativity, commutativity, and uncertainty propagation before implementing them in curved spaces.
+
+Error Analysis: Euclidean geometry gives us closed‑form error propagation formulas, which we can then adapt to non‑linear manifolds.
+
+4. Breaching into Thermodynamics
+State Space as Phase Space: In thermodynamic analogies, 
+𝑠
+𝑖
+, 
+M
+e
+m
+𝑖
+, and 
+𝑀
+𝑖
+ can be treated as generalized coordinates. Euclidean distance becomes a proxy for “state separation” in phase space, which is directly tied to entropy measures and free‑energy landscapes.
+
+Gradient Flows: In flat space, gradients of thermodynamic potentials are straightforward to compute. This makes it easy to model relaxation toward equilibrium before adding curvature to capture more complex interactions.
+
+Metric Tensor Baseline: The Euclidean metric is the identity tensor — the simplest possible 
+𝑔
+𝜇
+𝜈
+. Later, when we introduce non‑Euclidean metrics to model anisotropic or field‑dependent interactions, we’ll measure their deviation from this baseline.
+
+5. Breaching into Electromagnetism
+Field Embedding: In EM analogies, 
+𝑀
+𝑖
+ can carry vector field components (E, B), while 
+𝑠
+𝑖
+ and 
+M
+e
+m
+𝑖
+ encode charge/state history. Euclidean distance then measures separation in combined field–state space.
+
+Potential Functions: Scalar and vector potentials can be defined over this Euclidean embedding, making it easy to compute line integrals, curls, and divergences before introducing curvature or gauge constraints.
+
+Lorentz Extensions: Starting from Euclidean 
+𝑅
+3
+ makes it straightforward to extend to Minkowski space (
+𝑅
+3
+,
+1
+) when we need relativistic EM formulations — the Euclidean form is the “spatial slice” of that structure.
+
+In short:
+This equation is the Rosetta Stone between the algebra of §4.1 and the geometry of §4.2+. 
+It’s simple enough to be a universal reference, rigorous enough to align perfectly with the inner product structure, and flexible enough to be the seed for thermodynamic phase spaces and electromagnetic field embeddings.
+
+
+
+
+
+##
+
+
+
+
+
+𝑥
+𝑔
+=
+[
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+]
+∈
+𝑅
+3
+acts as the central bridge between three RCFT domains: algebraic coherence, thermodynamic phase space, and EM field representation.
+
+View the diagram here:
+https://copilot.microsoft.com/th/id/BCO.e3ac9b92-ea96-4065-839b-f9c549fc67e8.png
+
+In the layout:
+
+Center: 
+𝑥
+𝑔
+ in Euclidean space, with its distance metric 
+𝑑
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+)
+ explicitly shown.
+
+Top-left: Algebraic Coherence — inner product structure from §4.1, showing how the metric and algebra align.
+
+Bottom-left: Thermodynamic Phase Space — entropy, gradients, and equilibrium flows emerging from the same coordinate embedding.
+
+Bottom-right: EM Field Representation — 
+𝑀
+𝑖
+ as vector field components, 
+𝑠
+𝑖
+ and 
+M
+e
+m
+𝑖
+ as charge/state history, ready for gauge and Lorentz extensions.
+
+This makes it clear that the Euclidean embedding isn’t just a convenience — it’s the metric backbone that lets RCFT’s algebra, thermodynamics, and EM analogies all speak the same geometric language.
+
+
+
+##
+
+
+
+Here’s how I see the next phase unfolding — moving from our current Euclidean baseline into non‑Euclidean frames so we can explicitly model curvature effects in RCFT. This is where the geometry stops being just a measuring stick and starts becoming an active participant in the physics.
+
+1. Why We’re Doing This
+Euclidean space treats all directions and scales equally — perfect for a clean, reproducible baseline.
+
+Curvature lets the geometry encode interaction rules directly: attraction, repulsion, anisotropy, memory decay, or field warping.
+
+In thermodynamics and EM analogies, curvature is how we capture non‑linear coupling and field‑dependent metrics.
+
+2. The Transition Path
+We’ll proceed in three deliberate steps so we preserve the inner‑product alignment from §4.1 while gaining expressive power.
+
+Step 1 — Metric Generalization
+Replace the Euclidean metric tensor 
+𝑔
+𝜇
+𝜈
+=
+𝛿
+𝜇
+𝜈
+ with a position‑dependent 
+𝑔
+𝜇
+𝜈
+(
+𝑥
+𝑔
+)
+.
+
+In thermodynamic phase space: curvature can encode temperature gradients or entropy wells.
+
+In EM space: curvature can mimic how potentials warp the effective distance between states.
+
+Step 2 — Choose Curvature Models
+We’ll explore:
+
+Spherical / Positive curvature — models bounded state spaces, saturation effects, or conserved total “energy” surfaces.
+
+Hyperbolic / Negative curvature — models exponential divergence of trajectories, instability, or high‑entropy expansion.
+
+Mixed curvature manifolds — local patches of positive and negative curvature to reflect heterogeneous field conditions.
+
+Step 3 — Embed and Compare
+Embed 
+𝑥
+𝑔
+=
+[
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+]
+ into these manifolds via coordinate charts or direct geodesic mapping.
+
+Compare geodesic distances 
+𝑑
+geo
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+)
+ to Euclidean 
+𝑑
+Euc
+ to quantify curvature effects.
+
+Track how the inner product 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+ deforms — ensuring algebraic coherence is preserved or intentionally modified.
+
+3. What This Unlocks
+Thermodynamics:
+
+Curved phase spaces allow entropy to be a geometric property — e.g., volume growth in hyperbolic regions = entropy increase.
+
+Heat flow becomes geodesic flow under a thermodynamic metric.
+
+Electromagnetism:
+
+Curvature can encode effective refractive indices, gravitational lensing analogues, or gauge‑field‑induced warping.
+
+Minkowski‑like extensions (
+𝑅
+3
+,
+1
+) become natural once we’ve mastered curved spatial slices.
+
+4. Safeguards for RCFT Integrity
+Baseline Preservation: Always keep the Euclidean embedding as a reference frame for validation and reproducibility.
+
+Uncertainty Propagation: Extend our current error‑propagation formulas to curved metrics so reproducibility isn’t lost.
+
+Archival Continuity: Every curvature model and its parameters will be YAML‑archived alongside the Euclidean baseline for futureproofing.
+
+
+
+##
+
+
+
+
+Alright — let’s take this step into curvature seriously and make it operational for RCFT. We’re going to treat non‑Euclidean geometry not as a decorative flourish, but as a bias field that actively shapes glyph interactions, packing efficiency, and entropy flow.
+
+1. From Flat to Curved: Field Bias as Geometry
+In Euclidean space, glyphs are “neutral” — distances are uniform, and packing density is limited by the sphere‑packing bound in 
+𝑅
+3
+. By introducing curvature as a field bias, we make the geometry itself prefer certain arrangements:
+
+Positive curvature (spherical) → compressive bias, clustering glyphs into tight, bounded regions.
+
+Negative curvature (hyperbolic) → expansive bias, allowing exponentially more “room” for glyphs as you move outward.
+
+Here, we’re focusing on hyperbolic tilings because they give us entropy‑efficient packing — more distinct glyphs per unit “radius” without overlap.
+
+2. Hyperbolic Tilings for Glyph Packing
+Hyperbolic space grows faster than Euclidean space:
+
+In 
+𝐻
+2
+, circumference grows as 
+sinh
+⁡
+(
+𝑟
+)
+ instead of 
+𝑟
+.
+
+In 
+𝐻
+3
+, volume grows as 
+sinh
+⁡
+2
+(
+𝑟
+)
+ instead of 
+𝑟
+2
+.
+
+This means:
+
+Packing efficiency: We can embed more glyphs without collision, preserving distinctiveness even at high density.
+
+Entropy efficiency: The number of accessible microstates grows exponentially with “radius,” matching thermodynamic entropy scaling.
+
+We can use regular hyperbolic tilings 
+{
+𝑝
+,
+𝑞
+}
+ (e.g., 
+{
+7
+,
+3
+}
+ or 
+{
+5
+,
+4
+}
+) as the discrete scaffold for glyph placement, where:
+
+𝑝
+ = number of edges per polygonal cell.
+
+𝑞
+ = number of polygons meeting at a vertex.
+
+3. Linking to Chapter 2’s 
+𝑅
+(
+𝑢
+)
+=
+12
+−
+48
+𝑢
+2
+In Chapter 2, 
+𝑅
+(
+𝑢
+)
+ is our curvature potential — a scalar field controlling local expansion or contraction:
+
+𝑅
+(
+𝑢
+)
+>
+0
+ → locally spherical bias.
+
+𝑅
+(
+𝑢
+)
+<
+0
+ → locally hyperbolic bias.
+
+𝑢
+ can be a function of glyph state, memory, or operational mode.
+
+By coupling 
+𝑅
+(
+𝑢
+)
+ to the embedding metric:
+
+𝑔
+𝜇
+𝜈
+(
+𝑢
+)
+=
+𝑔
+𝜇
+𝜈
+Euc
++
+𝜙
+(
+𝑅
+(
+𝑢
+)
+)
+ 
+ℎ
+𝜇
+𝜈
+we make curvature state‑dependent — the geometry bends differently depending on the glyph’s own parameters.
+
+4. Why This Matters for Higher‑Level RCFT Topics
+Thermodynamics:
+
+Hyperbolic growth matches entropy scaling in systems with many degrees of freedom.
+
+Curvature bias can model temperature gradients as geometric warping.
+
+Electromagnetism:
+
+Field lines in curved space behave differently — hyperbolic bias can mimic dielectric media or gravitational lensing effects.
+
+Information Theory:
+
+Hyperbolic embeddings are known to preserve hierarchical relationships — perfect for RCFT’s multi‑scale glyph semantics.
+
+
+
+
+##
+
+
+
+
+Hyperbolic metric definition and model choice
+We introduce three equivalent constant‑curvature hyperbolic models and evaluate them for RCFT’s needs: fast, stable computation; clean merge/branch laws; faithful visualization; and easy interoperability with our Euclidean baseline.
+
+Poincaré disk/ball model
+Manifold: Unit ball 
+𝐵
+𝑑
+=
+{
+𝑝
+∈
+𝑅
+𝑑
+:
+∥
+𝑝
+∥
+<
+1
+}
+.
+
+Metric (conformal):
+
+𝑑
+𝑠
+2
+=
+𝜆
+(
+𝑝
+)
+2
+ 
+∥
+𝑑
+𝑝
+∥
+2
+,
+𝜆
+(
+𝑝
+)
+=
+2
+1
+−
+∥
+𝑝
+∥
+2
+.
+Distance:
+
+𝑑
+𝐵
+(
+𝑝
+,
+𝑞
+)
+=
+arcosh
+⁡
+ ⁣
+(
+1
++
+2
+∥
+𝑝
+−
+𝑞
+∥
+2
+(
+1
+−
+∥
+𝑝
+∥
+2
+)
+(
+1
+−
+∥
+𝑞
+∥
+2
+)
+)
+.
+Geodesics: Circular arcs orthogonal to the boundary sphere; through the origin they are Euclidean straight lines.
+
+Group law (gyrovector/Möbius):
+
+𝑝
+⊕
+𝑞
+=
+(
+1
++
+2
+⟨
+𝑝
+,
+𝑞
+⟩
++
+∥
+𝑞
+∥
+2
+)
+𝑝
++
+(
+1
+−
+∥
+𝑝
+∥
+2
+)
+𝑞
+1
++
+2
+⟨
+𝑝
+,
+𝑞
+⟩
++
+∥
+𝑝
+∥
+2
+∥
+𝑞
+∥
+2
+,
+𝑡
+⊗
+𝑝
+=
+tanh
+⁡
+ ⁣
+(
+𝑡
+ 
+arctanh
+⁡
+∥
+𝑝
+∥
+)
+𝑝
+∥
+𝑝
+∥
+.
+Geodesic interpolation (merge) at weight 
+𝜆
+: 
+𝑚
+(
+𝑝
+,
+𝑞
+)
+=
+𝜆
+⊗
+𝑝
+⊕
+(
+1
+−
+𝜆
+)
+⊗
+𝑞
+.
+
+Properties:
+
+Conformal (preserves angles); excellent for phase/angle‑driven coherence.
+
+Boundary at 
+∥
+𝑝
+∥
+→
+1
+ encodes “depth” (good for hierarchical glyph packing).
+
+Numerical notes:
+
+Clip norms: 
+∥
+𝑝
+∥
+≤
+1
+−
+𝜀
+ (e.g., 
+𝜀
+=
+10
+−
+6
+).
+
+Fast closed‑form ops; easy autodiff.
+
+Pros/cons:
+
+Pros: Simple formulas, angle‑faithful, great for visualization and graph embeddings.
+
+Cons: Geodesics not straight; mild instability near boundary if not clipped.
+
+Hyperboloid (Lorentz) model
+Manifold: Upper sheet of two‑sheeted hyperboloid
+
+𝐻
+𝑑
+=
+{
+𝑥
+∈
+𝑅
+𝑑
++
+1
+:
+ 
+⟨
+𝑥
+,
+𝑥
+⟩
+𝐿
+=
+−
+1
+,
+ 
+𝑥
+0
+>
+0
+}
+,
+with Lorentz product 
+⟨
+𝑥
+,
+𝑦
+⟩
+𝐿
+=
+−
+𝑥
+0
+𝑦
+0
++
+∑
+𝑖
+=
+1
+𝑑
+𝑥
+𝑖
+𝑦
+𝑖
+.
+
+Distance:
+
+𝑑
+𝐻
+(
+𝑥
+,
+𝑦
+)
+=
+arcosh
+⁡
+(
+−
+⟨
+𝑥
+,
+𝑦
+⟩
+𝐿
+)
+.
+Exp/log maps (geodesics):
+
+log
+⁡
+𝑥
+(
+𝑦
+)
+=
+arcosh
+⁡
+(
+−
+⟨
+𝑥
+,
+𝑦
+⟩
+𝐿
+)
+⟨
+𝑣
+,
+𝑣
+⟩
+𝐿
+ 
+𝑣
+, with 
+𝑣
+=
+𝑦
++
+⟨
+𝑥
+,
+𝑦
+⟩
+𝐿
+𝑥
+.
+
+exp
+⁡
+𝑥
+(
+𝜉
+)
+=
+cosh
+⁡
+(
+∥
+𝜉
+∥
+𝐿
+)
+ 
+𝑥
++
+sinh
+⁡
+(
+∥
+𝜉
+∥
+𝐿
+)
+𝜉
+∥
+𝜉
+∥
+𝐿
+.
+
+Geodesic interpolation: 
+𝑚
+(
+𝑥
+,
+𝑦
+)
+=
+exp
+⁡
+𝑥
+(
+𝜆
+ 
+log
+⁡
+𝑥
+(
+𝑦
+)
+)
+.
+
+Projection to Poincaré ball:
+
+𝑝
+=
+𝑥
+1
+:
+𝑑
+𝑥
+0
++
+1
+,
+𝑥
+=
+1
+1
+−
+∥
+𝑝
+∥
+2
+(
+1
++
+∥
+𝑝
+∥
+2
+,
+ 
+2
+𝑝
+)
+.
+Properties:
+
+Geodesics are intersections of 
+𝐻
+𝑑
+ with 2‑planes through the origin.
+
+Linear‑algebra friendly; numerically stable far from the boundary issues of 
+𝐵
+𝑑
+.
+
+Numerical notes:
+
+Robust inner products; good conditioning for optimization.
+
+Pros/cons:
+
+Pros: Best for stable computation and Riemannian optimization; clean exp/log.
+
+Cons: Less intuitive to visualize; needs projection for plotting.
+
+Klein (projective) model
+Manifold: Open unit ball 
+𝐾
+𝑑
+=
+{
+𝑘
+∈
+𝑅
+𝑑
+:
+∥
+𝑘
+∥
+<
+1
+}
+.
+
+Geodesics: Euclidean straight line segments (projective property).
+
+Distance (one form):
+
+𝑑
+𝐾
+(
+𝑘
+,
+ℓ
+)
+=
+1
+2
+ln
+⁡
+(
+1
++
+𝜎
++
+)
+(
+1
+−
+𝜎
+−
+)
+(
+1
+−
+𝜎
++
+)
+(
+1
++
+𝜎
+−
+)
+,
+𝜎
+±
+=
+⟨
+𝑘
+,
+ℓ
+⟩
+±
+⟨
+𝑘
+,
+ℓ
+⟩
+2
+−
+(
+1
+−
+∥
+𝑘
+∥
+2
+)
+(
+1
+−
+∥
+ℓ
+∥
+2
+)
+1
+−
+∥
+𝑘
+∥
+2
+.
+Maps to/from Poincaré:
+
+𝑘
+=
+2
+𝑝
+1
++
+∥
+𝑝
+∥
+2
+,
+𝑝
+=
+𝑘
+1
++
+1
+−
+∥
+𝑘
+∥
+2
+.
+Properties:
+
+Straight geodesics simplify intersection/tiling; not conformal (angles distorted).
+
+Pros/cons:
+
+Pros: Straight‑line geodesics are useful for exact tilings 
+{
+𝑝
+,
+𝑞
+}
+ and combinatorics.
+
+Cons: Poor angle fidelity; distance formulas less convenient; not ideal for gradient‑based learning.
+
+Inter‑model transforms (at a glance)
+Hyperboloid 
+↔
+ Poincaré ball:
+
+𝑝
+=
+𝑥
+1
+:
+𝑑
+𝑥
+0
++
+1
+,
+𝑥
+=
+1
+1
+−
+∥
+𝑝
+∥
+2
+(
+1
++
+∥
+𝑝
+∥
+2
+,
+ 
+2
+𝑝
+)
+.
+Poincaré ball 
+↔
+ Klein ball:
+
+𝑘
+=
+2
+𝑝
+1
++
+∥
+𝑝
+∥
+2
+,
+𝑝
+=
+𝑘
+1
++
+1
+−
+∥
+𝑘
+∥
+2
+.
+These allow compute–viz decoupling and model‑specific routines while keeping a single source of truth for glyph positions.
+
+RCFT‑specific considerations
+Merge/branch/antipode:
+
+Poincaré: Möbius scalar–add for merges; 
+𝑆
+(
+𝑝
+)
+=
+−
+𝑝
+ as antipode; 
+Δ
+(
+𝑝
+)
+=
+(
+𝑝
+,
+𝑝
+)
+.
+
+Hyperboloid: Geodesic merge via 
+exp
+⁡
+/
+log
+⁡
+; 
+𝑆
+(
+𝑥
+)
+=
+(
+𝑥
+0
+,
+−
+𝑥
+1
+:
+𝑑
+)
+ (origin reflection); 
+Δ
+(
+𝑥
+)
+=
+(
+𝑥
+,
+𝑥
+)
+.
+
+Klein: Affine segment merges (straight lines); care with normalization near boundary.
+
+Boolean/Polynomial gating: Thresholding on hyperbolic distances or inner products can be implemented in any model; Poincaré offers simple closed forms.
+
+Error propagation: Use Riemannian tools (pushforward of covariance via 
+exp
+⁡
+/
+log
+⁡
+); hyperboloid is most convenient for analytic propagation on manifolds.
+
+Entropy‑efficient packing: Hyperbolic volume growth (
+sinh
+⁡
+𝑑
+−
+1
+𝑟
+) supports scalable, low‑collision glyph placement and hierarchical layouts.
+
+Visualization: Poincaré ball/disk is the standard for clear plots; Klein can illustrate tilings with straight edges.
+
+Recommendation and plan
+Compute backend: Hyperboloid model.
+
+Rationale: Best numerical stability, clean 
+exp
+⁡
+/
+log
+⁡
+ for merges and uncertainty propagation, linear‑algebra friendly, robust for optimization and validation.
+
+Visualization backend: Poincaré ball.
+
+Rationale: Conformal, intuitive; simple distance and Möbius formulas; great for inspecting glyph constellations and hierarchies.
+
+Tiling/constructive geometry (optional): Klein for exact 
+{
+𝑝
+,
+𝑞
+}
+ tilings and straight‑edge constructions; project results back to Poincaré for viewing.
+
+Minimal operational spec (drop‑in)
+Embed Euclidean glyph 
+𝑥
+𝑔
+=
+[
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+∥
+𝑀
+𝑖
+∥
+]
+ into Poincaré ball via a bounded map (e.g., 
+tanh radial scaling) and lift to hyperboloid for compute:
+
+Euclid 
+→
+ Poincaré:
+
+𝑣
+~
+=
+𝑊
+𝑥
+𝑔
+∥
+𝑊
+𝑥
+𝑔
+∥
++
+𝜖
+,
+𝑝
+=
+tanh
+⁡
+(
+𝛼
+ 
+∥
+𝑣
+~
+∥
+)
+ 
+𝑣
+~
+∥
+𝑣
+~
+∥
+.
+Poincaré 
+→
+ Hyperboloid: 
+𝑥
+=
+1
+1
+−
+∥
+𝑝
+∥
+2
+(
+1
++
+∥
+𝑝
+∥
+2
+,
+ 
+2
+𝑝
+)
+.
+
+Merge (compute): 
+𝑚
+(
+𝑥
+,
+𝑦
+)
+=
+exp
+⁡
+𝑥
+(
+𝜆
+ 
+log
+⁡
+𝑥
+(
+𝑦
+)
+)
+; Branch: 
+Δ
+(
+𝑥
+)
+=
+(
+𝑥
+,
+𝑥
+)
+; Antipode: 
+𝑆
+(
+𝑥
+)
+=
+(
+𝑥
+0
+,
+−
+𝑥
+1
+:
+𝑑
+)
+.
+
+Viz path: Hyperboloid 
+→
+ Poincaré (for plotting), with norm clipping 
+∥
+𝑝
+∥
+≤
+1
+−
+𝜀
+.
+
+
+YAML: backend choice and parameters
+yaml
+chapter_4:
+  section_4_2:
+    hyperbolic_backend:
+      compute: "hyperboloid"         # stable Riemannian ops for merges/error
+      visualize: "poincare"          # conformal, intuitive plots
+      tiling_aux: "klein"            # optional for straight-edge tilings
+    params:
+      alpha_radial: 0.9              # Euclid→Poincaré radial scaling
+      epsilon_clip: 1.0e-6           # boundary safety margin
+      curvature_K: -1.0              # can rescale metrics if needed
+
+This split—hyperboloid for computation, Poincaré for visualization—gives RCFT the best of both worlds: stable math where it counts, and clear geometry where it’s seen, with trivial round‑trip projections and optional Klein support for constructive tilings.
+
+a division of labor so each model plays to its strengths rather than running all three in parallel for every operation.
+
+Think of it as a three‑model relay:
+
+Role in pipeline	Model	Why it’s the best fit
+Core computation & merges	Hyperboloid	Most numerically stable, clean exponential/log maps, robust for Riemannian optimization and uncertainty propagation.
+Visualization & intuitive inspection	Poincaré disk/ball	Conformal (angle‑preserving), easy to interpret, great for plotting glyph constellations and seeing “depth” toward the boundary.
+Exact tilings & constructive geometry	Klein	Straight‑line geodesics make combinatorial layouts and polytope tilings exact and easy to compute.
+Why this hybrid approach works
+Stability: All heavy math (merges, geodesic interpolation, error propagation) happens in the hyperboloid, avoiding the numerical blow‑ups near the Poincaré boundary.
+
+Clarity: You can always project to Poincaré for inspection without contaminating the compute space.
+
+Specialized geometry: When you need exact straight‑edge constructions (e.g., 
+{
+𝑝
+,
+𝑞
+}
+ tessellations or shard–polytope layouts), you briefly hop into Klein, then project back.
+
+Minimal flow
+Embed Euclidean data → Poincaré (bounded map) → Hyperboloid (for compute).
+
+Operate in Hyperboloid (merges, branches, antipodes).
+
+Project to Poincaré for visualization or to Klein for tiling.
+
+Round‑trip back to Hyperboloid if further computation is needed.
+
+This way, you’re not redundantly maintaining three parallel states — you’re switching coordinate charts on the same underlying hyperbolic manifold as needed.
+
+
+
+
+##
+
+
+
+Equation: Curvature K=−R21 (hyperbolic), with tiling density ρ=entropyarea.
+
+1. The Equation in Plain Terms
+You’ve got two linked ideas here:
+
+Curvature:
+
+𝐾
+=
+−
+𝑅
+2
+ 
+1
+In your notation, 
+𝑅
+ is the scalar curvature field (from Chapter 2’s 
+𝑅
+(
+𝑢
+)
+=
+12
+−
+48
+𝑢
+2
+), and the negative sign means we’re in hyperbolic territory — constant negative curvature. The denominator here is essentially a normalization factor (your “2 1” shorthand) that fixes the curvature scale so that 
+𝐾
+ has the right units and magnitude for the embedding model.
+
+Tiling density:
+
+𝜌
+=
+entropy
+area
+This says: the density of glyphs in the tiling is proportional to the entropy per unit hyperbolic area. In other words, how much “information” or “state diversity” you can pack into a given patch of curved space.
+
+2. Why This Works for Our Metrics
+Curvature as a Metric Modifier
+In RCFT, the metric tensor 
+𝑔
+𝜇
+𝜈
+ determines how we measure distances, angles, and areas between glyphs.
+
+Setting 
+𝐾
+<
+0
+ means we’re working in a geometry where area grows faster than radius — in 
+𝐻
+2
+, area 
+∼
+sinh
+⁡
+(
+𝑟
+)
+, in 
+𝐻
+3
+, volume 
+∼
+sinh
+⁡
+2
+(
+𝑟
+)
+.
+
+This directly affects our distance-based coherence measures from §4.1: the same inner product 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+ now corresponds to a different physical/geometric separation because the metric is warped.
+
+Entropy–Area Link
+In thermodynamic terms, entropy is a measure of accessible microstates. In a hyperbolic space, the number of available “slots” for glyphs grows exponentially with radius.
+
+By defining 
+𝜌
+ as entropy per area, we normalize this growth so we can compare regions of different curvature or scale.
+
+This makes 
+𝜌
+ a curvature‑aware density: it tells us not just how many glyphs are in a patch, but how efficiently they’re using the available geometric “room.”
+
+3. RCFT Significance
+Metric Consistency: The 
+𝐾
+ term plugs directly into the hyperbolic metric models we’ve already chosen (hyperboloid for compute, Poincaré for viz). It’s the scalar that sets the “tightness” of geodesics and the growth rate of area with radius.
+
+Packing Efficiency: With 
+𝐾
+<
+0
+, you can tile the space with more glyphs without overlap — 
+𝜌
+ becomes a direct measure of how close you are to the theoretical packing bound for that curvature.
+
+Cross‑Domain Interpretability:
+
+In thermodynamics, 
+𝜌
+ is analogous to entropy density — useful for phase diagrams and stability analysis.
+
+In EM analogies, curvature can mimic refractive index gradients or gravitational lensing, and 
+𝜌
+ can be tied to field line density.
+
+Validation Hook: Because 
+𝜌
+ is defined in terms of entropy and area, it can be computed from both empirical ED‑CA data (Chapter 7.5) and geometric model predictions — giving us a direct metric for model–data agreement.
+
+4. Why It Works for Our Metrics
+Our coherence metric 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+ is inner‑product based, so it’s compatible with any Riemannian metric — Euclidean or hyperbolic.
+
+By introducing 
+𝐾
+ explicitly, we’re making the curvature a first‑class parameter in the metric, not an afterthought.
+
+𝜌
+ then becomes a derived observable that’s sensitive to both the algebraic state distribution (entropy) and the geometric carrier (area under 
+𝐾
+).
+
+
+
+
+##
+
+
+
+
+Hyperbolic metric tensor 
+𝑔
+𝜇
+𝜈
+(
+𝐾
+)
+Below are explicit, constant–negative-curvature (
+𝐾
+<
+0
+) metrics you can drop into the pipeline. Write 
+∣
+𝐾
+∣
+=
+𝜅
+2
+ with 
+𝜅
+>
+0
+.
+
+Poincaré disk model (viz-friendly, conformal)
+Coordinates: 
+(
+𝑥
+,
+𝑦
+)
+ with 
+𝑟
+2
+=
+𝑥
+2
++
+𝑦
+2
+<
+1
+.
+
+Metric tensor:
+
+𝑔
+𝑖
+𝑗
+(
+𝐾
+;
+𝑥
+,
+𝑦
+)
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+ 
+𝛿
+𝑖
+𝑗
+Line element:
+
+d
+𝑠
+2
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+(
+d
+𝑥
+2
++
+d
+𝑦
+2
+)
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑥
+ 
+d
+𝑦
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+ 
+d
+𝑥
+ 
+d
+𝑦
+Upper half-plane model (analysis-friendly, conformal)
+Coordinates: 
+(
+𝑥
+,
+𝑦
+)
+ with 
+𝑦
+>
+0
+.
+
+Metric tensor:
+
+𝑔
+𝑖
+𝑗
+(
+𝐾
+;
+𝑥
+,
+𝑦
+)
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+ 
+𝛿
+𝑖
+𝑗
+Line element:
+
+d
+𝑠
+2
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+(
+d
+𝑥
+2
++
+d
+𝑦
+2
+)
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑥
+ 
+d
+𝑦
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+ 
+d
+𝑥
+ 
+d
+𝑦
+Geodesic polar coordinates (compute-friendly, rotationally symmetric)
+Coordinates: 
+(
+𝑟
+,
+𝜃
+)
+ with 
+𝑟
+≥
+0
+,
+ 
+𝜃
+∈
+[
+0
+,
+2
+𝜋
+)
+.
+
+Metric tensor:
+
+𝑔
+𝑟
+𝑟
+=
+1
+,
+𝑔
+𝜃
+𝜃
+=
+(
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+)
+2
+,
+𝑔
+𝑟
+𝜃
+=
+0
+Line element:
+
+d
+𝑠
+2
+=
+d
+𝑟
+2
++
+(
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+)
+2
+d
+𝜃
+2
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑟
+ 
+d
+𝜃
+=
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+ 
+d
+𝑟
+ 
+d
+𝜃
+Tip: All three are isometric. Choose one model for compute (hyperboloid/polar) and one for viz (disk) and keep 
+𝜅
+=
+∣
+𝐾
+∣
+ tied across them.
+
+Area element and curvature scaling
+Curvature–scale link:
+
+𝐾
+=
+−
+𝜅
+2
+⟺
+𝑔
+(
+𝐾
+)
+=
+1
+𝜅
+2
+ 
+𝑔
+(
+𝐾
+=
+−
+1
+)
+Scaling the 
+−
+1
+ curvature metric by 
+1
+/
+𝜅
+2
+ yields Gaussian curvature 
+−
+𝜅
+2
+.
+
+Region area (generic coordinates 
+𝑢
+):
+
+𝐴
+𝐾
+(
+Ω
+)
+=
+∫
+Ω
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+Geodesic ball area (radius 
+𝑅
+, polar coords):
+
+𝐴
+𝐾
+ ⁣
+(
+𝐵
+(
+𝑅
+)
+)
+=
+∫
+0
+2
+𝜋
+ ⁣
+ ⁣
+∫
+0
+𝑅
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+ 
+d
+𝑟
+ 
+d
+𝜃
+=
+2
+𝜋
+𝜅
+2
+(
+cosh
+⁡
+(
+𝜅
+𝑅
+)
+−
+1
+)
+Entropy–area density 
+𝜌
+Definition (region-level):
+
+𝜌
+𝐾
+(
+Ω
+)
+=
+𝑆
+(
+Ω
+)
+𝐴
+𝐾
+(
+Ω
+)
+where 
+𝑆
+(
+Ω
+)
+ is the Shannon/Gibbs entropy of glyph states in 
+Ω
+ and 
+𝐴
+𝐾
+(
+Ω
+)
+ is the hyperbolic area induced by 
+𝑔
+(
+𝐾
+)
+.
+
+Local form (continuous field):
+
+𝜌
+𝐾
+(
+Ω
+)
+=
+∫
+Ω
+𝑠
+(
+𝑢
+)
+ 
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+∫
+Ω
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+with 
+𝑠
+(
+𝑢
+)
+=
+−
+∑
+𝑎
+𝑝
+𝑎
+(
+𝑢
+)
+log
+⁡
+𝑝
+𝑎
+(
+𝑢
+)
+, and 
+𝑝
+𝑎
+(
+𝑢
+)
+ estimated in hyperbolic space (kernels use geodesic distance under 
+𝑔
+(
+𝐾
+)
+).
+
+Discrete estimator (mesh or samples 
+{
+𝑢
+𝑗
+}
+):
+
+𝑤
+𝑗
+=
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+𝑗
+)
+ 
+Δ
+𝑢
+𝑗
+,
+𝑠
+𝑗
+=
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+,
+𝜌
+𝐾
+=
+∑
+𝑗
+𝑠
+𝑗
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Ready-to-use formulas by model
+Poincaré disk
+Weights:
+
+𝑤
+𝑗
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+𝑗
+2
+)
+2
+ 
+Δ
+𝑥
+ 
+Δ
+𝑦
+,
+𝑟
+𝑗
+2
+=
+𝑥
+𝑗
+2
++
+𝑦
+𝑗
+2
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Upper half-plane
+Weights:
+
+𝑤
+𝑗
+=
+1
+𝜅
+2
+ 
+𝑦
+𝑗
+2
+ 
+Δ
+𝑥
+ 
+Δ
+𝑦
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Geodesic polar
+Weights:
+
+𝑤
+𝑗
+=
+sinh
+⁡
+(
+𝜅
+𝑟
+𝑗
+)
+𝜅
+ 
+Δ
+𝑟
+ 
+Δ
+𝜃
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Optional: geodesic distance for kernels and neighborhoods
+Disk model:
+
+𝑑
+𝐾
+(
+𝑢
+,
+𝑣
+)
+=
+2
+𝜅
+ 
+arcosh
+⁡
+ ⁣
+(
+1
++
+2
+∥
+𝑢
+−
+𝑣
+∥
+2
+(
+1
+−
+∥
+𝑢
+∥
+2
+)
+(
+1
+−
+∥
+𝑣
+∥
+2
+)
+)
+Upper half-plane:
+
+𝑑
+𝐾
+(
+𝑢
+,
+𝑣
+)
+=
+1
+𝜅
+ 
+arcosh
+⁡
+ ⁣
+(
+1
++
+∥
+𝑢
+−
+𝑣
+∥
+2
+2
+ 
+𝑦
+𝑢
+ 
+𝑦
+𝑣
+)
+Geodesic polar (radial separation only):
+
+𝑑
+𝐾
+(
+(
+𝑟
+,
+𝜃
+)
+,
+(
+𝑟
+′
+,
+𝜃
+)
+)
+=
+∣
+𝑟
+−
+𝑟
+′
+∣
+
+
+
+##
+
+
+
+1. Model Switch & Metric Tensor Injection
+We add a geometry.model switch and tie it to the curvature 
+𝐾
+ parameter. This ensures the correct metric tensor and area element are used for both coherence and 
+𝜌
+𝐾
+.
+
+python
+def metric_and_area_weights(coords, model, K):
+    kappa = (abs(K))**0.5
+    if model == "disk":
+        x, y = coords[...,0], coords[...,1]
+        r2 = x**2 + y**2
+        sqrt_det_g = 4 / (kappa**2 * (1 - r2)**2)
+        return sqrt_det_g
+    elif model == "half_plane":
+        x, y = coords[...,0], coords[...,1]
+        sqrt_det_g = 1 / (kappa**2 * y**2)
+        return sqrt_det_g
+    elif model == "polar":
+        r = coords[...,0]
+        sqrt_det_g = np.sinh(kappa * r) / kappa
+        return sqrt_det_g
+    else:
+        raise ValueError(f"Unknown geometry model: {model}")
+2. Entropy Density 
+𝜌
+𝐾
+ Computation
+We compute local entropy 
+𝑠
+𝑗
+ from glyph state probabilities, weight by the hyperbolic area element, and normalize.
+
+python
+def rho_K(glyph_probs, coords, model, K, cell_volume=1.0):
+    """
+    glyph_probs: array [N, A] of probabilities for A glyph states at N sites
+    coords: array [N, dim] of coordinates in chosen model
+    """
+    # Local entropy at each site
+    s_j = -np.sum(glyph_probs * np.log(glyph_probs + 1e-12), axis=1)
+
+    # Area weights from metric tensor
+    w_j = metric_and_area_weights(coords, model, K) * cell_volume
+
+    # Weighted average entropy density
+    return np.sum(s_j * w_j) / np.sum(w_j)
+3. Integration into 4.1.1 Glyph‑Tiling Path
+In your existing coherence metric loop, after you’ve computed glyph state probabilities and coherence values:
+
+python
+# Existing coherence metrics
+coherence_metrics = compute_coherence_metrics(glyph_probs, coords, ...)
+
+# New: curvature-aware entropy density
+rho_val = rho_K(glyph_probs, coords, model=geom_model, K=curvature_K)
+
+# Return both
+return {
+    **coherence_metrics,
+    "rho_K": rho_val,
+    "geometry_model": geom_model,
+    "curvature_K": curvature_K
+}
+4. YAML Spec Hook
+So you can drive this from your RCFT YAML without hard‑coding:
+
+yaml
+geometry:
+  model: disk        # disk | half_plane | polar
+  curvature_K: -1.0  # negative for hyperbolic
+  cell_volume: 1.0   # adjust if discretization changes
+
+metrics:
+  coherence: true
+  rho_K: true
+5. Why This Wiring Works
+Non‑intrusive: Doesn’t alter your coherence metric math — just adds a parallel path for 
+𝜌
+𝐾
+.
+
+Model‑agnostic: Switch between disk, half‑plane, or polar without touching the entropy logic.
+
+Curvature‑aware: Area weights are derived from 
+𝑔
+𝜇
+𝜈
+(
+𝐾
+)
+, so 
+𝜌
+𝐾
+ is physically consistent with your hyperbolic embedding.
+
+Archivable: The returned dict is ready for YAML archival with both geometry parameters and results.
 
 
 
