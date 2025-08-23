@@ -1362,6 +1362,211 @@ rcft_update:
 
 
 
+##
+
+
+
+
+chapter_4_2_update:
+  version: "2025-08-23.D"
+  section: "4.2 Geometric Acceptance and Embedding (Linked to 4.1 tolerances)"
+  dependencies:
+    - chapter: "4.1"
+      ids:
+        - "DEF-GLYPH-NORM"         # ε_norm embedded
+        - "DEF-CONSERVATION"       # tol_C embedded
+        - "DEF-MONOTONICITY"       # tol_M embedded
+      requirement: "All 4.1 definitions and tolerances are authoritative; 4.2 inherits them without redefinition."
+
+  tolerances:
+    inherited:
+      epsilon_norm: 1.0e-6     # from 4.1
+      tol_C: 1.0e-9            # from 4.1
+      tol_M: 1.0e-12           # from 4.1
+    local:
+      tol_geom: 1.0e-9         # oriented flux/volume tolerance on shard–polytope
+      tol_glue: 1.0e-10        # mismatch tolerance at gluing boundaries
+      epsilon_geom_perturb: 1.0e-8  # perturbation magnitude for measure-zero facet handling
+
+  embedding:
+    map:
+      id: "def:embedding_map"
+      text: "E: S -> P (state space to shard–polytope), preserving incidence and oriented adjacency."
+      invariants:
+        - "Face incidence preserved"
+        - "Orientation preserved under allowed transitions"
+      diagnostics:
+        - "reject if orientation_flip_count > 0"
+        - "reject if incidence_violation_count > 0"
+      numeric_checks:
+        oriented_flux_nonneg: "Flux(P_boundary) >= -tol_geom"
+        adjacency_preserved: "All mapped edges found in P adjacency list"
+
+  acceptance_rule:
+    description: "Run accepted iff all three gates pass: algebraic, geometric, and guards."
+    gates:
+      - name: "algebraic"
+        conditions:
+          - "|C_{t+1} - C_t| <= tol_C"
+          - "M_{t+1} - M_t >= -tol_M"
+      - name: "geometric"
+        conditions:
+          - "oriented_flux_nonneg >= -tol_geom"
+          - "embedding_preserves_adjacency == true"
+          - "gluing_mismatch <= tol_glue"
+      - name: "guards"
+        conditions:
+          - "ESS_policy_satisfied == true"
+          - "no_retroactive_bias == true"
+    reason_codes:
+      - "accepted"
+      - "rejected_nonmonotone"      # M violation (links to FM-3)
+      - "rejected_conservation"     # C violation (links to FM-2)
+      - "rejected_geometry"         # embedding/flux/gluing violation
+      - "rejected_norm"             # normalization violation (links to FM-1)
+      - "rejected_guard"            # ESS/retro-bias violation
+
+  equivalence_theorem:
+    id: "thm:geometry_accepts_iff_algebraic_monotone"
+    statement: "Geometry accepts ⇔ M is nondecreasing within tol_M, with conservation within tol_C."
+    scope: "K=3 shard–polytope, admissible seeds, guard-aware ESS"
+    operationalization:
+      forward_check: "Accepted geometry implies ΔM >= -tol_M and |ΔC| <= tol_C."
+      reverse_check: "ΔM >= -tol_M and |ΔC| <= tol_C imply a feasible path in P with oriented_flux_nonneg >= -tol_geom."
+    edge_cases:
+      measure_zero_facets:
+        description: "Stalls where ΔM≈0 on facets of measure zero."
+        remedy:
+          - "apply perturbation of magnitude epsilon_geom_perturb in normal direction"
+          - "re-evaluate gates; accept if limits satisfy tolerances"
+      degenerate_projection:
+        description: "Incidence preserved but orientation numerically ambiguous."
+        remedy:
+          - "increase precision or use robust orientation test; fallback tolerance = 10*tol_geom"
+
+  gluing_constraints:
+    definition: "Adjacent shards must match conserved quantity and boundary flow."
+    conditions:
+      - "left.C - right.C |<=| tol_glue"
+      - "left_to_right_flux - algebraic_expected_flux |<=| tol_glue"
+    failure_action: "rejected_geometry"
+    notes: "Constraints derive directly from 4.1 conservation identity."
+
+  failure_mode_linkage:
+    fm_map:
+      FM-1:
+        from_chapter: "4.1"
+        name: "Normalization Violation"
+        4_2_effects:
+          - "reject as rejected_norm prior to geometry checks"
+          - "invalidate embedding coordinates for affected glyphs"
+        instrumentation:
+          - "log span (G_max - G_min) and ε_norm at failure"
+      FM-2:
+        from_chapter: "4.1"
+        name: "Conservation Violation"
+        4_2_effects:
+          - "reject as rejected_conservation"
+          - "skip gluing tests (dependent on C consistency)"
+        instrumentation:
+          - "log ΔC, tol_C, step_index"
+      FM-3:
+        from_chapter: "4.1"
+        name: "Monotonicity Violation"
+        4_2_effects:
+          - "reject as rejected_nonmonotone"
+          - "trigger counterexample capture for theorem equivalence"
+        instrumentation:
+          - "log ΔM, tol_M, local facet id in P"
+    geometry_specific:
+      G-1:
+        name: "Oriented Flux Negative"
+        trigger: "oriented_flux_nonneg < -tol_geom"
+        action: "rejected_geometry"
+        falsification_path: "If algebraic gates passed, record as potential equivalence counterexample."
+      G-2:
+        name: "Adjacency Violation"
+        trigger: "embedding_preserves_adjacency == false"
+        action: "rejected_geometry"
+      G-3:
+        name: "Gluing Mismatch"
+        trigger: "gluing_mismatch > tol_glue"
+        action: "rejected_geometry"
+
+  runtime_checks:
+    sequence:
+      - "validate_normalization(ε_norm)"
+      - "check_conservation(tol_C)"
+      - "check_monotonicity(tol_M)"
+      - "embed_and_test_geometry(tol_geom)"
+      - "test_gluing(tol_glue)"
+      - "verify_guards(ESS_policy)"
+    short_circuit_policy: "fail-fast; earliest failing gate emits reason_code and halts"
+
+  validation_pipeline_4_2:
+    stages:
+      - name: "G1-Embedding-Integrity"
+        tests: ["incidence", "orientation", "adjacency"]
+      - name: "G2-Oriented-Flux"
+        tests: ["flux_nonnegativity >= -tol_geom"]
+      - name: "G3-Gluing"
+        tests: ["boundary C match <= tol_glue", "flux match <= tol_glue"]
+      - name: "G4-Equivalence-Crosscheck"
+        tests: ["if accepted_geometry then ΔM >= -tol_M and |ΔC| <= tol_C", "if ΔM >= -tol_M and |ΔC| <= tol_C then feasible path exists"]
+      - name: "G5-Guards"
+        tests: ["ESS policy, no retroactive bias"]
+    outputs:
+      audit_log: "geom_validation/audit_YYYYMMDD.jsonl"
+      summary_table: "geom_validation/summary.csv"
+      counterexamples_dir: "geom_validation/counterexamples/"
+
+  examples:
+    - id: "EX-4.2-ACCEPT"
+      description: "Accepted run with all gates passing."
+      metrics:
+        delta_C_max: "<= 5e-10"
+        min_delta_M: ">= -5e-13"
+        oriented_flux_min: ">= -5e-10"
+        gluing_mismatch_max: "<= 5e-11"
+      artifacts: ["plots/path_in_polytope.png", "logs/accept_run.json"]
+    - id: "EX-4.2-REJECT-GEOM"
+      description: "Geometry reject despite near-ideal algebra; used to probe theorem tightness."
+      metrics:
+        delta_C_max: "<= 2e-10"
+        min_delta_M: ">= -2e-12"
+        oriented_flux_min: "< -1e-9"
+      action: "store as counterexample candidate; rerun with epsilon_geom_perturb"
+
+  logging:
+    schema:
+      fields:
+        - "run_id"
+        - "timestamp"
+        - "reason_code"
+        - "ΔC"
+        - "min_ΔM"
+        - "oriented_flux_min"
+        - "gluing_mismatch_max"
+        - "facet_ids_touched"
+        - "epsilon_geom_perturb_used"
+        - "precision_mode"
+    reason_code_policy:
+      accepted: "All metrics within tolerances"
+      rejected_nonmonotone: "min_ΔM < -tol_M"
+      rejected_conservation: "|ΔC| > tol_C"
+      rejected_geometry: "flux/adjoining/glue out of bounds"
+      rejected_norm: "normalization constraints violated"
+      rejected_guard: "ESS or bias rule violated"
+
+  notes:
+    - "All tolerances are defaults; may be tightened for high-precision runs."
+    - "When storing counterexamples, capture state snapshots pre/post perturbation."
+    - "Gluing constraints are the primary handshake with 4.1; do not bypass on 'accepted' runs."
+
+
+
+
+
 
 ##
 
