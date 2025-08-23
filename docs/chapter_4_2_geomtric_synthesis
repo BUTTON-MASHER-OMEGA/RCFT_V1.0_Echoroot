@@ -64,6 +64,64 @@ chapter_4:
 
 
 
+
+##
+
+
+
+
+chapter_4_1_update:
+  version: "2025-08-23.C"
+  section: "4.1.1 Operational Definitions"
+  changes:
+    - id: DEF-GLYPH-NORM
+      description: "Embedded ε_norm directly into glyph normalization definition."
+      formula: "G_norm = (G - G_min) / (G_max - G_min)"
+      constraints:
+        bound_constraint: "0 - ε_norm <= G_norm <= 1 + ε_norm"
+        span_constraint: "reject if (G_max - G_min) < ε_norm"
+      tolerance:
+        epsilon_norm: 1.0e-6
+    - id: DEF-CONSERVATION
+      description: "Embedded tol_C directly into conservation identity definition."
+      formula: "C(α, κ) = Σ_i w_i(α, κ) * G_norm,i"
+      constraint: "|C_{t+1} - C_t| <= tol_C"
+      tolerance:
+        tol_C: 1.0e-9
+    - id: DEF-MONOTONICITY
+      description: "Embedded tol_M directly into monotonicity metric definition."
+      formula: "M_{t+1} - M_t >= -tol_M"
+      tolerance:
+        tol_M: 1.0e-12
+
+  new_subsection:
+    id: "4.1.2 Failure Modes and Falsification Hooks"
+    entries:
+      - code: FM-1
+        name: "Normalization Violation"
+        trigger: "Span < ε_norm or G_norm outside [0,1] beyond ε_norm"
+        effect: "Downstream checks undefined or misleading"
+        falsification_path: "Construct compressed-range glyph set; verify spurious invariance"
+      - code: FM-2
+        name: "Conservation Violation"
+        trigger: "|C_{t+1} - C_t| > tol_C"
+        effect: "Invariant not preserved by update rule U"
+        falsification_path: "Run adversarial seeds; confirm persistence under higher precision"
+      - code: FM-3
+        name: "Monotonicity Violation"
+        trigger: "M_{t+1} - M_t < -tol_M"
+        effect: "Breaks equivalence with geometric acceptance in 4.2"
+        falsification_path: "Find seeds where geometry accepts but monotonicity fails"
+
+  crosslinks:
+    - to: "4.2"
+      note: "Tolerance values and failure modes feed directly into geometric acceptance theorem and gluing constraints."
+
+
+
+
+
+
 ##
 
 
