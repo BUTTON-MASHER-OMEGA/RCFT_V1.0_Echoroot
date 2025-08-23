@@ -1969,6 +1969,192 @@ next_step: feed_into_4.2_geometric_embedding
 
 
 
+
+##
+
+
+
+rcft_update:
+  version: "2025-08-23.B"
+  timestamp_utc: "2025-08-23T14:55:00Z"
+  scope:
+    chapters:
+      - "4.1: Algebraic backbone and operational definitions"
+      - "4.2: Geometric embedding and validation pathways"
+    overlap_note: "Proof constraints from 4.1 directly inform acceptance geometry and gluing in 4.2; shared parameters must remain invariant across both chapters."
+
+  provenance:
+    session_label: "Proof integration – latest session"
+    materials:
+      - "whiteboard captures (png) — TODO:add_links_or_hashes"
+      - "derivation notes (md) — TODO:add_commit_hash"
+      - "CA run logs K=3 shard–polytope — TODO:add_run_ids"
+    decisions_log:
+      - id: DEC-0411-NORM-01
+        summary: "Adopted explicit glyph normalization with bounded ranges and example computation."
+        status: "accepted"
+        rationale: "Removes ambiguity in downstream acceptance tests and ensures reproducibility."
+      - id: DEC-0420-ACC-ESS-02
+        summary: "Guard-aware ESS auto-selection retained; acceptance rule tightened by geometry-consistent thresholding."
+        status: "accepted"
+        rationale: "Improves monotonicity and reduces false positives."
+      - id: DEC-042-GLUE-03
+        summary: "4.2 gluing constraints derived directly from 4.1 conservation identities."
+        status: "provisional"
+        rationale: "Holds under stated regularity; needs stress tests on adversarial seeds."
+
+  artifacts_updated:
+    - id: "Fig-4.1.1a"
+      chapter: "4.1"
+      type: "figure"
+      change_type: "revision"
+      changes:
+        description: "Expanded legend; arrows/loops annotated with operational meanings; glyph normalization panel added."
+        acceptance_criteria: "All symbols in figure map one-to-one to definitions in 4.1.1; no free glyphs."
+    - id: "Sec-4.1.1"
+      chapter: "4.1"
+      type: "section"
+      change_type: "extension"
+      changes:
+        description: "Inserted explicit bounds, example computation, and cross-link to 4.2 transition note."
+        anchors_added:
+          - "def:glyph_norm"
+          - "prop:conservation_identity"
+          - "link:to_4_2_gluing"
+    - id: "Sec-4.2.0"
+      chapter: "4.2"
+      type: "section"
+      change_type: "new-subsection"
+      changes:
+        description: "Geometric embedding launchpad; defines shard–polytope mapping and acceptance geometry."
+        anchors_added:
+          - "def:embedding_map"
+          - "thm:geometry_accepts_iff_algebraic_monotone"
+          - "test:gluing_consistency"
+
+  path_to_truth:
+    epistemic_contract:
+      claims_must_include:
+        - "assumptions"
+        - "derivation_outline"
+        - "operational_definition"
+        - "independent_checks"
+        - "falsification_path"
+        - "uncertainty_bounds"
+      verification_axes:
+        - "analytic proof"
+        - "computational replication"
+        - "counterexample search"
+        - "geometry–algebra consistency"
+    falsification_hooks:
+      - label: "Monotonicity break under perturbed kappa"
+        method: "Sweep kappa around accepted band; detect sign changes in dM/dt"
+        expected_fail_signature: "Any non-monotone segment invalidates acceptance."
+      - label: "Geometry–algebra mismatch"
+        method: "Compute oriented volume change vs. algebraic conservation identity"
+        expected_fail_signature: "Nonzero divergence where conservation predicts zero."
+
+  formal_updates:
+    definitions:
+      - label: "def:glyph_norm"
+        text: "Glyph \( G \) normalized to \( G_{\text{norm}} = \frac{G - G_{\min}}{G_{\max} - G_{\min}} \), with \( 0 \leq G_{\text{norm}} \leq 1 \)."
+        assumptions: ["Finite, known bounds \( G_{\min} < G_{\max} \)", "No aliasing across glyph classes"]
+        operational_check: "Reject if \( G_{\max} - G_{\min} < \varepsilon_{\text{norm}} \)."
+      - label: "def:embedding_map"
+        text: "Map \( E: S \to P \) from state space \( S \) to shard–polytope \( P \), preserving incidence and oriented adjacency."
+        invariants: ["Face incidence preserved", "Orientation preserved under allowed transitions"]
+    propositions:
+      - label: "prop:conservation_identity"
+        statement: "Invariant \( C(\alpha, \kappa) \) conserved under update rule \( U \) for admissible states."
+        dependencies: ["def:glyph_norm", "U well-posedness"]
+        proof_status: "complete"
+        derivation_outline:
+          - "Show \( U \) respects partition of glyph classes."
+          - "Establish local conservation on each class."
+          - "Aggregate to global \( C \) via telescoping sum."
+        independent_checks:
+          - "Symbolic check on toy model"
+          - "Numeric check on \( 10^4 \) random seeds"
+        uncertainty_bounds: "Numeric error < \( \text{tol}_C \); symbolic check exact."
+    theorems:
+      - label: "thm:geometry_accepts_iff_algebraic_monotone"
+        statement: "A run is accepted by the embedding geometry iff the algebraic monotonicity metric \( M \) is nondecreasing."
+        scope: "K=3 shard–polytope, admissible seeds, guard-aware ESS"
+        proof_status: "sketch complete"
+        assumptions:
+          - "\( U \) is time-homogeneous"
+          - "Guards enforce ESS selection without retroactive bias"
+          - "Embedding map \( E \) preserves oriented adjacency"
+        derivation_outline:
+          - "⇒: Acceptance implies nonnegative boundary flux; translate to \( M \) increment via conservation identity."
+          - "⇐: Nondecreasing \( M \) implies feasible oriented flow; realize as path in shard–polytope without violating guards."
+        gaps_todo:
+          - "Tighten boundary case where \( \frac{dM}{dt} = 0 \) on measure-zero facets."
+          - "Formalize 'no retroactive bias' as a sigma-algebra measurability condition."
+        falsification_path:
+          - "Construct seed with geometry-accepted loop but measured negative \( \Delta M \); if found, theorem false."
+        crosslinks:
+          - "prop:conservation_identity"
+          - "def:embedding_map"
+
+  parameters:
+    shared:
+      alpha:
+        role: "rate/weight in update rule"
+        accepted_range: "[TODO_alpha_min, TODO_alpha_max]"
+        calibration_method: "Grid search minimizing violations of conservation identity"
+      kappa:
+        role: "curvature/smoothing parameter"
+        accepted_band: "[TODO_kappa_low, TODO_kappa_high]"
+        monotonicity_gate: "reject if sign of \( dM/dt \) flips"
+      guards:
+        role: "ESS auto-selection constraints"
+        policy: "guard-aware with lookahead depth L"
+        L: "TODO_set_L"
+
+  cellular_automaton_runs:
+    model: "K=3 shard–polytope CA"
+    acceptance_rule:
+      description: "Geometry-driven acceptance gated by algebraic monotonicity and guard-aware ESS."
+      reason_codes:
+        - "accepted"
+        - "rejected_nonmonotone"
+        - "rejected_guard"
+        - "rejected_geometry"
+
+  diagram_legend_extensions:
+    arrows:
+      forward_update: "Applies \( U \) to state; conserves \( C \)"
+      guard_loop: "ESS selection step; no change to \( C \); may prune branches"
+      geometry_projection: "Map via \( E \) to shard–polytope face"
+    loops:
+      stabilization_loop: "Iterate until \( \Delta M \) within \( \text{tol}_M \)"
+    symbols:
+      G: "glyph"
+      C: "conserved quantity"
+      M: "monotonicity metric"
+
+  validation_pipeline:
+    stages:
+      - name: "S1-Static-Checks"
+      - name: "S2-Conservation"
+      - name: "S3-Monotonicity"
+      - name: "S4-Geometry"
+      - name: "S5-Cross-Agreement"
+
+  cross_chapter_anchors:
+    from_4_1_to_4_2:
+      - "prop:conservation_identity -> constraint on oriented volume change"
+      - "def:glyph_norm -> coordinate chart on shard–polytope"
+      - "M monotonicity -> acceptance path feasibility"
+    from_4_2_to_4_1:
+      - "geometry counterexample -> algebraic metric revision"
+      - "gluing failure -> update rule locality check"
+
+
+
+
+
 ##
 
 ##Chapter4_1 Notes##
@@ -8995,4 +9181,779 @@ Path to 4.2: Prepares optimized glyphs for geometric embedding, leveraging polyn
 
 
 
+Updates for Chapter 4.1: Algebraic Beginnings
+1. Hopf Algebra Duality and Commutativity-Cocommutativity
 
+Explanation:
+
+Issue: The original proof mismatched pairing domains ($ V \otimes V \times V $ vs. $ V \times V^\ast $), over-relied on the antipode, ignored commutativity, and treated numerical checks as proof.
+Revision: Defines a finite-dimensional bialgebra $ H = (V, m, \eta, \Delta, \varepsilon) $ with dual $ V^\ast $, using the evaluation pairing $ \langle x, f \rangle = f(x) $. Adjointness identities $ \langle m(x \otimes y), f \rangle = \langle x \otimes y, \Delta_{V^\ast}(f) \rangle $ and $ \langle \Delta(z), f \otimes g \rangle = \langle z, m_{V^\ast}(f \otimes g) \rangle $ are proven via dual map properties. The corollary $ H $ commutative $ \Leftrightarrow H^\ast $ cocommutative addresses the title, relevant for 4.2’s “shape flow.” Numerical residuals (<1e-8) are now a computational check.
+Significance: Ensures reversibility and symmetry, foundational for 4.2’s embeddings.
+
+
+2. Tensor Functoriality of $ T^{\otimes K} $
+
+Explanation:
+
+Issue: Mixed $ T^{\otimes K} $ definition, intertwiner naturality, and coassociativity, lacking clarity as a lemma.
+Revision: Specifies $ H $ as a Hopf algebra with $ T $ as a Hopf endomorphism. Defines $ T^{\otimes K} $ and $ \Delta^{(K)} $ clearly, stating the naturality condition $ \Delta^{(K')} \circ \iota_{K \to K'} = (\iota_{K \to K'} \otimes \iota_{K \to K'}) \circ \Delta^{(K)} $ as a lemma. Proof leverages coassociativity $ (\Delta \otimes \mathrm{id}) \circ \Delta = (\mathrm{id} \otimes \Delta) \circ \Delta $, with 7.5’s ESS=0.836 as a computational check.
+Significance: Proves dimensional scalability, critical for 4.2’s $ K>3 $ embeddings.
+
+
+
+3. Coherence Metric Optimization
+
+Explanation:
+
+Issue: Trivial constraint, non-differentiable overlap, indefinite Hessian, and empirical reliance weakened the proof.
+Revision: Introduces relaxed variables $ m_i \in [0,1]^d $, replaces $ |\mathrm{Mem}_i \cap \mathrm{Mem}_j| $ with $ m_i^\top m_j $, and adds proximal terms $ -\frac{\mu_s}{2} (s_i^2 + s_j^2) $ with $ \mu_s > |\alpha| $ to ensure negative definiteness. The Lagrangian $ \mathcal{L} = \langle g_i, g_j \rangle_\mu + \lambda (E_{\text{total}} - \sum E_i) $ under $ \sum E_i = E_{\text{total}} $ (with $ E_i $ convex) yields a strict local maximum via second-order sufficiency. Empirical R²=0.93 and corr=0.83 are validation, not proof.
+Significance: Validates glyph optimization, underpinning 4.2’s positive geometry.
+
+
+
+4. Boolean Gate Consistency with Hopf Structure
+
+Explanation:
+
+Issue: $ C_T(s) = H(p_{\text{acc}} - U) \cdot f(s) $ lacked unit preservation, $ f $’s associativity was irrelevant, comultiplication scaling was inconsistent, Boolean semantics were unclear, and numerics were over-relied upon.
+Revision: Defines $ C_T = H_T \cdot f + (1 - H_T) \cdot \mathrm{id}_V $ with $ H_T \in \{0, 1\} $, requiring $ f $ as a Hopf endomorphism. Proves commutation $ C_T \circ m = m \circ (C_T \otimes C_T) $ and $ \Delta \circ C_T = (C_T \otimes C_T) \circ \Delta $ via $ H_T^2 = H_T $, with $ C_T(1) = 1 $ and $ \varepsilon \circ C_T = \varepsilon $. Variants (expected gate, Boolean setting, projector) and a 0.88 match check are included.
+Significance: Ensures logical stability, foundational for 4.2’s edge formation.
+
+
+
+
+##
+
+
+
+
+Got it — here’s how I’d splice the curvature‑aware density computation straight into the 4.1.1 glyph‑tiling pipeline without breaking any of your existing coherence metric flow. I’ll keep it modular so you can toggle models and curvature without touching the rest of the code.
+
+1. Model Switch & Metric Tensor Injection
+We add a geometry.model switch and tie it to the curvature 
+𝐾
+ parameter. This ensures the correct metric tensor and area element are used for both coherence and 
+𝜌
+𝐾
+.
+
+python
+def metric_and_area_weights(coords, model, K):
+    kappa = (abs(K))**0.5
+    if model == "disk":
+        x, y = coords[...,0], coords[...,1]
+        r2 = x**2 + y**2
+        sqrt_det_g = 4 / (kappa**2 * (1 - r2)**2)
+        return sqrt_det_g
+    elif model == "half_plane":
+        x, y = coords[...,0], coords[...,1]
+        sqrt_det_g = 1 / (kappa**2 * y**2)
+        return sqrt_det_g
+    elif model == "polar":
+        r = coords[...,0]
+        sqrt_det_g = np.sinh(kappa * r) / kappa
+        return sqrt_det_g
+    else:
+        raise ValueError(f"Unknown geometry model: {model}")
+2. Entropy Density 
+𝜌
+𝐾
+ Computation
+We compute local entropy 
+𝑠
+𝑗
+ from glyph state probabilities, weight by the hyperbolic area element, and normalize.
+
+python
+def rho_K(glyph_probs, coords, model, K, cell_volume=1.0):
+    """
+    glyph_probs: array [N, A] of probabilities for A glyph states at N sites
+    coords: array [N, dim] of coordinates in chosen model
+    """
+    # Local entropy at each site
+    s_j = -np.sum(glyph_probs * np.log(glyph_probs + 1e-12), axis=1)
+
+    # Area weights from metric tensor
+    w_j = metric_and_area_weights(coords, model, K) * cell_volume
+
+    # Weighted average entropy density
+    return np.sum(s_j * w_j) / np.sum(w_j)
+3. Integration into 4.1.1 Glyph‑Tiling Path
+In your existing coherence metric loop, after you’ve computed glyph state probabilities and coherence values:
+
+python
+# Existing coherence metrics
+coherence_metrics = compute_coherence_metrics(glyph_probs, coords, ...)
+
+# New: curvature-aware entropy density
+rho_val = rho_K(glyph_probs, coords, model=geom_model, K=curvature_K)
+
+# Return both
+return {
+    **coherence_metrics,
+    "rho_K": rho_val,
+    "geometry_model": geom_model,
+    "curvature_K": curvature_K
+}
+4. YAML Spec Hook
+So you can drive this from your RCFT YAML without hard‑coding:
+
+yaml
+geometry:
+  model: disk        # disk | half_plane | polar
+  curvature_K: -1.0  # negative for hyperbolic
+  cell_volume: 1.0   # adjust if discretization changes
+
+metrics:
+  coherence: true
+  rho_K: true
+5. Why This Wiring Works
+Non‑intrusive: Doesn’t alter your coherence metric math — just adds a parallel path for 
+𝜌
+𝐾
+.
+
+Model‑agnostic: Switch between disk, half‑plane, or polar without touching the entropy logic.
+
+Curvature‑aware: Area weights are derived from 
+𝑔
+𝜇
+𝜈
+(
+𝐾
+)
+, so 
+𝜌
+𝐾
+ is physically consistent with your hyperbolic embedding.
+
+Archivable: The returned dict is ready for YAML archival with both geometry parameters and results.
+
+
+
+
+##
+
+
+
+
+Where the proof needs tightening
+Constraint trivialization: You set 
+𝐸
+total
+=
+∑
+𝐸
+𝑖
+ as an identity, which nullifies the constraint term. Treat 
+𝐸
+total
+ as a fixed budget and 
+∑
+𝐸
+𝑖
+ as a variable, i.e., enforce 
+∑
+𝐸
+𝑖
+=
+𝐸
+total
+ (or 
+≤
+) so the Lagrange multiplier is meaningful.
+
+Differentiability of overlap: The term 
+∣
+M
+e
+m
+𝑖
+∩
+M
+e
+m
+𝑗
+∣
+ is discrete and not differentiable. Replace it with a smooth overlap between relaxed memory embeddings, e.g., vectors 
+𝑚
+𝑖
+,
+𝑚
+𝑗
+∈
+[
+0
+,
+1
+]
+𝑑
+ and use 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
+ (or a smooth Jaccard).
+
+Bilinearity and Hessian sign: The terms 
+𝑠
+𝑖
+𝑠
+𝑗
+ and 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+ are bilinear when both sides are variables. For the scalar pair, the Hessian on 
+[
+𝑠
+𝑖
+,
+𝑠
+𝑗
+]
+ is
+
+[
+0
+𝛼
+𝛼
+0
+]
+with eigenvalues 
+±
+𝛼
+: indefinite, not negative definite. Same story for 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
+ and 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+. Concavity does not hold as written.
+
+Convexity of 
+𝐸
+𝑖
+ is not enough: Maximizing a function with an equality constraint does not inherit negative definiteness from the convexity of 
+𝐸
+𝑖
+. You need the objective to be concave (Hessian negative semidefinite) on the decision variables or to add a strictly concave regularizer.
+
+Empirical R²/correlation ≠ proof of maxima: Those are great sanity checks but don’t establish Hessian definiteness or KKT satisfaction.
+
+Minimal fix that makes it rigorous
+Introduce smooth embeddings and a proximal (strictly concave) regularizer to dominate the bilinear blocks.
+
+Relaxed variables: Use 
+𝑚
+𝑖
+∈
+[
+0
+,
+1
+]
+𝑑
+ and keep 
+𝑠
+𝑖
+∈
+𝑅
+, 
+𝑀
+𝑖
+∈
+𝑅
+𝑝
+×
+𝑞
+. Replace the set cardinality with 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
+.
+
+Objective (concavified):
+
+𝐹
+=
+𝛼
+ 
+𝑠
+𝑖
+𝑠
+𝑗
++
+𝛽
+ 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
++
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+  
+−
+  
+𝜇
+𝑠
+2
+ 
+(
+𝑠
+𝑖
+2
++
+𝑠
+𝑗
+2
+)
+  
+−
+  
+𝜇
+𝑚
+2
+ 
+(
+∥
+𝑚
+𝑖
+∥
+2
++
+∥
+𝑚
+𝑗
+∥
+2
+)
+  
+−
+  
+𝜇
+𝑀
+2
+ 
+(
+∥
+𝑀
+𝑖
+∥
+𝐹
+2
++
+∥
+𝑀
+𝑗
+∥
+𝐹
+2
+)
+Choose 
+𝜇
+𝑠
+>
+∣
+𝛼
+∣
+, 
+𝜇
+𝑚
+>
+∣
+𝛽
+∣
+, 
+𝜇
+𝑀
+>
+∣
+𝛾
+∣
+. Each 2×2 block then has eigenvalues 
+−
+𝜇
+∙
+±
+{
+𝛼
+,
+𝛽
+,
+𝛾
+}
+, all strictly negative.
+
+Constraint: Use
+
+∑
+𝑖
+𝐸
+𝑖
+(
+𝑠
+𝑖
+,
+𝑚
+𝑖
+,
+𝑀
+𝑖
+)
+=
+𝐸
+total
+or 
+≤
+𝐸
+total
+ (with KKT complementary slackness). Assume 
+𝐸
+𝑖
+ convex for a well‑posed budget set.
+
+Lagrangian:
+
+𝐿
+=
+𝐹
++
+𝜆
+ ⁣
+(
+𝐸
+total
+−
+∑
+𝑖
+𝐸
+𝑖
+)
+Stationarity 
+∇
+𝐿
+=
+0
+ yields first‑order conditions; with the chosen 
+𝜇
+ coefficients, the Hessian of 
+𝐿
+ in the decision variables is block‑diagonally strictly negative definite (plus any positive semidefinite contributions from 
+−
+𝜆
+∇
+2
+𝐸
+𝑖
+ if 
+𝐸
+𝑖
+ is convex), hence negative definite overall for equality constraints.
+
+Result: By second‑order sufficient conditions, the stationary point is a strict local maximizer under the energy budget.
+
+Clean revised statement
+Statement: Let 
+𝑠
+𝑖
+∈
+𝑅
+, 
+𝑚
+𝑖
+∈
+[
+0
+,
+1
+]
+𝑑
+, 
+𝑀
+𝑖
+∈
+𝑅
+𝑝
+×
+𝑞
+. For 
+𝜇
+𝑠
+>
+∣
+𝛼
+∣
+, 
+𝜇
+𝑚
+>
+∣
+𝛽
+∣
+, 
+𝜇
+𝑀
+>
+∣
+𝛾
+∣
+, consider
+
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+𝜇
+=
+𝛼
+ 
+𝑠
+𝑖
+𝑠
+𝑗
++
+𝛽
+ 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
++
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+−
+𝜇
+𝑠
+2
+ 
+(
+𝑠
+𝑖
+2
++
+𝑠
+𝑗
+2
+)
+−
+𝜇
+𝑚
+2
+ 
+(
+∥
+𝑚
+𝑖
+∥
+2
++
+∥
+𝑚
+𝑗
+∥
+2
+)
+−
+𝜇
+𝑀
+2
+ 
+(
+∥
+𝑀
+𝑖
+∥
+𝐹
+2
++
+∥
+𝑀
+𝑗
+∥
+𝐹
+2
+)
+.
+Maximize 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+𝜇
+ subject to 
+∑
+𝑖
+𝐸
+𝑖
+(
+𝑠
+𝑖
+,
+𝑚
+𝑖
+,
+𝑀
+𝑖
+)
+=
+𝐸
+total
+ with 
+𝐸
+𝑖
+ convex. Then any KKT point 
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+,
+𝜆
+)
+ satisfies 
+∇
+𝐿
+=
+0
+ and the Hessian of 
+𝐿
+ in 
+(
+𝑔
+𝑖
+,
+𝑔
+𝑗
+)
+ is negative definite; hence it is a strict local maximizer.
+
+Proof sketch: Each variable pair contributes a 2×2 Hessian block of form
+
+[
+−
+𝜇
+∙
+𝑐
+𝑐
+−
+𝜇
+∙
+]
+with eigenvalues 
+−
+𝜇
+∙
+±
+𝑐
+, strictly negative by choice of 
+𝜇
+∙
+>
+∣
+𝑐
+∣
+. Summing blocks preserves negative definiteness. The equality constraint contributes no curvature; with 
+𝐸
+𝑖
+ convex, 
+−
+𝜆
+∇
+2
+𝐸
+𝑖
+ is negative semidefinite for 
+𝜆
+≥
+0
+, so the total Hessian remains negative definite. Second‑order sufficiency yields a strict local maximum.
+
+Optional alternatives (depending on intent)
+Optimize one side at a time: If 
+𝑔
+𝑗
+ is fixed, the objective is strictly concave in 
+𝑔
+𝑖
+ with just the proximal terms; no bilinearity issue, and you can drop some 
+𝜇
+ strength.
+
+Augmented Lagrangian: If you prefer not to add proximal penalties to the objective, use an augmented Lagrangian on the constraint and keep a small proximal term solely for definiteness during maximization; let it anneal to zero.
+
+Smooth overlap choices: Replace 
+𝑚
+𝑖
+⊤
+𝑚
+𝑗
+ with 
+∑
+𝑘
+𝑚
+𝑖
+𝑘
+𝑚
+𝑗
+𝑘
+ or a soft‑Jaccard to better reflect “overlap” semantics while staying differentiable.
+
+Keep your empirical hooks, but separate them
+Empirical validation: Keep the 
+𝑅
+2
+=
+0.93
+ and correlation 
+0.83
+ as external checks that maxima align with stable modes.
+
+Theoretical claim: Don’t use them to certify curvature; the curvature is handled by the proximal coefficients and block eigenvalue bounds above.
