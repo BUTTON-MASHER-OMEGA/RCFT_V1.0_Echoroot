@@ -2152,6 +2152,60 @@ rcft_update:
       - "gluing failure -> update rule locality check"
 
 
+##
+
+
+
+
+chapter_4_1_update:
+  version: "2025-08-23.C"
+  section: "4.1.1 Operational Definitions"
+  changes:
+    - id: DEF-GLYPH-NORM
+      description: "Embedded ε_norm directly into glyph normalization definition."
+      formula: "G_norm = (G - G_min) / (G_max - G_min)"
+      constraints:
+        bound_constraint: "0 - ε_norm <= G_norm <= 1 + ε_norm"
+        span_constraint: "reject if (G_max - G_min) < ε_norm"
+      tolerance:
+        epsilon_norm: 1.0e-6
+    - id: DEF-CONSERVATION
+      description: "Embedded tol_C directly into conservation identity definition."
+      formula: "C(α, κ) = Σ_i w_i(α, κ) * G_norm,i"
+      constraint: "|C_{t+1} - C_t| <= tol_C"
+      tolerance:
+        tol_C: 1.0e-9
+    - id: DEF-MONOTONICITY
+      description: "Embedded tol_M directly into monotonicity metric definition."
+      formula: "M_{t+1} - M_t >= -tol_M"
+      tolerance:
+        tol_M: 1.0e-12
+
+  new_subsection:
+    id: "4.1.2 Failure Modes and Falsification Hooks"
+    entries:
+      - code: FM-1
+        name: "Normalization Violation"
+        trigger: "Span < ε_norm or G_norm outside [0,1] beyond ε_norm"
+        effect: "Downstream checks undefined or misleading"
+        falsification_path: "Construct compressed-range glyph set; verify spurious invariance"
+      - code: FM-2
+        name: "Conservation Violation"
+        trigger: "|C_{t+1} - C_t| > tol_C"
+        effect: "Invariant not preserved by update rule U"
+        falsification_path: "Run adversarial seeds; confirm persistence under higher precision"
+      - code: FM-3
+        name: "Monotonicity Violation"
+        trigger: "M_{t+1} - M_t < -tol_M"
+        effect: "Breaks equivalence with geometric acceptance in 4.2"
+        falsification_path: "Find seeds where geometry accepts but monotonicity fails"
+
+  crosslinks:
+    - to: "4.2"
+      note: "Tolerance values and failure modes feed directly into geometric acceptance theorem and gluing constraints."
+
+
+
 
 
 
@@ -9957,3 +10011,246 @@ Empirical validation: Keep the
  as external checks that maxima align with stable modes.
 
 Theoretical claim: Don’t use them to certify curvature; the curvature is handled by the proximal coefficients and block eigenvalue bounds above.
+
+
+
+
+
+##
+
+
+
+
+4.1.1 Operational Definitions (Revised)
+Definition 4.1.1a — Glyph Normalization Let 
+𝐺
+ be a glyph value with known finite bounds 
+𝐺
+min
+⁡
+<
+𝐺
+max
+⁡
+. The normalized glyph is defined as:
+
+𝐺
+norm
+=
+𝐺
+−
+𝐺
+min
+⁡
+𝐺
+max
+⁡
+−
+𝐺
+min
+⁡
+with the following embedded tolerances:
+
+Bound constraint: 
+0
+−
+𝜀
+norm
+≤
+𝐺
+norm
+≤
+1
++
+𝜀
+norm
+
+Span constraint: Reject if 
+𝐺
+max
+⁡
+−
+𝐺
+min
+⁡
+<
+𝜀
+norm
+
+Recommended value: 
+𝜀
+norm
+=
+10
+−
+6
+ (adjustable per model scale)
+
+Definition 4.1.1b — Conservation Identity For parameters 
+𝛼
+,
+𝜅
+ and update rule 
+𝑈
+, define the conserved quantity:
+
+𝐶
+(
+𝛼
+,
+𝜅
+)
+=
+∑
+𝑖
+∈
+𝑆
+𝑤
+𝑖
+(
+𝛼
+,
+𝜅
+)
+ 
+𝐺
+norm
+,
+𝑖
+where 
+𝑤
+𝑖
+ are fixed weights determined by the partition of glyph classes. The conservation law holds if:
+
+∣
+𝐶
+𝑡
++
+1
+−
+𝐶
+𝑡
+∣
+≤
+tol
+𝐶
+Recommended value: 
+tol
+𝐶
+=
+10
+−
+9
+ (numeric error bound)
+
+Definition 4.1.1c — Monotonicity Metric Let 
+𝑀
+𝑡
+ be the monotonicity metric at step 
+𝑡
+. Acceptance requires:
+
+𝑀
+𝑡
++
+1
+−
+𝑀
+𝑡
+≥
+−
+tol
+𝑀
+Recommended value: 
+tol
+𝑀
+=
+10
+−
+12
+ (allows for floating‑point drift without masking true decreases)
+
+4.1.2 Failure Modes and Falsification Hooks
+FM‑1: Normalization Violation
+
+Trigger: 
+𝐺
+max
+⁡
+−
+𝐺
+min
+⁡
+<
+𝜀
+norm
+ or 
+𝐺
+norm
+ outside 
+[
+0
+,
+1
+]
+ beyond tolerance.
+
+Effect: Downstream conservation and monotonicity checks become undefined or misleading.
+
+Falsification Path: Construct a glyph set with artificially compressed range; verify that conservation identity produces spurious invariance.
+
+FM‑2: Conservation Violation
+
+Trigger: 
+∣
+𝐶
+𝑡
++
+1
+−
+𝐶
+𝑡
+∣
+>
+tol
+𝐶
+ for any admissible state.
+
+Effect: Indicates update rule 
+𝑈
+ does not preserve the intended invariant.
+
+Falsification Path: Run adversarial seeds; if violation persists under reduced step size or higher precision, conservation claim is false.
+
+FM‑3: Monotonicity Violation
+
+Trigger: 
+𝑀
+𝑡
++
+1
+−
+𝑀
+𝑡
+<
+−
+tol
+𝑀
+ in any segment.
+
+Effect: Breaks equivalence with geometric acceptance in 4.2.
+
+Falsification Path: Identify seeds where geometry accepts but monotonicity fails; forces revision of acceptance theorem.
+
+
+
+
+
+
+##
+
+
+
+
+
+
