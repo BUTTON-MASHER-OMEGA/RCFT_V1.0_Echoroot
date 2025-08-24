@@ -1677,7 +1677,256 @@ chapter_4:
 
 
 
+
 ##
+
+
+
+
+chapter_4:
+  section_4_2:
+    title: "Non-Euclidean Geometry Expansion"
+    curvature_density:
+      curvature_equation: "K = -R/2"
+      reference_in_4_3:
+        used_for: "Metric compatibility checks in 4.3.3 mapping"
+        linked_fields: ["K", "kappa", "g_K", "A_K"]
+      significance: >
+        Provides the hyperbolic carrier geometry that 4.3 will embed algebraic
+        loci into, ensuring canonical forms are integrated over the correct
+        metric space.
+    mapping_from_M:
+      gradient_to_curvature:
+        equation: "kappa^2 = kappa0^2 + eta * ||∇M_i||^2 + zeta * tr(∇^2 M_i)"
+        reference_in_4_3:
+          used_for: "Curvature-aware embedding of algebraic varieties into positive domains"
+          linked_fields: ["eta", "zeta", "kappa0"]
+      hopf_branching:
+        reference_in_4_3:
+          used_for: "Facet decomposition alignment with algebraic branching"
+      significance: >
+        Ensures curvature propagation rules are available to 4.3 so that
+        algebraic/positive geometry mappings respect RCFT’s recursive structure.
+    rcft_role:
+      reference_in_4_3:
+        used_for: "Entropy optimization constraints in 4.3.4 RCFT integration"
+        linked_fields: ["rho", "Spp_beta"]
+      significance: >
+        Supplies the entropy density objective and stability metrics that 4.3
+        will use when optimizing canonical form measures.
+    forward_path:
+      K_gt_3_exploration:
+        reference_in_4_3:
+          used_for: "High-dimensional embedding stability checks in 4.3.6"
+          linked_fields: ["spectral_gap_min", "injectivity_radius_min", "mode_overlap_min"]
+      significance: >
+        Pre-computed stability gates for higher-dimensional tilings, enabling
+        4.3 to safely extend algebraic/positive geometry into K>3 regimes.
+
+  section_4_3:
+    title: "Algebraic & Positive Geometry"
+    tolerances:
+      epsilon_alg: 1e-6
+      epsilon_pos: 1e-6
+    dependencies:
+      from_4_2:
+        curvature_density: "Use K, kappa, g_K, A_K for metric compatibility"
+        mapping_from_M: "Use eta, zeta, kappa0 for curvature-aware embeddings"
+        rcft_role: "Use rho and Spp_beta for entropy optimization targets"
+        forward_path: "Use stability criteria for K>3 embeddings"
+    algebraic_geometry:
+      carriers: ["varieties", "schemes", "toric charts"]
+      morphisms: ["pullback", "pushforward"]
+      validation: ["zero_locus", "intersection_numbers"]
+      metric_link: "All embeddings measured with g_K from 4.2"
+    positive_geometry:
+      domains: ["simplices", "polytopes", "amplituhedra"]
+      canonical_forms: ["log_singularities", "residue_factorization"]
+      validation: ["volume_match", "sign_coherence"]
+      metric_link: "Canonical form integrals use A_K and sqrt_det_g from 4.2"
+    mapping:
+      embedding: "algebraic_locus -> positive_domain"
+      compatibility: "Metric from 4.2 respects positivity boundaries"
+      curvature_awareness: "Embedding curvature from mapping_from_M in 4.2"
+    rcft_integration:
+      pipeline: ["4.1_acceptance", "4.2_curvature", "4.3_positive_geometry"]
+      falsification_hooks: ["intersection_vs_residue", "positivity_under_curvature"]
+      entropy_target: "rho from 4.2"
+    validation:
+      metrics: ["delta_int", "delta_vol"]
+      stress_tests: ["morphism_perturbations", "boundary_degenerations"]
+      stability_reference: "K>3 criteria from 4.2.forward_path"
+    forward_path:
+      extensions: ["cluster_varieties", "tropical_positive_geometry"]
+      high_dim_embeddings: "Link to K>3 stability from 4.2"
+
+
+
+
+
+##
+
+
+chapter_4:
+  section_4_2:
+    finalization_checklist:
+      gradient_curvature_mapping_audit:
+        equation: "kappa^2 = kappa0^2 + eta * ||∇M_i||^2 + zeta * tr(∇^2 M_i)"
+        coefficients:
+          kappa0: "Baseline curvature scale (final value TBD)"
+          eta: "Gradient magnitude weight (final value TBD)"
+          zeta: "Laplacian weight (final value TBD)"
+        actions:
+          - "Finalize coefficients via cross-validation across all M_i"
+          - "Verify curvature response stability across dataset"
+        falsification_hooks:
+          perturbation_test:
+            method: "Apply controlled perturbations to M_i"
+            expected: "ΔK matches predicted change within ε_kappa"
+            tolerance: "ε_kappa = 1e-6"
+        significance: >
+          Locks in the quantitative mapping from algebraic gradients to curvature,
+          ensuring reproducibility and enabling 4.3 to embed algebraic loci with
+          predictable geometric effects.
+
+      hopf_branching_consistency:
+        tests:
+          coassociativity:
+            method: "Compare branch→update vs. update→branch curvature results"
+            tolerance: "ε_norm = 1e-6"
+          drift_logging:
+            method: "Document any edge cases where curvature propagation drifts"
+        significance: >
+          Guarantees that curvature updates commute with Hopf branching Δ,
+          preserving structural consistency in recursive decompositions.
+
+      entropy_area_calibration:
+        stability_sweeps:
+          delta_K: "±0.01"
+          tiling_sets: ["{7,3}", "{5,4}", "{8,3}"]
+          expected_Spp_beta: 0.0001
+        regression_tests:
+          - "Embed sweeps into automated test suite"
+          - "Fail build if S''(β) deviates beyond ±5% of target"
+        significance: >
+          Confirms that entropy density remains smooth under small curvature
+          changes across multiple tiling geometries, preventing silent degradation.
+
+      forward_path_prototypes:
+        candidate_tilings:
+          H2: ["{7,3}", "{5,4}"]
+          H3: ["Regular honeycombs", "Quasi-regular honeycombs"]
+        recorded_metrics:
+          spectral_gap: "λ2(Δ) ≥ 0.1"
+          injectivity_radius: "≥ 0.05"
+          mode_overlap: "≥ 0.80"
+        significance: >
+          Provides a pre-vetted geometric menu for 4.3 to map algebraic/positive
+          domains onto, ensuring stability in higher-dimensional embeddings.
+
+      cross_chapter_significance:
+        - "4.3 inherits 4.2’s metric and curvature definitions"
+        - "Stable 4.2 ensures modular validation pipelines"
+        - "Locked tolerances allow direct YAML references in 4.3 without re-derivation"
+
+
+
+
+
+
+
+
+##
+
+
+
+
+
+chapter_4:
+  section_4_2:
+    finalization_checklist:
+      gradient_curvature_mapping_audit:
+        equation: "kappa^2 = kappa0^2 + eta * ||∇M_i||^2 + zeta * tr(∇^2 M_i)"
+        coefficients:
+          kappa0: "Baseline curvature scale (final value TBD)"
+          eta: "Gradient magnitude weight (final value TBD)"
+          zeta: "Laplacian weight (final value TBD)"
+        actions:
+          - "Finalize coefficients via cross-validation across all M_i"
+          - "Verify curvature response stability across dataset"
+        falsification_hooks:
+          perturbation_test:
+            method: "Apply controlled perturbations to M_i"
+            expected: "ΔK matches predicted change within ε_kappa"
+            tolerance: "ε_kappa = 1e-6"
+        explanation: >
+          This step locks in the quantitative mapping from algebraic gradients to curvature.
+          By finalizing kappa0, eta, and zeta, we ensure that small changes in M_i produce
+          predictable, stable changes in K. The falsification hook—perturbing M_i and checking
+          ΔK against the model—guards against hidden instabilities that could ripple into
+          entropy and tiling behaviour in later sections.
+
+      hopf_branching_consistency:
+        tests:
+          coassociativity:
+            method: "Compare branch→update vs. update→branch curvature results"
+            tolerance: "ε_norm = 1e-6"
+          drift_logging:
+            method: "Document any edge cases where curvature propagation drifts"
+        explanation: >
+          Hopf branching (Δ) is the recursive decomposition rule. Curvature updates must commute
+          with branching so that the order of operations does not affect results. This check
+          ensures coassociativity within a tight tolerance, preventing structural drift and
+          preserving reproducibility across recursive decompositions.
+
+      entropy_area_calibration:
+        stability_sweeps:
+          delta_K: "±0.01"
+          tiling_sets: ["{7,3}", "{5,4}", "{8,3}"]
+          expected_Spp_beta: 0.0001
+        regression_tests:
+          - "Embed sweeps into automated test suite"
+          - "Fail build if S''(β) deviates beyond ±5% of target"
+        explanation: >
+          This calibration confirms that entropy density rho = S/A_K changes smoothly under
+          small curvature adjustments. Running sweeps across multiple tiling geometries and
+          checking S''(β) ≈ 1e-4 ensures the optimization landscape is smooth, making it safe
+          to adjust curvature without destabilizing entropy. Regression tests catch any future
+          code changes that would silently degrade this property.
+
+      forward_path_prototypes:
+        candidate_tilings:
+          H2: ["{7,3}", "{5,4}"]
+          H3: ["Regular honeycombs", "Quasi-regular honeycombs"]
+        recorded_metrics:
+          spectral_gap: "λ2(Δ) ≥ 0.1"
+          injectivity_radius: "≥ 0.05"
+          mode_overlap: "≥ 0.80"
+        explanation: >
+          Pre-computing candidate tilings and their stability metrics gives 4.3 a ready-made
+          geometric menu for embedding algebraic and positive geometries. By recording spectral
+          gaps, injectivity radii, and mode overlaps now, we avoid re-running stability analyses
+          later and ensure only robust carriers are used for higher-dimensional embeddings.
+
+      cross_chapter_significance:
+        - "4.3 inherits 4.2’s metric and curvature definitions"
+        - "Stable 4.2 ensures modular validation pipelines"
+        - "Locked tolerances allow direct YAML references in 4.3 without re-derivation"
+        explanation: >
+          Locking down 4.2 before starting 4.3 prevents cascading rework. Since 4.3 will directly
+          use 4.2’s curvature, metric, and entropy definitions, any instability here would force
+          recalibration downstream. A finalized 4.2 keeps validation modular and makes cross-
+          chapter references reproducible and auditable.
+
+
+
+
+
+##
+
+
+
+
 
 
 
@@ -10913,6 +11162,211 @@ Hopf compliance: curvature updates commute with
  (branch then update ≈ update then branch) within numerical tolerance.
 
 This gives you a consistent, curvature‑aware path that ties the 4.1 algebra to a hyperbolic carrier, optimizes entropy at the lattice level, honors Hopf structure, and scales to higher‑dimensional tilings with explicit stability gates.
+
+
+
+
+
+##
+
+
+
+
+
+1. Gradient–Curvature Mapping Audit
+What it is: This is about finalizing the exact numerical relationship between the shape of your 
+𝑀
+𝑖
+ fields (their gradients and Laplacians) and the curvature 
+𝐾
+ of the hyperbolic carrier geometry. The equation in play is:
+
+𝜅
+2
+=
+𝜅
+0
+2
++
+𝜂
+∥
+∇
+𝑀
+𝑖
+∥
+2
++
+𝜁
+ 
+t
+r
+(
+∇
+2
+𝑀
+𝑖
+)
+𝜅
+0
+ is your baseline curvature scale — the “default” curvature when 
+𝑀
+𝑖
+ is flat.
+
+𝜂
+ controls how much steep gradients increase curvature magnitude.
+
+𝜁
+ controls how much the Laplacian (overall concavity/convexity) affects curvature.
+
+Why it matters: If these coefficients are off, your curvature field will be unstable — small changes in 
+𝑀
+𝑖
+ could cause huge, unpredictable swings in geometry. That would make entropy density (
+𝜌
+) and tiling stability impossible to control.
+
+Falsification hook: You deliberately perturb 
+𝑀
+𝑖
+ in a controlled way, predict the change in 
+𝐾
+ from the equation, and check that the actual computed change matches within a tight tolerance (
+𝜀
+𝜅
+≈
+10
+−
+6
+). If it doesn’t, you know something in the mapping is broken.
+
+2. Hopf Branching Consistency Checks
+What it is: Hopf branching (
+Δ
+) is your recursive decomposition rule — splitting structures into substructures. The curvature update rule must commute with this branching:
+
+Branch → Update: First split the structure, then compute curvature for each branch.
+
+Update → Branch: First update curvature, then split.
+
+If the two orders give different results beyond a tiny tolerance (
+𝜀
+norm
+≈
+10
+−
+6
+), you’ve got a consistency problem.
+
+Why it matters: If curvature propagation isn’t coassociative, then recursive structures will “drift” — the same object could end up with different curvature depending on the order of operations. That breaks reproducibility and makes cross‑chapter references unreliable.
+
+3. Entropy–Area Calibration
+What it is: This ensures that your entropy density 
+𝜌
+=
+𝑆
+/
+𝐴
+𝐾
+ behaves smoothly when you make small changes to curvature 
+𝐾
+. You run stability sweeps:
+
+Slightly adjust 
+𝐾
+ by 
+±
+0.01
+.
+
+Measure 
+𝑆
+′
+′
+(
+𝛽
+)
+ — the second derivative of entropy with respect to inverse temperature 
+𝛽
+.
+
+Confirm it stays around 
+10
+−
+4
+ across multiple tiling types (
+{
+7
+,
+3
+}
+,
+{
+5
+,
+4
+}
+,
+{
+8
+,
+3
+}
+, etc.).
+
+Why it matters: If entropy changes too sharply with small curvature tweaks, your optimization landscape becomes jagged — making it hard to find stable, high‑entropy configurations. Smoothness here means you can adjust curvature without destabilizing the system.
+
+Regression test: You bake these sweeps into an automated test suite so that if someone changes the geometry code and suddenly 
+𝑆
+′
+′
+(
+𝛽
+)
+ jumps, the build fails — preventing silent degradation.
+
+4. Forward‑Path Prototypes
+What it is: You pre‑compute a set of candidate tilings and honeycombs for future exploration, especially for 
+𝐾
+>
+3
+ (higher‑dimensional or denser embeddings). For each candidate, you record:
+
+Spectral gap (
+𝜆
+2
+(
+Δ
+)
+) — ensures modes don’t diffuse uncontrollably.
+
+Injectivity radius — minimum distance before geodesics self‑intersect.
+
+Mode overlap — how well stable modes persist under perturbations.
+
+Why it matters: When 4.3 wants to embed algebraic or positive geometries into these carriers, you already have a vetted “menu” of stable geometries. This avoids having to do stability analysis from scratch later.
+
+5. Cross‑Chapter Significance
+Why locking 4.2 first is critical:
+
+Metric inheritance: 4.3 will directly use 4.2’s curvature and metric definitions. If those are still shifting, every embedding and canonical form integration in 4.3 will need re‑alignment.
+
+Modular validation: With 4.2 frozen, 4.3 can focus purely on algebraic loci, positivity constraints, and canonical forms without worrying about metric drift.
+
+Reproducibility: Stable tolerances in 4.2 mean 4.3 can cite them directly in YAML, ensuring that any future audit can trace results back to fixed, validated parameters.
+
+In short:
+The checklist is your quality gate for 4.2. It forces you to:
+
+Nail down the math (coefficients, tolerances).
+
+Prove the recursive geometry logic is consistent.
+
+Guarantee entropy behaves predictably.
+
+Pre‑load stable geometric carriers for future sections.
+
+Once this is done, 4.3 can be built on bedrock — no shifting sands, no hidden dependencies, and every claim auditable.
 
 
 
