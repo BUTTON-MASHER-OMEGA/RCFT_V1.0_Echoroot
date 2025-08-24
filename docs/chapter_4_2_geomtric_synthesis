@@ -1928,6 +1928,211 @@ chapter_4:
 
 
 
+chapter_4:
+  section_4_2:
+    title: "Geometric Synthesis / Non-Euclidean Geometry Expansion"
+    version: "0.1.6"
+    finalized_components:
+      - gradient_curvature_mapping:
+          equation: "K = k_1 ∇s · ∇s + k_2, k_1=0.5, k_2=0.1 (provisional)"
+          falsification_hooks:
+            - "Test against 7.5 β_c shifts, reject if |K_obs - K_exp| > 0.01"
+      - hopf_branching:
+          checks: "Coassociativity |Δ^(K+1) - (Δ ⊗ id) ∘ Δ^(K)| < 1e-8"
+          drift_logging:
+            format: "{step, drift_value, tolerance}"
+      - entropy_area_calibration:
+          sweeps: "Across hyperbolic, Euclidean tilings"
+          regression_tests: "R² > 0.9, reject if < 0.85"
+      - k_greater_3_prototypes:
+          forward_paths: "Tilings/honeycombs with spectral gaps > 0.05, injectivity radii > 0.01, mode overlap ≥ 0.75"
+          outputs: "CSV: {gap, radius, overlap}"
+      - cross_chapter_references:
+          to_4_3: "Inherit metric, curvature, stability parameters"
+    tolerances:
+      inherited:
+        - ε_norm
+        - tol_C
+        - tol_M
+      local:
+        tol_curvature: 1.0e-8
+        tol_spectral: 0.05
+        tol_drift: 1.0e-9
+    validation:
+      edge_cases:
+        - tiling_degeneracy:
+            remedy: "Apply perturbation ε_perturb = 1e-8, retest"
+      drift_check: "|metric_4.2 - metric_4.3| < tol_drift"
+
+
+
+
+
+chapter_4:
+  section_4_2:
+    finalized_components:
+      - gradient_curvature_mapping:
+          equation: "K = k_1 ∇s · ∇s + k_2, k_1=0.5, k_2=0.1 (provisional)"
+          falsification_hooks:
+            - "Test against 7.5 β_c shifts, reject if |K_obs - K_exp| > 0.01"
+      - hopf_branching:
+          checks: "Coassociativity |Δ^(K+1) - (Δ ⊗ id) ∘ Δ^(K)| < 1e-8"
+          drift_logging:
+            format: "{step, drift_value, tolerance}"
+
+
+chapter_4:
+  section_4_2:
+    finalized_components:
+      - k_greater_3_prototypes:
+          forward_paths: "Tilings/honeycombs with spectral gaps > tol_spectral, injectivity radii > 0.01, mode overlap ≥ 0.75"
+          outputs: "CSV: {gap, radius, overlap}"
+          validation_hooks:
+            - "gap > tol_spectral"
+            - "overlap ≥ 0.75"
+      - entropy_area_calibration:
+          sweeps: "Across hyperbolic, Euclidean tilings"
+          regression_tests:
+            acceptance: "R² > 0.9"
+            falsification: "Reject if R² < 0.85"
+    tolerances:
+      inherited:
+        - ε_norm
+        - tol_C
+        - tol_M
+      local:
+        tol_curvature: 1.0e-8
+        tol_spectral: 0.05
+        tol_drift: 1.0e-9
+
+
+
+chapter_4:
+  section_4_2:
+    finalized_components:
+      - k_greater_3_prototypes:
+          forward_paths: "Tilings/honeycombs with spectral gaps > tol_spectral, injectivity radii > 0.01, mode overlap ≥ 0.75"
+          outputs: "CSV: {gap, radius, overlap}"
+          validation_hooks:
+            - "gap > tol_spectral"
+            - "overlap ≥ 0.75"
+      - entropy_area_calibration:
+          sweeps: "Across hyperbolic, Euclidean tilings"
+          regression_tests:
+            acceptance: "R² > 0.9"
+            falsification: "Reject if R² < 0.85"
+    tolerances:
+      inherited:
+        - ε_norm
+        - tol_C
+        - tol_M
+      local:
+        tol_curvature: 1.0e-8
+        tol_spectral: 0.05
+        tol_drift: 1.0e-9
+
+
+chapter_4:
+  section_4_2:
+    validation:
+      edge_cases:
+        - tiling_degeneracy:
+            perturbation: 1.0e-8
+            action: "Apply perturbation to geometry, re-run all validation hooks, reject if tolerance breached"
+      drift_check: "|metric_4.2 - metric_4.3| < tol_drift"
+
+
+chapter_4:
+  section_4_3:
+    dependencies:
+      - "tol_geom: from 4.2.tolerances.local.tol_curvature"
+      - "tol_spectral: from 4.2.tolerances.local.tol_spectral"
+      - "tol_drift: from 4.2.tolerances.local.tol_drift"
+
+
+
+
+
+##
+
+
+
+
+chapter_4:
+  section_4_2:
+    title: "Geometric Synthesis / Non-Euclidean Geometry Expansion"
+    version: "0.1.6"
+    overview:
+      purpose: "Transform algebraic glyphs into geometric structures encoding coherence, stability, and scalability."
+      objective: "Map ⟨g_i,g_j⟩, Boolean gates, polynomial scores, and T-spectra into positive-geometry complexes, expanding to non-Euclidean frameworks."
+      dependencies:
+        - "4.1.1 glyph basis and Hopf axioms"
+        - "4.1.2 Boolean/Polynomial gating"
+        - "7.5 ED-CA data: L=256, 500 sweeps/sec, β_c=0.39614"
+        - "Chapter 5 reflection/scattering"
+        - "Chapter 6 entropy overlays"
+    finalized_components:
+      - gradient_curvature_mapping:
+          equation: "K = k_1 ∇s · ∇s + k_2, k_1=0.5, k_2=0.1 (provisional)"
+          falsification_hooks:
+            - "Test against 7.5 β_c shifts, reject if |K_obs - K_exp| > 0.01"
+      - hopf_branching:
+          checks: "Coassociativity |Δ^(K+1) - (Δ ⊗ id) ∘ Δ^(K)| < 1e-8"
+          drift_logging:
+            format: "{step, drift_value, tolerance}"
+      - entropy_area_calibration:
+          sweeps: "Across hyperbolic, Euclidean tilings"
+          regression_tests:
+            acceptance: "R² > 0.9"
+            falsification: "Reject if R² < 0.85"
+      - k_greater_3_prototypes:
+          forward_paths: "Tilings/honeycombs with spectral gaps > tol_spectral, injectivity radii > 0.01, mode overlap ≥ 0.75"
+          outputs: "CSV: {gap, radius, overlap, k_value, tiling_type}"
+          validation_hooks:
+            - "gap > tol_spectral"
+            - "overlap ≥ 0.75"
+      - cross_chapter_references:
+          to_4_3:
+            inherit:
+              - "metric"
+              - "curvature"
+              - "stability parameters"
+            tolerances:
+              - "tol_geom: from 4.2.tolerances.local.tol_curvature"
+              - "tol_spectral: from 4.2.tolerances.local.tol_spectral"
+              - "tol_drift: from 4.2.tolerances.local.tol_drift"
+    tolerances:
+      inherited:
+        - ε_norm
+        - tol_C
+        - tol_M
+      local:
+        tol_curvature: 1.0e-8
+        tol_spectral: 0.05
+        tol_drift: 1.0e-9
+    validation:
+      edge_cases:
+        - tiling_degeneracy:
+            perturbation: 1.0e-8
+            action: "Apply perturbation to geometry, re-run all validation hooks, reject if tolerance breached"
+            failures: []
+      drift_check: "|metric_4.2 - metric_4.3| < tol_drift"
+    integration:
+      csv_schema:
+        fields:
+          - gap: float
+          - radius: float
+          - overlap: float
+          - k_value: int
+          - tiling_type: str
+        compatibility: "Confirmed with 4.3 ingestion pipeline"
+    significance: "Establishes 4.2 as bedrock for 4.3, ensuring auditable stability and reproducibility."
+
+
+
+##
+
+
 
 
 ##Chapter 4.2 Notes
@@ -11367,6 +11572,308 @@ Guarantee entropy behaves predictably.
 Pre‑load stable geometric carriers for future sections.
 
 Once this is done, 4.3 can be built on bedrock — no shifting sands, no hidden dependencies, and every claim auditable.
+
+
+
+
+
+##
+
+
+
+
+4.2 Narrative Insertions
+Gradient→Curvature Mapping We define the provisional mapping as:
+
+𝐾
+=
+𝑘
+1
+ 
+∇
+𝑠
+⋅
+∇
+𝑠
++
+𝑘
+2
+with 
+𝑘
+1
+=
+0.5
+, 
+𝑘
+2
+=
+0.1
+ (provisional).
+
+Falsification Hook: Validate against Chapter 7.5’s 
+𝛽
+𝑐
+ shifts; reject if
+
+∣
+𝐾
+obs
+−
+𝐾
+exp
+∣
+>
+0.01
+Hopf Branching Drift metric:
+
+∣
+Δ
+(
+𝐾
++
+1
+)
+−
+(
+Δ
+⊗
+i
+d
+)
+∘
+Δ
+(
+𝐾
+)
+∣
+<
+1
+×
+10
+−
+8
+Logging Format: All drift events are recorded in YAML with fields:
+
+yaml
+{step, drift_value, tolerance}
+📄 Summary Equation Table (to append at end of 4.2)
+
+Component	Equation / Condition	Tolerance / Hook
+Gradient→Curvature Mapping	
+𝐾
+=
+0.5
+ 
+∇
+𝑠
+⋅
+∇
+𝑠
++
+0.1
+Reject if \(	K_{\text{obs}} - K_{\text{exp}}	> 0.01\)
+Hopf Branching Drift	\(	\Delta^{(K+1)} - (\Delta \otimes \mathrm{id}) \circ \Delta^{(K)}	< 1\times 10^{-8}\)	Log {step, drift_value, tolerance}
+YAML Update (Clarity Section)
+yaml
+chapter_4:
+  section_4_2:
+    finalized_components:
+      - gradient_curvature_mapping:
+          equation: "K = k_1 ∇s · ∇s + k_2, k_1=0.5, k_2=0.1 (provisional)"
+          falsification_hooks:
+            - "Test against 7.5 β_c shifts, reject if |K_obs - K_exp| > 0.01"
+      - hopf_branching:
+          checks: "Coassociativity |Δ^(K+1) - (Δ ⊗ id) ∘ Δ^(K)| < 1e-8"
+          drift_logging:
+            format: "{step, drift_value, tolerance}"
+
+
+
+
+##
+
+
+
+
+
+
+4.2 Narrative Insertions (Completeness)
+Additional Validation Hooks
+
+K > 3 Spectral Gaps: All prototypes must satisfy
+
+gap
+>
+tol
+spectral
+where 
+tol
+spectral
+=
+0.05
+ (local).
+
+Mode Overlap Consistency: Require
+
+overlap
+≥
+0.75
+across all tiling types tested.
+
+Entropy–Area Regression Residuals: Accept only if
+
+𝑅
+2
+>
+0.9
+and reject if 
+𝑅
+2
+<
+0.85
+ (falsification trigger).
+
+Tolerances
+
+Inherited from 4.1:
+
+𝜀
+norm
+
+tol
+𝐶
+
+tol
+𝑀
+
+Local to 4.2:
+
+tol
+curvature
+=
+1.0
+×
+10
+−
+8
+
+tol
+spectral
+=
+0.05
+
+tol
+drift
+=
+1.0
+×
+10
+−
+9
+
+Updated YAML Snippet (Completeness)
+yaml
+chapter_4:
+  section_4_2:
+    finalized_components:
+      - k_greater_3_prototypes:
+          forward_paths: "Tilings/honeycombs with spectral gaps > tol_spectral, injectivity radii > 0.01, mode overlap ≥ 0.75"
+          outputs: "CSV: {gap, radius, overlap}"
+          validation_hooks:
+            - "gap > tol_spectral"
+            - "overlap ≥ 0.75"
+      - entropy_area_calibration:
+          sweeps: "Across hyperbolic, Euclidean tilings"
+          regression_tests:
+            acceptance: "R² > 0.9"
+            falsification: "Reject if R² < 0.85"
+    tolerances:
+      inherited:
+        - ε_norm
+        - tol_C
+        - tol_M
+      local:
+        tol_curvature: 1.0e-8
+        tol_spectral: 0.05
+        tol_drift: 1.0e-9
+Why this matters: These hooks and tolerances close the last “silent failure” gaps Patrick spotted — especially for K > 3 cases and entropy–area fits — and make 4.2’s acceptance criteria fully machine‑checkable. 
+With these in place, 4.3 can inherit a locked, falsifiable baseline without re‑derivation.
+
+
+
+
+
+
+
+
+
+#
+
+
+
+
+
+
+
+
+
+
+4.2 Narrative Insertions (Robustness)
+Edge Cases
+
+Tiling Degeneracy Test: For all 
+𝐾
+>
+3
+ prototypes, apply a perturbation
+
+𝜖
+perturb
+=
+1
+×
+10
+−
+8
+to vertex coordinates or adjacency matrices, then re‑run all validation hooks. Reject if any tolerance is breached post‑perturbation.
+
+Metric Drift
+
+Cross‑Chapter Drift Check: After 4.3 integration, verify
+
+∣
+metric
+4.2
+−
+metric
+4.3
+∣
+<
+tol
+drift
+where 
+tol
+drift
+=
+1.0
+×
+10
+−
+9
+ (local). This ensures downstream sections inherit stable, reproducible metrics without silent drift.
+
+Updated YAML Snippet (Robustness)
+yaml
+chapter_4:
+  section_4_2:
+    validation:
+      edge_cases:
+        - tiling_degeneracy:
+            perturbation: 1.0e-8
+            action: "Apply perturbation to geometry, re-run all validation hooks, reject if tolerance breached"
+      drift_check: "|metric_4.2 - metric_4.3| < tol_drift"
+Why this matters: These two additions close the last robustness gaps Patrick flagged — the degeneracy test protects against pathological geometry collapse, and the drift check guarantees that 4.3’s algebraic/positive‑geometry work won’t silently diverge from the 4.2 baseline.
+
 
 
 
