@@ -1568,6 +1568,115 @@ chapter_4_2_update:
 
 
 
+
+##
+
+
+
+
+
+chapter_4:
+  section_4_2:
+    title: "Non-Euclidean Geometry Expansion"
+    curvature_density:
+      curvature_equation: "K = -R/2  # hyperbolic curvature; kappa = sqrt(|K|)"
+      curvature_variables:
+        R: "Scalar curvature potential (e.g., R(u) = 12 - 48u^2)"
+        K: "Sectional curvature; negative for hyperbolic geometry"
+        kappa: "Curvature scale parameter, sqrt(|K|)"
+      density_equation: "rho(Ω;K) = S(Ω) / A_K(Ω)"
+      density_variables:
+        S: "Entropy of region Ω, computed from probability distribution over glyph states"
+        A_K: "Hyperbolic area of Ω under curvature K"
+        g_K: "Metric tensor for constant curvature K"
+      area_elements:
+        disk_model: "sqrt_det_g = 4 / (kappa^2 * (1 - r^2)^2)"
+        half_plane_model: "sqrt_det_g = 1 / (kappa^2 * y^2)"
+        polar_model: "sqrt_det_g = sinh(kappa*r)/kappa"
+      significance: >
+        Establishes the hyperbolic carrier geometry for RCFT’s lattice,
+        enabling entropy density calculations that respect the exponential
+        growth of area in negative curvature spaces. This normalizes entropy
+        across regions and geometries, making cross-comparisons auditable.
+
+    mapping_from_M:
+      gradient_to_curvature:
+        equation: "kappa^2(u) = kappa0^2 + eta * ||∇M_i(u)||^2 + zeta * tr(∇^2 M_i(u))"
+        parameters:
+          kappa0: "Baseline curvature scale"
+          eta: "Weight for gradient magnitude contribution"
+          zeta: "Weight for Laplacian (trace of Hessian) contribution"
+      hopf_branching:
+        rule: "K_child = Π(K_parent, ∇M_i, context)"
+        properties:
+          coassociativity: "Curvature updates commute with Hopf branching Δ"
+          branch_propagation: "Curvature field updated consistently along branches"
+      significance: >
+        Links local algebraic changes (gradients of M_i) to geometric curvature,
+        ensuring that rapid structural changes induce more negative curvature.
+        Hopf branching alignment guarantees that curvature propagation is
+        consistent across recursive decompositions.
+
+    rcft_role:
+      objective: "Maximize rho subject to coherence gates and energy budgets"
+      constraints:
+        coherence_gates: "From 4.1/4.1.2 algebraic acceptance criteria"
+        energy_budgets: "Operational limits on curvature adjustments"
+      validation:
+        Spp_beta: 0.0001
+        note: "Small second derivative of entropy near beta_c indicates stability"
+      significance: >
+        Positions non-Euclidean geometry as the entropy-optimizing substrate
+        for RCFT’s lattice. The smooth entropy landscape (S'' ≈ 1e-4) confirms
+        that small curvature changes do not destabilize the system, enabling
+        controlled optimization.
+
+    algorithmic_pipeline:
+      steps:
+        - "Compute glyph vectors g_i = [s_i, Mem_i, M_i] and coherence metrics"
+        - "Map M_i to curvature scale kappa^2 via gradient/Laplacian rule"
+        - "Select hyperbolic chart (disk, half-plane, polar)"
+        - "Assemble tiling/mesh and place glyphs by geodesic separation"
+        - "Estimate entropy S(Ω) using hyperbolic kernels and area weights"
+        - "Compute rho = S / A_K; record with coherence metrics"
+        - "Optimize positions and curvature parameters under constraints"
+      significance: >
+        Provides a reproducible, step-by-step method for embedding RCFT’s
+        algebraic structures into a hyperbolic carrier, computing entropy
+        density, and optimizing placement while preserving coherence.
+
+    forward_path:
+      K_gt_3_exploration:
+        stability_criteria:
+          spectral_gap_min: 0.1
+          injectivity_radius_min: 0.05
+          mode_overlap_min: 0.80
+        tiling_candidates:
+          H2: ["{7,3}", "{5,4}"]
+          H3: ["Regular/quasi-regular honeycombs where feasible"]
+        evaluation_metrics:
+          - "Spectral gap of Laplace–Beltrami operator"
+          - "Injectivity radius to avoid geodesic self-intersections"
+          - "Betti numbers and Euler characteristic for topology control"
+        significance: >
+          Extends the framework to higher-dimensional or denser tilings,
+          ensuring stability through spectral, geometric, and topological
+          checks. Pre-computed candidates provide ready-to-use geometries
+          for integration with algebraic and positive geometry in 4.3.
+
+    validation_hooks:
+      coherence_agreement: "Hyperbolic neighborhoods preserve R² ≈ 0.93 polynomial fit"
+      entropy_smoothness: "ΔK produces O(ΔK) changes in rho near beta_c"
+      hopf_compliance: "Branch/update order yields curvature differences ≤ ε_norm"
+      significance: >
+        Embeds falsification and regression tests directly into the geometry
+        layer, ensuring that future modifications remain within validated
+        operational tolerances.
+
+
+
+
+
 ##
 
 
@@ -8395,6 +8504,2421 @@ Separate numerics: Keep the 0.88 match and residuals as a “Computational check
 ##
 
 
+
+
+Got it — here’s how I’d splice the curvature‑aware density computation straight into the 4.1.1 glyph‑tiling pipeline without breaking any of your existing coherence metric flow. I’ll keep it modular so you can toggle models and curvature without touching the rest of the code.
+
+1. Model Switch & Metric Tensor Injection
+We add a geometry.model switch and tie it to the curvature 
+𝐾
+ parameter. This ensures the correct metric tensor and area element are used for both coherence and 
+𝜌
+𝐾
+.
+
+python
+def metric_and_area_weights(coords, model, K):
+    kappa = (abs(K))**0.5
+    if model == "disk":
+        x, y = coords[...,0], coords[...,1]
+        r2 = x**2 + y**2
+        sqrt_det_g = 4 / (kappa**2 * (1 - r2)**2)
+        return sqrt_det_g
+    elif model == "half_plane":
+        x, y = coords[...,0], coords[...,1]
+        sqrt_det_g = 1 / (kappa**2 * y**2)
+        return sqrt_det_g
+    elif model == "polar":
+        r = coords[...,0]
+        sqrt_det_g = np.sinh(kappa * r) / kappa
+        return sqrt_det_g
+    else:
+        raise ValueError(f"Unknown geometry model: {model}")
+2. Entropy Density 
+𝜌
+𝐾
+ Computation
+We compute local entropy 
+𝑠
+𝑗
+ from glyph state probabilities, weight by the hyperbolic area element, and normalize.
+
+python
+def rho_K(glyph_probs, coords, model, K, cell_volume=1.0):
+    """
+    glyph_probs: array [N, A] of probabilities for A glyph states at N sites
+    coords: array [N, dim] of coordinates in chosen model
+    """
+    # Local entropy at each site
+    s_j = -np.sum(glyph_probs * np.log(glyph_probs + 1e-12), axis=1)
+
+    # Area weights from metric tensor
+    w_j = metric_and_area_weights(coords, model, K) * cell_volume
+
+    # Weighted average entropy density
+    return np.sum(s_j * w_j) / np.sum(w_j)
+3. Integration into 4.1.1 Glyph‑Tiling Path
+In your existing coherence metric loop, after you’ve computed glyph state probabilities and coherence values:
+
+python
+# Existing coherence metrics
+coherence_metrics = compute_coherence_metrics(glyph_probs, coords, ...)
+
+# New: curvature-aware entropy density
+rho_val = rho_K(glyph_probs, coords, model=geom_model, K=curvature_K)
+
+# Return both
+return {
+    **coherence_metrics,
+    "rho_K": rho_val,
+    "geometry_model": geom_model,
+    "curvature_K": curvature_K
+}
+4. YAML Spec Hook
+So you can drive this from your RCFT YAML without hard‑coding:
+
+yaml
+geometry:
+  model: disk        # disk | half_plane | polar
+  curvature_K: -1.0  # negative for hyperbolic
+  cell_volume: 1.0   # adjust if discretization changes
+
+metrics:
+  coherence: true
+  rho_K: true
+5. Why This Wiring Works
+Non‑intrusive: Doesn’t alter your coherence metric math — just adds a parallel path for 
+𝜌
+𝐾
+.
+
+Model‑agnostic: Switch between disk, half‑plane, or polar without touching the entropy logic.
+
+Curvature‑aware: Area weights are derived from 
+𝑔
+𝜇
+𝜈
+(
+𝐾
+)
+, so 
+𝜌
+𝐾
+ is physically consistent with your hyperbolic embedding.
+
+Archivable: The returned dict is ready for YAML archival with both geometry parameters and results.
+
+
+
+
+
+
+
+##
+
+
+
+
+
+
+
+
+Coherence maximization under an energy constraint
+Statement
+Let the coherence functional be
+
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+  
+=
+  
+𝛼
+ 
+𝑠
+𝑖
+𝑠
+𝑗
+  
++
+  
+𝛽
+ 
+Φ
+(
+M
+e
+m
+𝑖
+,
+M
+e
+m
+𝑗
+)
+  
++
+  
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+,
+with fixed 
+𝑔
+𝑗
+ and decision variables 
+𝑔
+𝑖
+=
+(
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+)
+. Assume 
+𝛼
+=
+1
+,
+ 
+𝛽
+=
+0.5
+,
+ 
+𝛾
+=
+0.1
+. Impose the equality energy budget
+
+∑
+𝑘
+𝐸
+𝑘
+  
+=
+  
+𝐸
+total
+,
+so at the 
+𝑖
+-th site the Lagrangian is
+
+𝐿
+(
+𝑔
+𝑖
+,
+𝜆
+)
+  
+=
+  
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+  
++
+  
+𝜆
+(
+𝐸
+total
+−
+∑
+𝑘
+𝐸
+𝑘
+)
+,
+and, for the local stationarity conditions, 
+∂
+𝐿
+/
+∂
+𝑔
+𝑖
+=
+0
+. If 
+𝐸
+𝑖
+ is strictly convex (e.g., quadratic) in 
+(
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+)
+ and 
+𝜆
+>
+0
+, then any stationary point has a negative‑definite Hessian in the 
+𝑔
+𝑖
+ variables, hence is a local maximizer.
+
+Assumptions and smoothing
+Treat 
+Φ
+(
+M
+e
+m
+𝑖
+,
+M
+e
+m
+𝑗
+)
+ as a smooth, bilinear overlap surrogate (e.g., 
+M
+e
+m
+𝑖
+⊤
+M
+e
+m
+𝑗
+) to ensure differentiability. The set cardinality 
+∣
+M
+e
+m
+𝑖
+∩
+M
+e
+m
+𝑗
+∣
+ can be approximated by such surrogates without changing the argument.
+
+Take 
+𝐸
+𝑖
+ strictly convex (e.g., 
+𝐸
+𝑖
+=
+1
+2
+𝑎
+𝑠
+𝑠
+𝑖
+2
++
+1
+2
+M
+e
+m
+𝑖
+⊤
+𝐴
+m
+e
+m
+M
+e
+m
+𝑖
++
+1
+2
+⟨
+𝑀
+𝑖
+,
+𝐴
+𝑀
+𝑀
+𝑖
+⟩
+ with 
+𝑎
+𝑠
+>
+0
+,
+ 
+𝐴
+m
+e
+m
+≻
+0
+,
+ 
+𝐴
+𝑀
+≻
+0
+).
+
+Gradient (first‑order/KKT) conditions
+With the equality constraint, the local Lagrangian for the 
+𝑖
+-th site can be written as
+
+𝐿
+𝑖
+(
+𝑔
+𝑖
+,
+𝜆
+)
+  
+=
+  
+𝛼
+ 
+𝑠
+𝑖
+𝑠
+𝑗
++
+𝛽
+ 
+M
+e
+m
+𝑖
+⊤
+M
+e
+m
+𝑗
++
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+⏟
+linear in 
+𝑔
+𝑖
+ for fixed 
+𝑔
+𝑗
+  
+−
+  
+𝜆
+ 
+𝐸
+𝑖
+(
+𝑔
+𝑖
+)
+  
++
+  
+const
+,
+where the constant absorbs 
+𝐸
+total
+ and 
+∑
+𝑘
+≠
+𝑖
+𝐸
+𝑘
+. Stationarity gives
+
+Scalar component:
+
+∂
+𝐿
+𝑖
+∂
+𝑠
+𝑖
+  
+=
+  
+𝛼
+ 
+𝑠
+𝑗
+  
+−
+  
+𝜆
+ 
+∂
+𝐸
+𝑖
+∂
+𝑠
+𝑖
+  
+=
+  
+0.
+Memory vector:
+
+∂
+𝐿
+𝑖
+∂
+M
+e
+m
+𝑖
+  
+=
+  
+𝛽
+ 
+M
+e
+m
+𝑗
+  
+−
+  
+𝜆
+ 
+∇
+M
+e
+m
+𝑖
+𝐸
+𝑖
+  
+=
+  
+0.
+Matrix/vector 
+𝑀
+𝑖
+:
+
+∂
+𝐿
+𝑖
+∂
+𝑀
+𝑖
+  
+=
+  
+𝛾
+ 
+𝑀
+𝑗
+  
+−
+  
+𝜆
+ 
+∇
+𝑀
+𝑖
+𝐸
+𝑖
+  
+=
+  
+0.
+These linear equations determine 
+𝑔
+𝑖
+⋆
+ in terms of 
+𝑔
+𝑗
+ and 
+𝜆
+. The multiplier 
+𝜆
+ is then set by the global energy budget 
+∑
+𝑘
+𝐸
+𝑘
+=
+𝐸
+total
+.
+
+Note the sign: since 
+𝐿
+𝑖
+ contains 
+−
+𝜆
+𝐸
+𝑖
+, a positive 
+𝜆
+ penalizes energy and thus favors coherence gains under the fixed budget.
+
+Hessian (second‑order) condition
+For fixed 
+𝑔
+𝑗
+, the coherence part is linear in 
+𝑔
+𝑖
+, hence 
+∇
+𝑔
+𝑖
+2
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+=
+0
+. Therefore,
+
+∇
+𝑔
+𝑖
+2
+𝐿
+𝑖
+  
+=
+  
+−
+ 
+𝜆
+ 
+∇
+𝑔
+𝑖
+2
+𝐸
+𝑖
+.
+If 
+𝐸
+𝑖
+ is strictly convex, then 
+∇
+𝑔
+𝑖
+2
+𝐸
+𝑖
+≻
+0
+. With 
+𝜆
+>
+0
+, it follows that
+
+∇
+𝑔
+𝑖
+2
+𝐿
+𝑖
+  
+≺
+  
+0
+,
+so the stationary point 
+𝑔
+𝑖
+⋆
+ is a strict local maximum of 
+𝐿
+𝑖
+ (and hence of coherence under the energy constraint) in the 
+𝑔
+𝑖
+ variables.
+
+Existence/uniqueness
+Existence follows from the KKT conditions for equality constraints and the continuity of the maps involved.
+
+Uniqueness of the maximizer in 
+𝑔
+𝑖
+ is guaranteed by strict concavity of 
+𝐿
+𝑖
+ (negative‑definite Hessian) given the strictly convex 
+𝐸
+𝑖
+ and 
+𝜆
+>
+0
+.
+
+Empirical validation hooks
+The 4.1.2 polynomial fit (R²≈0.93) shows that the bilinear surrogate tracks the measured coherence landscape closely, so the linear‑in‑
+𝑔
+𝑖
+ assumption for fixed 
+𝑔
+𝑗
+ is well‑justified near observed optima.
+
+The 7.5 CA correlation (~0.83) indicates that the coherence maxima align with stable modes of the transition operator 
+𝑇
+; in this setup, those stable modes correspond to stationary points where the energy penalty dominates curvature of 
+𝐿
+, yielding negative‑definite Hessians.
+
+Notes on the overlap term
+If you prefer to retain 
+∣
+M
+e
+m
+𝑖
+∩
+M
+e
+m
+𝑗
+∣
+ explicitly:
+
+Replace it with a smooth proxy (e.g., soft‑intersection 
+∑
+ℓ
+min
+⁡
+{
+(
+M
+e
+m
+𝑖
+)
+ℓ
+,
+(
+M
+e
+m
+𝑗
+)
+ℓ
+}
+ approximated by a smoothed minimum), or
+
+Use a kernel overlap 
+M
+e
+m
+𝑖
+⊤
+𝑊
+ 
+M
+e
+m
+𝑗
+ with 
+𝑊
+⪰
+0
+. Either choice preserves the linear‑in‑
+𝑔
+𝑖
+ property for fixed 
+𝑔
+𝑗
+ (Hessian zero), keeping the argument intact.
+
+Direct recipe (what to implement)
+Choose 
+𝐸
+𝑖
+ strictly convex (quadratic is simplest) and set 
+𝜆
+>
+0
+.
+
+Solve the linear stationarity system for 
+𝑔
+𝑖
+⋆
+ given 
+𝑔
+𝑗
+ and 
+𝜆
+.
+
+Enforce 
+∑
+𝑘
+𝐸
+𝑘
+=
+𝐸
+total
+ to fix 
+𝜆
+.
+
+Verify 
+∇
+𝑔
+𝑖
+2
+𝐿
+𝑖
+≺
+0
+ (automatic with steps 1–3).
+
+Log coherence value, 
+𝐸
+𝑖
+(
+𝑔
+𝑖
+⋆
+)
+, and the KKT residuals for reproducibility.
+
+This gives a clean, verifiable path to maximizing 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+ under a resource budget, with second‑order guarantees coming “for free” from the convexity of the energy term.
+
+
+
+
+
+##
+
+
+
+
+
+Hyperbolic metric tensor 
+𝑔
+𝜇
+𝜈
+(
+𝐾
+)
+Below are explicit, constant–negative-curvature (
+𝐾
+<
+0
+) metrics you can drop into the pipeline. Write 
+∣
+𝐾
+∣
+=
+𝜅
+2
+ with 
+𝜅
+>
+0
+.
+
+Poincaré disk model (viz-friendly, conformal)
+Coordinates: 
+(
+𝑥
+,
+𝑦
+)
+ with 
+𝑟
+2
+=
+𝑥
+2
++
+𝑦
+2
+<
+1
+.
+
+Metric tensor:
+
+𝑔
+𝑖
+𝑗
+(
+𝐾
+;
+𝑥
+,
+𝑦
+)
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+ 
+𝛿
+𝑖
+𝑗
+Line element:
+
+d
+𝑠
+2
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+(
+d
+𝑥
+2
++
+d
+𝑦
+2
+)
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑥
+ 
+d
+𝑦
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+2
+)
+2
+ 
+d
+𝑥
+ 
+d
+𝑦
+Upper half-plane model (analysis-friendly, conformal)
+Coordinates: 
+(
+𝑥
+,
+𝑦
+)
+ with 
+𝑦
+>
+0
+.
+
+Metric tensor:
+
+𝑔
+𝑖
+𝑗
+(
+𝐾
+;
+𝑥
+,
+𝑦
+)
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+ 
+𝛿
+𝑖
+𝑗
+Line element:
+
+d
+𝑠
+2
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+(
+d
+𝑥
+2
++
+d
+𝑦
+2
+)
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑥
+ 
+d
+𝑦
+=
+1
+𝜅
+2
+ 
+𝑦
+2
+ 
+d
+𝑥
+ 
+d
+𝑦
+Geodesic polar coordinates (compute-friendly, rotationally symmetric)
+Coordinates: 
+(
+𝑟
+,
+𝜃
+)
+ with 
+𝑟
+≥
+0
+,
+ 
+𝜃
+∈
+[
+0
+,
+2
+𝜋
+)
+.
+
+Metric tensor:
+
+𝑔
+𝑟
+𝑟
+=
+1
+,
+𝑔
+𝜃
+𝜃
+=
+(
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+)
+2
+,
+𝑔
+𝑟
+𝜃
+=
+0
+Line element:
+
+d
+𝑠
+2
+=
+d
+𝑟
+2
++
+(
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+)
+2
+d
+𝜃
+2
+Area element:
+
+det
+⁡
+𝑔
+ 
+d
+𝑟
+ 
+d
+𝜃
+=
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+ 
+d
+𝑟
+ 
+d
+𝜃
+Tip: All three are isometric. Choose one model for compute (hyperboloid/polar) and one for viz (disk) and keep 
+𝜅
+=
+∣
+𝐾
+∣
+ tied across them.
+
+Area element and curvature scaling
+Curvature–scale link:
+
+𝐾
+=
+−
+𝜅
+2
+⟺
+𝑔
+(
+𝐾
+)
+=
+1
+𝜅
+2
+ 
+𝑔
+(
+𝐾
+=
+−
+1
+)
+Scaling the 
+−
+1
+ curvature metric by 
+1
+/
+𝜅
+2
+ yields Gaussian curvature 
+−
+𝜅
+2
+.
+
+Region area (generic coordinates 
+𝑢
+):
+
+𝐴
+𝐾
+(
+Ω
+)
+=
+∫
+Ω
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+Geodesic ball area (radius 
+𝑅
+, polar coords):
+
+𝐴
+𝐾
+ ⁣
+(
+𝐵
+(
+𝑅
+)
+)
+=
+∫
+0
+2
+𝜋
+ ⁣
+ ⁣
+∫
+0
+𝑅
+sinh
+⁡
+(
+𝜅
+𝑟
+)
+𝜅
+ 
+d
+𝑟
+ 
+d
+𝜃
+=
+2
+𝜋
+𝜅
+2
+(
+cosh
+⁡
+(
+𝜅
+𝑅
+)
+−
+1
+)
+Entropy–area density 
+𝜌
+Definition (region-level):
+
+𝜌
+𝐾
+(
+Ω
+)
+=
+𝑆
+(
+Ω
+)
+𝐴
+𝐾
+(
+Ω
+)
+where 
+𝑆
+(
+Ω
+)
+ is the Shannon/Gibbs entropy of glyph states in 
+Ω
+ and 
+𝐴
+𝐾
+(
+Ω
+)
+ is the hyperbolic area induced by 
+𝑔
+(
+𝐾
+)
+.
+
+Local form (continuous field):
+
+𝜌
+𝐾
+(
+Ω
+)
+=
+∫
+Ω
+𝑠
+(
+𝑢
+)
+ 
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+∫
+Ω
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+with 
+𝑠
+(
+𝑢
+)
+=
+−
+∑
+𝑎
+𝑝
+𝑎
+(
+𝑢
+)
+log
+⁡
+𝑝
+𝑎
+(
+𝑢
+)
+, and 
+𝑝
+𝑎
+(
+𝑢
+)
+ estimated in hyperbolic space (kernels use geodesic distance under 
+𝑔
+(
+𝐾
+)
+).
+
+Discrete estimator (mesh or samples 
+{
+𝑢
+𝑗
+}
+):
+
+𝑤
+𝑗
+=
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+𝑗
+)
+ 
+Δ
+𝑢
+𝑗
+,
+𝑠
+𝑗
+=
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+,
+𝜌
+𝐾
+=
+∑
+𝑗
+𝑠
+𝑗
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Ready-to-use formulas by model
+Poincaré disk
+Weights:
+
+𝑤
+𝑗
+=
+4
+𝜅
+2
+ 
+(
+1
+−
+𝑟
+𝑗
+2
+)
+2
+ 
+Δ
+𝑥
+ 
+Δ
+𝑦
+,
+𝑟
+𝑗
+2
+=
+𝑥
+𝑗
+2
++
+𝑦
+𝑗
+2
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Upper half-plane
+Weights:
+
+𝑤
+𝑗
+=
+1
+𝜅
+2
+ 
+𝑦
+𝑗
+2
+ 
+Δ
+𝑥
+ 
+Δ
+𝑦
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Geodesic polar
+Weights:
+
+𝑤
+𝑗
+=
+sinh
+⁡
+(
+𝜅
+𝑟
+𝑗
+)
+𝜅
+ 
+Δ
+𝑟
+ 
+Δ
+𝜃
+Density:
+
+𝜌
+𝐾
+=
+∑
+𝑗
+(
+−
+∑
+𝑎
+𝑝
+𝑗
+,
+𝑎
+log
+⁡
+𝑝
+𝑗
+,
+𝑎
+)
+ 
+𝑤
+𝑗
+∑
+𝑗
+𝑤
+𝑗
+Optional: geodesic distance for kernels and neighborhoods
+Disk model:
+
+𝑑
+𝐾
+(
+𝑢
+,
+𝑣
+)
+=
+2
+𝜅
+ 
+arcosh
+⁡
+ ⁣
+(
+1
++
+2
+∥
+𝑢
+−
+𝑣
+∥
+2
+(
+1
+−
+∥
+𝑢
+∥
+2
+)
+(
+1
+−
+∥
+𝑣
+∥
+2
+)
+)
+Upper half-plane:
+
+𝑑
+𝐾
+(
+𝑢
+,
+𝑣
+)
+=
+1
+𝜅
+ 
+arcosh
+⁡
+ ⁣
+(
+1
++
+∥
+𝑢
+−
+𝑣
+∥
+2
+2
+ 
+𝑦
+𝑢
+ 
+𝑦
+𝑣
+)
+Geodesic polar (radial separation only):
+
+𝑑
+𝐾
+(
+(
+𝑟
+,
+𝜃
+)
+,
+(
+𝑟
+′
+,
+𝜃
+)
+)
+=
+∣
+𝑟
+−
+𝑟
+′
+∣
+Minimal pipeline spec (drop-in)
+yaml
+geometry:
+  curvature:
+    K: -kappa^2        # K < 0
+    kappa: sqrt(|K|)   # tie these; choose one as source of truth
+  model: disk          # disk | half_plane | polar
+  metrics:
+    disk:
+      g_xx: 4/(kappa^2*(1 - r^2)^2)
+      g_yy: 4/(kappa^2*(1 - r^2)^2)
+      sqrt_det_g: 4/(kappa^2*(1 - r^2)^2)
+    half_plane:
+      g_xx: 1/(kappa^2*y^2)
+      g_yy: 1/(kappa^2*y^2)
+      sqrt_det_g: 1/(kappa^2*y^2)
+    polar:
+      g_rr: 1
+      g_tt: (sinh(kappa*r)/kappa)^2
+      sqrt_det_g: sinh(kappa*r)/kappa
+
+entropy_density:
+  estimator:
+    neighborhood: geodesic_ball
+    radius: R              # in hyperbolic units; uses chosen model’s distance
+    kernel: exp(-d^2/h^2)  # use d = d_K; normalize in hyperbolic measure
+  compute:
+    s_j: -sum_a p_{j,a}*log(p_{j,a})
+    w_j: sqrt_det_g(u_j) * cell_volume
+    rho: sum_j(s_j*w_j) / sum_j(w_j)
+
+
+
+
+##
+
+
+
+
+Non-Euclidean geometry expansion
+Equation and meaning
+Curvature–density pair:
+
+Curvature field (hyperbolic):
+
+𝐾
+  
+=
+  
+−
+ 
+𝑅
+2
+(
+<
+0
+)
+where 
+𝑅
+ is the scalar curvature potential (e.g., Chapter 2’s 
+𝑅
+(
+𝑢
+)
+=
+12
+−
+48
+𝑢
+2
+). The factor 
+1
+/
+2
+ fixes the curvature scale so that 
+𝐾
+=
+−
+𝜅
+2
+ with 
+𝜅
+>
+0
+.
+
+Tiling density (entropy per hyperbolic area):
+
+𝜌
+(
+Ω
+;
+𝐾
+)
+  
+=
+  
+𝑆
+(
+Ω
+)
+𝐴
+𝐾
+(
+Ω
+)
+  
+=
+  
+−
+ ⁣
+∫
+Ω
+∑
+𝑎
+𝑝
+𝑎
+(
+𝑢
+)
+ 
+log
+⁡
+𝑝
+𝑎
+(
+𝑢
+)
+ 
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+∫
+Ω
+det
+⁡
+𝑔
+(
+𝐾
+;
+𝑢
+)
+ 
+d
+2
+𝑢
+with 
+𝑔
+(
+𝐾
+)
+ any constant‑curvature 
+(
+𝐾
+<
+0
+)
+ model (disk, half‑plane, polar). Hyperbolic area 
+𝐴
+𝐾
+ grows as 
+∼
+cosh
+⁡
+(
+𝜅
+𝑅
+)
+−
+1
+, enabling entropy‑efficient packing.
+
+Why it works for our metrics:
+
+Hyperbolic growth (negative 
+𝐾
+) provides exponentially more “placement capacity” without glyph collisions, so 
+𝜌
+ scales in step with accessible microstates.
+
+𝜌
+ is geometrically normalized: comparisons across regions/manifolds respect the carrier geometry through 
+det
+⁡
+𝑔
+(
+𝐾
+)
+.
+
+4.1 tie‑in: mapping 
+𝑀
+𝑖
+’s gradient to curvature via Hopf branching
+Curvature coupling (local rule):
+
+𝜅
+2
+(
+𝑢
+)
+  
+=
+  
+∣
+𝐾
+(
+𝑢
+)
+∣
+  
+=
+  
+𝜅
+0
+2
+  
++
+  
+𝜂
+ 
+∥
+∇
+𝑀
+𝑖
+(
+𝑢
+)
+∥
+2
+  
++
+  
+𝜁
+ 
+t
+r
+ ⁣
+(
+∇
+2
+𝑀
+𝑖
+(
+𝑢
+)
+)
+so steeper 
+𝑀
+𝑖
+ gradients induce more negative curvature (larger 
+𝜅
+), biasing the geometry toward hyperbolic expansion where structure changes rapidly.
+
+Hopf branching 
+Δ
+ (propagation):
+
+Geometric readout: 
+Δ
+(
+𝑔
+𝑖
+)
+↦
+(
+𝑥
+𝑖
+,
+𝑥
+𝑖
+)
+ (duplicate the glyph in the product space).
+
+Curvature update along branches:
+
+𝐾
+child
+  
+=
+  
+Π
+ ⁣
+(
+𝐾
+parent
+,
+ 
+∇
+𝑀
+𝑖
+,
+ 
+context
+)
+with 
+Π
+ a branch‑local update (e.g., low‑pass filtered 
+𝜅
+2
+ plus branch‑specific corrections). This keeps curvature assignment compatible with 
+Δ
+ (coassociativity), so successive branchings yield consistent 
+𝐾
+ fields.
+
+Inner‑product alignment:
+
+Coherence 
+⟨
+𝑔
+𝑖
+,
+𝑔
+𝑗
+⟩
+=
+𝛼
+𝑠
+𝑖
+𝑠
+𝑗
++
+𝛽
+ 
+Φ
+(
+M
+e
+m
+𝑖
+,
+M
+e
+m
+𝑗
+)
++
+𝛾
+ 
+t
+r
+(
+𝑀
+𝑖
+⊤
+𝑀
+𝑗
+)
+ remains the algebraic score; distances/neighborhoods for entropy and gating use the hyperbolic metric 
+𝑔
+(
+𝐾
+)
+. This preserves the 4.1 algebra while upgrading the carrier geometry.
+
+RCFT role: optimizing lattice entropy (validated)
+Objective (region‑wise):
+
+max
+⁡
+glyph positions
+,
+ 
+𝐾
+  
+𝜌
+(
+Ω
+;
+𝐾
+)
+s.t.  coherence gates, energy budgets
+Coherence (4.1/4.1.2) picks admissible edges/cells.
+
+Geometry (hyperbolic 
+𝑔
+(
+𝐾
+)
+) provides curvature‑aware area and kernels.
+
+Entropy 
+𝑆
+(
+Ω
+)
+ uses hyperbolic neighborhoods (geodesic balls) for consistent density estimates.
+
+Validation hook (7.5):
+
+The small second derivative 
+𝑆
+′
+′
+(
+𝛽
+)
+≈
+10
+−
+4
+ indicates a locally flat entropy landscape near 
+𝛽
+𝑐
+, matching the expectation that mild curvature adjustments (small 
+Δ
+𝐾
+) do not destabilize entropy density. That is, 
+𝜌
+ responds smoothly to 
+𝐾
+ perturbations in the empirically stable regime.
+
+Algorithmic pipeline (ready to drop in)
+Compute 
+𝑔
+𝑖
+=
+[
+𝑠
+𝑖
+,
+M
+e
+m
+𝑖
+,
+𝑀
+𝑖
+]
+ (4.1) and coherence gates/weights (4.1.2).
+
+Map 
+𝑀
+𝑖
+↦
+𝜅
+2
+(
+𝑢
+)
+ via 
+𝜅
+2
+=
+𝜅
+0
+2
++
+𝜂
+∥
+∇
+𝑀
+𝑖
+∥
+2
++
+𝜁
+ 
+t
+r
+(
+∇
+2
+𝑀
+𝑖
+)
+.
+
+Choose hyperbolic chart (compute: hyperboloid/polar; viz: Poincaré disk).
+
+Assemble tiling/mesh (e.g., 
+{
+𝑝
+,
+𝑞
+}
+ scaffold) and place glyphs by geodesic separation.
+
+Estimate entropy 
+𝑆
+(
+Ω
+)
+ using hyperbolic kernels 
+𝐾
+ℎ
+(
+𝑑
+𝐾
+)
+ (e.g., 
+𝑒
+−
+𝑑
+𝐾
+2
+/
+ℎ
+2
+); area weights 
+det
+⁡
+𝑔
+(
+𝐾
+)
+ from the chosen chart.
+
+Compute 
+𝜌
+=
+𝑆
+/
+𝐴
+𝐾
+; record alongside coherence metrics.
+
+Optimize positions (and optionally 
+𝜂
+,
+𝜁
+) with constraints (coherence gates, energy budgets). Use Riemannian gradients (hyperboloid 
+exp
+⁡
+/
+log
+⁡
+).
+
+Forward path: tiling stability for 
+𝐾
+>
+3
+Here 
+𝐾
+>
+3
+ refers to scaling the lattice neighborhood/embedding dimension beyond the baseline (e.g., higher 
+𝑑
+ in 
+𝐻
+𝑑
+ or larger neighborhood width).
+
+Stability criteria:
+
+Spectral gap: ensure the Laplace–Beltrami spectrum on the tiling has a bounded gap to avoid diffusive blow‑up; track 
+𝜆
+2
+(
+Δ
+𝐻
+𝑑
+)
+ over the complex as 
+𝑑
+ increases.
+
+Injectivity radius: maintain a lower bound to prevent geodesic self‑intersections under denser tilings.
+
+Betti/Euler controls: monitor 
+𝛽
+0
+,
+𝛽
+1
+ and 
+𝜒
+ for unintended topology changes as cells proliferate.
+
+Packing regularity: constrain 
+{
+𝑝
+,
+𝑞
+}
+ (or Coxeter parameters in 
+𝑑
+>
+2
+) so cell angles remain realizable in curvature 
+−
+𝜅
+2
+.
+
+Practical steps:
+
+Start in 
+𝐻
+2
+ with 
+{
+7
+,
+3
+}
+ or 
+{
+5
+,
+4
+}
+; lift to 
+𝐻
+3
+ using regular honeycombs (where feasible), or quasi‑regular tessellations with local straight‑edge constraints in Klein projected back to Poincaré for verification.
+
+Evaluate 
+𝜌
+, spectral gap, and coherence overlap at each lift 
+𝐾
+→
+𝐾
++
+1
+ (dimension/width), accepting only if targets are met (e.g., stable mode overlap ≥ 0.8, spectral gap above threshold).
+
+Drop‑in YAML (curvature–entropy block)
+yaml
+chapter_4:
+  section_4_2:
+    non_euclidean_geometry:
+      curvature_density:
+        curvature: "K = -R/2  # hyperbolic; kappa = sqrt(|K|)"
+        density: "rho(Ω;K) = S(Ω) / A_K(Ω)"
+        area_element:
+          disk: "sqrt_det_g = 4 / (kappa^2 * (1 - r^2)^2)"
+          half_plane: "sqrt_det_g = 1 / (kappa^2 * y^2)"
+          polar: "sqrt_det_g = sinh(kappa*r)/kappa"
+      mapping_from_M:
+        kappa2: "kappa0^2 + eta * ||∇M_i||^2 + zeta * tr(∇^2 M_i)"
+        hopf_branching:
+          rule: "K_child = Π(K_parent, ∇M_i, context)"
+          notes: "coassociative with Δ; curvature update commutes with branching"
+      rcft_role:
+        objective: "maximize rho subject to coherence gates and energy budgets"
+        validation:
+          Spp_beta: 0.0001
+          note: "smooth entropy curvature near beta_c"
+      forward_path:
+        K_gt_3:
+          stability:
+            spectral_gap_min: 0.1
+            injectivity_radius_min: 0.05
+            mode_overlap_min: 0.80
+          tilings:
+            H2: ["{7,3}", "{5,4}"]
+            H3: ["regular/quasi-regular honeycombs (feasible subsets)"]
+Quick sanity checks (what to verify)
+Coherence agreement: hyperbolic neighborhoods do not degrade the R²≈0.93 polynomial fit; stable‑mode overlap stays ≥ 0.8.
+
+Entropy smoothness: small perturbations 
+Δ
+𝐾
+ produce 
+𝑂
+(
+Δ
+𝐾
+)
+ changes in 
+𝜌
+ near 
+𝛽
+𝑐
+, consistent with 
+𝑆
+′
+′
+(
+𝛽
+)
+≈
+10
+−
+4
+.
+
+Hopf compliance: curvature updates commute with 
+Δ
+ (branch then update ≈ update then branch) within numerical tolerance.
+
+This gives you a consistent, curvature‑aware path that ties the 4.1 algebra to a hyperbolic carrier, optimizes entropy at the lattice level, honors Hopf structure, and scales to higher‑dimensional tilings with explicit stability gates.
+
+
+
+
+
+##
 
 
 
