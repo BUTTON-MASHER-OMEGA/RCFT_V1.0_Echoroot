@@ -2394,6 +2394,113 @@ With diagnostics embedded in CI, scaling verified, adaptive stability controls i
 
 ##Chapter 7_5 Notes
 
+##
+
+
+
+
+LHT drift at the entropy peak
+
+You’re on the right thread. The 7.5 peak near \(\beta_c=0.39614\) is exactly where lepton drift becomes most sensitive to small thermodynamic shifts—so it’s the right place to tighten our geometric story.
+
+---
+
+Key relations to pin down
+
+- Thermo-to-geometry coupling:
+  
+  \[
+  \frac{dS}{d\beta}=-\frac{C(\beta)}{\beta},\qquad 
+  \nabla S\approx \frac{\partial S}{\partial \beta}\,\nabla \beta
+  \]
+  
+  Hence near \(\beta_c\),
+  
+  \[
+  \nabla S \;\approx\; -\frac{C(\betac)}{\betac}\,\nabla \beta.
+  \]
+
+- Lepton drift expression (notation sanity check):
+  - If \(M\) is a scalar memory mass, then the vector form is
+    
+    \[
+    \mathbf{L}d \equiv M\,\nabla S \;\approx\; -M\,\frac{C(\betac)}{\beta_c}\,\nabla \beta.
+    \]
+    
+  - If \(M\) is a vector memory field, interpret
+    
+    \[
+    \mathbf{L}_d \equiv (\nabla S\cdot \hat{M})\,\hat{M},
+    \]
+    
+    i.e., drift is the projection of \(\nabla S\) onto the \(M\)-direction (useful for streamline construction).  
+  - Either way, the proportionality slope at \(\betac\) is controlled by \(C(\betac)/\beta_c\).
+
+- Immediate implication: Regions with steep \(\|\nabla\beta\|\) become lepton “flow channels”; controls on \(\|\nabla \beta\|\) or \(M\)-smoothing directly bound \(\|\mathbf{L}_d\|\).
+
+---
+
+What to compute next on the geometric thread
+
+- Fieldline geometry:
+  - Streamlines: Seed integral curves of \(\mathbf{L}_d\) across the lattice; extract lengths, curvature, and dwell near critical points.  
+  - Critical set: Solve \(\nabla S=\mathbf{0}\) to locate saddles and attractors; compare to \(H_e\) hotspots.
+
+- Flux diagnostics across boundaries:
+  - Normal flux: 
+  
+    \[
+    \Phi{\partial F}=\int{\partial F}\mathbf{L}_d\cdot \mathbf{n}\,dA
+    \]
+    
+    and monitor \(\Delta\Phi_{\partial F}\) under \(\Delta\beta=\pm 0.01\).  
+  - Circulation: 
+  
+    \[
+    \Gamma{\partial F}=\oint{\partial F}\mathbf{L}_d\cdot d\mathbf{\ell}
+    \]
+    
+    to detect shear that could erode \(H_e\).
+
+- Stability cross‑checks (reuse our bounds):
+  - PSI: Keep \(|\Delta \mathrm{PSI}|\leq \tau\) with
+    
+    \[
+    |\Delta \mathrm{PSI}|\;\lesssim\;\frac{k}{V{\max}}\,L{V|S}\,\frac{C(\betac)}{\betac}\,|\Delta\beta|.
+    \]
+    
+  - Horizon entrenchment: Maintain margin \(m\) via
+    
+    \[
+    |\Delta He|\;\lesssim\;P\left(2\eta\,\|\nabla M\|\infty L{\nabla M|S}+\zeta\,L{\Delta M|S}\right)\frac{C(\betac)}{\betac}\,|\Delta\beta|.
+    \]
+
+---
+
+Minimal experiment plan around \(\beta_c=0.39614\)
+
+- Calibration slice:
+  - Data: Three snapshots at \(\beta=\{\betac-0.01,\ \betac,\ \beta_c+0.01\}\).  
+  - Outputs: \(\|\nabla\beta\|\) map, \(\nabla S\) map, \(\mathbf{L}d\) streamlines, \(\Phi{\partial F}\), \(\Gamma{\partial F}\), PSI, \(He\).
+
+- Sensitivity curve:
+  - Sweep: 9 points across \([\betac-0.02,\ \betac+0.02]\).  
+  - Fit: Linear slope of each metric vs. \(\beta\) to estimate the effective coefficient \(\propto C(\beta)/\beta\).  
+  - Gate: Confirm PSI and \(H_e\) remain within set tolerances across the sweep.
+
+- Smoothing lever test:
+  - Knobs: Memory kernel half‑life for \(M\), and \(\eta,\zeta\) in \(\kappa(M)\).  
+  - Goal: Find the minimal smoothing that preserves \(He\) margin while keeping \(\mathbf{L}d\) geometry sharp.
+
+---
+
+Decision point
+
+- Path A (thermo‑anchored): Pull \(C(\beta)\) near \(\betac\), compute the explicit multiplier \(C(\betac)/\beta_c\), and lock the drift bounds first.  
+- Path B (geometry‑first): Start with streamline/flux maps around \(\betac\), then back‑solve the required smoothing to hold PSI and \(He\) margins.
+
+
+
 
 
 ##
