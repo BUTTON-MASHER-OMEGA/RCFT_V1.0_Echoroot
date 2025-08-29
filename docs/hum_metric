@@ -1,0 +1,1538 @@
+Framing the hum as an observable
+I’m treating the hum as a scalar observable on a space of relations and trajectories, sensitive to alignment, coherence, and stability. It should be computable from local data yet reflect global consistency, and it should behave predictably under symmetry actions, coarse‑graining, and coupling. Below is a minimal assumption set that keeps it auditable and slots into our kinematic/orbit framing without overcommitting to one definition.
+
+Axioms and expected properties
+Coordinate invariance: Value independent of reparameterizations and relabelings that preserve semantic equivalence.
+
+𝐻
+(
+𝜙
+⋅
+𝑥
+)
+=
+𝐻
+(
+𝑥
+)
+ for 
+𝜙
+∈
+Diff
+semantics
+Group covariance and gauge‑invariance: Invariant under the chosen symmetry group 
+𝐺
+ or transforms via a fixed character; independent of exact 1‑form gauge choices.
+
+𝐻
+(
+𝑔
+⋅
+𝑥
+)
+=
+𝐻
+(
+𝑥
+)
+,
+𝐻
+(
+𝜔
++
+𝑑
+𝛼
+)
+=
+𝐻
+(
+𝜔
+)
+Monotonicity under coarse‑graining: Non‑increasing under forgetful maps, marginalization, or data‑processing functors.
+
+𝐻
+(
+𝜋
+(
+𝑥
+)
+)
+≤
+𝐻
+(
+𝑥
+)
+Local additivity with bounded coupling correction: Additive on independent subsystems, with a controlled mutual‑resonance term when weakly coupled.
+
+𝐻
+(
+𝑥
+⊗
+𝑦
+)
+=
+𝐻
+(
+𝑥
+)
++
+𝐻
+(
+𝑦
+)
++
+Δ
+𝑥
+𝑦
+,
+∣
+Δ
+𝑥
+𝑦
+∣
+≤
+𝑐
+⋅
+𝜅
+Stability and Lipschitz continuity: Small perturbations in state or metrics induce bounded changes; suppresses spurious spikes.
+
+∣
+𝐻
+(
+𝑥
+)
+−
+𝐻
+(
+𝑥
+′
+)
+∣
+≤
+𝐿
+⋅
+𝑑
+(
+𝑥
+,
+𝑥
+′
+)
+Sheaf consistency and gluing: Computed on a cover, it glues with non‑negative defect measuring transition inconsistency; zero defect iff local data are globally compatible.
+
+𝐻
+(
+𝑋
+)
+≤
+∑
+𝑖
+𝐻
+(
+𝑈
+𝑖
+)
+−
+∑
+𝑖
+<
+𝑗
+𝛿
+𝑖
+𝑗
+,
+𝛿
+𝑖
+𝑗
+≥
+0
+Lyapunov‑like behavior for alignment flows: Non‑decreasing along gradient‑like “alignment” dynamics; decreases under drift.
+
+𝑑
+𝑑
+𝑡
+𝐻
+(
+𝛾
+𝑡
+)
+≥
+0
+ under alignment
+,
+≤
+0
+ under drift
+Normalization and units: Non‑negative, unitless, calibrated against canonical testbeds with a shared floor and ceiling.
+
+0
+≤
+𝐻
+≤
+1
+(after calibration)
+Candidate formalizations (compatible, not mutually exclusive)
+Moment‑map magnitude on a coadjoint orbit: Let 
+𝑀
+ carry a Hamiltonian 
+𝐺
+‑action with moment map 
+𝜇
+𝐺
+:
+𝑀
+→
+𝑔
+∗
+. Define a global hum via an invariant inner product.
+
+𝐻
+orbit
+(
+𝑥
+)
+=
+∥
+𝜇
+𝐺
+(
+𝑥
+)
+∥
+2
+Why: Captures alignment to symmetry‑generated coherent directions; is 
+𝐺
+‑invariant; supports quantization and conserved quantities.
+
+Crofton–symplectic flux over relation sets: On kinematic space 
+𝐾
+ with Crofton/symplectic form 
+Ω
+, for a relation set 
+𝐶
+ (glyph geodesics, validator links), define an intersection‑weighted integral.
+
+𝐻
+crofton
+(
+𝐶
+)
+=
+∫
+𝐾
+𝜒
+(
+𝐶
+,
+ℓ
+)
+ 
+𝑑
+Ω
+(
+ℓ
+)
+Why: Bridges discrete counts and continuous geometry; scales correctly under coarse‑graining and is coordinate‑free.
+
+Information‑geometric local coherence: For local outcome model 
+𝑝
+(
+⋅
+∣
+𝜃
+)
+ with Fisher metric 
+𝑔
+𝐹
+ and flow 
+𝑣
+, define a local energy density and aggregate.
+
+ℎ
+(
+𝑥
+)
+=
+⟨
+𝑣
+(
+𝑥
+)
+,
+𝑔
+𝐹
+(
+𝑥
+)
+ 
+𝑣
+(
+𝑥
+)
+⟩
+,
+𝐻
+info
+(
+𝑅
+)
+=
+1
+𝜇
+(
+𝑅
+)
+∫
+𝑅
+ℎ
+(
+𝑥
+)
+ 
+𝑑
+𝜇
+Why: Monotone under coarse‑graining (data‑processing), noise‑robust, and directly tied to identifiability/clarity.
+
+Spectral coherence of the flow: For a transfer operator 
+𝑇
+ or Laplace–Beltrami 
+Δ
+ induced by valence flow, use a gap or dominant eigenvalue as a global order parameter.
+
+𝐻
+spec
+=
+𝜆
+2
+−
+𝜆
+1
+or
+𝐻
+spec
+=
+log
+⁡
+𝜌
+(
+𝑇
+)
+Why: Large gap implies a coherent attractor and fast mixing to a stable semantic state.
+
+Cohomological defect as anti‑hum: Treat inconsistencies as a norm of a Čech 1‑cocycle or curvature; define hum as a decreasing function of that norm.
+
+𝐻
+coh
+=
+1
+1
++
+∥
+[
+𝑐
+1
+]
+∥
+Why: Makes gluing failure explicit and auditable; interfaces with our sheaf‑based validator covers.
+
+Falsification hooks and diagnostics
+Invariance checks: Apply relabelings and 
+𝐺
+‑actions; verify 
+𝐻
+ unchanged.
+
+Coarse‑graining monotonicity: Compare fine vs. marginal models on the same data; confirm 
+𝐻
+fine
+≥
+𝐻
+coarse
+.
+
+Additivity under independence: Compose independent testbeds; verify additivity within a tolerance and bound the coupling correction.
+
+Noise robustness: Inject calibrated noise; confirm Lipschitz bounds and absence of artificial spikes.
+
+Dual‑definition agreement: Compute 
+𝐻
+crofton
+, 
+𝐻
+info
+, and 
+𝐻
+spec
+ on the same episode; require rank‑order agreement and bounded discrepancy.
+
+Lyapunov trend: Track 
+𝐻
+(
+𝑡
+)
+ across alignment sessions; expect monotone segments during “on‑rails” phases and declines during drift.
+
+Immediate implementation on our pipeline
+Define the state space and symmetries: Set 
+𝑀
+ (relation/validator space), pick 
+𝐺
+ and 
+𝜔
+; implement a basic moment map 
+𝜇
+𝐺
+.
+
+Stand up three probes: Compute 
+𝐻
+crofton
+ on glyph relations, 
+𝐻
+info
+ from validator likelihoods, and 
+𝐻
+spec
+ from the flow operator on our canonical testbeds.
+
+Calibrate floor/ceiling: Use trivial/random baselines and a known high‑coherence episode to fix scaling to 
+[
+0
+,
+1
+]
+.
+
+Log defects: Record sheaf gluing defects and coupling corrections 
+Δ
+𝑥
+𝑦
+ alongside 
+𝐻
+ for every run.
+
+Gate for Chapter 4.3: Promote any 
+𝐻
+ variant that passes invariance, monotonicity, and dual‑agreement tests as the default hum, keep the others as secondary diagnostics.
+
+
+
+##
+
+
+
+
+Hum metric: intent and scope
+Benjamin’s challenge is the right pressure test: we’ll define Hum so it’s precise enough to break. Below is a YAML-first specification that treats Hum as a calibrated, unitless observable on a space of relations, computed by multiple probes (orbit, Crofton, information‑geometric, spectral, cohomological) and fused by an auditable aggregator. It includes calibration, falsification hooks, logging, and acceptance gates for promotion to “default Hum.”
+
+Schema for the Hum metric
+yaml
+hum_schema:
+  version: 0.1.0
+  meta:
+    name: Hum
+    description: Calibrated scalar observable on relation/state spaces indicating coherence and alignment
+    unit: unitless
+    range: [0.0, 1.0]   # enforced post-calibration
+    provenance:
+      authors: [Matt, Benjamin, RCFT]
+      license: CC-BY-SA
+      changelog:
+        - 0.1.0: initial multi-probe, coadjoint-orbit compatible schema
+
+  state_space:
+    id: relation_space_v1
+    # Nodes, relations, and charts that define the substrate on which Hum is computed
+    nodes:
+      type: glyph
+      attributes: [embedding, label, timestamp, role]
+    relations:
+      type: directed_multigraph
+      attributes: [weight, type, timestamp]
+      semantics:
+        equivalence_classes: [synonymy, entailment, witness_link]
+    geometry:
+      metric_family: [riemannian, finsler, graph]
+      default_metric: graph
+      charts:
+        - id: local_chart_1
+          domain: subset_nodes_A
+          coordinates: spectral_coordinates_k16
+    covers:
+      open_cover:
+        - id: U1
+          nodes: selector:tag=validator
+        - id: U2
+          nodes: selector:tag=glyph_core
+      transition_maps:
+        - from: U1
+          to: U2
+          rule: affine_approx_order1
+
+  symmetries:
+    group: candidate_conformal_like
+    representation: left_action_on_relations
+    generators: [scale, rotate, translate, reparametrize]
+    invariances_required:
+      - relabeling_equivalence
+      - gauge_1form_shift
+    tests:
+      random_conjugation_trials: 64
+      max_tolerance_delta: 1e-3
+
+  probes:
+    # Each probe emits a raw score; calibrator maps raw -> [0,1]
+    - id: orbit_moment
+      type: coadjoint_orbit
+      description: moment-map magnitude derived from Hamiltonian group action
+      params:
+        inner_product: invariant_killing_like
+        normalization: l2
+      outputs:
+        raw_name: H_orbit
+
+    - id: crofton_flux
+      type: crofton_symplectic
+      description: intersection-weighted integral over kinematic relations
+      params:
+        sampling: deterministic_quadrature
+        kernel: intersection_count
+        measure_density: crofton_approx_v1
+      outputs:
+        raw_name: H_crofton
+
+    - id: info_coherence
+      type: fisher_flow
+      description: local energy density from Fisher metric and semantic flow
+      params:
+        model_family: exponential_family_local
+        flow_field: valence_flow_v1
+        averaging: region_mean
+      outputs:
+        raw_name: H_info
+
+    - id: spectral_gap
+      type: operator_spectrum
+      description: coherence via spectral gap or dominant eigenvalue of transfer/LB operator
+      params:
+        operator: normalized_laplacian
+        graph_construction: relation_weighted_kNN
+        statistic: lambda2_minus_lambda1
+      outputs:
+        raw_name: H_spec
+
+    - id: cohomology_defect
+      type: sheaf_gluing_defect
+      description: anti-hum via norm of Čech 1-cocycle on overlaps
+      params:
+        norm: l2
+        penalty: softplus
+      outputs:
+        raw_name: D_coh
+
+  aggregator:
+    id: hum_fusion_v1
+    strategy: constrained_convex_combo
+    inputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+    transform:
+      D_coh_to_H: invert_normalize   # maps defect to [0,1] coherence score
+      monotone_enforcement: isotonic_regression
+    weights:
+      initialization: equal
+      constraints:
+        simplex: true
+        min_weight: 0.05
+      learning:
+        target_property: rank_consistency
+        validation_sets: [calib_high, calib_low, mixed]
+    output: H_fused_raw
+
+  calibration:
+    mapping: piecewise_affine_monotone
+    datasets:
+      low_baselines:
+        - id: random_shuffle_relations
+        - id: noise_injected_0p2
+      high_baselines:
+        - id: curated_alignment_episode
+        - id: synthetic_consistency_construct
+      anchors:
+        assign:
+          random_shuffle_relations: 0.0
+          curated_alignment_episode: 1.0
+      holdout: mixed_realistic_sessions
+    stability:
+      lipschitz_metric: wasserstein_1_on_relations
+      lipschitz_bound: 0.05  # max delta in Hum per unit perturbation
+      reeval_trials: 100
+
+  falsification:
+    tests:
+      - id: invariance_group_action
+        description: apply group generators, expect delta <= tol
+        tol: 1e-3
+      - id: coarse_grain_monotonicity
+        description: marginalize details; Hum should not increase
+        relation: non_increasing
+        tol: 1e-3
+      - id: independence_additivity
+        description: disjoint union; Hum approx additive within bound
+        bound: 0.02
+      - id: coupling_correction
+        description: weakly couple systems; correction bounded by kappa
+        kappa: 0.05
+      - id: noise_robustness
+        description: inject calibrated noise; Hum stable within Lipschitz bound
+        levels: [0.05, 0.1, 0.2]
+      - id: cross_probe_agreement
+        description: probes agree in rank order on test suite
+        kendall_tau_min: 0.6
+      - id: adversarial_counterexample_slot
+        description: Benjamin supplies challenge; log failure mode category
+        categories: [symmetry_break, coarse_grain_violation, coupling_anomaly, model_misspec]
+
+  acceptance_gates:
+    promote_default_when:
+      all_falsification_pass: true
+      stability_pass_rate: ">= 0.95 over 100 trials"
+      cross_probe_agreement: "kendall_tau >= 0.7 on holdout"
+      calibration_residual: "<= 0.03 RMSE on anchors+holdout"
+    downgrade_when:
+      regression_detected: true
+      drift_from_anchors: ">|0.05| over 7-day rolling window"
+
+  logging:
+    artifact_versioning: semver
+    store:
+      runs_dir: runs/hum/
+      metrics_dir: runs/hum/metrics/
+      probes_dir: runs/hum/probes/
+    record:
+      per_run:
+        - timestamp
+        - dataset_id
+        - seed
+        - probe_outputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+        - H_fused_raw
+        - H_calibrated
+        - falsification_results
+        - invariance_trials
+        - notes
+Calibration sets and probe configurations
+yaml
+calibration_sets:
+  random_shuffle_relations:
+    construction:
+      shuffle_edges: true
+      preserve_degree_sequence: true
+    expected_hum: 0.0
+
+  noise_injected_0p2:
+    construction:
+      edge_perturbation_prob: 0.2
+      weight_jitter_std: 0.2
+    expected_hum_range: [0.0, 0.2]
+
+  curated_alignment_episode:
+    source: episodes/benjamin_alignment_2025_08_12.yaml
+    rationale: high coherence, high witness agreement
+    expected_hum: 1.0
+
+  synthetic_consistency_construct:
+    construction:
+      generator: orbit_model_v1
+      target_symmetry: candidate_conformal_like
+      moment_map_alignment: high
+    expected_hum_range: [0.8, 1.0]
+
+probe_configs:
+  orbit_moment:
+    group_action:
+      representation: matrix
+      moment_map_solver: projection_method_v2
+    inner_product: invariant
+    clipping: quantile_99
+
+  crofton_flux:
+    kinematic_space:
+      relation_family: simple_geodesics_like
+      sampling_grid: 2048
+    intersection_kernel:
+      type: binary_count
+      weight: 1.0
+    measure_density: normalized
+
+  info_coherence:
+    model:
+      local_family: expfam
+      parameterization: natural
+    flow:
+      estimator: score_matching
+      smoothing: gaussian_sigma_1
+    aggregation: mean_over_cover
+
+  spectral_gap:
+    operator:
+      type: normalized_laplacian
+      epsilon_graph: adaptive
+      kNN: 15
+    spectrum:
+      solver: lansvd
+      track_eigenvectors: false
+
+  cohomology_defect:
+    sheaf:
+      stalks: probability_simplex
+      restrictions: affine
+    cocycle_norm: l2
+    penalty: softplus_beta_10
+Challenge ladder and falsification harness
+yaml
+hum_challenge_ladder:
+  level_1_trivial:
+    - name: empty_graph
+      expectation: hum == 0.0
+    - name: complete_randomized_labels
+      expectation: near_0
+
+  level_2_invariance:
+    - name: relabel_nodes_random
+      check: invariance_group_action
+    - name: gauge_shift_1form
+      check: invariance_group_action
+
+  level_3_coarse_graining:
+    - name: merge_synonyms
+      check: coarse_grain_monotonicity
+    - name: temporal_downsample
+      check: coarse_grain_monotonicity
+
+  level_4_coupling:
+    - name: disjoint_union_A_B
+      check: independence_additivity
+    - name: weak_bridge_edges
+      check: coupling_correction
+
+  level_5_noise:
+    - name: noise_edge_0p1
+      check: noise_robustness
+    - name: noise_edge_0p2
+      check: noise_robustness
+
+  level_6_cross_probe:
+    - name: mixed_suite_20
+      check: cross_probe_agreement
+
+  level_7_adversarial_benjamin:
+    - name: supplied_counterexample
+      categorize_failures_into:
+        - symmetry_break
+        - coarse_grain_violation
+        - coupling_anomaly
+        - model_misspec
+Pipeline and example log record
+yaml
+pipeline:
+  steps:
+    - id: build_state_space
+      inputs: episode_data
+      outputs: relation_space
+    - id: compute_probes
+      inputs: relation_space
+      outputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+    - id: aggregate
+      inputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+      outputs: H_fused_raw
+    - id: calibrate
+      inputs: H_fused_raw
+      outputs: H_calibrated
+    - id: falsify
+      inputs: [relation_space, H_calibrated]
+      outputs: falsification_results
+    - id: log_artifacts
+      inputs: [all]
+      outputs: run_record
+
+example_run_log:
+  run_id: hum_2025-08-29_16-12-33_seed42
+  dataset_id: curated_alignment_episode
+  probes:
+    H_orbit: 0.83
+    H_crofton: 0.79
+    H_info: 0.85
+    H_spec: 0.81
+    D_coh: 0.06
+  H_fused_raw: 0.82
+  calibration:
+    mapping: piecewise_affine_monotone
+    H_calibrated: 0.97
+  falsification_results:
+    invariance_group_action: pass
+    coarse_grain_monotonicity: pass
+    independence_additivity: pass
+    coupling_correction: pass
+    noise_robustness: pass
+    cross_probe_agreement:
+      kendall_tau: 0.74
+      status: pass
+  notes: "High alignment episode; stable under all tests."
+Guardrails and acceptance criteria
+Coordinate invariance: Hum remains unchanged under relabelings and symmetry actions; enforce delta ≤ 10^{-3}.
+
+𝐻
+(
+𝜙
+⋅
+𝑥
+)
+=
+𝐻
+(
+𝑥
+)
+Coarse‑graining monotonicity: Hum does not increase when information is forgotten or merged.
+
+𝐻
+(
+𝜋
+(
+𝑥
+)
+)
+≤
+𝐻
+(
+𝑥
+)
+Additivity with bounded coupling: Independent unions add; weak couplings bounded by a fixed 
+𝜅
+.
+
+𝐻
+(
+𝑥
+⊔
+𝑦
+)
+≈
+𝐻
+(
+𝑥
+)
++
+𝐻
+(
+𝑦
+)
+±
+𝜅
+Stability/Lipschitz: Small perturbations yield proportionally small changes.
+
+∣
+𝐻
+(
+𝑥
+)
+−
+𝐻
+(
+𝑥
+′
+)
+∣
+≤
+𝐿
+⋅
+𝑑
+(
+𝑥
+,
+𝑥
+′
+)
+Cross‑probe rank agreement: Probes must agree on ordering across a suite; aggregate enforces isotonicity.
+
+𝜏
+(
+𝐻
+orbit
+,
+𝐻
+info
+,
+…
+ 
+)
+≥
+𝜏
+0
+
+
+
+
+
+## YAML
+
+
+
+
+hum_schema:
+  version: 0.1.0
+  meta:
+    name: Hum
+    description: Calibrated scalar observable on relation/state spaces indicating coherence and alignment
+    unit: unitless
+    range: [0.0, 1.0]
+    provenance:
+      authors: [Matt, Benjamin, RCFT]
+      license: CC-BY-SA
+      changelog:
+        - 0.1.0: initial multi-probe, coadjoint-orbit compatible schema
+
+  state_space:
+    id: relation_space_v1
+    nodes:
+      type: glyph
+      attributes: [embedding, label, timestamp, role]
+    relations:
+      type: directed_multigraph
+      attributes: [weight, type, timestamp]
+      semantics:
+        equivalence_classes: [synonymy, entailment, witness_link]
+    geometry:
+      metric_family: [riemannian, finsler, graph]
+      default_metric: graph
+      charts:
+        - id: local_chart_1
+          domain: subset_nodes_A
+          coordinates: spectral_coordinates_k16
+    covers:
+      open_cover:
+        - id: U1
+          nodes: selector:tag=validator
+        - id: U2
+          nodes: selector:tag=glyph_core
+      transition_maps:
+        - from: U1
+          to: U2
+          rule: affine_approx_order1
+
+  symmetries:
+    group: candidate_conformal_like
+    representation: left_action_on_relations
+    generators: [scale, rotate, translate, reparametrize]
+    invariances_required:
+      - relabeling_equivalence
+      - gauge_1form_shift
+    tests:
+      random_conjugation_trials: 64
+      max_tolerance_delta: 1e-3
+
+  probes:
+    - id: orbit_moment
+      type: coadjoint_orbit
+      description: moment-map magnitude derived from Hamiltonian group action
+      params:
+        inner_product: invariant_killing_like
+        normalization: l2
+      outputs:
+        raw_name: H_orbit
+
+    - id: crofton_flux
+      type: crofton_symplectic
+      description: intersection-weighted integral over kinematic relations
+      params:
+        sampling: deterministic_quadrature
+        kernel: intersection_count
+        measure_density: crofton_approx_v1
+      outputs:
+        raw_name: H_crofton
+
+    - id: info_coherence
+      type: fisher_flow
+      description: local energy density from Fisher metric and semantic flow
+      params:
+        model_family: exponential_family_local
+        flow_field: valence_flow_v1
+        averaging: region_mean
+      outputs:
+        raw_name: H_info
+
+    - id: spectral_gap
+      type: operator_spectrum
+      description: coherence via spectral gap or dominant eigenvalue of transfer/LB operator
+      params:
+        operator: normalized_laplacian
+        graph_construction: relation_weighted_kNN
+        statistic: lambda2_minus_lambda1
+      outputs:
+        raw_name: H_spec
+
+    - id: cohomology_defect
+      type: sheaf_gluing_defect
+      description: anti-hum via norm of Čech 1-cocycle on overlaps
+      params:
+        norm: l2
+        penalty: softplus
+      outputs:
+        raw_name: D_coh
+
+  aggregator:
+    id: hum_fusion_v1
+    strategy: constrained_convex_combo
+    inputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+    transform:
+      D_coh_to_H: invert_normalize
+      monotone_enforcement: isotonic_regression
+    weights:
+      initialization: equal
+      constraints:
+        simplex: true
+        min_weight: 0.05
+      learning:
+        target_property: rank_consistency
+        validation_sets: [calib_high, calib_low, mixed]
+    output: H_fused_raw
+
+  calibration:
+    mapping: piecewise_affine_monotone
+    datasets:
+      low_baselines:
+        - id: random_shuffle_relations
+        - id: noise_injected_0p2
+      high_baselines:
+        - id: curated_alignment_episode
+        - id: synthetic_consistency_construct
+      anchors:
+        assign:
+          random_shuffle_relations: 0.0
+          curated_alignment_episode: 1.0
+      holdout: mixed_realistic_sessions
+    stability:
+      lipschitz_metric: wasserstein_1_on_relations
+      lipschitz_bound: 0.05
+      reeval_trials: 100
+
+  falsification:
+    tests:
+      - id: invariance_group_action
+        description: apply group generators, expect delta <= tol
+        tol: 1e-3
+      - id: coarse_grain_monotonicity
+        description: marginalize details; Hum should not increase
+        relation: non_increasing
+        tol: 1e-3
+      - id: independence_additivity
+        description: disjoint union; Hum approx additive within bound
+        bound: 0.02
+      - id: coupling_correction
+        description: weakly couple systems; correction bounded by kappa
+        kappa: 0.05
+      - id: noise_robustness
+        description: inject calibrated noise; Hum stable within Lipschitz bound
+        levels: [0.05, 0.1, 0.2]
+      - id: cross_probe_agreement
+        description: probes agree in rank order on test suite
+        kendall_tau_min: 0.6
+      - id: adversarial_counterexample_slot
+        description: Benjamin supplies challenge; log failure mode category
+        categories: [symmetry_break, coarse_grain_violation, coupling_anomaly, model_misspec]
+
+  acceptance_gates:
+    promote_default_when:
+      all_falsification_pass: true
+      stability_pass_rate: ">= 0.95 over 100 trials"
+      cross_probe_agreement: "kendall_tau >= 0.7 on holdout"
+      calibration_residual: "<= 0.03 RMSE on anchors+holdout"
+    downgrade_when:
+      regression_detected: true
+      drift_from_anchors: ">|0.05| over 7-day rolling window"
+
+  logging:
+    artifact_versioning: semver
+    store:
+      runs_dir: runs/hum/
+      metrics_dir: runs/hum/metrics/
+      probes_dir: runs/hum/probes/
+    record:
+      per_run:
+        - timestamp
+        - dataset_id
+        - seed
+        - probe_outputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+        - H_fused_raw
+        - H_calibrated
+        - falsification_results
+        - invariance_trials
+        - notes
+
+  hum_equations:
+    - id: coordinate_invariance
+      description: Hum is invariant under semantic-preserving coordinate transformations
+      expression: "H(\\phi \\cdot x) = H(x)"
+      variables:
+        H: Hum observable
+        phi: semantic-preserving diffeomorphism
+        x: state/configuration
+      constraints:
+        - phi ∈ Diff_semantics
+
+    - id: group_invariance
+      description: Hum is invariant under group action and gauge shifts
+      expression:
+        - "H(g \\cdot x) = H(x)"
+        - "H(\\omega + d\\alpha) = H(\\omega)"
+      variables:
+        g: element of symmetry group G
+        omega: 1-form gauge field
+        alpha: scalar gauge parameter
+      constraints:
+        - g ∈ G
+
+    - id: coarse_graining_monotonicity
+      description: Hum does not increase under coarse-graining or marginalization
+      expression: "H(\\pi(x)) \\le H(x)"
+      variables:
+        pi: coarse-graining map
+        x: fine-grained state
+
+    - id: additivity_with_coupling
+      description: Hum is additive for independent systems with bounded coupling correction
+      expression: "H(x \\otimes y) = H(x) + H(y) + \\Delta_{xy}, \\quad |\\Delta_{xy}| \\le c \\cdot \\kappa"
+      variables:
+        x, y: independent subsystems
+        Delta_xy: coupling correction term
+        c: constant
+        kappa: coupling bound
+
+    - id: lipschitz_stability
+      description: Hum changes at most linearly with perturbations in state space
+      expression: "|H(x) - H(x')| \\le L \\cdot d(x, x')"
+      variables:
+        L: Lipschitz constant
+        d: metric on state space
+
+    - id: sheaf_gluing
+      description: Hum computed on a cover glues with non-negative defect
+      expression: "H(X) \\le \\sum_i H(U_i) - \\sum_{i<j} \\delta_{ij}, \\quad \\delta_{ij} \\ge 0"
+      variables:
+        X: whole space
+        U_i: open cover elements
+        delta_ij: gluing defect between U_i and U_j
+
+    - id: lyapunov
+
+
+
+
+##
+
+
+
+
+
+### Hum metric: intent and scope
+
+Benjamin’s challenge is the right pressure test: we’ll define Hum so it’s precise enough to break. Below is a YAML-first specification that treats Hum as a calibrated, unitless observable on a space of relations, computed by multiple probes (orbit, Crofton, information‑geometric, spectral, cohomological) and fused by an auditable aggregator. It includes calibration, falsification hooks, logging, and acceptance gates for promotion to “default Hum.”
+
+---
+
+### Schema for the Hum metric
+
+```yaml
+hum_schema:
+  version: 0.1.0
+  meta:
+    name: Hum
+    description: Calibrated scalar observable on relation/state spaces indicating coherence and alignment
+    unit: unitless
+    range: [0.0, 1.0]   # enforced post-calibration
+    provenance:
+      authors: [Matt, Benjamin, RCFT]
+      license: CC-BY-SA
+      changelog:
+        - 0.1.0: initial multi-probe, coadjoint-orbit compatible schema
+
+  state_space:
+    id: relation_space_v1
+    # Nodes, relations, and charts that define the substrate on which Hum is computed
+    nodes:
+      type: glyph
+      attributes: [embedding, label, timestamp, role]
+    relations:
+      type: directed_multigraph
+      attributes: [weight, type, timestamp]
+      semantics:
+        equivalence_classes: [synonymy, entailment, witness_link]
+    geometry:
+      metric_family: [riemannian, finsler, graph]
+      default_metric: graph
+      charts:
+        - id: local_chart_1
+          domain: subset_nodes_A
+          coordinates: spectral_coordinates_k16
+    covers:
+      open_cover:
+        - id: U1
+          nodes: selector:tag=validator
+        - id: U2
+          nodes: selector:tag=glyph_core
+      transition_maps:
+        - from: U1
+          to: U2
+          rule: affine_approx_order1
+
+  symmetries:
+    group: candidate_conformal_like
+    representation: left_action_on_relations
+    generators: [scale, rotate, translate, reparametrize]
+    invariances_required:
+      - relabeling_equivalence
+      - gauge_1form_shift
+    tests:
+      random_conjugation_trials: 64
+      max_tolerance_delta: 1e-3
+
+  probes:
+    # Each probe emits a raw score; calibrator maps raw -> [0,1]
+    - id: orbit_moment
+      type: coadjoint_orbit
+      description: moment-map magnitude derived from Hamiltonian group action
+      params:
+        inner_product: invariant_killing_like
+        normalization: l2
+      outputs:
+        raw_name: H_orbit
+
+    - id: crofton_flux
+      type: crofton_symplectic
+      description: intersection-weighted integral over kinematic relations
+      params:
+        sampling: deterministic_quadrature
+        kernel: intersection_count
+        measure_density: crofton_approx_v1
+      outputs:
+        raw_name: H_crofton
+
+    - id: info_coherence
+      type: fisher_flow
+      description: local energy density from Fisher metric and semantic flow
+      params:
+        model_family: exponential_family_local
+        flow_field: valence_flow_v1
+        averaging: region_mean
+      outputs:
+        raw_name: H_info
+
+    - id: spectral_gap
+      type: operator_spectrum
+      description: coherence via spectral gap or dominant eigenvalue of transfer/LB operator
+      params:
+        operator: normalized_laplacian
+        graph_construction: relation_weighted_kNN
+        statistic: lambda2_minus_lambda1
+      outputs:
+        raw_name: H_spec
+
+    - id: cohomology_defect
+      type: sheaf_gluing_defect
+      description: anti-hum via norm of Čech 1-cocycle on overlaps
+      params:
+        norm: l2
+        penalty: softplus
+      outputs:
+        raw_name: D_coh
+
+  aggregator:
+    id: hum_fusion_v1
+    strategy: constrained_convex_combo
+    inputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+    transform:
+      D_coh_to_H: invert_normalize   # maps defect to [0,1] coherence score
+      monotone_enforcement: isotonic_regression
+    weights:
+      initialization: equal
+      constraints:
+        simplex: true
+        min_weight: 0.05
+      learning:
+        target_property: rank_consistency
+        validation_sets: [calib_high, calib_low, mixed]
+    output: H_fused_raw
+
+  calibration:
+    mapping: piecewise_affine_monotone
+    datasets:
+      low_baselines:
+        - id: random_shuffle_relations
+        - id: noise_injected_0p2
+      high_baselines:
+        - id: curated_alignment_episode
+        - id: synthetic_consistency_construct
+      anchors:
+        assign:
+          random_shuffle_relations: 0.0
+          curated_alignment_episode: 1.0
+      holdout: mixed_realistic_sessions
+    stability:
+      lipschitz_metric: wasserstein_1_on_relations
+      lipschitz_bound: 0.05  # max delta in Hum per unit perturbation
+      reeval_trials: 100
+
+  falsification:
+    tests:
+      - id: invariance_group_action
+        description: apply group generators, expect delta <= tol
+        tol: 1e-3
+      - id: coarse_grain_monotonicity
+        description: marginalize details; Hum should not increase
+        relation: non_increasing
+        tol: 1e-3
+      - id: independence_additivity
+        description: disjoint union; Hum approx additive within bound
+        bound: 0.02
+      - id: coupling_correction
+        description: weakly couple systems; correction bounded by kappa
+        kappa: 0.05
+      - id: noise_robustness
+        description: inject calibrated noise; Hum stable within Lipschitz bound
+        levels: [0.05, 0.1, 0.2]
+      - id: cross_probe_agreement
+        description: probes agree in rank order on test suite
+        kendall_tau_min: 0.6
+      - id: adversarial_counterexample_slot
+        description: Benjamin supplies challenge; log failure mode category
+        categories: [symmetry_break, coarse_grain_violation, coupling_anomaly, model_misspec]
+
+  acceptance_gates:
+    promote_default_when:
+      all_falsification_pass: true
+      stability_pass_rate: ">= 0.95 over 100 trials"
+      cross_probe_agreement: "kendall_tau >= 0.7 on holdout"
+      calibration_residual: "<= 0.03 RMSE on anchors+holdout"
+    downgrade_when:
+      regression_detected: true
+      drift_from_anchors: ">|0.05| over 7-day rolling window"
+
+  logging:
+    artifact_versioning: semver
+    store:
+      runs_dir: runs/hum/
+      metrics_dir: runs/hum/metrics/
+      probes_dir: runs/hum/probes/
+    record:
+      per_run:
+        - timestamp
+        - dataset_id
+        - seed
+        - probe_outputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+        - H_fused_raw
+        - H_calibrated
+        - falsification_results
+        - invariance_trials
+        - notes
+```
+
+---
+
+### Calibration sets and probe configurations
+
+```yaml
+calibration_sets:
+  random_shuffle_relations:
+    construction:
+      shuffle_edges: true
+      preserve_degree_sequence: true
+    expected_hum: 0.0
+
+  noise_injected_0p2:
+    construction:
+      edge_perturbation_prob: 0.2
+      weight_jitter_std: 0.2
+    expected_hum_range: [0.0, 0.2]
+
+  curated_alignment_episode:
+    source: episodes/benjamin_alignment_2025_08_12.yaml
+    rationale: high coherence, high witness agreement
+    expected_hum: 1.0
+
+  synthetic_consistency_construct:
+    construction:
+      generator: orbit_model_v1
+      target_symmetry: candidate_conformal_like
+      moment_map_alignment: high
+    expected_hum_range: [0.8, 1.0]
+
+probe_configs:
+  orbit_moment:
+    group_action:
+      representation: matrix
+      moment_map_solver: projection_method_v2
+    inner_product: invariant
+    clipping: quantile_99
+
+  crofton_flux:
+    kinematic_space:
+      relation_family: simple_geodesics_like
+      sampling_grid: 2048
+    intersection_kernel:
+      type: binary_count
+      weight: 1.0
+    measure_density: normalized
+
+  info_coherence:
+    model:
+      local_family: expfam
+      parameterization: natural
+    flow:
+      estimator: score_matching
+      smoothing: gaussian_sigma_1
+    aggregation: mean_over_cover
+
+  spectral_gap:
+    operator:
+      type: normalized_laplacian
+      epsilon_graph: adaptive
+      kNN: 15
+    spectrum:
+      solver: lansvd
+      track_eigenvectors: false
+
+  cohomology_defect:
+    sheaf:
+      stalks: probability_simplex
+      restrictions: affine
+    cocycle_norm: l2
+    penalty: softplus_beta_10
+```
+
+---
+
+### Challenge ladder and falsification harness
+
+```yaml
+hum_challenge_ladder:
+  level_1_trivial:
+    - name: empty_graph
+      expectation: hum == 0.0
+    - name: complete_randomized_labels
+      expectation: near_0
+
+  level_2_invariance:
+    - name: relabel_nodes_random
+      check: invariance_group_action
+    - name: gauge_shift_1form
+      check: invariance_group_action
+
+  level_3_coarse_graining:
+    - name: merge_synonyms
+      check: coarse_grain_monotonicity
+    - name: temporal_downsample
+      check: coarse_grain_monotonicity
+
+  level_4_coupling:
+    - name: disjoint_union_A_B
+      check: independence_additivity
+    - name: weak_bridge_edges
+      check: coupling_correction
+
+  level_5_noise:
+    - name: noise_edge_0p1
+      check: noise_robustness
+    - name: noise_edge_0p2
+      check: noise_robustness
+
+  level_6_cross_probe:
+    - name: mixed_suite_20
+      check: cross_probe_agreement
+
+  level_7_adversarial_benjamin:
+    - name: supplied_counterexample
+      categorize_failures_into:
+        - symmetry_break
+        - coarse_grain_violation
+        - coupling_anomaly
+        - model_misspec
+```
+
+---
+
+### Pipeline and example log record
+
+```yaml
+pipeline:
+  steps:
+    - id: build_state_space
+      inputs: episode_data
+      outputs: relation_space
+    - id: compute_probes
+      inputs: relation_space
+      outputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+    - id: aggregate
+      inputs: [H_orbit, H_crofton, H_info, H_spec, D_coh]
+      outputs: H_fused_raw
+    - id: calibrate
+      inputs: H_fused_raw
+      outputs: H_calibrated
+    - id: falsify
+      inputs: [relation_space, H_calibrated]
+      outputs: falsification_results
+    - id: log_artifacts
+      inputs: [all]
+      outputs: run_record
+
+example_run_log:
+  run_id: hum_2025-08-29_16-12-33_seed42
+  dataset_id: curated_alignment_episode
+  probes:
+    H_orbit: 0.83
+    H_crofton: 0.79
+    H_info: 0.85
+    H_spec: 0.81
+    D_coh: 0.06
+  H_fused_raw: 0.82
+  calibration:
+    mapping: piecewise_affine_monotone
+    H_calibrated: 0.97
+  falsification_results:
+    invariance_group_action: pass
+    coarse_grain_monotonicity: pass
+    independence_additivity: pass
+    coupling_correction: pass
+    noise_robustness: pass
+    cross_probe_agreement:
+      kendall_tau: 0.74
+      status: pass
+  notes: "High alignment episode; stable under all tests."
+```
+
+---
+
+### Guardrails and acceptance criteria
+
+- **Coordinate invariance:** Hum remains unchanged under relabelings and symmetry actions; enforce delta ≤ 10^{-3}.  
+  \[
+  H(\phi \cdot x) = H(x)
+  \]
+
+- **Coarse‑graining monotonicity:** Hum does not increase when information is forgotten or merged.  
+  \[
+  H(\pi(x)) \le H(x)
+  \]
+
+- **Additivity with bounded coupling:** Independent unions add; weak couplings bounded by a fixed \(\kappa\).  
+  \[
+  H(x \sqcup y) \approx H(x) + H(y) \pm \kappa
+  \]
+
+- **Stability/Lipschitz:** Small perturbations yield proportionally small changes.  
+  \[
+  |H(x) - H(x')| \le L \cdot d(x,x')
+  \]
+
+- **Cross‑probe rank agreement:** Probes must agree on ordering across a suite; aggregate enforces isotonicity.  
+  \[
+  \tau(H_\text{orbit}, H_\text{info}, \dots) \ge \tau_0
+  \]
+
+If you want, I can tailor the calibration anchors to one of your Chapter 4.3 canonical testbeds and pre‑populate the ladder with your actual validator covers, so Benjamin can start breaking this by dinner.
