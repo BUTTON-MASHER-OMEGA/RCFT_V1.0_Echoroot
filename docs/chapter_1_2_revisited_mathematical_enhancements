@@ -745,6 +745,225 @@ where the symmetric channel handles energy-like valence, and the antisymmetric c
 
 
 
+~~
+
+
+Here’s how I’d frame the post‑Chapter 1.2 equation in a way that makes its leap from the old scalar‑only form to the new dual‑channel law immediately clear — both mathematically and conceptually.
+
+1. Why the Original Broke Down
+The original
+
+𝑉
+(
+𝜙
+1
+⊕
+𝜙
+2
+)
+=
+𝑉
+(
+𝜙
+1
+)
+⋆
+𝑉
+(
+𝜙
+2
+)
+treated composition as a single scalar operation. That meant:
+
+No explicit cross‑term — the interaction 
+𝐶
+12
+ between 
+𝜙
+1
+ and 
+𝜙
+2
+ was hidden inside 
+⋆
+ and couldn’t be isolated or tested.
+
+No alignment sensitivity — perfectly aligned, orthogonal, and anti‑aligned states could collapse to the same value.
+
+No order sensitivity — reversing 
+𝜙
+1
+ and 
+𝜙
+2
+ produced identical results, even when the physics suggested otherwise.
+
+2. The New Dual‑Channel Model
+A. Symmetric Channel — Valence Composition with Coherence Floor
+𝑉
+⊕
+sym
+(
+𝜙
+1
+,
+𝜙
+2
+)
+=
+𝑉
+(
+𝜙
+1
+)
++
+𝑉
+(
+𝜙
+2
+)
++
+2
+𝜌
+12
+𝑉
+(
+𝜙
+1
+)
+𝑉
+(
+𝜙
+2
+)
++
+C
+F
+⋅
+exp
+⁡
+ ⁣
+(
+−
+∣
+𝜌
+12
+𝜌
+0
+∣
+2
+)
+Key features:
+
+Core term: The first three terms are the familiar bilinear expansion, now explicit in 
+𝜌
+12
+ (coherence coefficient).
+
+Coherence Floor (CF): A stabilizer for the near‑zero regime (
+∣
+𝜌
+12
+∣
+≲
+0.06
+), preventing noise‑driven sign flips.
+
+Gaussian‑like decay: The floor fades smoothly as 
+∣
+𝜌
+12
+∣
+ grows, avoiding discontinuities.
+
+B. Antisymmetric Channel — Directed Drift
+Ω
+⊕
+(
+𝜙
+1
+→
+𝜙
+2
+)
+=
+𝜆
+Ω
+𝑉
+(
+𝜙
+1
+)
+𝑉
+(
+𝜙
+2
+)
+⋅
+s
+g
+n
+(
+𝜋
+)
+⋅
+max
+⁡
+(
+0
+,
+−
+𝜌
+12
+)
+Key features:
+
+Order sensitivity: 
+s
+g
+n
+(
+𝜋
+)
+ flips sign when the input order is reversed.
+
+Anti‑alignment capture: Only active when 
+𝜌
+12
+<
+0
+, preserving magnitude information that the symmetric channel would otherwise lose.
+
+Empirical fit: 
+𝜆
+Ω
+≈
+1.0
+ from 7.5 anti‑aligned pairs with 
+𝑅
+2
+≈
+1.0
+.
+
+3. Why This Matters
+Falsifiable: Each channel can be independently tested and ablated.
+
+Regime‑aware: Behaves differently in aligned, orthogonal, and anti‑aligned cases.
+
+Order‑aware: Captures directional effects that were invisible before.
+
+Protocol‑ready: Parameters (
+C
+F
+,
+𝜌
+0
+,
+𝜆
+Ω
+) are calibrated from reproducible datasets.
+
 
 ##
 
