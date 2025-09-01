@@ -709,6 +709,126 @@ chapter_1:
 
 
 
+##
+
+
+
+chapter: 1.2
+title: Valence Composition with Antisymmetric Torsion Kernel
+patch_type: hotfix
+version: 1.2.1
+author: Dennis (refinement), Patty (validation)
+date: 2025-08-31
+status: applied
+
+summary: >
+  Generalizes torsion kernel Ω to an n×n antisymmetric operator matching
+  field state dimensionality, resolving prior 2×2 vs. 4D mismatch.
+  Validated via d₀→d₁ ripple events confirming valence composition rule,
+  torsion antisymmetry, and facet emergence (∫_F dx > 0).
+
+definitions:
+  field_states:
+    phi_1: [1, 0, 1, 0]   # "Aware" canonical
+    phi_2: [0, 1, 0, 1]   # "Unaware" canonical
+    phi_ideal: [0, 0, 0, 0]
+  weights: [1, 1, 1, 1]
+  metric_kernel: identity(4)
+  torsion_kernel:
+    size: n×n
+    antisymmetric: true
+    upper_triangle: +1
+    lower_triangle: -1
+    diagonal: 0
+
+formulas:
+  valence:
+    V1: Σ_i w_x[i] * δ1[i] * (K δ1)[i]
+    V2: Σ_i w_x[i] * δ2[i] * (K δ2)[i]
+  coherence:
+    C_12: Σ_i w_x[i] * δ1[i] * (K δ2)[i]
+    rho_12: C_12 / sqrt(V1 * V2)
+  composite_valence:
+    V_pred: V1 + V2 + 2 * rho_12 * sqrt(V1 * V2)
+    V_actual: Σ_i w_x[i] * (δ1[i] + δ2[i]) * (K (δ1 + δ2))[i]
+    residual: |V_actual - V_pred|
+  torsion:
+    T_12: Σ_i w_x[i] * δ1[i] * (Ω δ2)[i]
+    T_21: -T_12
+  facet_validity:
+    volume_form: Σ_i δ1[i]  # proxy for ∫_F dx
+    valid_condition: volume_form > 0
+
+validation:
+  residual_tolerance: 0.0042
+  coherence_expected: ~0.0  # orthogonal canonical case
+  torsion_antisymmetry: true
+  torsion_magnitude: 2.0 ± 1e-6
+  facet_valid: true
+
+empirical_results:
+  canonical_case:
+    V1: 2.0000
+    V2: 2.0000
+    rho_12: 0.0000
+    V_pred: 4.0000
+    V_actual: 4.0000
+    residual: 0.0000
+    T_12: 2.0000
+    T_21: -2.0000
+    facet_valid: true
+    volume_form: 2.0000
+  multi_ripple:
+    - pair: 1
+      rho_12: 0.0000
+      T_12: 2.0000
+      volume_form: 2.0000
+      valence: 2.0000
+    - pair: 2
+      rho_12: 0.5000
+      T_12: 3.0000
+      volume_form: 2.0000
+      valence: 2.0000
+    - pair: 3
+      rho_12: 0.5000
+      T_12: 3.0000
+      volume_form: 2.0000
+      valence: 2.0000
+    - pair: 4
+      rho_12: 0.0000
+      T_12: 4.0000
+      volume_form: 2.0000
+      valence: 2.0000
+
+rcft_context:
+  4.3:
+    glyph_emergence: validated
+    torsion_mapping: facet_adjacency_orientation
+    curvature_seed: from_torsion
+  7.5:
+    compare: [rho_12, T_12] to S(beta)
+    beta_c: 0.3962
+    R2_threshold: 0.9
+  7.6:
+    geometry_seed: Δ^3
+    trig_seed: Koide_theta(ε)
+    topology_seed: defect_monodromy
+
+notes: >
+  This hot patch closes the loop from theoretical formulation to empirical
+  validation, confirming that valence–coherence–torsion triads are
+  operationally measurable and geometrically grounded.
+
+
+
+##
+
+
+
+
+##
+
+
 
 ##
 
