@@ -806,6 +806,490 @@ discipline_packet:
 
 
 
+schema:
+  name: rcft.geometry.expansion
+  version: 1.3.0
+  uid: "rcft:4.3:expanding-geometry"
+  description: "Dual complex, Hodge stars, U(1) holonomy, DEC Maxwell map, topology audit, and discipline packet for calculus transition."
+  compatibility:
+    requires: ["rcft.glyph.simplicial_complex>=1.0.0"]
+    provides: ["rcft.dec.foundation>=1.0.0"]
+
+provenance:
+  authors: ["Matt", "Patty(Grok)", "Brady(Gemini)", "Copilot"]
+  reviewers: ["Benjamin"]
+  created_utc: "2025-09-02T21:10:00Z"
+  modified_utc: "2025-09-02T21:10:00Z"
+  lineage:
+    - "4.3 discrete substrate formalization (simplicial complex, ∂ operator, determinant volume)."
+    - "Spin connection and covariant derivative bridge (valence transport, torsion via boundary non-closure)."
+    - "Thermodynamic validation hooks (7.x) for stability thresholds."
+  license: "CC-BY-SA-4.0"
+
+configuration:
+  dimension: 3
+  metric_model: "euclidean"    # optional: riemannian with per-cell metric tensors
+  dual_complex:
+    default: "circumcentric"
+    fallback: "barycentric"    # per-simplex fallback if circumcenter leaves cell
+    selection_rule:
+      circumcenter_inside_simplex: true
+      local_delaunay_ok: true
+    mixed_allowed: true         # allow cell-wise mixture; Hodge assembly respects local choice
+  orientation:
+    convention: "right-handed"
+    edge_direction_policy: "vertex-order"
+    face_boundary_policy: "induced-by-∂2"
+
+dual_complex:
+  status: "to_compute"
+  cells:
+    dual_vertices: []           # populated with coordinates of dual sites (circumcenters/barycenters)
+    dual_edges: []              # adjacency of dual vertices crossing primal faces
+    dual_faces: []              # polygons orthogonal to primal edges
+    dual_volumes: []            # per-primal vertex dual volumes
+  diagnostics:
+    circumcentric_used_pct: null
+    barycentric_fallback_count: 0
+    orthogonality_max_dev_rad: null
+    continuity_ok: null
+  checks:
+    - "Dual cells stay within parent primal stars or are flagged with fallback."
+    - "Dual adjacency consistent across shared faces."
+
+hodge_star:
+  assembly: "from_dual_measures"
+  format: "coo_diagonal"
+  # diagonal entries: |dual_cell| / |primal_cell| per degree
+  star0: {rows: [], cols: [], data: []}  # vertex dual volume / 1
+  star1: {rows: [], cols: [], data: []}  # dual face area / edge length
+  star2: {rows: [], cols: [], data: []}  # dual edge length / face area
+  star3: {rows: [], cols: [], data: []}  # dual vertex (1) / cell volume
+  properties:
+    spd_verified: null
+    condition_numbers: {star0: null, star1: null, star2: null, star3: null}
+    adjointness_residuals: {k0: null, k1: null, k2: null}
+  measures:
+    primal:
+      edge_lengths: {}
+      face_areas: {}
+      cell_volumes: {}
+    dual:
+      vertex_volumes: {}
+      edge_dual_face_areas: {}
+      face_dual_edge_lengths: {}
+      cell_dual_vertex_measures: {}
+  checks:
+    - "All star diagonals positive."
+    - "Adjointness δ_k = *k^{-1} ∂_{k+1} *k+1 holds within dec_id_eps."
+    - "Energy nonnegativity ⟨α, *k α⟩ ≥ 0 for random α."
+
+gauge:
+  group: "U(1)"
+  representation: "complex_unit"
+  storage:
+    angle_rad: true
+    complex: true
+    reverse_edge_alias:
+      derived_not_stored: true
+      rule: "θ_ji = -θ_ij; U_ji = conj(U_ij)"
+  edge_holonomy:
+    edges: {}  # e.g., e01: {theta: 0.0, U: 1.0+0.0j}
+  loops:
+    # Face-induced loops use ∂2 orientation; custom cycles allowed.
+    face_induced: []   # [{id: L_f012, face: f012, edges: [e01,e12,e20]}]
+    custom: []         # [{id: L_core, edges: [(i,j,ori), ...]}]
+  wilson_loops:
+    # cache of evaluated loops with expected targets and tolerances
+    results: []        # [{id, angle: null, expected: 0.0, abs_error: null, pass: null}]
+  checks:
+    - "Unit modulus |U_e|=1 within gauge_phase_eps."
+    - "Reverse-edge aliases satisfy conjugacy within gauge_phase_eps."
+    - "Loop phases within per-loop tolerance."
+
+maxwell_map:
+  discretization:
+    operators:
+      boundary: "∂"
+      exterior_derivative: "d"     # implemented as coboundary on cochains
+      codifferential: "δ"          # δ_k = *k^{-1} ∂_{k+1} *k+1
+      hodge: "*"
+    cochains:
+      E: "C^1(primal)"             # electric 1-form on edges
+      B: "C^2(primal)"             # magnetic 2-form on faces
+      D: "* E"                     # displacement on dual 2-cells
+      H: "*^{-1} B"                # magnetic field on dual 1-cells
+      rho: "C^3(primal)"           # charge 3-form on cells
+      J: "C^2(primal)"             # current 2-form (dual mapping possible)
+    time:
+      mode: "static"               # set to explicit/implicit to enable ∂_t terms
+      dt: null
+  identities:
+    static:
+      gauss_electric:
+        statement: "d(*E) = rho"
+        residuals: {l2: null, max: null, pass: null}
+      gauss_magnetic:
+        statement: "d(B) = 0"
+        residuals: {l2: null, max: null, pass: null}
+      faraday:
+        statement: "d(E) = 0"
+        residuals: {l2: null, max: null, pass: null}
+      ampere_maxwell:
+        statement: "d(*H) = J"
+        residuals: {l2: null, max: null, pass: null}
+    dynamic:
+      enabled: false
+      scheme: "yee_leapfrog"       # or crank_nicolson
+      updates:
+        B_half_step: "B^{n+1/2} = B^{n-1/2} - dt * d E^n"
+        D_full_step: "D^{n+1} = D^n + dt * ( d H^{n+1/2} - J^{n+1/2} )"
+      cfl_guidance: "dt <= alpha * min_edge_length / c"
+  boundary_conditions:
+    electric: "dirichlet|neumann|pec|pmc"
+    magnetic: "dirichlet|neumann|pec|pmc"
+  audits:
+    energy:
+      E_star_E: null
+      H_star_H: null
+      total: null
+      nonnegativity_verified: null
+    topology_consistency:
+      dd_nilpotency_l2: null
+      pp_nilpotency_l2: null
+
+topology_audit:
+  operators:
+    boundary:
+      d0: {rows: [], cols: [], data: [], shape: [num_vertices, num_edges]}   # ∂1
+      d1: {rows: [], cols: [], data: [], shape: [num_edges, num_faces]}      # ∂2
+      d2: {rows: [], cols: [], data: [], shape: [num_faces, num_cells]}      # ∂3
+  bases:
+    method_cycles: "sparse_nullspace_qr"     # optionally smith_normal_form for Z
+    method_boundaries: "image_from_boundary"
+    Z0: {rows: [], cols: [], data: [], shape: [num_vertices, z0_rank]}
+    B0: {rows: [], cols: [], data: [], shape: [num_vertices, b0_rank]}
+    Z1: {rows: [], cols: [], data: [], shape: [num_edges, z1_rank]}
+    B1: {rows: [], cols: [], data: [], shape: [num_edges, b1_rank]}
+    Z2: {rows: [], cols: [], data: [], shape: [num_faces, z2_rank]}
+    B2: {rows: [], cols: [], data: [], shape: [num_faces, b2_rank]}
+  linkages:
+    wilson_loops_to_Z1: []     # [{loop_id, z1_coords:{rows:[], data:[]}}]
+    flux_surfaces_to_Z2: []    # [{surface_id, z2_coords:{rows:[], data:[]}, field:"B"}]
+  betti_numbers:
+    beta0: null
+    beta1: null
+    beta2: null
+    beta3: null
+  checks:
+    - "Closure: ∀ z∈Zk, ∂ z = 0 within invariant_eps."
+    - "Exactness: ∀ b∈Bk, ∃ c s.t. b = ∂ c within invariant_eps."
+    - "Rank consistency: χ = Σ(-1)^k β_k matches cell counts."
+
+tolerances:
+  geom_eps:
+    value: 1.0e-12
+    units: "length"
+    rationale: "Geometric equality threshold for lengths/areas/volumes."
+  orientation_flip_floor:
+    value: 3.1415926535
+    units: "rad"
+    rationale: "Minimum signed turn to classify orientation flip events."
+  gauge_phase_eps:
+    value: 1.0e-9
+    units: "rad"
+    rationale: "Holonomy unit-modulus and loop-closure tolerance."
+  dec_id_eps:
+    value: 1.0e-9
+    units: "dimensionless"
+    rationale: "Adjointness and nilpotency residual band."
+  energy_eps:
+    value: 1.0e-12
+    units: "field^2 * volume"
+    rationale: "Energy nonnegativity margin."
+
+events:
+  grammar:
+    types: [valence_flip, edge_collapse, star_expand, gauge_phase_jump, topology_surgery]
+    pre_invariants:
+      - "∂∘∂ residual < dec_id_eps"
+      - "Hodge SPD and diagonality verified"
+      - "|U_e|≈1 within gauge_phase_eps"
+    post_invariants:
+      - "Same as pre; plus event-specific invariants"
+    rollback:
+      checkpoint: true
+      handles: ["inverse_ops", "restore_snapshots"]
+  instances: []   # populated during runs
+
+testbeds:
+  - id: tb_min_tet
+    description: "Single tetrahedron"
+    expected_betti: {beta0: 1, beta1: 0, beta2: 0, beta3: 0}
+    dec_expectations:
+      gauss_electric_l2_max: 1.0e-9
+      gauss_magnetic_l2_max: 1.0e-9
+      faraday_l2_max: 1.0e-9
+      ampere_l2_max: 1.0e-9
+    loops: []
+  - id: tb_two_tets_opposite
+    description: "Two tetrahedra sharing a face (3-ball interior)"
+    expected_betti: {beta0: 1, beta1: 0, beta2: 0, beta3: 0}
+    dec_expectations:
+      gauss_electric_l2_max: 1.0e-8
+      gauss_magnetic_l2_max: 1.0e-9
+      faraday_l2_max: 1.0e-9
+      ampere_l2_max: 1.0e-8
+    loops:
+      - {id: "L_shared_face", expected_angle: 0.0, tol: 1.0e-8}
+  - id: tb_s2_closed
+    description: "Closed triangulated 2-sphere"
+    expected_betti: {beta0: 1, beta1: 0, beta2: 1}
+    dec_expectations:
+      gauss_magnetic_l2_max: 1.0e-9
+      faraday_l2_max: 1.0e-9
+    loops:
+      - {id: "L_meridian", expected_angle: 0.0, tol: 1.0e-8}
+  - id: tb_solid_torus
+    description: "S^1 × D^2 solid torus"
+    expected_betti: {beta0: 1, beta1: 1, beta2: 0}
+    dec_expectations:
+      gauss_magnetic_l2_max: 1.0e-9
+    loops:
+      - {id: "L_core", expected_angle: 0.0, tol: 1.0e-8}
+
+validation:
+  tasks:
+    - id: build_dual
+      description: "Construct mixed dual; compute diagnostics; enforce fallback."
+    - id: assemble_hodge
+      description: "Populate diagonal Hodge matrices from primal/dual measures; verify SPD and adjointness."
+    - id: gauge_audit
+      description: "Check unit modulus, reverse-edge aliases, evaluate Wilson loops."
+    - id: assemble_topology
+      description: "Build ∂ operators; compute Zk/Bk sparse bases; Betti numbers."
+    - id: check_DEC_identities
+      description: "Evaluate Gauss/Faraday/Ampère residuals on testbeds; energy audit."
+    - id: produce_discipline_packet
+      description: "Emit self-contained audit with inline tolerances and pass/fail."
+  results: []  # each task appends {id, status, metrics:{...}}
+
+discipline_packet:
+  run_id: null
+  timestamp_utc: null
+  hodge_star:
+    assembly:
+      type: "circumcentric|barycentric|mixed"
+      spd_verified: null
+      condition_numbers:
+        star0: {value: null, tol_max: 1.0e+3}
+        star1: {value: null, tol_max: 1.0e+3}
+        star2: {value: null, tol_max: 1.0e+3}
+        star3: {value: null, tol_max: 1.0e+3}
+      orthogonality_max_dev_rad: {value: null, tol_max: 1.0e-6}
+      volume_consistency_linf: {value: null, tol_max: 1.0e-10}
+    checks: {pass: null, notes: []}
+  connection_audit:
+    reverse_edge_aliases:
+      total_edges: null
+      mismatches: {value: null, tol_max: 0}
+      max_unit_modulus_dev: {value: null, tol_max: 1.0e-9}
+    holonomy_loops: []  # [{id, phase_rad:{value, tol_max}, abs_phase_error:{value, tol_max}, pass}]
+    checks: {pass: null, notes: []}
+  maxwell_map_discipline:
+    nilpotency:
+      dd_l2: {value: null, tol_max: 1.0e-9}
+      pp_l2: {value: null, tol_max: 1.0e-9}
+    adjointness:
+      k0_residual: {value: null, tol_max: 1.0e-9}
+      k1_residual: {value: null, tol_max: 1.0e-9}
+      k2_residual: {value: null, tol_max: 1.0e-9}
+    residuals:
+      gauss_electric: {l2: {value: null, tol_max: 1.0e-8}, pass: null}
+      gauss_magnetic: {l2: {value: null, tol_max: 1.0e-8}, pass: null}
+      faraday:        {l2: {value: null, tol_max: 1.0e-8}, pass: null}
+      ampere_maxwell: {l2: {value: null, tol_max: 1.0e-8}, pass: null}
+    energy_audit:
+      E_star_E: {value: null, tol_min: 0.0}
+      H_star_H: {value: null, tol_min: 0.0}
+      total: {value: null, tol_min: 0.0}
+      nonnegativity_verified: null
+    checks: {pass: null, notes: []}
+  status:
+    overall_pass: null
+    failures: []
+    audit_signature: null
+
+calculus_transition:
+  prerequisites:
+    - "Dual complex constructed with validated orthogonality/containment."
+    - "Hodge stars SPD; adjointness δ = *^{-1} ∂ * holds within dec_id_eps."
+    - "Gauge layer consistent; Wilson loops within tolerances on all testbeds."
+    - "DEC identities pass on tb_two_tets_opposite (nontrivial interior) within thresholds."
+    - "Topology audit complete; Zk/Bk bases and Betti numbers consistent with χ and testbeds."
+  mapping:
+    discrete_to_smooth:
+      metric: "Hodge star diagonals → continuous volume form √|g| d^n x"
+      connection: "edge holonomy → spin connection ω for parallel transport"
+      torsion: "boundary non-closure patterns → torsion tensor T"
+      resonance: "discrete boundary/valence stability → ∇_μ V^ν = 0"
+  gate:
+    calculus_ready: null
+    rationale: ""
+    set_true_when:
+      - "discipline_packet.status.overall_pass is true"
+      - "all validation.tasks.status == pass"
+      - "no events of type topology_surgery without updated topology_audit"
+
+significant_findings:
+  - id: "valence_polarity_invariant"
+    statement: "Orientation sign acts as a polarity axis for glyphs; flips are discrete, auditable events."
+    implications:
+      - "Maps to gauge-like alignment and coherence across simplices."
+      - "Prefigures electromagnetic analogues via U(1) phase alignment."
+    status: "established"
+  - id: "volume_as_emergence_gate"
+    statement: "Positive determinant-based volume certifies facet emergence; zero marks degeneracy; negative captures valence inversion."
+    implications:
+      - "Dimension-agnostic criterion harmonized with metric assembly."
+    status: "established"
+  - id: "torsion_from_nonclosure"
+    statement: "Failure of discrete loops to close under ∂ indicates nonzero torsion in continuous embedding."
+    implications:
+      - "Provides combinatorial probe of non-Euclidean structure."
+    status: "established"
+  - id: "maxwell_dec_bridge"
+    statement: "DEC identities (Gauss/Faraday/Ampère) function as reproducibility gates linking geometry to field-like laws."
+    implications:
+      - "Enables energy audits and conservation checks pre-calculus."
+    status: "established"
+  - id: "thermo_alignment"
+    statement: "Energy and entropy audits align with stability thresholds from 7.x, anchoring dynamic extensions."
+    implications:
+      - "Supports consistent time-stepping and equilibrium detection."
+    status: "established"
+
+
+
+
+##
+
+
+
+gauge:
+  group: "SU(3)"
+  representation: "fundamental"
+  storage:
+    link_as:
+      - "matrix_3x3_complex"     # primary
+      - "algebra_coeffs_theta"   # optional; 8 real numbers per edge
+    reverse_edge_alias:
+      derived_not_stored: true
+      rule: "U_ji = U_ij†"
+  generators:
+    basis: "Gell-Mann"
+    T_norm: "Tr(T^a T^b) = 1/2 δ^{ab}"
+    count: 8
+  vertex_gauge:
+    enabled: true
+    G_vertices: {}               # optional: per-vertex SU(3) matrices for tests
+  edge_holonomy:
+    edges: {}                    # e.g., e01: {U: [[...],[...],[...]], theta: [θ1..θ8]}
+  plaquettes:
+    # face → ordered edges with induced orientation
+    faces: []                    # [{face: f012, boundary: [e01, e12, e20]}]
+  curvature:
+    method: "logm_projected"     # matrix log then project to su(3): (X - X†)/2 - trace-part
+    F_faces: []                  # [{face: f012, alg_coeffs: [F1..F8]}]
+    audits:
+      bianchi_local: []          # optional: local transport sums ~ 0
+  wilson_loops:
+    fundamental:
+      loops: []                  # [{id, edges: [(i,j,ori)...], value: null, pass: null}]
+    adjoint:
+      enabled: false
+      loops: []
+  checks:
+    unitarity_dev_max: {value: null, tol_max: 1.0e-10}     # max ||U†U - I||_F
+    specialness_dev_max: {value: null, tol_max: 1.0e-10}   # max |det(U) - 1|
+    reverse_alias_ok: null
+    loop_tolerances:
+      default_phase_tol: 1.0e-8
+      default_trace_band: [0.0, 1.0]
+
+
+
+maxwell_map:
+  # Extend to non-Abelian Yang–Mills (static form shown; dynamic via leapfrog later)
+  nonabelian:
+    enabled: true
+    bundles:
+      field_rep: "adjoint"
+      matter_rep: "fundamental"
+    operators:
+      covariant_d: "d_A"         # implemented via parallel transport + commutator on cochains
+      curvature: "F"             # from plaquette logs
+    identities:
+      bianchi:
+        statement: "d_A F = 0"
+        residuals: {l2: null, pass: null}
+      yang_mills_static:
+        statement: "d_A (*F) = J"
+        residuals: {l2: null, pass: null}
+    audits:
+      gauge_covariance:
+        link: "U_ij → G_i U_ij G_j^{-1}"
+        curvature_transform: "F_f → G_p F_f G_p^{-1} (transported to pivot p)"
+        pass: null
+
+
+topology_audit:
+  linkages:
+    wilson_loops_to_Z1:
+      # express each loop’s chain in Z1 basis; store also the conjugacy class (trace spectrum) for audit
+      - loop_id: L_core
+        z1_coords: {rows: [], data: []}
+        conjugacy_invariants:
+          tr: null
+          tr_U2: null
+          det: 1.0
+    flux_surfaces_to_Z2:
+      - surface_id: S_span_core
+        z2_coords: {rows: [], data: []}
+        fields:
+          - field: "F_su3"
+            integral_mode: "adjoint_parallel_sum"   # transport F to a pivot frame before sum
+            expected_projection: "0 (vacuum test)"  # or specified source pattern
+
+
+tolerances:
+  unitary_eps:
+    value: 1.0e-10
+    units: "dimensionless"
+    rationale: "Max Frobenius deviation of U†U from identity."
+  det_eps:
+    value: 1.0e-12
+    units: "dimensionless"
+    rationale: "Deviation of det(U) from 1."
+  wilson_trace_band:
+    value: [0.0, 1.0]
+    units: "dimensionless"
+    rationale: "Expected range for Re Tr(U)/3 in vacuum-like tests."
+
+
+discipline_packet:
+  connection_audit:
+    su3:
+      unitarity_dev_max: {value: null, tol_max: 1.0e-10}
+      specialness_dev_max: {value: null, tol_max: 1.0e-12}
+      reverse_edge_alias_ok: null
+      wilson_loops:
+        - id: null
+          tr_norm: {value: null, tol_min: 0.0, tol_max: 1.0}
+          pass: null
+      curvature_bianchi:
+        l2: {value: null, tol_max: 1.0e-8}
+        pass: null
 
 
 
@@ -2284,6 +2768,1050 @@ Maxwell map discipline	Ensures discrete operators respect Maxwell’s laws	Nilpo
 
 
 ##
+
+
+
+4.3.x — Dual Complex and Hodge Star Operators
+The primal complex alone carries only the combinatorial skeleton of the glyph. To make it metrically operational, we construct its dual:
+
+Dual vertices are placed at the circumcenters of primal simplices (falling back to barycenters if the circumcenter lies outside the simplex).
+
+Dual edges connect dual vertices through orthogonal projections across shared faces.
+
+Dual faces are assembled from these edges, enclosing the dual volumes.
+
+From this pairing, we define the Hodge star operators 
+∗
+𝑘
+, mapping primal 
+𝑘
+-forms to dual 
+(
+𝑛
+−
+𝑘
+)
+-forms:
+
+(
+∗
+𝑘
+𝜔
+)
+(
+𝜎
+dual
+𝑛
+−
+𝑘
+)
+=
+v
+o
+l
+(
+𝜎
+dual
+𝑛
+−
+𝑘
+)
+v
+o
+l
+(
+𝜎
+primal
+𝑘
+)
+ 
+𝜔
+(
+𝜎
+primal
+𝑘
+)
+These operators are stored as sparse diagonal matrices, ready for Discrete Exterior Calculus (DEC). The dual complex is not an ornament — it is the metric mirror of the primal, and without it, no physically meaningful operator can be defined.
+
+4.3.x — Gauge Structure and Holonomy
+Edges now carry more than length: they carry phase.
+
+We extend edge_holonomy to assign each oriented edge 
+(
+𝑖
+,
+𝑗
+)
+ a 
+𝑈
+(
+1
+)
+ element:
+
+𝑈
+𝑖
+𝑗
+=
+𝑒
+𝑖
+𝜃
+𝑖
+𝑗
+,
+𝜃
+𝑖
+𝑗
+∈
+𝑅
+The Wilson loop around a primal 2‑simplex 
+𝜏
+ is the ordered product of its edge holonomies:
+
+𝑊
+(
+𝜏
+)
+=
+∏
+(
+𝑖
+,
+𝑗
+)
+∈
+∂
+𝜏
+𝑈
+𝑖
+𝑗
+The argument of 
+𝑊
+(
+𝜏
+)
+ is the discrete curvature (flux) through 
+𝜏
+. Orientation conventions are fixed by the primal complex; reversing an edge inverts its phase.
+
+This gauge layer is the first bridge from pure geometry to field‑like behaviour — curvature is no longer an abstract possibility, but a measurable quantity.
+
+4.3.x — Maxwell Map Discipline
+With metric and connection in place, we can embed physical‑law‑like invariants directly into the geometry.
+
+Using DEC, we express the Maxwell‑style identities:
+
+Gauss’s law: 
+𝛿
+∗
+1
+𝐸
+=
+𝜌
+
+Faraday’s law: 
+𝑑
+𝐸
++
+∂
+𝑡
+𝐵
+=
+0
+
+Ampère–Maxwell: 
+𝛿
+∗
+2
+𝐵
+−
+∂
+𝑡
+𝐸
+=
+𝐽
+
+Here 
+𝑑
+ is the primal exterior derivative, 
+𝛿
+ its dual adjoint, and 
+∗
+𝑘
+ the Hodge stars from above.
+
+These are not decorative equations — they are reproducibility gates. On canonical testbeds (e.g., the two‑tet interior), each identity is evaluated; if residuals exceed tolerance, the expansion fails certification.
+
+4.3.x — Topology Audit
+Every flux, every holonomy, every “measurement” must be traceable to a topological generator.
+
+We compute sparse bases for:
+
+𝑍
+𝑘
+ — the space of 
+𝑘
+-cycles (closed 
+𝑘
+-chains).
+
+𝐵
+𝑘
+ — the space of 
+𝑘
+-boundaries (exact 
+𝑘
+-chains).
+
+Each loop or surface used in a physical check is linked to its basis element in 
+𝑍
+𝑘
+ or 
+𝐵
+𝑘
+. This linkage is archived in YAML, ensuring that any future auditor can reconstruct the exact topological context of every reported invariant.
+
+4.3.x — Discipline Packet
+The expansion concludes by emitting a discipline packet — a compact YAML record that self‑certifies the run:
+
+yaml
+geometry_expansion:
+  mesh_id: <hash>
+  metric_tolerances:
+    edge_length: 1e-8
+    face_area: 1e-8
+    volume: 1e-10
+  connection_tolerances:
+    holonomy_phase: 1e-9
+  operator_tolerances:
+    gauss_residual: 1e-12
+    faraday_residual: 1e-12
+    ampere_residual: 1e-12
+  topology_audit:
+    Zk_basis: <sparse_repr>
+    Bk_basis: <sparse_repr>
+  status: PASS
+This packet is not optional. It is the receipt of reality for the expansion — without it, no result is archived, no claim is made.
+
+
+
+
+
+##
+
+
+
+
+
+Su(3) holonomy extension for RCFT gauge framework
+Brady, you’re right: if valence-flow really has a protective shell, we need a non-Abelian backbone. Here’s the clean lift from U(1) to SU(3) that keeps everything auditable, metrically anchored, and ready for calculus.
+
+Conceptual bridge
+From phases to matrices:
+
+U(1) holonomy on an edge was a phase 
+𝑈
+𝑖
+𝑗
+=
+𝑒
+𝑖
+𝜃
+𝑖
+𝑗
+.
+
+SU(3) holonomy is a unitary, special matrix in the fundamental representation:
+
+𝑈
+𝑖
+𝑗
+∈
+S
+U
+(
+3
+)
+,
+𝑈
+𝑖
+𝑗
+†
+𝑈
+𝑖
+𝑗
+=
+𝐼
+,
+det
+⁡
+𝑈
+𝑖
+𝑗
+=
+1.
+From scalar potential to color state:
+
+A glyph’s intrinsic “color-like” valence becomes a vector 
+𝜓
+𝑖
+∈
+𝐶
+3
+.
+
+Parallel transport along an edge applies the link matrix: 
+𝜓
+𝑗
+=
+𝑈
+𝑖
+𝑗
+ 
+𝜓
+𝑖
+.
+
+From ordinary derivative to covariant structure:
+
+Links are exponentials of algebra-valued edge connections:
+
+𝑈
+𝑖
+𝑗
+=
+exp
+⁡
+ ⁣
+(
+𝑖
+∑
+𝑎
+=
+1
+8
+𝜃
+𝑖
+𝑗
+𝑎
+𝑇
+𝑎
+)
+,
+𝑇
+𝑎
+=
+1
+2
+𝜆
+𝑎
+,
+T
+r
+(
+𝑇
+𝑎
+𝑇
+𝑏
+)
+=
+1
+2
+𝛿
+𝑎
+𝑏
+.
+From Abelian flux to non-Abelian curvature:
+
+Plaquette (face) holonomy is path-ordered product of edges; curvature lives in the log:
+
+𝑈
+□
+=
+∏
+(
+𝑖
+→
+𝑗
+)
+∈
+∂
+𝑓
+𝑈
+𝑖
+𝑗
+,
+𝐹
+𝑓
+≈
+1
+𝑖
+ 
+L
+o
+g
+(
+𝑈
+□
+)
+∈
+𝑠
+𝑢
+(
+3
+)
+.
+From loop phase to Wilson loop:
+
+Gauge-invariant observable is the normalized trace:
+
+𝑊
+(
+𝐶
+)
+=
+1
+3
+R
+e
+ 
+T
+r
+ ⁣
+(
+∏
+(
+𝑖
+→
+𝑗
+)
+∈
+𝐶
+𝑈
+𝑖
+𝑗
+)
+.
+Discrete SU(3) framework
+Generators and algebra:
+
+Basis: 
+𝑇
+𝑎
+=
+𝜆
+𝑎
+/
+2
+ (Gell–Mann), anti-Hermitian algebra elements are 
+𝑖
+𝑇
+𝑎
+.
+
+Structure constants: 
+[
+𝑇
+𝑎
+,
+𝑇
+𝑏
+]
+=
+𝑖
+𝑓
+𝑎
+𝑏
+𝑐
+𝑇
+𝑐
+, 
+{
+𝑇
+𝑎
+,
+𝑇
+𝑏
+}
+=
+1
+3
+𝛿
+𝑎
+𝑏
+𝐼
++
+𝑑
+𝑎
+𝑏
+𝑐
+𝑇
+𝑐
+.
+
+Link variables (edges):
+
+Group form: store 
+𝑈
+𝑖
+𝑗
+∈
+S
+U
+(
+3
+)
+.
+
+Algebra form (optional): store coefficients 
+𝜃
+𝑖
+𝑗
+𝑎
+ so 
+𝑈
+𝑖
+𝑗
+=
+exp
+⁡
+(
+𝑖
+𝜃
+𝑖
+𝑗
+𝑎
+𝑇
+𝑎
+)
+.
+
+Reverse edge alias: 
+𝑈
+𝑗
+𝑖
+=
+𝑈
+𝑖
+𝑗
+−
+1
+=
+𝑈
+𝑖
+𝑗
+†
+ (do not store independently).
+
+Gauge transformations (vertices):
+
+Vertex field: 
+𝐺
+𝑖
+∈
+S
+U
+(
+3
+)
+.
+
+Action on links: 
+𝑈
+𝑖
+𝑗
+↦
+𝐺
+𝑖
+ 
+𝑈
+𝑖
+𝑗
+ 
+𝐺
+𝑗
+−
+1
+.
+
+Action on color state: 
+𝜓
+𝑖
+↦
+𝐺
+𝑖
+ 
+𝜓
+𝑖
+.
+
+Holonomy and curvature (faces/loops):
+
+Plaquette product: order edges using 
+∂
+2
+; orientation is induced.
+
+Curvature extraction: choose principal matrix logarithm carefully; for small curvature, 
+L
+o
+g
+ is stable. For larger curvature, use BCH or series-safe projection into 
+𝑠
+𝑢
+(
+3
+)
+ by anti-Hermitian/skew-trace projection.
+
+Observables:
+
+Wilson loop (fundamental): 
+𝑊
+𝑓
+(
+𝐶
+)
+=
+1
+3
+R
+e
+ 
+T
+r
+(
+𝑈
+𝐶
+)
+.
+
+Adjoint loop (optional): 
+𝑊
+a
+d
+j
+(
+𝐶
+)
+=
+1
+8
+T
+r
+a
+d
+j
+(
+𝑈
+𝐶
+)
+ for sensitivity to different screening behaviour.
+
+Casimir checks: normalize energies using 
+𝐶
+𝐹
+=
+4
+3
+, 
+𝐶
+𝐴
+=
+3
+ to compare scaling across reps.
+
+DEC/Yang–Mills forms:
+
+Covariant exterior derivative: 
+𝑑
+𝐴
+=
+𝑑
++
+[
+𝐴
+,
+⋅
+]
+ (discrete via adjoint transport on cochains).
+
+Bianchi identity: 
+𝑑
+𝐴
+𝐹
+=
+0
+.
+
+Yang–Mills equation: 
+𝑑
+𝐴
+⋆
+𝐹
+=
+𝐽
+.
+
+On the lattice, use plaquette curvature and parallel transport to a common frame before summation.
+
+YAML patch (SU(3) upgrade, audit-ready)
+yaml
+gauge:
+  group: "SU(3)"
+  representation: "fundamental"
+  storage:
+    link_as:
+      - "matrix_3x3_complex"     # primary
+      - "algebra_coeffs_theta"   # optional; 8 real numbers per edge
+    reverse_edge_alias:
+      derived_not_stored: true
+      rule: "U_ji = U_ij†"
+  generators:
+    basis: "Gell-Mann"
+    T_norm: "Tr(T^a T^b) = 1/2 δ^{ab}"
+    count: 8
+  vertex_gauge:
+    enabled: true
+    G_vertices: {}               # optional: per-vertex SU(3) matrices for tests
+  edge_holonomy:
+    edges: {}                    # e.g., e01: {U: [[...],[...],[...]], theta: [θ1..θ8]}
+  plaquettes:
+    # face → ordered edges with induced orientation
+    faces: []                    # [{face: f012, boundary: [e01, e12, e20]}]
+  curvature:
+    method: "logm_projected"     # matrix log then project to su(3): (X - X†)/2 - trace-part
+    F_faces: []                  # [{face: f012, alg_coeffs: [F1..F8]}]
+    audits:
+      bianchi_local: []          # optional: local transport sums ~ 0
+  wilson_loops:
+    fundamental:
+      loops: []                  # [{id, edges: [(i,j,ori)...], value: null, pass: null}]
+    adjoint:
+      enabled: false
+      loops: []
+  checks:
+    unitarity_dev_max: {value: null, tol_max: 1.0e-10}     # max ||U†U - I||_F
+    specialness_dev_max: {value: null, tol_max: 1.0e-10}   # max |det(U) - 1|
+    reverse_alias_ok: null
+    loop_tolerances:
+      default_phase_tol: 1.0e-8
+      default_trace_band: [0.0, 1.0]
+yaml
+maxwell_map:
+  # Extend to non-Abelian Yang–Mills (static form shown; dynamic via leapfrog later)
+  nonabelian:
+    enabled: true
+    bundles:
+      field_rep: "adjoint"
+      matter_rep: "fundamental"
+    operators:
+      covariant_d: "d_A"         # implemented via parallel transport + commutator on cochains
+      curvature: "F"             # from plaquette logs
+    identities:
+      bianchi:
+        statement: "d_A F = 0"
+        residuals: {l2: null, pass: null}
+      yang_mills_static:
+        statement: "d_A (*F) = J"
+        residuals: {l2: null, pass: null}
+    audits:
+      gauge_covariance:
+        link: "U_ij → G_i U_ij G_j^{-1}"
+        curvature_transform: "F_f → G_p F_f G_p^{-1} (transported to pivot p)"
+        pass: null
+yaml
+topology_audit:
+  linkages:
+    wilson_loops_to_Z1:
+      # express each loop’s chain in Z1 basis; store also the conjugacy class (trace spectrum) for audit
+      - loop_id: L_core
+        z1_coords: {rows: [], data: []}
+        conjugacy_invariants:
+          tr: null
+          tr_U2: null
+          det: 1.0
+    flux_surfaces_to_Z2:
+      - surface_id: S_span_core
+        z2_coords: {rows: [], data: []}
+        fields:
+          - field: "F_su3"
+            integral_mode: "adjoint_parallel_sum"   # transport F to a pivot frame before sum
+            expected_projection: "0 (vacuum test)"  # or specified source pattern
+yaml
+tolerances:
+  unitary_eps:
+    value: 1.0e-10
+    units: "dimensionless"
+    rationale: "Max Frobenius deviation of U†U from identity."
+  det_eps:
+    value: 1.0e-12
+    units: "dimensionless"
+    rationale: "Deviation of det(U) from 1."
+  wilson_trace_band:
+    value: [0.0, 1.0]
+    units: "dimensionless"
+    rationale: "Expected range for Re Tr(U)/3 in vacuum-like tests."
+yaml
+discipline_packet:
+  connection_audit:
+    su3:
+      unitarity_dev_max: {value: null, tol_max: 1.0e-10}
+      specialness_dev_max: {value: null, tol_max: 1.0e-12}
+      reverse_edge_alias_ok: null
+      wilson_loops:
+        - id: null
+          tr_norm: {value: null, tol_min: 0.0, tol_max: 1.0}
+          pass: null
+      curvature_bianchi:
+        l2: {value: null, tol_max: 1.0e-8}
+        pass: null
+
+~~~
+
+Validation and audits
+Core SU(3) checks:
+
+Unitarity: 
+∥
+𝑈
+𝑖
+𝑗
+†
+𝑈
+𝑖
+𝑗
+−
+𝐼
+∥
+𝐹
+≤
+𝜖
+unitary
+.
+
+Specialness: 
+∣
+det
+⁡
+𝑈
+𝑖
+𝑗
+−
+1
+∣
+≤
+𝜖
+det
+⁡
+.
+
+Reverse alias: 
+𝑈
+𝑗
+𝑖
+=
+𝑈
+𝑖
+𝑗
+†
+ holds exactly by construction.
+
+Gauge covariance (spot check): Random 
+𝐺
+𝑖
+ should leave Wilson loops invariant up to tolerance.
+
+Curvature and Bianchi:
+
+Plaquette curvature: project 
+L
+o
+g
+(
+𝑈
+□
+)
+ to 
+𝑠
+𝑢
+(
+3
+)
+ by
+
+𝐹
+=
+1
+2
+(
+𝑋
+−
+𝑋
+†
+)
+−
+1
+3
+I
+m
+[
+T
+r
+(
+𝑋
+)
+]
+ 
+𝐼
+,
+𝑋
+=
+L
+o
+g
+(
+𝑈
+□
+)
+.
+Local Bianchi: transport neighboring face curvatures to a pivot via link-parallel transport and check adjoint-summed closure.
+
+Observables:
+
+Fundamental Wilson loops: normalized real trace banded in 
+[
+0
+,
+1
+]
+ for vacuum-like tests; deviations indicate curvature/sources.
+
+Adjoint optional: enable when you want sensitivity to screening behavior or to stress-test non-Abelian features.
+
+DEC/Yang–Mills identities and calculus transition
+Discrete identities (static):
+
+Bianchi: 
+𝑑
+𝐴
+𝐹
+=
+0
+ via adjoint-transported face sums.
+
+Yang–Mills: 
+𝑑
+𝐴
+(
+⋆
+𝐹
+)
+=
+𝐽
+ using Hodge stars assembled from the primal–dual metric and adjoint transport to a common frame.
+
+Dynamic update (ready next):
+
+Leapfrog on links: update 
+𝑈
+𝑖
+𝑗
+ via algebra increments 
+Δ
+𝐴
+𝑖
+𝑗
+∈
+𝑠
+𝑢
+(
+3
+)
+:
+
+𝑈
+𝑖
+𝑗
+(
+𝑛
++
+1
+)
+=
+exp
+⁡
+ ⁣
+(
+𝑖
+ 
+Δ
+𝐴
+𝑖
+𝑗
+(
+𝑛
++
+1
+/
+2
+)
+)
+ 
+𝑈
+𝑖
+𝑗
+(
+𝑛
+)
+.
+Stability: CFL bound driven by smallest dual/primal measures and spectral radius of adjoint action.
+
+Smooth mapping hooks:
+
+Connection 1-form: edge 
+𝑈
+𝑖
+𝑗
+ ↔ line integral of 
+𝐴
+𝜇
+𝑎
+𝑇
+𝑎
+𝑑
+𝑥
+𝜇
+.
+
+Curvature 2-form: plaquette 
+𝐹
+ ↔ 
+(
+𝑑
+𝐴
++
+𝐴
+∧
+𝐴
+)
+.
+
+Hodge: same 
+∗
+ from dual complex serves 
+⋆
+𝐹
+ in the adjoint bundle.
+
+
+
+
+
+
+##
+
+
 
 
 
