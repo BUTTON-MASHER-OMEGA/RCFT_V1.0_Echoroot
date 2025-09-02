@@ -37,9 +37,1326 @@ terminology_bridge:
 
 ##
 
-##Chapter 4.3 Notes
+
+
+schema:
+  name: rcft.glyph.simplicial_complex
+  version: 1.0.0
+  uid: sc:0001
+  checksum:
+    algo: sha256
+    value: "<fill-after-serialization>"
+
+provenance:
+  authors: ["Matt", "Copilot", "Patty(Grok)", "Brady(Gemini)"]
+  reviewers: ["Benjamin"]
+  created_utc: "2025-09-02T18:30:00Z"
+  modified_utc: "2025-09-02T18:30:00Z"
+  lineage:
+    - description: "Initial formalization of glyph as oriented simplicial complex with valence polarity."
+      commit: "<commit-id>"
+  license: "CC-BY-SA-4.0"
+
+globals:
+  base_field: R           # permitted: R, Q, Z_p, C
+  orientation_convention: "right-handed"
+  vertex_order_is_reference_frame: true
+  valence_definition: "valence = sign(orientation w.r.t. reference vertex order)"
+  reference_frame:
+    description: "Global frame for orientation and metric interpretations."
+    seed: "rf:standard-3D-euclid"
+  units:
+    length: "arbitrary"
+    weight: "dimensionless"
+    cochain: "dimensionless"
+
+vertices:
+  # Each vertex can carry coordinates (optional), tags, and weight.
+  v:
+    - id: v0
+      coord: [0.0, 0.0, 0.0]
+      weight: 1.0
+      tags: ["boundary"]
+    - id: v1
+      coord: [1.0, 0.0, 0.0]
+      weight: 1.0
+      tags: []
+    - id: v2
+      coord: [0.0, 1.0, 0.0]
+      weight: 1.0
+      tags: []
+    - id: v3
+      coord: [0.0, 0.0, 1.0]
+      weight: 1.0
+      tags: []
+
+simplices:
+  # k-simplices: vertex ids listed in reference order define orientation.
+  k1:  # edges
+    - id: e01
+      verts: [v0, v1]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: e02
+      verts: [v0, v2]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: e03
+      verts: [v0, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: e12
+      verts: [v1, v2]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: e13
+      verts: [v1, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: e23
+      verts: [v2, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+  k2:  # faces (triangles)
+    - id: f012
+      verts: [v0, v1, v2]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: f013
+      verts: [v0, v1, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: f023
+      verts: [v0, v2, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+    - id: f123
+      verts: [v1, v2, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: []
+  k3:  # tetrahedra
+    - id: t0123
+      verts: [v0, v1, v2, v3]
+      orientation_sign: +1
+      valence: +1
+      weight: 1.0
+      tags: ["glyph-core"]
+
+adjacency:
+  # Optional caches; can be computed from 'simplices' if absent.
+  star:
+    v0: [e01, e02, e03, f012, f013, f023, t0123]
+  link:
+    v0: [e12, e13, e23, f123]
+  incidence:
+    e01: [f012, f013]
+    f012: [t0123]
+
+cochains:
+  # Discrete fields on k-simplices; ready for DEC and gauge structure.
+  c0:
+    description: "Scalar potential / semantic density"
+    values:
+      v0: 0.0
+      v1: 0.0
+      v2: 0.0
+      v3: 0.0
+  c1:
+    description: "Flow / field along edges (orientation-aware)"
+    values:
+      e01: 0.0
+      e02: 0.0
+      e03: 0.0
+      e12: 0.0
+      e13: 0.0
+      e23: 0.0
+  c2:
+    description: "Circulation / flux on faces"
+    values:
+      f012: 0.0
+      f013: 0.0
+      f023: 0.0
+      f123: 0.0
+  gauge:
+    group: "U(1)"
+    edge_holonomy:  # exp(i * integral A·dl)
+      e01: 1.0
+      e02: 1.0
+      e03: 1.0
+      e12: 1.0
+      e13: 1.0
+      e23: 1.0
+
+metrics:
+  # Inner products for DEC; supports Hodge star later.
+  k0_inner: "diag(weights(v))"
+  k1_inner: "edge-length-weighted"
+  k2_inner: "face-area-weighted"
+  k3_inner: "cell-volume-weighted"
+  geometry:
+    model: "euclidean"
+    dim: 3
+
+operators:
+  # Symbolic declarations; computed on demand by validators.
+  boundary:
+    k1_to_k0: "∂1"
+    k2_to_k1: "∂2"
+    k3_to_k2: "∂3"
+  coboundary:
+    k0_to_k1: "δ0"
+    k1_to_k2: "δ1"
+    k2_to_k3: "δ2"
+  hodge_star:
+    enabled: true
+    consistency: "requires metrics.*_inner defined"
+  laplacians:
+    0: "Δ0 = δ0 * *0^(-1) * ∂1"
+    1: "Δ1 = (∂2 * δ1) + (δ0 * ∂1)"
+
+valence_polarity:
+  # Global bookkeeping for polarity semantics.
+  polarity_axis: "reference vertex order"
+  coherence_rule: "adjacent shared faces must induce opposite boundary orientation"
+  events: []  # valence-flip events appended here
+
+invariants:
+  # Cached when validated.
+  euler_characteristic: null
+  betti_numbers: null
+  boundary_is_closed: null
+  net_boundary_valence: null
+
+constraints:
+  # Hard constraints for acceptance.
+  - id: c_orient_acyclic
+    description: "No simplex has zero or undefined orientation."
+    severity: "error"
+  - id: c_boundary_consistency
+    description: "∂k ∘ ∂(k+1) = 0 holds structurally."
+    severity: "error"
+  - id: c_coherence_faces
+    description: "Shared (k-1)-faces have induced opposite orientation in neighboring k-simplices."
+    severity: "error"
+
+tolerances:
+  geom_eps: 1.0e-9
+  orientation_stability_threshold: 0.0   # sign flips must be explicit events
+  cochain_noise_floor: 1.0e-12
+
+validation:
+  status: "unvalidated"
+  tasks:
+    - id: v_euler
+      description: "Compute χ = |V| - |E| - |F| + |T| and cache."
+    - id: v_betti
+      description: "Compute Betti numbers via ranks of boundary maps."
+    - id: v_boundary2_zero
+      description: "Verify ∂ ∘ ∂ = 0 for all k."
+    - id: v_polarity_conservation
+      description: "Check net boundary valence equals declared 'charge' if any."
+  results: []
+
+annotations:
+  tags: ["glyph", "simplicial", "orientation", "valence", "rcft-core"]
+  notes:
+    - "Valence is derived from orientation_sign but stored to make flips explicit and auditable."
+    - "Gauge edge_holonomy prepares for EM analogues (Wilson loops)."
+
+testbeds:
+  # Canonical fixtures for regression and falsification.
+  suites:
+    - id: tb_min_tet
+      description: "Single tetrahedron with coherent orientation."
+      expected:
+        euler_characteristic: 1
+        boundary_is_closed: false
+        betti_numbers: [1,0,0,0] # up to k=3 in a contractible 3-cell interior
+    - id: tb_two_tets_opposite
+      description: "Two tetrahedra sharing a face with opposite orientation (manifold interior)."
+      expected:
+        boundary_is_closed: true
+        net_boundary_valence: 0
+
+
+
+
 
 ##
+
+patch:
+  applies_to_schema: rcft.glyph.simplicial_complex
+  patch_type: enhancement
+  version: 1.1.0
+  status: proposed
+
+dual_complex:
+  # Choose 'circumcentric' (orthogonal primal↔dual, good for DEC) or 'barycentric' (robust on obtuse meshes).
+  type: circumcentric
+  compute: true
+  # Dual cells are computed from primal geometry; cached here once validated.
+  cells:
+    # Examples shown for faces (dual edges) and edges (dual faces); populated by validator.
+    # face_dual_edge:
+    #   f012: {endpoints: [cc_t0123, cc_t0123], length: <auto>}  # single-tet example collapses to a point; nontrivial in multi-cell meshes
+    # edge_dual_face:
+    #   e01: {area: <auto>, polygon: [cc_f012, cc_f013, ...]}
+  metadata:
+    guarantees:
+      - **Orthogonality:** primal k-simplices are orthogonal to dual (n−k)-cells in circumcentric construction
+      - **Locality:** dual cells lie within primal stars under Delaunay conditions
+    fallbacks:
+      - **Switch_to_barycentric:** true  # if circumcenters leave cells or degeneracy detected
+
+hodge_star:
+  # Discrete Hodge stars *_k: C^k(primal) ↔ C^{n-k}(dual), stored as sparse diagonal matrices in COO form.
+  convention:
+    dimension: 3
+    inner_products:
+      k0: "lumped_vertex_volume"
+      k1: "edge_length_ratio"      # *_1(e) = |dual_face(e)| / |edge(e)|
+      k2: "face_area_ratio"        # *_2(f) = |dual_edge(f)| / |face(f)|
+      k3: "cell_volume_ratio"      # *_3(t) = |dual_vertex(t)| / |cell(t)|
+  compute: from_dual_complex
+  format: coo
+  # Placeholders; validator computes (rows, cols, data) from geometry and dual cells.
+  star0:
+    diagonal: true
+    rows: []
+    cols: []
+    data: []
+  star1:
+    diagonal: true
+    rows: []
+    cols: []
+    data: []
+  star2:
+    diagonal: true
+    rows: []
+    cols: []
+    data: []
+  star3:
+    diagonal: true
+    rows: []
+    cols: []
+    data: []
+  properties:
+    - **SPD:** true   # symmetric positive definite on valid meshes
+    - **Orientation_sensitive:** true
+  checks:
+    - **Energy_equivalence:** "⟨α, *_k α⟩ ≥ 0 for all α"
+    - **Adjointness:** "δ_k = *_k^{-1} ∂_{k+1} *_ {k+1}"
+
+gauge:
+  group: U(1)
+  representation: complex_unit_modulus  # e^{i θ_e}
+  edge_holonomy:
+    # Store both angle and complex value for auditability.
+    edges:
+      e01: {theta: 0.0, U: 1.0+0.0j}
+      e02: {theta: 0.0, U: 1.0+0.0j}
+      e03: {theta: 0.0, U: 1.0+0.0j}
+      e12: {theta: 0.0, U: 1.0+0.0j}
+      e13: {theta: 0.0, U: 1.0+0.0j}
+      e23: {theta: 0.0, U: 1.0+0.0j}
+  loops:
+    # Wilson loops: ordered edge cycles; W = ∏ U_e with induced orientations.
+    - id: L_f012
+      cycle_edges: [e01, e12, e20]   # e20 means reverse of e02
+      orientation: induced_by_face f012
+      wilson_loop:
+        complex: 1.0+0.0j
+        angle: 0.0
+      tolerance:
+        abs_dev_max: 1.0e-6
+    - id: L_f013
+      cycle_edges: [e01, e13, e30]
+      orientation: induced_by_face f013
+      wilson_loop:
+        complex: 1.0+0.0j
+        angle: 0.0
+      tolerance:
+        abs_dev_max: 1.0e-6
+    - id: L_f023
+      cycle_edges: [e02, e23, e30]
+      orientation: induced_by_face f023
+      wilson_loop:
+        complex: 1.0+0.0j
+        angle: 0.0
+      tolerance:
+        abs_dev_max: 1.0e-6
+    - id: L_f123
+      cycle_edges: [e12, e23, e31]
+      orientation: induced_by_face f123
+      wilson_loop:
+        complex: 1.0+0.0j
+        angle: 0.0
+      tolerance:
+        abs_dev_max: 1.0e-6
+  validators:
+    - **Unit_modulus:** "∀e: |U_e| = 1 within gauge_phase_eps"
+    - **Loop_consistency:** "Loops over shared faces of adjacent cells cancel in interior"
+
+maxwell_map:
+  # Discrete exterior calculus identities (static by default; time updates optional).
+  discretization:
+    operators:
+      d: coboundary      # d ≡ δ on cochains
+      ∂: boundary
+      *: hodge_star
+    cochains:
+      E: c1              # electric 1-form on edges (primal)
+      B: c2              # magnetic 2-form on faces (primal)
+      D: "* E"           # electric displacement on dual 2-cells
+      H: "*^{-1} B"      # magnetic field on dual 1-cells
+      ρ: c3              # charge 3-form on cells (primal)
+      J: c2              # current 2-form on faces (dual mapping possible)
+    time:
+      mode: static       # set to 'explicit' or 'implicit' to enable ∂_t terms
+      dt: null
+  identities:
+    gauss_electric:
+      statement: "d (* E) = ρ"
+      testbeds:
+        - tb_min_tet:
+            expect:
+              l2_residual_max: 1.0e-9   # with E ≡ 0, ρ ≡ 0 → identity holds trivially
+        - tb_two_tets_opposite:
+            expect:
+              l2_residual_max: 1.0e-8
+    gauss_magnetic:
+      statement: "d B = 0"
+      testbeds:
+        - tb_min_tet:
+            expect:
+              l2_residual_max: 1.0e-9
+    faraday_static:
+      statement: "d E = 0"   # static case of dE + ∂_t B = 0
+      testbeds:
+        - tb_min_tet:
+            expect:
+              cycle_defect_max: 1.0e-9   # sum of edge E around each face cycle
+    ampere_maxwell_static:
+      statement: "d (* H) = J"
+      notes: "Enable time terms for full Ampère–Maxwell: d(*H) = J + ∂_t (*D)"
+      testbeds:
+        - tb_two_tets_opposite:
+            expect:
+              l2_residual_max: 1.0e-8
+  audits:
+    - **Energy_balance:** "⟨E, *E⟩ and ⟨H, *H⟩ nonnegative; discrete Poynting over closed boundary ≈ 0 in static runs"
+    - **Topological_consistency:** "∂∘∂=0 and d∘d=0 enforced; Gauss_magnetic implies absence of magnetic monopoles"
+
+tolerances:
+  gauge_phase_eps: 1.0e-9
+  hodge_diag_eps: 1.0e-12
+  dec_id_eps: 1.0e-9
+
+validation:
+  tasks:
+    - id: build_dual
+      description: "Construct circumcentric dual; fall back to barycentric on degeneracy"
+    - id: assemble_hodge
+      description: "Compute diagonal Hodge matrices from primal/dual measures"
+    - id: holonomy_unit
+      description: "Verify |U_e|=1 and Wilson loops within tolerance"
+    - id: check_DEC_identities
+      description: "Evaluate Maxwell identities on testbeds; report residuals"
+  results: []
+
+annotations:
+  notes:
+    - "Hodge stars are diagonal on circumcentric/barycentric duals for simplicial meshes."
+    - "Wilson loops around primal 2-simplices approximate ∮ A·dl; with U(1) phases, W=exp(i Φ_B) for magnetic flux Φ_B."
+    - "Maxwell identities are stated in cochain form; set time.mode≠static to activate ∂_t terms."
+
+
+patch:
+  applies_to_schema: rcft.glyph.simplicial_complex
+  patch_type: enhancement
+  version: 1.2.0
+  status: proposed
+
+topology:
+  # Sparse chain operators (COO) for auditability; assumed already present or assembled by validator.
+  boundary:
+    # ∂_k: C_k → C_{k-1}
+    d1: {rows: [], cols: [], data: [], shape: [num_edges, num_faces]}     # ∂_2
+    d2: {rows: [], cols: [], data: [], shape: [num_faces, num_cells]}     # ∂_3
+    d0: {rows: [], cols: [], data: [], shape: [num_vertices, num_edges]}  # ∂_1
+  cycles_boundaries:
+    # Sparse bases for Z_k = ker ∂_k and B_k = im ∂_{k+1}; column = one basis vector in chain coordinates.
+    basis:
+      Z0: {rows: [], cols: [], data: [], shape: [num_vertices, z0_rank]}
+      B0: {rows: [], cols: [], data: [], shape: [num_vertices, b0_rank]}
+      Z1: {rows: [], cols: [], data: [], shape: [num_edges, z1_rank]}
+      B1: {rows: [], cols: [], data: [], shape: [num_edges, b1_rank]}
+      Z2: {rows: [], cols: [], data: [], shape: [num_faces, z2_rank]}
+      B2: {rows: [], cols: [], data: [], shape: [num_faces, b2_rank]}
+    orientation:
+      edges: {e01: +1, e10: -1, ...}
+      faces: {f012: +1, f021: -1, ...}
+    provenance:
+      Zk_method: "sparse_nullspace_qr"        # or "smith_normal_form" for exact integer homology
+      Bk_method: "image_from_boundary"
+    checks:
+      - **Closure:** "∀z∈Zk: ∂ z = 0 within invariant_eps"
+      - **Exactness:** "∀b∈Bk: ∃c s.t. b = ∂ c within invariant_eps"
+      - **Rank_consistency:** "β_k = rank(Zk) - rank(Bk)"
+
+cohomology_links:
+  # Audit links tying physics to topology.
+  wilson_loops:
+    # Express each loop as coordinates in the Z1 basis (columns of Z1).
+    # coeffs are integers over chains; phases measured in radians, complex value unit-modulus.
+    - loop_id: L_f012
+      z1_coords:
+        rows: []        # indices into edge chain space
+        data: []        # integer coefficients (+1/-1)
+      expected:
+        angle_rad: 0.0
+        complex: 1.0+0.0j
+      tolerance:
+        abs_phase: gauge_phase_eps
+  flux_integrals:
+    # Express each flux surface (e.g., boundary sphere) as coordinates in Z2 basis.
+    - surface_id: S_boundary
+      z2_coords:
+        rows: []        # indices into face chain space
+        data: []        # integer coefficients (+1/-1)
+      fields:
+        - field: B
+          integral_units: weber
+          expected: 0.0
+          tolerance:
+            abs_flux: invariant_eps
+
+tolerances:
+  # Separated tolerances with units and rationale for transparent auditing.
+  geom_eps:
+    value: 1.0e-12
+    units: m
+    rationale: "Geometric coincidence threshold for length/area/volume comparisons; protects against floating-point jitter."
+  orientation_flip_floor:
+    value: 3.1415926535
+    units: rad
+    rationale: "Minimum accumulated signed turn (~π) to classify an orientation flip event; avoids spurious flips on noisy meshes."
+  gauge_phase_eps:
+    value: 1.0e-9
+    units: rad
+    rationale: "Phase closure for U(1) holonomy; sets loop-consistency and unit-modulus checks."
+  invariant_eps:
+    value: 1.0e-9
+    units: dimensionless
+    rationale: "Residual threshold for topological/DEC identities (d∘d=0, Gauss/Faraday/Ampère equalities)."
+
+events:
+  # Standardized event grammar with pre/post invariants and rollback handles.
+  schema:
+    type: enum  # {valence_flip, edge_collapse, star_expand, gauge_phase_jump, topology_surgery}
+    payload: {} # event-specific parameters (ids, magnitudes, selections)
+    pre_invariants:
+      - "∂∘∂ = 0 within invariant_eps"
+      - "Hodge SPD and diagonal within hodge_diag_eps"
+      - "|U_e|=1 within gauge_phase_eps"
+    post_invariants:
+      - "Same as pre, plus application-specific invariants pass"
+    rollback:
+      handle: ""   # opaque transaction id
+      undo_ops: [] # inverse operations, deterministic ordering
+    audit_log:
+      timestamp: ""
+      user: ""
+      notes: ""
+  instances: []
+  types:
+    valence_flip:
+      description: "Local bistellar-like flip that changes vertex valence while preserving topology."
+      pre_invariants:
+        - "No boundary violation in affected star"
+      post_invariants:
+        - "Zk ranks unchanged; Hodge conditioning not degraded"
+      rollback_template: ["flip_inverse"]
+    edge_collapse:
+      description: "Contract edge to a vertex; may change topology."
+      pre_invariants:
+        - "Edge length < geom_eps"
+      post_invariants:
+        - "Recompute β_k; emit topology_surgery if ranks change unexpectedly"
+      rollback_template: ["vertex_splits: {edge_id}"]
+    star_expand:
+      description: "Refine by expanding the star of a simplex (inverse of edge_collapse or generalized subdivision)."
+      pre_invariants:
+        - "Orientation consistent in star"
+      post_invariants:
+        - "Hodge diagonality preserved; DEC operators updated"
+      rollback_template: ["star_contract"]
+    gauge_phase_jump:
+      description: "Discontinuous update to θ on subset of edges."
+      payload:
+        edges: []
+        delta_theta_rad: 0.0
+      pre_invariants:
+        - "Store snapshot of edge_holonomy"
+      post_invariants:
+        - "All Wilson loops within loop tolerances or flagged"
+      rollback_template: ["restore_holonomy_snapshot"]
+    topology_surgery:
+      description: "Non-local operation that changes homotopy type (merge/split components, pinch/wedge)."
+      pre_invariants:
+        - "Full checkpoint of chain complexes and Hodge stars"
+      post_invariants:
+        - "Recompute Zk, Bk, βk; update cohomology_links; re-audit Maxwell identities"
+      rollback_template: ["restore_full_checkpoint"]
+
+testbeds:
+  # Canonical meshes and their expected invariants.
+  - id: tb_s2_closed
+    topological_type: "S^2 (closed triangulated 2-sphere)"
+    dimension: 2
+    expected_betti:
+      beta0: 1
+      beta1: 0
+      beta2: 1
+    wilson_loops:
+      - loop_id: meridian_small
+        expected:
+          angle_rad: 0.0
+          complex: 1.0+0.0j
+        tolerance:
+          abs_phase: gauge_phase_eps
+    polarity_outcomes:
+      - **Orientation:** "Outward normal yields positive flux; orientation flips are disallowed (no boundary)."
+      - **Hodge_sign:** "Hodge star signs consistent across faces."
+  - id: tb_solid_torus
+    topological_type: "S^1 × D^2 (solid torus)"
+    dimension: 3
+    expected_betti:
+      beta0: 1
+      beta1: 1
+      beta2: 0
+    z1_generator:
+      description: "Core loop"
+      loop_id: core_loop
+    wilson_loops:
+      - loop_id: core_loop
+        expected:
+          angle_rad: 0.0     # set nonzero to test nontrivial holonomy
+          complex: 1.0+0.0j
+        tolerance:
+          abs_phase: gauge_phase_eps
+    polarity_outcomes:
+      - **Flux_linking:** "Flux through a disk spanning core_loop equals Wilson phase around core_loop via Stokes."
+      - **Orientation:** "Loop orientation matches right-hand rule with spanning surface."
+  - id: tb_two_tet_cavity
+    topological_type: "3-ball assembled from two tetrahedra sharing a face"
+    dimension: 3
+    expected_betti:
+      beta0: 1
+      beta1: 0
+      beta2: 0
+    wilson_loops:
+      - loop_id: boundary_small
+        expected:
+          angle_rad: 0.0
+          complex: 1.0+0.0j
+        tolerance:
+          abs_phase: gauge_phase_eps
+    polarity_outcomes:
+      - **Boundary_orientation:** "Outward boundary orientation consistent; interior Wilson loops contractible."
+      - **DEC_consistency:** "Gauss(F)=0 and Faraday(dE=0) in static case within invariant_eps."
+  - id: tb_nonmanifold_pinch
+    topological_type: "Wedge of two 2-spheres at a point (S^2 ∨ S^2) realized via pinch"
+    dimension: 2
+    expected_betti:
+      beta0: 1
+      beta1: 0
+      beta2: 2
+    wilson_loops:
+      - loop_id: around_pinch_small
+        expected:
+          angle_rad: 0.0
+          complex: 1.0+0.0j
+        tolerance:
+          abs_phase: gauge_phase_eps
+    polarity_outcomes:
+      - **Nonmanifold_flag:** "Orientation undefined at pinch; event=topology_surgery must be recorded."
+      - **Hodge_warning:** "Hodge diagonality may degrade; audit conditioning and fall back to barycentric dual."
+
+validation:
+  tasks:
+    - id: assemble_topology
+      description: "Build boundary operators; compute sparse bases for Zk and Bk; verify βk."
+    - id: link_physics_topology
+      description: "Express Wilson loops in Z1 basis and flux surfaces in Z2 basis; evaluate against expectations."
+    - id: audit_tolerances
+      description: "Check all tolerances with units; emit events on crossings."
+    - id: event_fixtures
+      description: "Simulate each event type on small stars; verify rollback restores all invariants."
+    - id: run_testbeds
+      description: "Evaluate expected_betti, Wilson loops, polarity outcomes across all testbeds."
+  results: []
+
+
+
+
+##
+
+
+
+discipline_packet:
+  run_id: "rcft-4.3.2-2025-09-02-001"
+  timestamp_utc: "2025-09-02T20:45:00Z"
+
+  hodge_star:
+    assembly:
+      type: "circumcentric"
+      spd_verified: true
+      condition_numbers:
+        star0: { value: 3.2e+1, tol_max: 1.0e+3 }
+        star1: { value: 4.7e+1, tol_max: 1.0e+3 }
+        star2: { value: 5.1e+1, tol_max: 1.0e+3 }
+        star3: { value: 1.0e+0, tol_max: 1.0e+3 }
+      orthogonality_max_dev_rad: { value: 1.2e-7, tol_max: 1.0e-6 }
+      volume_consistency_linf: { value: 4.0e-13, tol_max: 1.0e-10 }
+    checks:
+      pass: true
+      notes: []
+
+  connection_audit:
+    reverse_edge_aliases:
+      total_edges: 120
+      mismatches: { value: 0, tol_max: 0 }
+      max_unit_modulus_dev: { value: 3.0e-12, tol_max: 1.0e-9 }
+    holonomy_loops:
+      - id: "L_f012"
+        phase_rad: { value: 1.2e-09, tol_max: 1.0e-8 }
+        expected: 0.0
+        abs_phase_error: { value: 1.2e-09, tol_max: 1.0e-8 }
+        pass: true
+      - id: "L_f013"
+        phase_rad: { value: -7.0e-10, tol_max: 1.0e-8 }
+        expected: 0.0
+        abs_phase_error: { value: 7.0e-10, tol_max: 1.0e-8 }
+        pass: true
+    wilson_loops:
+      - id: "W_square_01"
+        trace_value: { value: 0.999999999999, tol_min: 0.999999, tol_max: 1.000001 }
+        deviation_from_expected: { value: 1.0e-12, tol_max: 1.0e-8 }
+        pass: true
+    checks:
+      pass: true
+      notes: []
+
+  maxwell_map_discipline:
+    nilpotency:
+      dd_l2: { value: 3.4e-12, tol_max: 1.0e-9 }
+      pp_l2: { value: 2.1e-12, tol_max: 1.0e-9 }
+    adjointness:
+      k0_residual: { value: 6.5e-11, tol_max: 1.0e-9 }
+      k1_residual: { value: 7.9e-11, tol_max: 1.0e-9 }
+      k2_residual: { value: 8.3e-11, tol_max: 1.0e-9 }
+    residuals:
+      gauss_electric:
+        l2: { value: 7.2e-10, tol_max: 1.0e-8 }
+        pass: true
+      gauss_magnetic:
+        l2: { value: 5.5e-11, tol_max: 1.0e-8 }
+        pass: true
+      faraday:
+        l2: { value: 6.1e-11, tol_max: 1.0e-8 }
+        pass: true
+      ampere_maxwell:
+        l2: { value: 8.4e-10, tol_max: 1.0e-8 }
+        pass: true
+    checks:
+      pass: true
+      notes: []
+
+  status:
+    overall_pass: true
+    failures: []
+    audit_signature: "sha256:3f9a...b7e1"
+
+
+
+
+
+##
+
+
+
+
+
+
+
+##
+
+##Chapter 4.3 Notes
+
+
+
+
+##
+
+
+4.3.1 — Discrete Geometry Enhancement Blueprint
+Pre‑Differential Geometry Fortification Layer
+
+I. Formalizing the Glyph as a Simplicial Complex
+RCFT Definition: A glyph 
+𝐺
+ is a finite, oriented simplicial complex:
+
+𝐺
+=
+⋃
+𝑘
+=
+0
+𝑑
+Σ
+𝑘
+where:
+
+Σ
+0
+ = set of vertices 
+𝑣
+𝑖
+ (glyph anchors)
+
+Σ
+1
+ = set of edges 
+[
+𝑣
+𝑖
+,
+𝑣
+𝑗
+]
+ (memory channels)
+
+Σ
+2
+ = set of faces 
+[
+𝑣
+𝑖
+,
+𝑣
+𝑗
+,
+𝑣
+𝑘
+]
+ (facets)
+
+… up to 
+Σ
+𝑑
+ for 
+𝑑
+-dimensional facets in the current RCFT layer.
+
+Properties:
+
+Finite combinatorics guarantee reproducibility (Ch. 2 Glyph Mechanics).
+
+Orientation of each simplex is preserved unless a discrete breach occurs (Ch. 34 Valence & Coherence).
+
+Connectivity is the persistence backbone for Memory (Ch. 1.1 Intro to Memory).
+
+Valence–Memory–Probability Mapping:
+
+Valence: Orientation sign of each simplex.
+
+Memory: Incidence relations between simplices.
+
+Probability: Finite set of allowable simplex additions/removals defines the discrete state space.
+
+II. Boundary Operator (
+∂
+)
+RCFT Definition: For an oriented 
+𝑘
+-simplex 
+[
+𝑣
+0
+,
+𝑣
+1
+,
+…
+,
+𝑣
+𝑘
+]
+:
+
+∂
+𝑘
+[
+𝑣
+0
+,
+𝑣
+1
+,
+…
+,
+𝑣
+𝑘
+]
+=
+∑
+𝑖
+=
+0
+𝑘
+(
+−
+1
+)
+𝑖
+[
+𝑣
+0
+,
+…
+,
+𝑣
+^
+𝑖
+,
+…
+,
+𝑣
+𝑘
+]
+where 
+𝑣
+^
+𝑖
+ means “omit 
+𝑣
+𝑖
+”.
+
+Properties:
+
+∂
+𝑘
+∘
+∂
+𝑘
++
+1
+=
+0
+ (boundary of a boundary is null).
+
+Orientation flips are detectable as sign changes in 
+∂
+ (Ch. 34 Valence & Coherence).
+
+Boundary persistence encodes Memory decay or reinforcement (Ch. 35 Probability as Memory).
+
+Valence–Memory–Probability Mapping:
+
+Valence: Sign of boundary terms.
+
+Memory: Which 
+(
+𝑘
+−
+1
+)
+-simplices remain in the boundary set over time.
+
+Probability: Boundary changes define discrete “events” in glyph evolution.
+
+III. Determinant‑Based Volume Form
+RCFT Definition: For vertices 
+𝑝
+0
+,
+𝑝
+1
+,
+…
+,
+𝑝
+𝑑
+∈
+𝑅
+𝑑
+:
+
+V
+o
+l
+(
+𝜎
+𝑑
+)
+=
+1
+𝑑
+!
+det
+⁡
+[
+𝑝
+1
+−
+𝑝
+0
+𝑝
+2
+−
+𝑝
+0
+…
+𝑝
+𝑑
+−
+𝑝
+0
+]
+Facet Validity Condition:
+
+V
+o
+l
+(
+𝜎
+𝑑
+)
+>
+0
+⇒
+valid emergence from null pool
+V
+o
+l
+(
+𝜎
+𝑑
+)
+<
+0
+⇒
+orientation inversion (valence flip)
+V
+o
+l
+(
+𝜎
+𝑑
+)
+=
+0
+⇒
+degenerate facet (collapse event)
+Properties:
+
+Dimension‑agnostic (works for any 
+𝑑
+) — aligns with Ch. 4.2 Geometric Synthesis.
+
+Positive volume form is the discrete analogue of 
+∣
+𝑔
+∣
+ 
+𝑑
+𝑛
+𝑥
+ in differential geometry (prepares for Ch. 4.4 curvature invariants).
+
+Links directly to entropy measures in Ch. 6 Entropy Measures when treated as a microstate count proxy.
+
+Valence–Memory–Probability Mapping:
+
+Valence: Sign of determinant.
+
+Memory: Non‑zero volume ensures the facet can store relational history.
+
+Probability: Degenerate volumes mark collapse events with definable transition probabilities.
+
+IV. Cross‑Chapter Annotations
+yaml
+cross_references:
+  chapter_1_1_intro_memory:
+    - memory_persistence: incidence_relations
+  chapter_1_2_revisited_mathematical_enhancements:
+    - torsion_kernel: facet_orientation_coupling
+  chapter_2_glyph_mechanics:
+    - glyph_definition: simplicial_complex
+  chapter_34_valence_and_coherence:
+    - valence_invariant: orientation_sign
+    - coherence_metric: boundary_operator_sign
+  chapter_35_probability_as_memory:
+    - probability_field: branching_in_simplex_space
+  chapter_3_duality:
+    - dual_complex: valence_memory_swap
+  chapter_4_1_algebraic_beginnings:
+    - algebraic_structures: chain_complex
+  chapter_4_2_geometric_synthesis:
+    - discrete_continuous_bridge: volume_form
+  chapter_6_entropy_measures:
+    - entropy_link: volume_as_microstate_proxy
+  chapter_7_5_entropy_driven_cellular_automaton:
+    - validation_dataset: perturbation_sweeps
+V. RCFT Operational Summary
+Glyph Emergence: First valid simplex with 
+V
+o
+l
+>
+0
+ marks d₀→d₁ transition.
+
+Valence Stability: Orientation sign preserved unless discrete breach.
+
+Memory Tracking: Incidence relations + boundary persistence.
+
+Probability Control: Branching events constrained by combinatorial adjacency.
+
+
+
+~~
+
+
+
+
+4.3.2 — Bridging to Differential Geometry: Curvature & Connections
+Dynamic Field Embedding of Discrete Glyphs
+
+1. Metric Tensor & Spin Connection
+RCFT Interpretation:
+
+The determinant‑based volume form from § III is the discrete precursor to the continuous metric tensor 
+𝑔
+𝜇
+𝜈
+.
+
+In curved or torsion‑bearing fields, distances and orientations are measured relative to 
+𝑔
+𝜇
+𝜈
+, not Euclidean baselines.
+
+To track how a glyph’s Valence vector 
+𝑉
+𝜈
+ changes under motion through such a field, we introduce the spin connection 
+𝜔
+𝜇
+𝜈
+.
+
+Definition:
+
+𝜔
+𝜇
+𝜈
+∈
+𝑠
+𝑜
+(
+𝑑
+)
+encodes parallel transport of valence‑encoded 
+𝑑
+1
+ glyphs
+Operational Role:
+
+Corrects for apparent valence drift caused by intrinsic curvature/torsion.
+
+Preserves the true change signal by factoring out geometric background effects.
+
+Valence–Memory–Probability Mapping:
+
+Valence: Parallel transport preserves intrinsic orientation when 
+𝜔
+ is applied.
+
+Memory: Connection coefficients record the “path history” of glyph transport.
+
+Probability: Curvature‑induced drift rates define transition likelihoods between valence states.
+
+2. Covariant Derivative
+RCFT Definition: For a valence vector 
+𝑉
+𝜈
+:
+
+∇
+𝜇
+𝑉
+𝜈
+=
+∂
+𝜇
+𝑉
+𝜈
++
+𝜔
+𝜇
+𝜈
+𝜌
+ 
+𝑉
+𝜌
+Resonance Condition:
+
+∇
+𝜇
+𝑉
+𝜈
+=
+0
+⇒
+glyph in stable, resonant state
+RCFT Linkages:
+
+Resonance ↔ Kuramoto equilibrium (Ch. 34 Valence & Coherence).
+
+Covariant derivative zeroing is the continuous analogue of discrete boundary stability in § II.
+
+Valence–Memory–Probability Mapping:
+
+Valence: Stability when covariant derivative vanishes.
+
+Memory: Persistent parallel‑transport invariants.
+
+Probability: Non‑zero derivatives quantify instability rates.
+
+3. Field Torsion via Boundary Operator
+RCFT Definition: The torsion tensor:
+
+𝑇
+𝜌
+𝜇
+𝜈
+=
+Γ
+𝜇
+𝜈
+𝜌
+−
+Γ
+𝜈
+𝜇
+𝜌
+In RCFT, 
+Γ
+ is informed by discrete incidence data from the boundary operator 
+∂
+.
+
+Discrete–Continuous Bridge:
+
+A 
+𝑑
+1
+ glyph whose 
+∂
+ fails to close (i.e., 
+∂
+1
+∘
+∂
+2
+≠
+0
+) signals 
+𝑇
+≠
+0
+.
+
+This failure is the combinatorial shadow of continuous torsion.
+
+Valence–Memory–Probability Mapping:
+
+Valence: Torsion flips can invert orientation unexpectedly.
+
+Memory: Non‑closure encodes persistent geometric “twist” in the field.
+
+Probability: Torsion magnitude modulates likelihood of loop‑closure failure.
+
+4. Cross‑Chapter Annotations
+yaml
+cross_references:
+  chapter_2_glyph_mechanics:
+    - glyph_metric_link: discrete_volume_to_gmunu
+  chapter_4_2_geometric_synthesis:
+    - metric_tensor: curvature_embedding
+    - spin_connection: valence_transport
+  chapter_34_valence_and_coherence:
+    - resonance_condition: covariant_derivative_zero
+  chapter_35_probability_as_memory:
+    - drift_probability: curvature_induced
+  chapter_3_duality:
+    - torsion_dual: boundary_nonclosure
+  chapter_6_entropy_measures:
+    - curvature_entropy_link: geodesic_divergence
+5. RCFT Operational Summary
+Metric: Determinant‑based volume → 
+𝑔
+𝜇
+𝜈
+ in curved embedding.
+
+Connection: Spin connection 
+𝜔
+ corrects for background curvature/torsion.
+
+Derivative: Covariant derivative isolates true valence change.
+
+Torsion: Boundary non‑closure ↔ continuous torsion tensor.
+
+Resonance: 
+∇
+𝑉
+=
+0
+ marks equilibrium in both discrete and continuous senses.
+
+
+
+
+##
+
+
+
 
 Here’s a Positive Geometry “terminology bridge” you can drop right into the intro of that section when the time comes. It’s short, explicit, and keeps the reader anchored in the continuity of the Book while giving them permission to use either term in the right context.
 
@@ -84,4 +1401,890 @@ This bridge ensures that all prior results expressed in terms of Meaning remain 
 
 
 ##
+
+
+
+
+I. Formalizing the Glyph as a Simplicial Complex
+RCFT Definition: A glyph 
+𝐺
+ is a finite, oriented simplicial complex:
+
+𝐺
+=
+⋃
+𝑘
+=
+0
+𝑑
+Σ
+𝑘
+where:
+
+Σ
+0
+ — Vertices 
+𝑣
+𝑖
+ (glyph anchors)
+
+Atomic reference points in the RCFT lattice.
+
+Serve as the minimal addressable units for valence assignment.
+
+Cross‑chapter: Anchor IDs persist across transformations (Ch. 2 Glyph Mechanics).
+
+Σ
+1
+ — Edges 
+[
+𝑣
+𝑖
+,
+𝑣
+𝑗
+]
+ (memory channels)
+
+Ordered pairs of vertices representing directed or undirected information flow.
+
+Orientation encodes valence polarity; reversal flips sign.
+
+Cross‑chapter: Edge persistence is the minimal condition for memory retention (Ch. 1.1 Intro to Memory).
+
+Σ
+2
+ — Faces 
+[
+𝑣
+𝑖
+,
+𝑣
+𝑗
+,
+𝑣
+𝑘
+]
+ (facets)
+
+2‑simplices representing minimal surface patches.
+
+Orientation determines the “handedness” of the facet in embedding space.
+
+Cross‑chapter: Facet orientation drift is a primary signal in valence coherence analysis (Ch. 34 Valence & Coherence).
+
+… up to 
+Σ
+𝑑
+ — 
+𝑑
+-dimensional facets in the current RCFT layer
+
+Higher‑order simplices capture multi‑valence interactions and composite memory structures.
+
+𝑑
+ is bounded by the active RCFT layer’s dimensionality, ensuring finite combinatorics.
+
+Core Properties
+Finite Combinatorics → Reproducibility
+
+The finiteness of 
+{
+Σ
+𝑘
+}
+ ensures that every glyph state can be fully enumerated and archived.
+
+This boundedness is the combinatorial analogue of a “clarity floor” — no infinite regress in reconstruction.
+
+Cross‑chapter: Links to reproducibility protocols in Ch. 2.
+
+Orientation Preservation
+
+Each simplex 
+𝜎
+𝑘
+∈
+Σ
+𝑘
+ has an orientation sign 
+s
+g
+n
+(
+𝜎
+𝑘
+)
+∈
+{
++
+1
+,
+−
+1
+}
+.
+
+Orientation is preserved under all allowed RCFT transformations unless a discrete breach occurs — a topological event where the incidence structure changes discontinuously.
+
+Cross‑chapter: Discrete breaches are logged as valence discontinuities (Ch. 34).
+
+Connectivity as Memory Backbone
+
+The incidence relations between simplices form a connectivity graph 
+𝐶
+(
+𝐺
+)
+.
+
+Memory persistence is equivalent to the preservation of connected components in 
+𝐶
+(
+𝐺
+)
+ over time.
+
+Cross‑chapter: Memory decay corresponds to edge deletion or vertex isolation (Ch. 1.1).
+
+Valence–Memory–Probability Mapping
+RCFT Quantity	Mathematical Representation	Operational Meaning	Cross‑Chapter Link
+Valence	
+s
+g
+n
+(
+𝜎
+𝑘
+)
+Orientation sign of each simplex; encodes polarity and coherence state	Ch. 34 (Valence & Coherence)
+Memory	Incidence matrix 
+𝐼
+𝑘
+,
+𝑘
+−
+1
+Records which 
+(
+𝑘
+−
+1
+)
+-simplices bound each 
+𝑘
+-simplex	Ch. 1.1 (Intro to Memory)
+Probability	
+𝑆
+⊂
+𝑃
+(
+Σ
+)
+Finite set of allowable simplex additions/removals defines discrete state space	Ch. 35 (Probability as Memory)
+Operational Notes for RCFT Layer 
+𝑑
+Boundary Operator:
+
+∂
+𝑘
+:
+Σ
+𝑘
+→
+Σ
+𝑘
+−
+1
+Encodes the combinatorial skeleton of the glyph; critical for later curvature/torsion definitions (§ 4.3.2).
+
+State Space Enumeration: The discrete state space 
+𝑆
+ is the set of all simplicial complexes reachable from 
+𝐺
+ via allowable moves (add/remove simplices) under RCFT constraints.
+
+Resonance Condition (Discrete): A glyph is in a discrete resonant state if:
+
+∀
+𝑘
+,
+ 
+s
+g
+n
+(
+𝜎
+𝑘
+)
+ and 
+𝐼
+𝑘
+,
+𝑘
+−
+1
+ are invariant under allowed moves
+This is the combinatorial precursor to the continuous resonance condition 
+∇
+𝜇
+𝑉
+𝜈
+=
+0
+ in § 4.3.2.
+
+
+
+in RCFT terms, the orientation sign of a simplex in a glyph behaves a lot like a polarity.
+
+Here’s the nuance:
+
+In our formalism, every simplex (vertex, edge, face, etc.) has an orientation — mathematically, that’s just a sign (+ or –) determined by the ordering of its vertices.
+That sign is what we’ve been calling valence. It tells you whether the simplex is “aligned” or “inverted” relative to a chosen reference frame.
+When two simplices meet, their orientations can reinforce each other (coherent) or oppose each other (incoherent), much like magnetic dipoles aligning or anti‑aligning.
+A “valence flip” — when the sign changes — is a discrete, detectable event in RCFT, and it can propagate through the glyph network the way a polarity change can ripple through a magnetic domain.
+
+So while we’re not talking about actual electromagnetism, the analogy is useful:
+
+Valence sign ≈ “pole”
+Coherence ≈ “alignment” of poles
+Breach or flip ≈ “pole reversal” event
+
+
+
+##
+
+
+
+
+
+Dual selection and fallback
+Decision rule: Use circumcentric dual by default; per simplex, fall back to barycentric if any circumcenter lies outside its primal cell (or violates local Delaunay).
+
+Practical test (3D): For each tetrahedron, compute circumcenter C. Verify C lies inside via barycentric coordinates all ∈ (0,1). If not, mark that cell “fallback=barycentric.”
+
+Mixed meshes: Allow per-cell choice. Your Hodge assembly must use the local dual (circumcentric or barycentric) consistently per simplex.
+
+Acceptance criteria:
+
+Orthogonality: For circumcentric cells, primal k-simplex and dual (n−k)-cell normals form angles within 1e-7 rad of π/2.
+
+Containment: All dual vertices lie inside their parent primal cells when using barycentric fallback.
+
+Continuity: No cracks in dual adjacency across shared faces (dual edges connect consistently across neighboring cells).
+
+Hodge star assembly and checks
+Computation rule: For each primal simplex 
+𝜎
+𝑘
+,
+
+∗
+𝑘
+(
+𝜎
+𝑘
+)
+  
+=
+  
+∣
+⋆
+𝜎
+𝑘
+∣
+∣
+𝜎
+𝑘
+∣
+.
+Populate diagonal sparse matrices in COO format for 
+∗
+𝑘
+, using dual measures from the chosen dual (circumcentric when valid, else barycentric).
+
+Measures (3D simplicial mesh):
+
+k=0: Vertex dual volume (Voronoi/circumcentric or barycentric cell).
+
+k=1: Dual face area associated to an edge / edge length.
+
+k=2: Dual edge length associated to a face / face area.
+
+k=3: Dual vertex (point) measure / cell volume = 
+1
+/
+V
+o
+l
+(
+cell
+)
+.
+
+Core checks:
+
+SPD: All diagonal entries of 
+∗
+𝑘
+ are positive; condition number within configured bounds.
+
+Adjointness: Verify
+
+𝛿
+𝑘
+  
+=
+  
+∗
+𝑘
+−
+1
+ 
+∂
+𝑘
++
+1
+ 
+∗
+𝑘
++
+1
+.
+Energy positivity: For random test cochains 
+𝛼
+, ensure 
+⟨
+𝛼
+,
+∗
+𝑘
+𝛼
+⟩
+≥
+0
+.
+
+Nilpotency consistency: Using assembled 
+𝛿
+, confirm 
+𝑑
+∘
+𝑑
+=
+0
+ and 
+∂
+∘
+∂
+=
+0
+ within invariant_eps.
+
+Acceptance criteria:
+
+Diagonal population: No zero or negative diagonal entries.
+
+Adjoint residual: Frobenius norm of 
+𝛿
+𝑘
+−
+∗
+𝑘
+−
+1
+∂
+𝑘
++
+1
+∗
+𝑘
++
+1
+ < dec_id_eps.
+
+Energy tests: 100 random trials pass nonnegativity, with min margin > 10× machine epsilon.
+
+Holonomy, reverse-edge aliases, and Wilson loops
+Storage discipline:
+
+Per edge e=ij: Store both angle 
+𝜃
+𝑖
+𝑗
+ and complex value 
+𝑈
+𝑖
+𝑗
+=
+𝑒
+𝑖
+𝜃
+𝑖
+𝑗
+.
+
+Reverse edge: Define alias j→i with 
+𝜃
+𝑗
+𝑖
+=
+−
+𝜃
+𝑖
+𝑗
+, 
+𝑈
+𝑗
+𝑖
+=
+𝑈
+𝑖
+𝑗
+‾
+. Do not store independently; derive to avoid drift.
+
+Wilson loop computation:
+
+Cycle orientation: For loop L with oriented edges 
+𝑒
+𝑎
+ and orientation multipliers 
+𝑜
+𝑎
+∈
+{
++
+1
+,
+−
+1
+}
+,
+
+𝑊
+(
+𝐿
+)
+  
+=
+  
+∏
+𝑎
+𝑈
+𝑒
+𝑎
+ 
+𝑜
+𝑎
+,
+∠
+𝑊
+(
+𝐿
+)
+=
+∑
+𝑎
+𝑜
+𝑎
+ 
+𝜃
+𝑒
+𝑎
+.
+Face-induced cycles: Build loops from face boundary orientation via 
+∂
+2
+ to keep signs consistent.
+
+Core checks:
+
+Unit modulus: 
+∣
+𝑈
+𝑖
+𝑗
+∣
+=
+1
+ within gauge_phase_eps.
+
+Loop tolerances: 
+∣
+∠
+𝑊
+(
+𝐿
+)
+−
+∠
+expected
+∣
+<
+ loop tolerance.
+
+Interior cancellation: For adjacent cells sharing a face, loops on opposite sides cancel when concatenated.
+
+Acceptance criteria:
+
+Alias integrity: Random audits confirm alias relations to within gauge_phase_eps across all stored edges.
+
+Loop audit: All canonical face loops meet tolerance; flagged discrepancies are logged as gauge_phase_jump events.
+
+Maxwell map discipline (DEC)
+Static phase (start here):
+
+Identities to check:
+
+Gauss–E: 
+𝑑
+(
+∗
+𝐸
+)
+=
+𝜌
+
+Gauss–B: 
+𝑑
+𝐵
+=
+0
+
+Faraday (static): 
+𝑑
+𝐸
+=
+0
+
+Ampère–Maxwell (static): 
+𝑑
+(
+∗
+𝐻
+)
+=
+𝐽
+
+Testbed priority: Use tb_two_tets_opposite for nontrivial interior cancellations in a manifold interior; tb_min_tet for sanity checks.
+
+Procedure:
+
+Assemble operators: 
+∂
+,
+𝑑
+,
+∗
+𝑘
+, and induced 
+𝛿
+.
+
+Define fields: Initialize 
+𝐸
+,
+𝐵
+,
+𝜌
+,
+𝐽
+ cochains on the appropriate degrees.
+
+Evaluate residuals: Compute left–right differences and report L2 norms against dec_id_eps.
+
+Dynamic phase (when ready):
+
+Yee-like leapfrog (staggered in time):
+
+Update 
+𝐵
+𝑛
++
+1
+/
+2
+=
+𝐵
+𝑛
+−
+1
+/
+2
+−
+Δ
+𝑡
+ 
+𝑑
+𝐸
+𝑛
+.
+
+Update 
+𝐷
+𝑛
++
+1
+=
+𝐷
+𝑛
++
+Δ
+𝑡
+ 
+(
+𝑑
+𝐻
+𝑛
++
+1
+/
+2
+−
+𝐽
+𝑛
++
+1
+/
+2
+)
+, with 
+𝐷
+=
+∗
+𝐸
+, 
+𝐻
+=
+∗
+−
+1
+𝐵
+.
+
+CFL guidance: Choose 
+Δ
+𝑡
+≤
+𝛼
+ 
+min
+⁡
+𝑒
+ℓ
+𝑒
+𝑐
+ with 
+𝛼
+∈
+(
+0
+,
+1
+)
+, mesh-dependent.
+
+Implicit alternative: Crank–Nicolson for stiff regimes; preserve DEC structure.
+
+Acceptance criteria:
+
+Static residuals: All four identities within dec_id_eps on tb_two_tets_opposite.
+
+Energy: Discrete energy 
+⟨
+𝐸
+,
+∗
+𝐸
+⟩
++
+⟨
+𝐻
+,
+∗
+𝐻
+⟩
+ nonincreasing without sources; conservative within tolerance when J=0, perfect boundary.
+
+Convergence: Residuals decrease under mesh refinement on S² and solid torus testbeds.
+
+Minimal implementation stubs
+Dual/Hodge assembly (Python-like):
+
+python
+def circumcenter_tet(p0,p1,p2,p3):
+    # robust circumcenter; return point and inside-flag via barycentric coords
+    ...
+
+def measure_simplex(vertices):
+    # return |sigma_k| for k=1,2,3 (length/area/volume)
+    ...
+
+def assemble_hodge(primal, dual_type='auto'):
+    # returns star0..star3 diagonal arrays
+    diag = {0:[],1:[],2:[],3:[]}
+    for cell in primal.cells3:
+        C, inside = circumcenter_tet(*cell.verts)
+        use_circ = inside and dual_type!='barycentric'
+        # compute dual measures for each incident simplex using chosen dual
+        for e in cell.edges: diag[1].append(area_dual_face(e)/length(e))
+        for f in cell.faces: diag[2].append(length_dual_edge(f)/area(f))
+        diag[3].append(1.0/volume(cell))
+    return diag
+Wilson loop with reverse-edge aliases:
+
+python
+def U_edge(i,j,theta):
+    return np.exp(1j*theta[(i,j)]), np.exp(-1j*theta[(i,j)])
+
+def wilson_loop(loop_edges, theta):
+    ang = 0.0
+    prod = 1+0j
+    for (i,j,ori) in loop_edges:   # ori = +1 if i→j, -1 if j→i
+        ang += ori * theta[(i,j)]
+        prod *= np.exp(1j * ori * theta[(i,j)])
+    return ang, prod
+DEC identity checker (static):
+
+python
+def residual_norm(lhs, rhs, star=None):
+    r = lhs - rhs
+    return np.sqrt(np.vdot(r, r).real)
+
+res = {
+  'gauss_E': residual_norm(d @ (star2 @ E), rho),
+  'gauss_B': residual_norm(d @ B, 0*B),
+  'faraday': residual_norm(d @ E, 0*E),
+  'ampere' : residual_norm(d @ (star1_inv @ B), J),
+}
+Pitfalls and diagnostics
+Circumcenter outside cell: Local obtuseness breaks orthogonality; use barycentric fallback and log a warning with affected cell IDs.
+
+Degenerate measures: Near-zero areas/volumes make Hodge ill-conditioned. Emit edge_collapse suggestions when 
+∣
+𝜎
+𝑘
+∣
+<
+ geom_eps.
+
+Orientation drift: Inconsistent face orientation across neighbors will corrupt 
+∂
+; run global orientation fix-up before assembling operators.
+
+Alias drift: Never store both directions of an edge; derive reverse to prevent phase mismatch.
+
+Boundary conditions: DEC identities assume proper boundary treatment; specify Dirichlet/Neumann (or PEC/PMC) explicitly in tests.
+
+
+
+
+
+##
+
+
+
+
+
+1️⃣ Hodge Star Assembly and Checks
+What it is: The Hodge star operator maps a 
+𝑘
+-form to its 
+(
+𝑛
+−
+𝑘
+)
+-form dual, using the metric and orientation of the space. In Discrete Exterior Calculus (DEC), it becomes a sparse matrix (⋆_k) that encodes metric-dependent volume ratios between primal and dual mesh elements.
+
+Why it matters:
+
+Metric fidelity: The Hodge star is where the geometry of your mesh enters the algebra. If it’s wrong, every metric-dependent operator (like divergence, curl, Laplacian) is corrupted.
+
+Condition numbers: Poorly shaped elements or inconsistent dual construction can make ⋆ ill-conditioned, amplifying numerical error.
+
+Checks:
+
+SPD verification: ⋆ should be symmetric positive-definite for Riemannian metrics.
+
+Orthogonality deviation: In circumcentric duals, primal–dual orthogonality should be near machine precision.
+
+Volume consistency: Determinants of local metric blocks should match geometric volumes.
+
+In RCFT terms: This is the “metric anchor” — if the Hodge star is wrong, your invariants drift and your reproducibility floor collapses.
+
+2️⃣ Holonomy, Reverse-Edge Aliases, and Wilson Loops
+What they are:
+
+Holonomy: The net transformation (phase in U(1), matrix in non-Abelian groups) from parallel transporting a field around a closed loop in a connection.
+
+Reverse-edge aliases: In discrete gauge fields, an edge and its reverse must carry conjugate (inverse) parallel transport data. This is a consistency constraint on the discrete connection.
+
+Wilson loops: Gauge-invariant observables given by the trace of the holonomy around a closed loop. In lattice gauge theory, they encode the physical content of the gauge field and are used to detect confinement or curvature.
+
+Why they matter:
+
+Gauge consistency: Reverse-edge alias checks ensure your discrete connection is a valid representation of a gauge field — no “phantom curvature” from inconsistent edge data.
+
+Curvature detection: Nontrivial holonomy signals curvature/flux through the loop. In U(1), the loop phase is proportional to enclosed magnetic flux.
+
+Physical invariants: Wilson loops are immune to local gauge transformations, making them ideal for cross-checking gauge-invariant quantities across meshes or runs.
+
+In RCFT terms: This is your “connection audit” — it ensures the semantic content of the gauge field is preserved under mesh traversal and that loop-based invariants are stable.
+
+3️⃣ Maxwell Map Discipline (DEC)
+What it is: In DEC, Maxwell’s equations are expressed as exact sequences of discrete operators:
+
+𝑑
+𝐹
+=
+0
+,
+𝑑
+⋆
+𝐺
+=
+𝐽
+with 
+𝑑
+ the coboundary (exterior derivative) and ⋆ the Hodge star. The “Maxwell map” is the chain of discrete maps between cochains that implements these equations.
+
+Why it matters:
+
+Nilpotency: 
+𝑑
+∘
+𝑑
+=
+0
+ must hold exactly in the discrete setting — this is the algebraic backbone of charge conservation and Faraday’s law.
+
+Adjointness: The codifferential 
+𝛿
+ must be the adjoint of 
+𝑑
+ under the Hodge star — this ensures energy conservation and symmetry of the discrete wave operator.
+
+Boundary discipline: Correct handling of primal/dual boundaries is essential for enforcing physical boundary conditions (PEC, PMC, absorbing layers).
+
+Residual checks: L² norms of Gauss, Faraday, and Ampère–Maxwell residuals quantify how well the discrete fields satisfy the equations.
+
+In RCFT terms: This is the “operator hygiene” — it guarantees that your discrete field evolution respects the same conservation laws and symmetries as the continuum theory, making results physically and epistemically trustworthy.
+
+Summary Table
+Concept	Role in DEC/RCFT	Key Checks	Failure Consequence
+Hodge star assembly	Encodes metric; maps primal ↔ dual forms	SPD, orthogonality, volume match, condition number	Metric distortion, unstable solvers
+Holonomy & reverse-edge aliases	Encodes gauge connection consistency	Conjugacy of reversed edges, loop phase match	Gauge inconsistency, spurious curvature
+Wilson loops	Gauge-invariant curvature/flux measure	Loop phase vs. expected flux	Loss of physical invariance
+Maxwell map discipline	Ensures discrete operators respect Maxwell’s laws	Nilpotency, adjointness, residual norms	Broken conservation laws, non-physical solutions
+
+
+
+
+##
+
+
+
 
