@@ -204,6 +204,1724 @@ Fig. 7.5d	ΔS(β) decreases monotonically from β_min baseline.	ΔS(β) decrea
 ##
 
 
+Sparse‑graph mixing: concrete, unbiased mitigations
+You’ve got the right levers. Below are drop‑in, acceptance‑correct algorithms with tuning knobs and pass/fail gates so you can harden ESS when p_edge drops or heterogeneity rises.
+
+Replica exchange in graph space
+How it helps
+Global moves across sparsity: Temper in p_edge to traverse bottlenecks that local spin moves can’t cross, then pull samples back to the target ladder.
+
+Extended ensemble and swap rule
+Joint density per replica i: 
+𝜋
+(
+𝐺
+𝑖
+,
+𝑠
+𝑖
+∣
+𝑝
+𝑖
+)
+∝
+𝜋
+graph
+(
+𝐺
+𝑖
+∣
+𝑝
+𝑖
+)
+ 
+𝑒
+−
+𝛽
+𝐻
+(
+𝑠
+𝑖
+∣
+𝐺
+𝑖
+)
+.
+
+Swap acceptance between ladders i and j (swap p only or swap full states — both yield same test):
+
+𝛼
+swap
+=
+min
+⁡
+(
+1
+,
+ 
+𝜋
+graph
+(
+𝐺
+𝑖
+∣
+𝑝
+𝑗
+)
+ 
+𝜋
+graph
+(
+𝐺
+𝑗
+∣
+𝑝
+𝑖
+)
+𝜋
+graph
+(
+𝐺
+𝑖
+∣
+𝑝
+𝑖
+)
+ 
+𝜋
+graph
+(
+𝐺
+𝑗
+∣
+𝑝
+𝑗
+)
+)
+If 
+𝜋
+graph
+ is ER(p) with 
+𝑚
+ edges over 
+𝑀
+=
+𝑛
+(
+𝑛
+−
+1
+)
+2
+ possible:
+
+log
+⁡
+ratio
+=
+𝑚
+𝑖
+log
+⁡
+𝑝
+𝑗
+𝑝
+𝑖
++
+(
+𝑀
+−
+𝑚
+𝑖
+)
+log
+⁡
+1
+−
+𝑝
+𝑗
+1
+−
+𝑝
+𝑖
++
+𝑚
+𝑗
+log
+⁡
+𝑝
+𝑖
+𝑝
+𝑗
++
+(
+𝑀
+−
+𝑚
+𝑗
+)
+log
+⁡
+1
+−
+𝑝
+𝑖
+1
+−
+𝑝
+𝑗
+Minimal schedule
+Ladder: 
+𝑝
+∈
+{
+0.30
+,
+0.40
+,
+0.50
+}
+ at fixed 
+𝛽
+.
+
+Within‑replica updates: Your current kernel (local + any extras below).
+
+Swap period: every 50 sweeps; target mean swap acceptance 
+0.25
+–
+0.45
+.
+
+Guardrails
+Retain only target‑p samples.
+
+Abort if swap acceptance < 0.15 across 3 consecutive windows; widen ladder or add an intermediate p.
+
+Degree‑weighted multi‑try Metropolis (MTM)
+When to use
+Heterogeneous degree: Preferentially probe low‑degree “thin” regions while staying unbiased via MTM correction.
+
+Candidate and acceptance
+Selection distribution: 
+𝑝
+sel
+(
+𝑖
+)
+∝
+1
+deg
+⁡
+(
+𝑖
+)
++
+𝜖
+ (normalize each sweep).
+
+Build M candidates: For each 
+𝑖
+𝑘
+, propose a local change (e.g., flip Ising or recolor Potts).
+
+Weights (symmetric local proposals): For candidate 
+𝑦
+𝑘
+,
+
+𝑤
+𝑘
+=
+𝜋
+(
+𝑦
+𝑘
+)
+𝑞
+(
+𝑥
+→
+𝑦
+𝑘
+)
+with
+𝑞
+(
+𝑥
+→
+𝑦
+𝑘
+)
+=
+𝑝
+sel
+(
+𝑖
+𝑘
+)
+⋅
+1
+𝐾
+−
+1
+ 
+ 
+(
+Potts
+)
+,
+  
+𝑝
+sel
+(
+𝑖
+𝑘
+)
+ 
+ 
+(
+Ising
+)
+Choose one candidate 
+𝑦
+ with probability 
+𝑤
+𝑘
+/
+∑
+𝑘
+𝑤
+𝑘
+.
+
+Draw backward set: Build 
+𝑀
+−
+1
+ fresh proposals from 
+𝑦
+ with 
+𝑝
+sel
+(
+𝑦
+)
+ and include 
+𝑥
+.
+
+Accept with:
+
+𝛼
+MTM
+=
+min
+⁡
+(
+1
+,
+ 
+∑
+𝑘
+=
+1
+𝑀
+𝑤
+𝑘
+∑
+𝑘
+=
+1
+𝑀
+𝑤
+𝑘
+′
+)
+Pseudocode
+python
+# x: current (G, s); compute p_sel over nodes; sample M indices i_k ~ p_sel
+C = [local_change(x, i_k) for k in 1..M]              # propose flips/recolors
+w = [pi(c)/q(x->c) for c in C]
+y = sample(C, probs=normalize(w))
+
+# backward set at y
+C_back = [local_change(y, j_k) for k in 1..(M-1)] + [x]
+w_back = [pi(c)/q(y->c) for c in C_back]
+
+accept = min(1, sum(w)/sum(w_back))
+x = y if rand() < accept else x
+Tuning
+M: 4–8. Gains saturate beyond 8.
+
+ε: 0.5–1.0 to avoid over‑penalizing hubs.
+
+Cap work: Stop early if cumulative weight exceeds a high threshold; the acceptance ratio remains valid.
+
+Sparsity‑aware bounded cluster flips
+Why this variant
+Cluster moves without breaking guards: Use Wolff‑style clusters but bound size to avoid pathological spans in sparse regimes; correct with Metropolis on the flip.
+
+Build and accept
+Bond probability: 
+𝑝
+𝑏
+=
+1
+−
+𝑒
+−
+𝛽
+𝐽
+ on edges between same‑state neighbors.
+
+Grow a single cluster 
+𝐶
+ from a random seed using 
+𝑝
+𝑏
+; abort build if 
+∣
+𝐶
+∣
+>
+𝑠
+max
+⁡
+ (no move).
+
+Propose flip:
+
+Ising: invert spins in 
+𝐶
+.
+
+Potts: recolor 
+𝐶
+ to color 
+𝑐
+≠
+ current, sampled from heat‑bath on boundary.
+
+Accept with Metropolis:
+
+𝛼
+cl
+=
+min
+⁡
+(
+1
+,
+ 
+𝑒
+−
+𝛽
+Δ
+𝐻
+)
+Cluster‑construction cancels in the ratio because it’s identical in forward and reverse given the boundary states; the hard cap is handled by rejecting on overflow in both directions.
+
+Tuning
+s_max: 
+0.02
+–
+0.05
+ 
+𝑁
+ (tight in sparse graphs).
+
+Attempt rate: One cluster attempt per sweep per 1000 nodes; increase if 
+𝜏
+int
+ inflates.
+
+Nonreversible lifted sweeps (momentum bit)
+Intuition
+Break diffusive back‑tracking: Add an auxiliary momentum 
+𝑣
+∈
+{
++
+1
+,
+−
+1
+}
+ that persists across accepted moves and flips on rejection, satisfying skew detailed balance.
+
+Lifted single‑site kernel
+Skew detailed balance: 
+𝜋
+(
+𝑥
+)
+𝐾
++
+(
+𝑥
+→
+𝑦
+)
+=
+𝜋
+(
+𝑦
+)
+𝐾
+−
+(
+𝑦
+→
+𝑥
+)
+.
+
+Implementation sketch:
+
+Maintain an ordered list of nodes; a pointer p and momentum v.
+
+Propose an update at node p (local Metropolis or Gibbs).
+
+If accepted, set p ← p + v (wrap), keep v.
+
+If rejected, flip v ← −v, then set p ← p + v.
+
+python
+# State: (x, p, v)
+propose local_change at node p -> y
+if rand() < alpha_local(x->y):
+    x = y; p = step(p, v)        # persist direction
+else:
+    v = -v; p = step(p, v)       # reflect on reject
+Notes
+Unbiased: Invariant measure remains 
+𝜋
+.
+
+Benefit: Cuts 
+𝜏
+int
+ 10–40% in practice on lattices and sparse graphs with cheap bookkeeping.
+
+Compatibility: Composes with MTM or Gibbs as the “local” step.
+
+Diagnostics and gates to enforce
+ESS/time: Target ≥ 0.80× dense‑graph baseline; flag if < 0.70×.
+
+Autocorrelation: 
+𝜏
+int
+(
+𝐸
+)
+, 
+𝜏
+int
+(
+∣
+𝑃
+∣
+)
+ ≤ 
+1.25
+×
+ dense baseline.
+
+Acceptance bands:
+
+Local/MTM: 0.5–0.7.
+
+Cluster: 0.2–0.5 (bounded clusters tend lower).
+
+Replica swaps: 0.25–0.45.
+
+Connectivity health: Giant component ≥ 0.90 N; conductance proxy ≥ 0.05.
+
+Stop conditions: If two metrics fail in a window, pause scaling and widen the p ladder or increase cluster attempts before proceeding.
+
+YAML knobs for your runs
+yaml
+mixing_controls:
+  replica_exchange:
+    p_ladder: [0.30, 0.40, 0.50]
+    swap_period_sweeps: 50
+    min_swap_accept: 0.25
+    retain_target_only: true
+
+  mtm_degree_weighted:
+    enabled: true
+    M: 6
+    epsilon_deg: 0.8          # p_sel(i) ∝ 1/(deg(i)+epsilon)
+    kap_potts: true           # include 1/(K-1) in q for Potts
+    early_stop_weight_cap: 5.0
+
+  bounded_cluster:
+    enabled: true
+    p_bond: "1 - exp(-beta*J)"  # computed per edge
+    s_max_fraction: 0.03
+    attempts_per_sweep_per_1k: 1
+    abort_on_overflow: true
+    accept_rule: "Metropolis exp(-beta*ΔH)"
+
+  lifted_sweep:
+    enabled: true
+    order: "static_random"     # fixed random permutation per run
+    momentum_bit: true
+    compose_with: "mtm"        # local step used inside lifted kernel
+
+diagnostics_gates:
+  ess_per_time_min_vs_dense: 0.80
+  tau_int_max_multiplier: 1.25
+  local_accept_range: [0.50, 0.70]
+  cluster_accept_range: [0.20, 0.50]
+  swap_accept_range: [0.25, 0.45]
+  giant_component_min_fraction: 0.90
+  conductance_proxy_min: 0.05
+  yellow_if_one_fails: true
+  red_if_two_fail: true
+
+
+
+##
+
+
+Universality‑class mapping
+You’re after lock‑in, not vibes. Here’s a clean, auditable path to show your model sits where you claim.
+
+Observables and exact definitions
+Order parameter (Ising, K=2):
+
+𝑚
+=
+1
+𝑁
+∑
+𝑖
+𝑠
+𝑖
+,
+𝑠
+𝑖
+∈
+{
+−
+1
+,
++
+1
+}
+Order parameter (Potts, K=q≥3):
+
+𝑚
+=
+𝑞
+ 
+𝑛
+max
+⁡
+𝑁
+−
+1
+  
+/
+  
+(
+𝑞
+−
+1
+)
+where 
+𝑛
+max
+⁡
+ is the count of the majority color. This scalar maps disordered to 
+𝑚
+≈
+0
+, ordered to 
+𝑚
+≈
+1
+.
+
+Binder cumulant:
+
+𝑈
+4
+(
+𝛽
+,
+𝐿
+)
+=
+1
+−
+⟨
+𝑚
+4
+⟩
+3
+ 
+⟨
+𝑚
+2
+⟩
+2
+Use 
+𝑚
+ (not 
+∣
+𝑚
+∣
+) for K=2 with symmetry‑breaking handled by finite sampling or a tiny field only for thermalization; revert to 
+ℎ
+=
+0
+ for measurements.
+
+Susceptibility and specific heat (per site):
+
+𝜒
+=
+𝑁
+(
+⟨
+𝑚
+2
+⟩
+−
+⟨
+∣
+𝑚
+∣
+⟩
+2
+)
+,
+𝐶
+=
+𝛽
+2
+𝑁
+(
+⟨
+𝐸
+2
+⟩
+−
+⟨
+𝐸
+⟩
+2
+)
+Second‑moment correlation length on periodic L×L:
+
+𝜉
+(
+𝛽
+,
+𝐿
+)
+=
+1
+2
+sin
+⁡
+(
+𝑘
+min
+⁡
+/
+2
+)
+𝑆
+(
+0
+)
+𝑆
+(
+𝑘
+min
+⁡
+)
+−
+1
+,
+𝑘
+min
+⁡
+=
+(
+2
+𝜋
+𝐿
+,
+0
+)
+with 
+𝑆
+(
+𝑘
+)
+=
+1
+𝑁
+∑
+𝑖
+,
+𝑗
+(
+⟨
+𝑠
+𝑖
+𝑠
+𝑗
+⟩
+−
+⟨
+𝑠
+𝑖
+⟩
+⟨
+𝑠
+𝑗
+⟩
+)
+𝑒
+𝑖
+𝑘
+⋅
+(
+𝑟
+𝑖
+−
+𝑟
+𝑗
+)
+. Plot 
+𝜉
+/
+𝐿
+.
+
+Graph variant (if not on a regular lattice):
+
+Definition: choose a metric 
+𝑑
+(
+𝑖
+,
+𝑗
+)
+ (shortest‑path on the giant component). The graph‑moment correlation length:
+
+𝜉
+𝐺
+2
+=
+1
+2
+𝑑
+ 
+𝜒
+∑
+𝑖
+,
+𝑗
+(
+⟨
+𝑠
+𝑖
+𝑠
+𝑗
+⟩
+−
+⟨
+𝑠
+𝑖
+⟩
+⟨
+𝑠
+𝑗
+⟩
+)
+ 
+𝑑
+(
+𝑖
+,
+𝑗
+)
+2
+where 
+𝑑
+ is the graph’s effective dimension proxy (use 2 if embedded in 2D; otherwise treat 
+𝜉
+𝐺
+/
+𝐿
+ qualitatively).
+
+Practical: still prioritize 
+𝑈
+4
+ crossings; use 
+𝜉
+𝐺
+/
+𝐿
+ for corroboration.
+
+Reference exponents (for side‑by‑side fits)
+Model (d)	ν	β	γ	Notes
+Ising (2D)	1	1/8	7/4	α=0 (logs in C), η=1/4
+Potts q=3 (2D)	5/6	1/9	13/9	α=1/3, η=4/15
+Potts q=4 (2D)	2/3	1/12	7/6	α=2/3 with strong log corrections
+Ising (3D)	≈0.630	≈0.326	≈1.237	α≈0.110, η≈0.036
+Potts q≥3 (3D)	—	—	—	Expect first‑order; check latent‑heat/C peaks
+If you’re on 2D with periodic BCs, these are the right benchmarks. If you’re in 3D or on non‑regular graphs, keep the Ising row (K=2) and treat Potts q≥3 as “likely first‑order” unless data prove continuous.
+
+Finite‑size scaling workflow (side‑by‑side, falsifiable)
+Thermal grid:
+
+Range: center a dense β grid around the suspected transition so that both 
+𝑈
+4
+ and 
+𝜉
+/
+𝐿
+ exhibit clean monotone crossings.
+
+Sizes: 
+𝐿
+∈
+{
+64
+,
+96
+,
+128
+,
+192
+,
+256
+}
+ (or your nearest). Match statistics across L.
+
+Crossing analysis:
+
+Crossings: plot 
+𝑈
+4
+(
+𝛽
+,
+𝐿
+)
+ and 
+𝜉
+(
+𝛽
+,
+𝐿
+)
+/
+𝐿
+ for all L. Extract pairwise crossing β for 
+(
+𝐿
+,
+𝑠
+𝐿
+)
+ with 
+𝑠
+∈
+{
+1.5
+,
+2
+}
+.
+
+Drift law: fit 
+𝛽
+𝑐
+(
+𝐿
+)
+=
+𝛽
+𝑐
++
+𝑎
+ 
+𝐿
+−
+1
+/
+𝜈
+ using reference 
+𝜈
+ per candidate class. Report residuals; if they’re structured, free‑fit 
+𝜈
+.
+
+Critical scaling at β_c:
+
+Magnetization: at 
+𝛽
+=
+𝛽
+^
+𝑐
+ from crossings, fit
+
+⟨
+∣
+𝑚
+∣
+⟩
+∼
+𝐿
+−
+𝛽
+/
+𝜈
+Susceptibility: fit
+
+𝜒
+max
+⁡
+∼
+𝐿
+𝛾
+/
+𝜈
+Specific heat: if continuous with α>0, expect
+
+𝐶
+max
+⁡
+∼
+𝐿
+𝛼
+/
+𝜈
+If α=0 (2D Ising), check for 
+𝐶
+max
+⁡
+∼
+𝐴
+log
+⁡
+𝐿
++
+𝐵
+.
+
+Data collapse:
+
+Thermal variable: 
+𝑡
+=
+(
+𝛽
+−
+𝛽
+𝑐
+)
+/
+𝛽
+𝑐
+.
+
+Collapses: plot 
+𝐿
+𝛽
+/
+𝜈
+⟨
+∣
+𝑚
+∣
+⟩
+ vs 
+𝑡
+𝐿
+1
+/
+𝜈
+, and 
+𝐿
+−
+𝛾
+/
+𝜈
+𝜒
+ vs 
+𝑡
+𝐿
+1
+/
+𝜈
+, using reference exponents.
+
+Score: minimize total vertical spread (or maximize R² of a spline master curve). Predefine pass if spread ≤ 0.08 (normalized) and R² ≥ 0.98.
+
+Binder fixed point:
+
+Value: record 
+𝑈
+4
+∗
+ at the multi‑L crossing. It should stabilize with L if you’re in the right class and BCs; monotone drift suggests mismatch or corrections to scaling.
+
+Consistency: require 
+𝑈
+4
+∗
+ stability within ±0.01 across the largest three L.
+
+Decision rule:
+
+Accept class: if crossings align, β_c(L) drifts with the expected 
+𝐿
+−
+1
+/
+𝜈
+, exponent fits agree within 2σ of reference, and collapse passes.
+
+Otherwise: report best‑fit 
+(
+𝜈
+,
+𝛽
+,
+𝛾
+)
+, the observed 
+𝑈
+4
+∗
+, and whether first‑order diagnostics (below) triggered.
+
+First‑order vs continuous safeguards
+Binder dip: Criterion: a deepening negative minimum of 
+𝑈
+4
+(
+𝛽
+,
+𝐿
+)
+ whose depth scales up with L indicates phase coexistence.
+
+Peak scaling: Criterion: 
+𝐶
+max
+⁡
+∼
+𝐿
+𝑑
+ and 
+𝜒
+max
+⁡
+∼
+𝐿
+𝑑
+ indicate latent heat and first‑order; continuous transitions follow the exponent rules above.
+
+Histogram bimodality: Criterion: energy or order‑parameter histograms become distinctly bimodal near 
+𝛽
+𝑐
+, with valley deepening in L.
+
+Hysteresis: Criterion: heating vs cooling scans show β‑dependent lags that grow with L.
+
+If any two of these hold, abandon continuous‑class fits and report first‑order with estimated latent heat from energy histograms.
+
+Implementation details you can drop in
+Jackknife/blocked errors:
+
+𝑏
+≈
+2
+ 
+𝜏
+int
+⇒
+use block jackknife for 
+𝑈
+4
+,
+ 
+𝜉
+/
+𝐿
+Prevents underestimating errors near criticality.
+
+Potts scalar order parameter for consistency:
+
+𝑚
+=
+𝑞
+ 
+𝑛
+max
+⁡
+𝑁
+−
+1
+  
+/
+  
+(
+𝑞
+−
+1
+)
+Use this same 
+𝑚
+ for 
+𝜒
+ and 
+𝑈
+4
+ so curves are directly comparable to reference Potts data.
+
+k‑space estimator for ξ/L (code‑friendly):
+
+Compute: 
+𝑆
+(
+0
+)
+=
+1
+𝑁
+∑
+𝑖
+𝑠
+𝑖
+2
++
+2
+𝑁
+∑
+𝑖
+<
+𝑗
+𝑠
+𝑖
+𝑠
+𝑗
+.
+
+Compute: 
+𝑆
+(
+𝑘
+min
+⁡
+)
+ via one real‑FFT mode along x. Use the formula above; average over x and y directions to reduce noise.
+
+YAML panel for auditable gates
+yaml
+universality_mapping:
+  candidates:
+    K2: Ising
+    K3: Potts_q3
+    K4: Potts_q4_marginal
+  sizes: [64, 96, 128, 192, 256]
+  bcs: periodic           # keep fixed across L and references
+  observables: [U4, xi_over_L, m_abs, chi, C]
+  crossings:
+    pair_sizes: [[64,96],[96,128],[128,192],[192,256]]
+    drift_fit_nu:
+      use_reference: true
+      tolerance_abs: 0.05
+    U4_star_stability: 0.01
+  exponents_reference:
+    Ising_2D: {nu: 1.0, beta: 0.125, gamma: 1.75}
+    Potts3_2D: {nu: 0.8333333, beta: 0.1111111, gamma: 1.4444444}
+    Potts4_2D: {nu: 0.6666667, beta: 0.0833333, gamma: 1.1666667}
+    Ising_3D: {nu: 0.63, beta: 0.326, gamma: 1.237}
+  collapse:
+    metric: normalized_spread   # ≤ 0.08 passes
+    r2_min: 0.98
+  first_order_checks:
+    binder_negative_dip: true
+    peaks_scale_Ld: true
+    hist_bimodality: true
+    hysteresis_loop: true
+    flag_if_two_or_more: true
+  decision:
+    accept_if:
+      - crossings_consistent: true
+      - drift_L_to_minus1_over_nu: true
+      - exponents_within_2sigma_of_ref: true
+      - collapse_spread_leq: 0.08
+      - U4_star_stable_within: 0.01
+    else_report:
+      - best_fit_beta_gamma_nu
+      - U4_star_value
+      - first_order_flags
+      - beta_c_estimates
+
+
+
+##
+
+
+
+
+Bootstrap tuning protocol
+You want proof that the 20% gain is real across L and K. Here’s a compact, falsifiable protocol with stable CIs, peak checks, and ESS/time gates.
+
+Scope and baselines
+Targets: m_abs, U4, ξ/L, χ, C, E, and β_peak for χ and C.
+
+Series input: For each (L, K, β), use equilibrated time series of length 
+𝑇
+, with sweep‑indexed samples and per‑observable 
+𝜏
+int
+(
+𝑂
+)
+.
+
+Baseline definition: Your current production estimator and CI method at existing block length and resample count. All ratios below are “tuned vs baseline.”
+
+Block bootstrap design
+Method: Use moving‑block bootstrap (MBB) with circular wrap (CBB) to avoid edge bias on finite runs.
+
+Block length: 
+𝑏
+≈
+2
+ 
+𝜏
+int
+(
+𝑂
+)
+. Sweep b across 
+[
+1.5
+,
+ 
+3
+]
+×
+𝜏
+int
+(
+𝑂
+)
+ to verify stability.
+
+Resamples: 
+𝐵
+=
+2000
+ (fewer if you need speed; don’t go below 1000 for 95% CIs).
+
+Intervals: Bias‑corrected and accelerated (BCa) for skewed stats (e.g., U4, β_peak); percentile is fine for near‑Gaussian (e.g., E, m_abs far from criticality).
+
+First‑order guard: If histograms are bimodal near 
+𝛽
+𝑐
+, use a split‑phase bootstrap: stratify by phase label (e.g., sign of m or energy mode) and recombine to avoid phase‑switch artifacts in CIs.
+
+Tip: Stationary bootstrap (geometric block lengths with mean b) is a drop‑in alternative when τ varies across the window; use p = 1/b and match mean work.
+
+Autocorrelation and block length
+Integrated autocorrelation time:
+
+𝜏
+int
+(
+𝑂
+)
+  
+=
+  
+1
+2
+  
++
+  
+∑
+𝑡
+=
+1
+𝑇
+′
+𝜌
+𝑂
+(
+𝑡
+)
+where 
+𝜌
+𝑂
+(
+𝑡
+)
+ is the normalized ACF; truncate the sum with an initial‑positive or initial‑convex sequence rule to avoid noise.
+
+ESS and efficiency:
+
+ESS
+(
+𝑂
+)
+  
+=
+  
+𝑇
+2
+ 
+𝜏
+int
+(
+𝑂
+)
+,
+ESS
+time
+  
+=
+  
+𝑇
+2
+ 
+𝜏
+int
+(
+𝑂
+)
+ 
+runtime
+b sweep stability check (per observable):
+
+CI endpoint stability: 95% CI endpoints change ≤ 5% of CI width across 
+𝑏
+∈
+[
+1.5
+,
+3
+]
+𝜏
+int
+.
+
+SE stability: bootstrap SE varies ≤ 10%.
+
+Decision: If either fails, increase T or switch to stationary bootstrap; do not claim the 20% efficiency gain at that (L, K, β).
+
+Peak location bootstrap
+Target: β_peak for χ(β) and C(β).
+
+Procedure:
+
+Smoothing: Fit a local quadratic or cubic spline to the observable vs β using the same β grid for each resample.
+
+Per‑resample peak: Evaluate β̂_peak by maximizing the smoothed curve on a dense β subgrid.
+
+CI: Use BCa on 
+{
+𝛽
+^
+peak
+(
+𝑏
+)
+}
+𝑏
+=
+1
+𝐵
+.
+
+Gates:
+
+Peak stability: Tuned minus baseline |Δβ_peak| ≤ 0.002.
+
+Bias: Mean difference in observable values ≤ 
+1
+𝜎
+ (baseline SE) across β.
+
+Reporting and gates
+Per (L, K) summary across the β window:
+
+CI width ratio: median over β of
+
+𝑟
+CI
+=
+CI
+95
+,
+ tuned
+CI
+95
+,
+ baseline
+Require 
+𝑟
+CI
+≤
+1.05
+.
+
+Efficiency: median over β of ESS/time improvement; require ≥ 20% median and ≥ 15% minimum across β.
+
+Bias check: mean shifts within 
+1
+𝜎
+; β_peak shifts within 0.002.
+
+b‑sweep stability: pass both endpoint and SE stability.
+
+Global verdict: “Pass” only if all (L, K) pairs meet the efficiency and stability gates. Otherwise, report the failing (L, K, β) cells with the limiting metric.
+
+~~YAML BEGIN
+
+YAML controls and minimal loop
+yaml
+bootstrap_tuning:
+  method: cbb                 # moving blocks with circular wrap
+  resamples: 2000
+  block_length_factor: [1.5, 2.0, 3.0]   # × tau_int per observable
+  intervals:
+    default: bca
+    gaussian_like: percentile
+  peak_detection:
+    smoother: "local_quadratic"          # or "cubic_spline"
+    beta_subgrid_density: 10             # × vs original grid
+  gates:
+    ci_width_ratio_max: 1.05
+    eff_gain_median_min: 0.20
+    eff_gain_min_across_beta: 0.15
+    mean_shift_sigma_max: 1.0
+    beta_peak_shift_max: 0.002
+    ci_endpoint_stability_max_frac: 0.05
+    se_stability_max_frac: 0.10
+
+~~YAML END
+
+~~PYTHON BEGIN
+
+python
+# Pseudocode (per L, K, observable O)
+tau = estimate_tau_int(series_O)          # initial-positive/convex truncation
+for f in [1.5, 2.0, 3.0]:
+    b = max(2, int(round(f * tau)))
+    boot_samples = CBB(series_O, block_len=b, B=2000)
+    ci95[f] = BCa_CI(boot_samples, alpha=0.05)
+    se[f] = np.std(boot_samples, ddof=1)
+
+# Stability
+ci_stable = max_endpoint_diff(ci95.values()) <= 0.05 * median_width(ci95.values())
+se_stable = (max(se.values()) - min(se.values())) <= 0.10 * median(se.values())
+
+# Efficiency
+ESS = len(series_O) / (2.0 * tau)
+efficiency = ESS / runtime_O               # runtime measured for this (L,K,O,β)
+
+# Ratios vs baseline and gates are computed in an aggregator across β
+
+~~PYTHON END
+
+
+##
+
+
+
+
+Specific heat morphology
+The specific‑heat audit “fail” reflects a broad plateau rather than a sharp peak: in this kernel, the Polyakov channel is the sharper detector of critical structure. The absence of a narrow 
+𝐶
+(
+𝛽
+)
+ peak is consistent with the observed order‑parameter and susceptibility signals and does not imply a thermodynamic contradiction. We therefore elevate Polyakov‑channel diagnostics for locating 
+𝛽
+𝑐
+, using 
+𝐶
+(
+𝛽
+)
+ as a corroborating, lower‑resolution cue.
+
+ΔS baseline rationale
+We anchor 
+Δ
+𝑆
+ at 
+𝛽
+min
+⁡
+ to represent the most disordered reference state, fixing the additive constant in entropy consistently across runs. Alternative baselines (high‑T Gaussian approximation or DOS‑derived normalization) shift 
+Δ
+𝑆
+ by a constant only and leave all derivatives and decisions unchanged. Results are reported relative to this baseline so cross‑lattice and cross‑
+𝐾
+ comparisons remain auditable.
+
+Binder context
+For 
+𝐾
+=
+2
+ we test Ising‑class behavior; for 
+𝐾
+≥
+3
+ we test the corresponding Potts candidate. We use the dimensionless 
+𝑈
+4
+(
+𝛽
+,
+𝐿
+)
+ and 
+𝜉
+(
+𝛽
+,
+𝐿
+)
+/
+𝐿
+ because their multi‑size crossings locate 
+𝛽
+𝑐
+ with minimal nonuniversal drift and admit finite‑size scaling and collapse tests. Agreement of crossing structure and collapse with reference exponents is our criterion for universality‑class assignment.
+
+Stability checklist (gating)
+Green: 
+𝜏
+int
+ controlled; ESS/time ≥ 0.8× baseline; 
+𝑈
+4
+ and 
+𝜉
+/
+𝐿
+ crossings consistent; bootstrap CIs stable; efficiency ≥ 15% across 
+𝐿
+ and 
+𝐾
+.
+
+Yellow: Any one metric slips; proceed, but log remediation and recheck on the next window.
+
+Red: Two or more metrics fail; pause and apply mitigations before scaling to 7.6.
+
+~~Optional YAML drop‑in/
+
+yaml
+stability_gates:
+  green_if:
+    - "tau_int_controlled == true"          # e.g., multipliers ≤ 1.25 vs dense baseline
+    - "ess_per_time_ratio >= 0.80"
+    - "crossings_consistent == true"        # U4 and xi/L multi-L crossings align within tolerance
+    - "bootstrap_stable == true"            # CI width stable across b ∈ [1.5, 3] τ_int
+    - "efficiency_min_across_LK >= 0.15"
+  yellow_if:
+    - "exactly_one_gate_failed == true"
+  red_if:
+    - "two_or_more_gates_failed == true"
+
+
+
+~~
+
+stability_controls:
+  sparse_graph_mixing:
+    target_p_edge: 0.30
+    replica_exchange:
+      p_edge_ladder: [0.30, 0.40, 0.50]
+      swap_period_sweeps: 50
+      min_swap_accept: 0.25
+    multi_try:
+      M: 4
+      degree_weighting: true
+    cluster_flips:
+      enabled: true
+      max_cluster_fraction: 0.05
+    nonreversible:
+      momentum_bit: true
+    diagnostics:
+      giant_component_min_fraction: 0.90
+      conductance_proxy_min: 0.05
+      tau_int_targets:
+        energy_max_multiplier_vs_dense: 1.25
+        polyakov_max_multiplier_vs_dense: 1.25
+      ess_per_time_min_ratio_vs_dense: 0.80
+
+  universality_mapping:
+    candidates:
+      K2: "Ising"
+      K3: "Potts(q=3)"
+    observables:
+      - U4_binder
+      - xi_over_L
+      - susceptibility
+      - specific_heat_per_site
+    fss:
+      sizes: [64, 96, 128, 192, 256]
+      collapse:
+        use_reference_exponents: true   # compare; if fail, fit
+        tol_r2_min: 0.98
+      crossings:
+        require_stable_beta_c_window: true
+        delta_beta_c_max: 0.002
+
+  bootstrap_tuning:
+    block_length_factor: [1.5, 2.0, 3.0]  # × tau_int
+    reps: 2000
+    efficiency_targets:
+      min_median_gain: 0.20
+      min_all_configs_gain: 0.15
+    ci_stability:
+      width_ratio_max_vs_baseline: 1.05
+      mean_shift_sigma_threshold: 1.0
+      peak_shift_beta_max: 0.002
+
+stability_gates:
+  green_if:
+    - "ess_per_time_min_ratio_vs_dense >= 0.80"
+    - "giant_component_min_fraction >= 0.90"
+    - "tau_int multipliers <= 1.25"
+    - "U4/xiL crossings stable within delta_beta_c_max"
+    - "bootstrap CI width ratio <= 1.05"
+    - "efficiency gain median >= 0.20"
+  yellow_if:
+    - "one gate fails"
+  red_if:
+    - "two_or_more_gates_fail"
+
+
+
+##
+
+
 ##YAML
 
 
