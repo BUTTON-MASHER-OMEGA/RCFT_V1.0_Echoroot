@@ -544,4 +544,224 @@ They act as validator routines — if a vector identity fails in the discrete se
 
 
 
-
+Operator	Standard definition	Physical analogy	RCFT discrete analogue	Role in emergence
+Gradient 
+∇
+𝑓
+Vector of partial derivatives giving the direction and rate of steepest ascent of scalar field 
+𝑓
+.	Temperature map: arrow pointing toward hottest increase fastest.	Incidence matrix on 0‑cochains: 
+𝐵
+1
+:
+𝐶
+0
+→
+𝐶
+1
+. Edge values are oriented differences of vertex scalars.	Birth of directionality in 
+𝐷
+1
+: turns scalars into directed flows; seeds potentials for gauge fields.
+Divergence 
+∇
+⋅
+𝐹
+Scalar measuring net outflow (source) or inflow (sink) of vector field 
+𝐹
+.	Fluid: faucet (source, positive), drain (sink, negative).	Negative transpose of incidence: 
+−
+𝐵
+1
+⊤
+:
+𝐶
+1
+→
+𝐶
+0
+ (with Hodge stars for metric weighting).	Conservation accounting: detects expansion/compression; couples directly to 
+Δ
+V
+o
+l
+ and 
+Δ
+𝑆
+.
+Curl 
+∇
+×
+𝐹
+Vector measuring local rotation/circulation of 
+𝐹
+.	Whirlpool/swirl intensity and axis.	Next coboundary: 
+𝐵
+2
+:
+𝐶
+1
+→
+𝐶
+2
+. Face values are signed circulations around oriented loops.	Curvature/holonomy: detects twist of gauge potentials; distinguishes rotational from compressive updates.
+Laplacian 
+Δ
+𝑓
+=
+∇
+⋅
+∇
+𝑓
+Scalar operator measuring how 
+𝑓
+ differs from its neighborhood average.	Heat diffusion’s generator; peaks flatten, valleys fill.	Combinatorial Laplacian with Hodge stars: 
+𝐿
+0
+=
+𝐵
+1
+⊤
+ 
+𝐻
+1
+−
+1
+ 
+𝐵
+1
+ on 0‑cochains; similarly on 1‑forms.	Stability and smoothing: drives equilibration; links second‑order curvature to entropy production.
+Hessian 
+∇
+∇
+𝑓
+Matrix of second partials; local quadratic form of 
+𝑓
+.	Bowl vs. dome vs. saddle classification near a point.	Edge‑to‑edge lifting via discrete gradient differences; assembled per cell using local frames and stars.	Curvature fingerprint: classifies stable/unstable modes; informs step selection and gate safety.
+Jacobian determinant \(	\det J_\Phi	\)	Volume‑scaling factor of map 
+Φ
+; appears in change of variables.	Rubber sheet stretch/compress factor under deformation.	Primal/dual volume ratio per simplex: \(	\det J	\approx \mathrm{Vol}(\Phi(\sigma_k))/\mathrm{Vol}(\sigma_k)\).	Birth of measure: defines new volume layers; geometric proxy for entanglement density and 
+Δ
+𝑆
+.
+Change of variables	Integral transforms as \(\int f\,dx = \int f\circ\Phi^{-1}\,	\det J_\Phi	\,dy\).	Remeasuring area after switching to skewed coordinates.	Reweight cochains by Hodge stars built from cell volumes; atlas transitions carry Jacobian factors.	Reparameterization as physical act: preserves invariants under lifts and embeddings (kinematic 
+→
+ CY).
+Line integral / circulation 
+∮
+𝐹
+⋅
+𝑑
+ℓ
+Accumulated tangential component along a path.	Work done walking around a loop in a wind field.	Sum of edge 1‑cochain along a cycle; equals face 2‑cochain via Stokes.	Holonomy witness: detects gauge twist; feeds Wilson loops and SU(3) validators.
+Flux integral 
+∬
+𝐹
+⋅
+𝑑
+𝑆
+Net field passing through a surface.	Flow through a fishing net.	Sum of oriented face values; balanced by cell divergence via discrete divergence theorem.	Source–sink ledger: closes conservation; ties to local volume change and stability.
+Stokes/divergence theorems	
+∮
+∂
+𝑆
+𝐹
+⋅
+𝑑
+ℓ
+=
+∬
+𝑆
+(
+∇
+×
+𝐹
+)
+⋅
+𝑑
+𝑆
+; 
+∭
+𝑉
+∇
+⋅
+𝐹
+ 
+𝑑
+𝑉
+=
+∬
+∂
+𝑉
+𝐹
+⋅
+𝑑
+𝑆
+.	Boundary–interior consistency checks.	Exactness of coboundary: 
+𝐵
+2
+𝐵
+1
+=
+0
+; adjointness via Hodge stars ensures integral equalities on mesh.	Validator hooks: catch mesh defects and numerical drift; enforce coherence of operators.
+Vector identities	
+∇
+×
+(
+∇
+𝑓
+)
+=
+0
+, 
+∇
+⋅
+(
+∇
+×
+𝐹
+)
+=
+0
+, product rules.	“No swirl in pure slope; no sources in pure swirl.”	Nilpotency and mixed‑operator zeros: 
+𝐵
+2
+𝐵
+1
+=
+0
+, 
+−
+𝐵
+1
+⊤
+𝐵
+2
+=
+0
+ in metric‑consistent setting.	Emergence constraints: rule out spurious curvature/sources; maintain clarity floor under refinement.
+Differential forms / Hodge star 
+∗
+Isomorphism between 
+𝑘
+‑forms and 
+(
+𝑛
+ ⁣
+−
+ ⁣
+𝑘
+)
+‑forms via metric/volume.	Turning area measures into flux densities (and back).	Discrete Hodge stars 
+𝐻
+𝑘
+ from cell volumes; coderivative 
+𝛿
+=
+∗
+−
+1
+𝑑
+∗
+.	Metric coupling: lets topology (incidence) meet geometry (measure); underwrites adjoint operators.
