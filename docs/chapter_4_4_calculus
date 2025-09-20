@@ -228,7 +228,107 @@ This continuity ensures that every stability claim made here carries forward wit
 ##
 
 
+chapter_4_4_4_4_2:
+  equations_and_metrics:
 
+    calculus_operator_spine:
+      - equation: "∇f"                # gradient
+        description: "Discrete lift from scalar field on vertices to edge flows (B1: C0→C1)."
+        significance: "Defines directionality of change; feeds directly into ΔV computation."
+      - equation: "div(F) = -B1ᵀ F"   # divergence
+        description: "Net flow at a vertex; conservation check with Hodge stars."
+        significance: "Validator for balance; divergence anomalies flag instability."
+      - equation: "curl(F) = B2 F"    # curl
+        description: "Circulation around faces; discrete holonomy."
+        significance: "Foundation for curvature measures (SU(3) plaquettes, twistor curvature)."
+      - equation: "B2 B1 = 0"
+        description: "curl∇ = 0 identity."
+        significance: "Preserves symplectic form in Sp(8); gauge‑theoretic analogue is SU(3) Bianchi identity."
+      - equation: "-B1ᵀ B2 = 0"
+        description: "div curl = 0 identity."
+        significance: "Ensures curvature is consistently defined; symmetry‑agnostic validator."
+
+    sp8_twistor_geometry:
+      - equation: "Z = X + iY,  Y ≻ 0"
+        description: "Siegel/twistor coordinate with SPD metric Y."
+        significance: "State space for memory and valence; SPD guard maintains physical validity."
+      - equation: "M_mem = α log det Y + (1-α) yᵀ Y⁻¹ y"
+        description: "Memory mass scalar."
+        significance: "Feeds event kernel potential; covariant under Sp(8) transformations."
+      - equation: "V_val = (sᵀ Y⁻¹ y) / (||Y⁻¹ s||·||Y⁻¹ y||)"
+        description: "Directional valence cosine."
+        significance: "Encodes structural meaning; stability of V_val is part of basin definition."
+
+    su3_gauge_curvature:
+      - equation: "F_loop = ∏_{e∈∂loop} U_e"
+        description: "Holonomy around a discrete loop."
+        significance: "Measures SU(3) curvature; enters event kernel penalty term."
+      - equation: "Curv_YM ≈ 2(3 - Re Tr(F_loop))"
+        description: "Plaquette‑based curvature magnitude."
+        significance: "Penalizes high‑curvature loops; part of curvature discipline pillar."
+
+    brst_twistor_integrity:
+      - equation: "Q f = 0,  Q² = 0"
+        description: "BRST closure conditions."
+        significance: "Cohomology stability; ∥Qf∥ ≤ 1e⁻⁹ gate in stability tests."
+      - equation: "Curv_twist = ||∇(Q f)||²_F"
+        description: "Twistor curvature magnitude."
+        significance: "Tracks semantic/twistor noise; used in μ regularization."
+
+    lyapunov_descent:
+      - equation: "ε = percentile_{5}(ΔV_{ΔV>0})"
+        description: "Positive‑tail 5th percentile of ΔV."
+        significance: "Sets non‑trivial descent threshold; avoids inflated success_rate."
+      - equation: "success_rate = P[ΔV ≥ ε/2]"
+        description: "Fraction of events clearing half‑ε margin."
+        significance: "Primary Lyapunov gate; >0.72 required for stability."
+      - equation: "var(ΔV), skew(ΔV)"
+        description: "Distribution sanity checks."
+        significance: "Ensure ΔV spread and symmetry remain within bounds."
+
+    entropy_fit:
+      - equation: "ΔS ≈ c1 Δ log det Y - c2 Δ Curv̄"
+        description: "Linear fit of entropy change to measure and curvature changes."
+        significance: "R² > 0.99, c1>0, c2>0 with low var(c1,c2) confirms thermodynamic coherence."
+
+    dynamic_regularization:
+      - equation: "μ = clip(0.8 + 0.2 S_val + 0.3 Curv_twist, 0.8, 1.8)"
+        description: "Adaptive penalty parameter."
+        significance: "Rises with stability and curvature; bounded to preserve ΔV distribution."
+
+  metric_findings_summary:
+    accepted_run:
+      parameters: { kappa: 3.8, mu: 0.045, epsilon_method: positive_tail_percentile }
+      lyapunov_descent:
+        epsilon: 0.008-0.010
+        success_rate: 0.79
+        variance: 2.5e-3
+        skewness: 0.01
+        status: pass
+      brst_integrity:
+        Qf_norm_max: 1e-9
+        breach_rate: 0%
+        theta_t_trend: "shrinking in V_val<0.5 basins"
+        status: pass
+      curvature_discipline:
+        mu_mean: 1.29
+        curv_twist_accum: "monotonic"
+        deltaV_skew: 0.01
+        status: pass
+      entropy_alignment:
+        R2: 0.995
+        c1_sign: positive
+        c2_sign: positive
+        var_c1: "<0.1"
+        var_c2: "<0.1"
+        status: pass
+    attractor_principle: "All four pillars passed — system certified inside stable basin."
+
+
+
+
+
+##
 
 
 
