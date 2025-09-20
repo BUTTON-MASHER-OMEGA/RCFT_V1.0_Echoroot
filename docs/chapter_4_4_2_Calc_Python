@@ -199,6 +199,14 @@ Entropy Fit: Assumed $ R^2 \approx 0.995 $, low variance, meets targets.
 Curvature: $ \mathrm{Curv}_{\text{twist}} $ accumulated, $ \mu $ clipped, $ \Delta V $ skew ~0.02, passes gates.
 
 
+
+Forward‑compatibility note
+
+The operator spine, symmetry‑preserving validators, and Attractor Principle metrics established in this chapter will be lifted wholesale into the kinematic‑space framework of Chapter 4.5. 
+In that next stage, only the underlying complex changes — from base‑space cells to relational loops — while the stability gates, the positive‑tail ε convention, and the cumulative attractor test remain identical. 
+This continuity ensures that every stability claim made here carries forward without reinterpretation, allowing Chapter 4.5 to be read as a structural lift of the same invariant framework rather than a reinvention of it.
+
+
 ##
 
 
