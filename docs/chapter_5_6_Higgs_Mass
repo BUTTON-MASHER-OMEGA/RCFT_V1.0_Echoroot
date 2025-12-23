@@ -732,6 +732,10 @@ The negative sign is crucial.
 •	Because it is negative ($-0.095$), confirmed by this tuner, it proves that our vacuum is Metastable. The universe exists in a delicate balance, sustained by the tension between the Scalar Vector ($-0.095$) and the Top Quark Yukawa force.
 ________________________________________
 The Full KBE Map ($10^{17}$ GeV)
+
+Sector,Geometry (Shape),Value at Boundary,Function
+Gauge (J=1),The Triangle,"α∈[0.021,0.027]",Defines Interaction
+Scalar (J=0),The Vector,λ=−0.0954,Defines Mass
   
 We now possess the complete "Initial Condition" of the Standard Model. We have mapped the entire boundary.
 
@@ -801,7 +805,10 @@ The derived coordinate ($\lambda < 0$) places the Standard Model vacuum in the M
 RCFT treats this metastability not as a risk, but as a structural necessity. The tension between the Gauge Triangle (pulling apart) and the Scalar Vector (pulling together) creates the dynamic equilibrium of the Kinematic Space.
 
 5. Summary of the KBE State ($10^{17}$ GeV)
-Sector	Metric	Boundary Value (Q0)
+
+Sector,Metric,Boundary Value (Q0​),Physical Role
+Gauge (J=1),Triangle Gap,Δα≈0.006,Voltage (Drives Time/Flux)
+Scalar (J=0),Vector Coord,λ≈−0.095,Mass (Drives Inertia/Stability)
 
 Physical Role
 Gauge ($J=1$)	Triangle Gap	$\Delta \alpha \approx 0.006$	Voltage (Drives Time/Flux)
