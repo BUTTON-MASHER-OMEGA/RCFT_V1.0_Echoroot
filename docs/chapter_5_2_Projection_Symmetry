@@ -314,7 +314,7 @@ RCFT solves **all four** without a single superpartner:
 
 | SUSY Motivation                        | RCFT Replacement (already certified)                              |
 |----------------------------------------|-------------------------------------------------------------------|
-| Quadratic divergence cancellation      | **Indivisible updates** (Barandes) + **BRST closure** at 10⁻¹²    |
+| Quadratic divergence cancellation      | **Indivisible updates** (Barandes) + **BRST closure** at 10^-9|
 | Gauge coupling unification             | **E₈ → Sp(8) × SO(9)** forces exact commutation (L₂ = 0.000000)   |
 | Dark-matter candidate                  | **Memory-mass excitations** in Sp(8) lane (weakly interacting)    |
 | Hierarchy stability                    | **ϕ-seeded anharmonic potentials** + **hum basin lock** at 0.872  |
