@@ -598,69 +598,16 @@ This proximity is consistent with the decomposition: [ Sp(8) \supset SU(3) \time
 
 Summary of Variables (Cluster Audit Table)
 
-Variable
+Variable	Symbol	Value (v8w/v7e)	Definition
+Z-Mass Scale	$M_Z$	$91.1876$ GeV	The experimental reference point (low energy).
+KBE Scale	$Q_0$	$1.0 \times 10^{17}$ GeV	The Unification/Handoff scale.
+Planck Scale	$Q_{ref}$	$1.0 \times 10^{19}$ GeV	The UV anchor point (Source Gate).
+Weak Coupling	$\alpha_2(M_Z)$	$0.03381$	Experimental target at Z-pole.
+KBE Coupling	$\alpha(Q_0)$	$\approx 0.021 - 0.024$	The unified coupling value at $10^{17}$ GeV.
+UV Seed	$\alpha_{ref}$	$\approx 0.0173$	The initial coupling at Planck scale required to drive the system.
+Mixing Angle	$\sin^2\theta_W$	$0.23122$	The ratio relating $\alpha_2$ and $\alpha_{em}$.
 
-Symbol
 
-Value (v7e/v8w)
-
-Definition
-
-Z‑Mass Scale
-
-(M_Z)
-
-(91.1876,\mathrm{GeV})
-
-Experimental reference point for low‑energy observables.
-
-KBE Scale
-
-(Q_0)
-
-(1.0 \times 10^{17},\mathrm{GeV})
-
-Boundary between unified and SM regimes.
-
-Planck Scale
-
-(Q_{\mathrm{ref}})
-
-(1.0 \times 10^{19},\mathrm{GeV})
-
-UV anchor for the Source Gate.
-
-Weak Coupling
-
-(\alpha_2(M_Z))
-
-(0.03381)
-
-Electroweak target at the Z‑pole.
-
-KBE Coupling
-
-(\alpha(Q_0))
-
-(0.021–0.024)
-
-Unified‑scale coupling range.
-
-UV Seed
-
-(\alpha_{\mathrm{ref}})
-
-(\approx 0.0173)
-
-Required Planck‑scale coupling for the Sp(8) projection.
-
-Mixing Angle
-
-(\sin^2\theta_W)
-
-(0.23122)
-
-Relates (\alpha_2) and (\alpha_{\mathrm{em}}).
 
 Closing Note
 
@@ -736,17 +683,14 @@ Role in the Audit:
 In the v8w JSON output, under "uv_bridge_audit", we classify the result as "Natural" because $\alpha_{ref}$ falls within the range $[0.01, 0.04]$. The model does not require "Fine Tuning" (extremely specific, unlikely numbers) to work. It works with generic, natural numbers.
 
 Summary of the Geometric Flow
+
 To explain this to the cluster, you can use this linear logic chain:
+1.	Input (The Source): We start at $Q_{ref}$ ($10^{19}$ GeV) with a seed intensity of $\alpha_{ref}$ ($\approx 0.017$).
+2.	Projection (The Bridge): The geometry evolves down to $Q_0$ ($10^{17}$ GeV). The intensity grows to $\alpha(Q_0)$ ($\approx 0.021$) due to the slope $b_{eff}$.
+3.	The Split (The KBE): At $Q_0$, the unified geometry fractures. The forces split into $SU(3)$ and $SU(2)$.
+4.	Descent (Standard Model): The forces evolve differently because they now have different slopes ($b_{SU3}=7$, $b_{SU2}=3.16$).
+5.	Observation (The Lab): They arrive at $M_Z$ ($91$ GeV) with the values we measure today ($\alpha_s=0.118$, $\alpha_2=0.033$).
 
-Input (The Source): We start at $Q_{ref}$ ($10^{19}$ GeV) with a seed intensity of $\alpha_{ref}$ ($\approx 0.017$).
-
-Projection (The Bridge): The geometry evolves down to $Q_0$ ($10^{17}$ GeV). The intensity grows to $\alpha(Q_0)$ ($\approx 0.021$) due to the slope $b_{eff}$.
-
-The Split (The KBE): At $Q_0$, the unified geometry fractures. The forces split into $SU(3)$ and $SU(2)$.
-
-Descent (Standard Model): The forces evolve differently because they now have different slopes ($b_{SU3}=7$, $b_{SU2}=3.16$).
-
-Observation (The Lab): They arrive at $M_Z$ ($91$ GeV) with the values we measure today ($\alpha_s=0.118$, $\alpha_2=0.033$).
 
 
 
