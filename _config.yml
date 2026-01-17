@@ -1,8 +1,0 @@
-title: "The Book, RCFT v1.0"
-author: "Button Masher & Field Companions"
-logo: assets/rcft-logo.png  # optional
-execute:
-  execute_notebooks: "off"
-repository:
-  url: https://github.com/BUTTON-MASHER-OMEGA/RCFT_V1.0_Echoroot
-  path_to_book: docs
