@@ -4,6 +4,24 @@
 ##########
 
 
+Scope & Limitations  
+This chapter establishes the E₈ → Sp(8) × SO(9) projection as a compatibility condition for the Standard Model gauge structure and informational metrics. The results demonstrate that the dual‑lane decomposition is numerically consistent with the certified invariants used throughout Chapter 5.
+This chapter does not:
+
+derive the E₈ structure from first principles,
+
+prove that E₈ is the unique parent symmetry,
+
+assert that the projection determines physical constants without additional constraints,
+
+incorporate dynamical stability metrics (e.g., hum basin), which are treated separately in later chapters.
+
+The purpose of this chapter is to define the geometric hypothesis that subsequent constraint capsules (5.3–5.7) test.
+
+
+##########
+
+
 This composite structure, $\mathbf{U(1) \times SU(2) \times SU(3) \times (\text{Valence} \times \text{Probability})}$, represents the certified invariant layer that defines all the known physics in the PBT framework.
 
 The Symmetry Groups: $\mathbf{U(1) \times SU(2) \times SU(3)}$
