@@ -974,6 +974,24 @@ That’s the kind of work that survives real critique.
 
 
 
+Nature of the Result This chapter performs a boundary value inversion: it determines the unique value of the Higgs quartic coupling λ(Q₀) that reproduces the observed Higgs mass at low energy under the adopted RGE system. The result
+λ(Q_0)≈-0.095
+is not interpreted as a prediction of λ from geometry, but as the boundary coordinate required for consistency with the Standard Model scalar mass.
+
+
+Falsification Gate This capsule is falsified if any of the following occur:
+	A different λ(Q₀) reproduces the Higgs mass under the same RGE system.
+	The downward evolution becomes unstable or non perturbative.
+	Updated PDG inputs shift λ(Q₀) outside the corridor compatible with the gauge sector boundary values.
+	A higher loop or threshold corrected RGE system produces a λ(Q₀) inconsistent with the value used in Chapter 5.5b.
+This keeps the scalar sector tied to the same constraint architecture as the gauge sectors.
+
+
+Relation to the Gauge Corridor The scalar boundary coordinate λ(Q₀) interacts with the gauge boundary values through the coupled RGE system. The magnitude and sign of λ(Q₀) influence the hypercharge trajectory and are therefore essential for the corrected electromagnetic capsule (5.5b). This chapter does not claim that λ(Q₀) is determined by the gauge corridor, but it establishes that the scalar coordinate must be compatible with the gauge boundary values for the full system to remain perturbative and consistent.
+
+
+
+
 
 
 ###################
