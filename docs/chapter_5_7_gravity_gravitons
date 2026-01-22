@@ -2093,6 +2093,27 @@ If you’d like, I can write a short “Lumen Audit Note” paragraph you can pa
 
 
 
+What This Does Not Prove This chapter does not:
+	derive the Einstein–Hilbert action,
+	provide a graviton propagator or quantization scheme,
+	replace general relativity,
+	claim that gravity emerges from Standard Model vacuum stress,
+	assert that the Planck scale is determined by gauge or scalar dynamics.
+The chapter evaluates a containment requirement, not a gravitational theory.
+
+
+Containment Inequality The v11 capsule computes the minimum stiffness required to contain the net vacuum stress implied by the gauge and scalar boundary values at Q₀. The result
+M_"req" ≈9.6×〖10〗^16 " GeV" 
+is compared to the actual gravitational stiffness
+M_"Pl" ≈1.22×〖10〗^19 " GeV".
+This yields the inequality
+M_"Pl" ≫M_"req" ,
+which is interpreted as a containment margin, not a derivation of gravity.
+
+
+Why This Matters: The containment inequality demonstrates that the Standard Model vacuum stress is consistent with a manifold whose stiffness is significantly larger than the minimum required for stability. This provides a quantitative check that the gauge scalar boundary conditions used throughout Chapter 5 do not imply vacuum collapse or runaway expansion. The result constrains any candidate UV geometry: the manifold must possess stiffness at least of order 10¹⁷ GeV to remain compatible with the SM vacuum at the KBE.
+
+
 
 
 
