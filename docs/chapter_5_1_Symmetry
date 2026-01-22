@@ -4,19 +4,29 @@
 ##########
 
 
-Scope & Limitations  
-This chapter establishes the E₈ → Sp(8) × SO(9) projection as a compatibility condition for the Standard Model gauge structure and informational metrics. The results demonstrate that the dual‑lane decomposition is numerically consistent with the certified invariants used throughout Chapter 5.
-This chapter does not:
-
-derive the E₈ structure from first principles,
-
-prove that E₈ is the unique parent symmetry,
-
-assert that the projection determines physical constants without additional constraints,
-
-incorporate dynamical stability metrics (e.g., hum basin), which are treated separately in later chapters.
-
+CHAPTER 5.1 — Structural Repairs
+A. Add “Scope & Limitations” Block
+Scope & Limitations This chapter establishes the E₈ → Sp(8) × SO(9) projection as a compatibility condition for the Standard Model gauge structure and informational metrics. The results demonstrate that the dual lane decomposition is numerically consistent with the certified invariants used throughout Chapter 5. This chapter does not:
+	derive the E₈ structure from first principles,
+	prove that E₈ is the unique parent symmetry,
+	assert that the projection determines physical constants without additional constraints,
+	incorporate dynamical stability metrics (e.g., hum basin), which are treated separately in later chapters.
 The purpose of this chapter is to define the geometric hypothesis that subsequent constraint capsules (5.3–5.7) test.
+
+B. Reframe E₈ Projection as a Compatibility Condition
+Reframed Statement The decomposition
+E_8→Sp(8)×SO(9)
+is treated in this chapter as a compatibility condition, not a derivation. The projection is evaluated by checking whether:
+	the informational lane (Sp(8)) can support the probability/memory structure used in the lepton and scalar capsules, and
+	the dynamical lane (SO(9)) can support the gauge sector commutation relations used in the strong, weak, and electromagnetic capsules.
+The chapter shows that this dual lane structure is consistent with the numerical corridors established in later sections, but does not claim that E₈ is uniquely required.
+
+C. Remove Hum Basin From 5.1
+You can simply delete the hum lock references and replace them with:
+Stability metrics (e.g., hum basin, attractor widths) are not part of the symmetry definition and are introduced only after the gauge and scalar corridors are established.
+
+
+
 
 
 ##########
