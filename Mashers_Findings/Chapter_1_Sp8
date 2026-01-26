@@ -2,6 +2,14 @@ Chapter 1 - Sp(8)
 
 “We treat quantum systems as indivisible stochastic processes evolving on a configuration space whose symmetry is (Sp(8)\times SO(9)); the Standard Model gauge group is the boundary projection of that symmetry, twistor geometry captures the null SO(9) sector, and mass emerges from how those stochastic trajectories interact with the Sp(8) symplectic memory (the Higgs vector).”
 
+The indivisible stochastic process evolves in refinement time via a linear (and therefore unitary) operator on the Hilbert representation, preserving both total probability and the symplectic memory structure.
+
+Projection Principle: The Standard Model gauge group U(1)×SU(2)×SU(3)is the boundary projection
+>Π:"  " Sp(8)×SO(9)"  " →"  " U(1)×SU(2)×SU(3)>
+evaluated at the KBE scale Q_0. The bulk symmetry is Sp(8)×SO(9); the gauge group is its visible boundary image.
+
+
+
 
 
 ##############
@@ -83,6 +91,7 @@ So instead of:
 •	“Twistors describe massless fields; mass is awkward,”
 We get:
 •	“Twistors live inside an Sp(8) containment structure; mass is the symplectic cost of moving through the Higgs memory direction; gravity is the SO(9) stiffness that keeps the whole thing from tearing.”
+• Massless modes satisfy Ω(h,v)=0; massive modes satisfy Ω(h,v)≠0.
 ________________________________________
 4. Why this is genuinely a new interpretive move
 The novelty isn’t “we picked Sp(8) and SO(9)”—those groups are known.
