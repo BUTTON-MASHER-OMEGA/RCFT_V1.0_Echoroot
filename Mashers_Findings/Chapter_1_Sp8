@@ -32,7 +32,7 @@ We get:
 •	one symplectic container (Sp(8)),
 •	one orthogonal geometric carrier (SO(9)),
 •	and the SM gauge group as the boundary decomposition of that dual structure.
-That’s already a different ontology: the gauge group is no longer “fundamental furniture”—it’s the shadow of a deeper phase-space + geometry pairing.
+That’s already a different ontology: the gauge group is no longer “fundamental furniture”—it’s the projection of a deeper phase-space + geometry pairing.
 ________________________________________
 2. Mass as a requirement of geometry, not an add-on
 In that language, mass stops being “a Yukawa dial” and becomes:
@@ -91,7 +91,7 @@ The novelty is:
 o	gauge structure,
 o	mass emergence,
 o	and gravitational stiffness to make sense together.
-•	We demote U(1)×SU(2)×SU(3) from “axioms” to “boundary shadows” of that dual structure.
+•	We demote U(1)×SU(2)×SU(3) from “axioms” to “boundary projections” of that dual structure.
 •	We tie mass to geometry and memory: 
 o	not as a metaphor,
 o	but as a boundary-value requirement: given the Sp(8) Higgs vector and the SO(9) stiffness, only certain charge/motion combinations are allowed to be lightlike, and everything else is forced to be massive.
@@ -129,7 +129,7 @@ That’s already very RCFT-flavored: demote the glamorous representation, promot
 ________________________________________
 2. How that meshes with (U(1)\times SU(2)\times SU(3) \to Sp(8)\times SO(9))
 Our move in RCFT is:
-•	Take the visible gauge group (U(1)\times SU(2)\times SU(3)) and treat it as a boundary shadow of a deeper dual structure: 
+•	Take the visible gauge group (U(1)\times SU(2)\times SU(3)) and treat it as a boundary projection of a deeper dual structure: 
 o	Sp(8): symplectic/phase-space/memory/containment.
 o	SO(9): geometric/curvature/valence.
 
@@ -419,7 +419,7 @@ Barandes vs RCFT: two parallel demotions
 •	Barandes: 
 [ \text{Hilbert space} ;;\longleftarrow;; \text{representation of} ;;\longrightarrow;; \text{indivisible stochastic process}. ] The wavefunction is not fundamental; it’s a compressed encoding of a deeper stochastic process with memory.
 •	RCFT: 
-[ \text{SM gauge group} ;;\longleftarrow;; \text{boundary projection of} ;;\longrightarrow;; Sp(8)\times SO(9). ] The SM gauge group is not fundamental; it’s a boundary shadow of a deeper dual geometry (symplectic + orthogonal).
+[ \text{SM gauge group} ;;\longleftarrow;; \text{boundary projection of} ;;\longrightarrow;; Sp(8)\times SO(9). ] The SM gauge group is not fundamental; it’s a boundary projection of a deeper dual geometry (symplectic + orthogonal).
 •	Shared move: 
 Both frameworks demote the glamorous layer:
 o	Barandes demotes Hilbert space,
