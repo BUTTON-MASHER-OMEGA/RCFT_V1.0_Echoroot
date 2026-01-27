@@ -59,7 +59,7 @@ Mass then appears when:
 •	only one combination (the photon) is exactly orthogonal → no drag → no mass.
 So the statement becomes:
 Given an Sp(8)×SO(9) manifold with a fixed Higgs/memory vector, massive fields are those whose twistor/geometric charges are misaligned with the symplectic memory; massless fields are those that live in the null directions of that memory.
-That’s a geometric requirement for mass emergence, not a free parameter story.
+That’s a geometric requirement for the mass Boudary Projection, not a free parameter story.
 ________________________________________
 3. What Sp(8) adds to twistor theory
 Standard twistor theory is brilliant at:
@@ -98,7 +98,7 @@ The novelty isn’t “we picked Sp(8) and SO(9)”—those groups are known.
 The novelty is:
 •	We treat them as dual, co-equal lanes that must both be present for: 
 o	gauge structure,
-o	mass emergence,
+o	mass is the boundary projection of symplectic misalignment,
 o	and gravitational stiffness to make sense together.
 •	We demote U(1)×SU(2)×SU(3) from “axioms” to “boundary projections” of that dual structure.
 •	We tie mass to geometry and memory: 
@@ -250,7 +250,7 @@ o	preserves a canonical 2 form (memory/containment),
 o	and has enough room (36 generators) to encode: 
 	Higgs vector direction,
 	gauge sector embeddings,
-	and the “memory” structure we’re using for mass emergence.
+	and the “memory” structure we’re using for mass as the boundary projection of symplectic misalignment.
 It’s exactly the group of transformations that cannot destroy the vacuum’s symplectic memory, only reshuffle it.
 That’s why it’s such a natural home for:
 •	the Higgs vector as a direction in symplectic space,
@@ -362,7 +362,7 @@ o	preserves the Higgs axis,
 o	and can host SU(2)×U(1) like structures.
 From there, we can:
 •	treat the lepton triad as a 3 dimensional subspace in the Higgs orthogonal sector,
-•	treat mass emergence as misalignment with (h),
+•	treat geometric projections as mass misalignment with (h),
 •	and treat gauge structure as the way the stabilizer subgroup acts on these subspaces.
 ________________________________________
 
@@ -814,7 +814,7 @@ In RCFT, the Higgs is not a field — it is a memory direction in the symplectic
 It must satisfy:
 •	It is a unit vector in (V).
 •	It is fixed by the scalar boundary coordinate (\lambda(Q_0)).
-•	It defines the axis of drag for mass emergence.
+•	It defines the axis of drag for mass as a geometric projection.
 •	It must be preserved by the internal symmetry subgroup (the stabilizer).
 To make these properties transparent, we want the Higgs vector to be:
 •	simple,
