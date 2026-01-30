@@ -1133,6 +1133,102 @@ This diagram makes explicit the layered structure:
 
 
 
+############
+
+
+
+1. Where the Shift Occurs: From Linearity → Unitarity
+In RCFT, the shift happens at a very specific conceptual boundary:
+Stage 1 — Linearity is imposed as a structural requirement.
+This comes from:
+•	the dual lane geometry (both (V) and (W) are linear spaces),
+•	the additivity of histories in the indivisible stochastic process,
+•	the need to preserve superposition,
+•	the requirement that refinement steps compose linearly.
+At this stage, the only requirement is:
+[ U(\tau)(\alpha\psi + \beta\phi) = \alpha U(\tau)\psi + \beta U(\tau)\phi. ]
+This is linear refinement time.
+Stage 2 — Once linearity is fixed, the normalization structure forces unitarity.
+Because RCFT uses:
+•	normalized state vectors,
+•	probabilities computed directly from inner products,
+•	no renormalization step,
+•	no FTL signaling,
+•	and a symplectic memory structure that must remain invariant,
+the evolution operator must preserve norms:
+[ |U(\tau)\psi| = |\psi|. ]
+And Parker’s theorem tells us:
+For normalized states, any linear, norm preserving evolution must be unitary.
+This is the moment the shift occurs:
+Linearity + normalization + probability conservation ⇒ unitarity.
+So unitarity is not an extra assumption — it is the unique way to implement linear refinement time on normalized states.
+________________________________________
+2. Why Linear Time Is Needed to Enable Unitary Time Evolution
+This is the deeper structural point.
+Unitarity is only meaningful after linearity is established.
+Here’s why:
+________________________________________
+(a) Unitarity is defined as a linear operator preserving inner products
+A unitary operator is one that satisfies:
+[ U^\dagger U = I. ]
+But this definition only makes sense if (U) is linear.
+If (U) were nonlinear, the adjoint (U^\dagger) would not be well defined, and the entire concept of “unitary” would collapse.
+So linearity is the mathematical precondition for unitarity.
+________________________________________
+(b) Probability conservation requires linearity first
+The Born rule uses inner products:
+[ P(a|\psi) = |\langle a|\psi\rangle|^2. ]
+If time evolution were nonlinear:
+•	inner products would not evolve predictably,
+•	probabilities would depend on decomposition of states,
+•	orthogonality could be lost,
+•	distinguishability would break.
+Only linear maps preserve the structure needed for probability to be well defined.
+Once linearity is in place, probability conservation forces:
+[ \langle U\psi, U\phi\rangle = \langle \psi, \phi\rangle, ]
+which is exactly the definition of unitarity.
+________________________________________
+(c) Symplectic memory preservation requires linearity
+The RCFT mass mechanism depends on:
+[ \Omega(h,v). ]
+This is bilinear.
+Nonlinear evolution generically destroys bilinear invariants.
+Thus:
+•	linearity preserves (\Omega),
+•	preserving (\Omega) forces norm preservation in the Hilbert representation,
+•	norm preservation forces unitarity.
+So the chain is:
+[ \text{Symplectic memory} \Rightarrow \text{linearity} \Rightarrow \text{unitarity}. ]
+________________________________________
+(d) Barandes’ dilation argument requires linearity
+Barandes shows:
+•	an indivisible stochastic process admits a unitary Hilbert space dilation
+•	if and only if the stochastic law is linear and probability preserving.
+Thus:
+•	linearity is required for the existence of a unitary representation,
+•	unitarity is the representation of a deeper linear stochastic law.
+This is exactly RCFT’s structure.
+________________________________________
+3. The Clean Logical Chain
+Here is the full chain in its simplest form:
+1.	RCFT requires linear refinement time 
+(superposition, symplectic geometry, additive histories).
+2.	RCFT uses normalized states 
+(probabilities computed directly from inner products).
+3.	RCFT requires probability conservation 
+(no renormalization, no FTL signaling).
+4.	Parker’s theorem applies 
+(linear + normalized + probability preserving ⇒ unitary).
+5.	Therefore, refinement time evolution is unitary.
+This is the exact moment the shift occurs:
+Linearity is the structural requirement.
+Unitarity is the mathematical consequence.
+________________________________________
+RCFT shifts from linear to unitary time evolution the moment we require that linear refinement time evolution act on normalized states while preserving probability; at that point, Parker’s theorem forces the evolution operator to be unitary, making unitarity a derived necessity rather than an independent postulate.
+
+
+
+
 
 ############
 
