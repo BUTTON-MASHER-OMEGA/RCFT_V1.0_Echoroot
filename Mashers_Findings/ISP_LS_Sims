@@ -1,0 +1,627 @@
+ISP_LS_Sims
+
+
+Indivisible Stochastic Procceses & Lyapunov Stability
+
+
+###########
+
+
+
+import random
+import math
+from collections import Counter
+
+# ---------------------------------------------------------
+# 1. Define the relational configuration
+# ---------------------------------------------------------
+
+# Nodes and their states
+nodes = ["A", "B", "C"]
+
+# Initial random state
+def random_state():
+    return {n: random.choice([0, 1]) for n in nodes}
+
+# ---------------------------------------------------------
+# 2. Constraint definitions (graded violations)
+# ---------------------------------------------------------
+
+def constraint_violation(R):
+    """
+    Compute V_constraint(R) for the frustrated triangle.
+    Graded: 0 = satisfied, 1 = violated.
+    """
+    violations = 0
+
+    # A-B prefer same
+    violations += 1 if R["A"] != R["B"] else 0
+
+    # B-C prefer same
+    violations += 1 if R["B"] != R["C"] else 0
+
+    # A-C prefer opposite
+    violations += 1 if R["A"] == R["C"] else 0
+
+    return violations  # integer 0–3
+
+
+# ---------------------------------------------------------
+# 3. Total Lyapunov functional V(R)
+# ---------------------------------------------------------
+
+def V(R):
+    # For the first toy model, we only use constraint term
+    return constraint_violation(R)
+
+
+# ---------------------------------------------------------
+# 4. Transition rule P(R' | R)
+# ---------------------------------------------------------
+
+def propose_new_state(R):
+    """Flip one random node to propose R'."""
+    R_new = R.copy()
+    node = random.choice(nodes)
+    R_new[node] = 1 - R_new[node]  # flip 0 ↔ 1
+    return R_new
+
+def accept(R, R_new, kappa=2.0):
+    """
+    Metropolis-like acceptance rule:
+    Always accept if V decreases.
+    Accept with probability exp(-kappa * ΔV) if V increases.
+    """
+    dV = V(R_new) - V(R)
+
+    if dV <= 0:
+        return True
+
+    # Otherwise accept with Boltzmann probability
+    p = math.exp(-kappa * dV)
+    return random.random() < p
+
+
+# ---------------------------------------------------------
+# 5. Run the simulation
+# ---------------------------------------------------------
+
+def run_simulation(steps=2000):
+    R = random_state()
+    history = []
+    visits = Counter()
+
+    for t in range(steps):
+        R_new = propose_new_state(R)
+
+        if accept(R, R_new):
+            R = R_new
+
+        # Track history
+        history.append(V(R))
+        visits[tuple(R[n] for n in nodes)] += 1
+
+    return history, visits
+
+
+# ---------------------------------------------------------
+# 6. Execute and display results
+# ---------------------------------------------------------
+
+history, visits = run_simulation(steps=5000)
+
+print("State visitation counts:")
+for state, count in visits.items():
+    print(f"{state}: {count}")
+
+print("\nFinal V:", history[-1])
+
+
+
+~~~~~~~~~~~~
+
+
+
+Results:
+
+
+Results from the code:
+
+State visitation counts:
+(0, 0, 1): 835
+(0, 1, 1): 864
+(0, 0, 0): 778
+(1, 0, 0): 788
+(1, 1, 0): 853
+(1, 1, 1): 854
+(0, 1, 0): 17
+(1, 0, 1): 11
+
+Final V: 1
+
+
+** Process exited - Return Code: 0 **
+
+
+
+
+
+
+###########
+
+
+
+
+import random
+import math
+import matplotlib.pyplot as plt
+
+# -----------------------------
+# 1. Define system
+# -----------------------------
+
+# Nodes: A=0, B=1, C=2
+NODES = [0, 1, 2]
+
+# All possible states (0 or 1 per node)
+def random_state():
+    return [random.choice([0, 1]) for _ in NODES]
+
+# -----------------------------
+# 2. Constraint function
+# -----------------------------
+# Constraints:
+# (A,B): same
+# (B,C): same
+# (A,C): opposite
+
+def constraint_energy(state):
+    A, B, C = state
+
+    violations = 0
+
+    # A-B same
+    if A != B:
+        violations += 1
+
+    # B-C same
+    if B != C:
+        violations += 1
+
+    # A-C opposite
+    if A == C:
+        violations += 1
+
+    return violations
+
+# -----------------------------
+# 3. Transition proposal
+# -----------------------------
+def propose_state(state):
+    new_state = state.copy()
+    i = random.choice(NODES)
+    new_state[i] = 1 - new_state[i]  # flip bit
+    return new_state
+
+# -----------------------------
+# 4. Transition rule (Metropolis-like)
+# -----------------------------
+def accept_probability(V_old, V_new, kappa=2.0):
+    delta = V_new - V_old
+    if delta <= 0:
+        return 1.0
+    else:
+        return math.exp(-kappa * delta)
+
+# -----------------------------
+# 5. Simulation
+# -----------------------------
+def run_simulation(steps=1000, kappa=2.0):
+    state = random_state()
+    V = constraint_energy(state)
+
+    history_V = []
+    history_states = []
+
+    for _ in range(steps):
+        new_state = propose_state(state)
+        V_new = constraint_energy(new_state)
+
+        p = accept_probability(V, V_new, kappa)
+
+        if random.random() < p:
+            state = new_state
+            V = V_new
+
+        history_V.append(V)
+        history_states.append(tuple(state))
+
+    return history_V, history_states
+
+# -----------------------------
+# 6. Run it
+# -----------------------------
+steps = 2000
+history_V, history_states = run_simulation(steps=steps, kappa=2.0)
+
+# -----------------------------
+# 7. Plot energy (Lyapunov)
+# -----------------------------
+plt.figure()
+plt.plot(history_V)
+plt.title("Lyapunov Functional V(R) Over Time")
+plt.xlabel("Step")
+plt.ylabel("V(R)")
+plt.grid()
+plt.show()
+
+# -----------------------------
+# 8. Analyze attractors
+# -----------------------------
+from collections import Counter
+
+counts = Counter(history_states)
+
+print("\nMost common states (attractors):")
+for state, count in counts.most_common(5):
+    print(f"{state} -> {count} visits")
+
+
+~~~~~~~~~
+
+Results:
+
+
+Most common states (attractors):
+(0, 0, 0) -> 354 visits
+(0, 0, 1) -> 348 visits
+(1, 0, 0) -> 335 visits
+(0, 1, 1) -> 322 visits
+(1, 1, 0) -> 317 visits
+
+
+
+
+############
+
+
+
+Our Gemini friend chirped in with a code of their own as well:
+
+import numpy as np
+import random
+from collections import defaultdict
+
+============================================================
+
+RCFT Toy Universe 2.0 - The Entropy Expansion
+
+3-Node Frustrated Triangle with Stability Bias
+
+============================================================
+
+def get_neighbors(state):
+    """Generate all states that are exactly 1 flip away (Hamming distance 1)."""
+    neighbors = []
+    for i in range(len(state)):
+        # Flip the bit at index i
+        neighbor = list(state)
+        neighbor[i] = 1 - neighbor[i]
+        neighbors.append(tuple(neighbor))
+    return neighbors
+
+def calcVbase(state):
+    """
+    Calculates the hard constraints. 
+    State is a 6-bit tuple: (G1, M1, G2, M2, G3, M3)
+    """
+    G1, M1, G2, M2, G3, M3 = state
+    
+    # 1. Local Constraints (G must match M to be coherent)
+    v_cons = 0
+    if G1 != M1: v_cons += 1
+    if G2 != M2: v_cons += 1
+    if G3 != M3: v_cons += 1
+    
+    # 2. Relational Coupling (Frustrated Triangle)
+    # Let's say M1 wants to match M2, M2 wants to match M3, but M3 wants the OPPOSITE of M1
+    v_coup = 0
+    if M1 != M2: v_coup += 1
+    if M2 != M3: v_coup += 1
+    if M3 == M1: v_coup += 1 # Frustration link!
+    
+    return vcons + vcoup
+
+def calcNstable(state):
+    """
+    Calculates how many 1-flip neighbors are equally or more stable.
+    This defines the 'width' of the attractor basin.
+    """
+    basescore = calcV_base(state)
+    neighbors = get_neighbors(state)
+    
+    stable_count = 0
+    for n in neighbors:
+        if calcVbase(n) <= base_score:
+            stable_count += 1
+            
+    return stable_count
+
+def calcVtotal(state, alpha=1.0, beta=0.5):
+    """
+    Vtotal = (Alpha  Vbase) - (Beta  Entropy_Bonus)
+    We SUBTRACT the entropy bonus because a wider basin makes the state MORE attractive (lower V).
+    """
+    vbase = calcV_base(state)
+    nstable = calcN_stable(state)
+    
+    # Entropy bonus: log(1 + N_stable)
+    entropybonus = np.log(1 + nstable)
+    
+    return (alpha  vbase) - (beta  entropybonus)
+
+def runstochasticprocess(steps=10000, alpha=1.0, beta=1.0, temperature=0.5):
+    """Simulates the indivisible stochastic updates via Metropolis-Hastings."""
+    # Start in a random state (6 bits)
+    currentstate = tuple(random.randint(0, 1) for  in range(6))
+    currentV = calcVtotal(currentstate, alpha, beta)
+    
+    history = defaultdict(int)
+    
+    for _ in range(steps):
+        history[current_state] += 1
+        
+        # Propose a random 1-flip transition
+        neighbors = getneighbors(currentstate)
+        proposed_state = random.choice(neighbors)
+        proposedV = calcVtotal(proposedstate, alpha, beta)
+        
+        # Delta V
+        dV = proposedV - currentV
+        
+        # Transition Rule: P(R'|R) ~ e^(-dV / T)
+        if dV <= 0:
+            # If it's a better or equal state, definitely accept
+            currentstate = proposedstate
+            currentV = proposedV
+        else:
+            # If it's a worse state, accept with exponentially decaying probability
+            prob = np.exp(-dV / temperature)
+            if random.random() < prob:
+                currentstate = proposedstate
+                currentV = proposedV
+                
+    return history
+
+if name == "main":
+    print("Running Baseline (No Entropy Bonus: Beta = 0.0)...")
+    histbaseline = runstochastic_process(steps=50000, alpha=1.0, beta=0.0)
+    
+    print("\\nRunning RCFT Entropy Mode (Beta = 1.0)...")
+    histentropy = runstochastic_process(steps=50000, alpha=1.0, beta=1.0)
+    
+    # Sort and display the top 5 states for both
+    topbase = sorted(histbaseline.items(), key=lambda x: x[1], reverse=True)[:5]
+    topent = sorted(histentropy.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    print("\\n--- TOP STATES (BASELINE) ---")
+    for state, count in top_base:
+        print(f"State {state} | Base V: {calcVbase(state)} | Visits: {count}")
+        
+    print("\\n--- TOP STATES (ENTROPY BIAS) ---")
+    for state, count in top_ent:
+        print(f"State {state} | Base V: {calcVbase(state)} | Stable Neighbors: {calcNstable(state)} | Visits: {count}")
+
+~~
+
+Results:
+
+Running Baseline (No Entropy Bonus: Beta = 0.0)...
+
+\nRunning RCFT Entropy Mode (Beta = 1.0)...
+
+\n--- TOP STATES (BASELINE) ---
+
+State (1, 1, 1, 1, 0, 0) | Base V: 1 | Visits: 6359
+
+State (1, 1, 1, 1, 1, 1) | Base V: 1 | Visits: 5852
+
+State (0, 0, 1, 1, 1, 1) | Base V: 1 | Visits: 5813
+
+State (1, 1, 0, 0, 0, 0) | Base V: 1 | Visits: 5666
+
+State (0, 0, 0, 0, 1, 1) | Base V: 1 | Visits: 5272
+
+\n--- TOP STATES (ENTROPY BIAS) ---
+
+State (1, 1, 1, 1, 0, 1) | Base V: 2 | Stable Neighbors: 2 | Visits: 2069
+
+State (0, 0, 0, 1, 1, 1) | Base V: 2 | Stable Neighbors: 2 | Visits: 2048
+
+State (1, 0, 0, 0, 0, 0) | Base V: 2 | Stable Neighbors: 2 | Visits: 2031
+
+State (1, 0, 1, 1, 1, 1) | Base V: 2 | Stable Neighbors: 2 | Visits: 2001
+
+
+
+#########
+
+
+
+
+
+
+#########
+
+
+
+
+"""
+RCFT Toy Universe 4.2 – Strict Minimal-Loss Version
+No Metropolis-Hastings / no probabilistic uphill moves
+Only downhill or flat transitions are accepted (ΔV ≤ 0)
+
+This is closer to a pure indivisible stochastic process with strict coherence gradient preference.
+"""
+
+import random
+import math
+from statistics import mean
+
+random.seed(42)
+
+
+def get_neighbors(state):
+    """1-flip admissible transitions (𝒩₁(R))"""
+    neighbors = []
+    for i in range(len(state)):
+        neighbor = list(state)
+        neighbor[i] = 1 - neighbor[i]
+        neighbors.append(tuple(neighbor))
+    return neighbors
+
+
+def calc_v_base(state):
+    """V_constraint + frustrated relational coupling"""
+    G1, M1, G2, M2, G3, M3 = state
+    v_cons = (G1 != M1) + (G2 != M2) + (G3 != M3)
+    v_coup = (M1 != M2) + (M2 != M3) + (M3 == M1)
+    return v_cons + v_coup
+
+
+def calc_n_stable(state):
+    """Proxy for basin width / refinement count"""
+    base = calc_v_base(state)
+    return sum(1 for n in get_neighbors(state) if calc_v_base(n) <= base)
+
+
+def calc_v_total(state, alpha=1.0, beta=0.0, memory_penalty=0.0, mem_val=0):
+    """Coherence free energy (Lyapunov functional)"""
+    v_base = calc_v_base(state)
+    n_stable = calc_n_stable(state)
+    entropy = math.log(1 + n_stable) if n_stable > 0 else 0.0
+    mem_term = memory_penalty * abs(mem_val)
+    return alpha * v_base - beta * entropy + mem_term
+
+
+def run_rcft_strict(steps=50000, alpha=1.0, beta=0.0, memory_penalty=0.0, label=""):
+    """
+    Strict indivisible dynamics:
+    - Accept only if ΔV ≤ 0 (coherence non-decreasing)
+    - No uphill moves allowed
+    - Longer run (50k steps) to allow more time to reach attractors
+    """
+    current = tuple(random.randint(0, 1) for _ in range(6))
+    vtotal_hist = []
+    vbase_hist = []
+    nstable_hist = []
+    mem_val = 0
+    accepted_moves = 0
+
+    for t in range(steps):
+        vtotal_hist.append(calc_v_total(current, alpha, beta, memory_penalty, mem_val))
+        vbase_hist.append(calc_v_base(current))
+        nstable_hist.append(calc_n_stable(current))
+
+        proposed = random.choice(get_neighbors(current))
+
+        dV = (calc_v_total(proposed, alpha, beta, memory_penalty, mem_val) -
+              calc_v_total(current, alpha, beta, memory_penalty, mem_val))
+
+        if dV <= 0:
+            current = proposed
+            accepted_moves += 1
+            # Update memory proxy (symplectic flavor)
+            mem_val = (mem_val + sum(current)) % 5
+
+    final_vtotal = calc_v_total(current, alpha, beta, memory_penalty, mem_val)
+    acceptance_rate = accepted_moves / steps if steps > 0 else 0
+
+    print(f"\n=== {label}  |  β = {beta:.1f}  |  strict downhill only ===")
+    print(f"Final attractor : {current}")
+    print(f"  V_base           = {calc_v_base(current)}")
+    print(f"  N_stable (basin) = {calc_n_stable(current)}")
+    print(f"  V_total          = {final_vtotal:.3f}")
+    print(f"Avg V_total over run: {mean(vtotal_hist):.3f}")
+    print(f"Min V_total observed: {min(vtotal_hist):.3f}")
+    print(f"Acceptance rate     : {acceptance_rate:.1%}  (only ΔV ≤ 0 moves)")
+    print(f"Final memory val    : {mem_val}")
+
+    # Show tail of trajectory
+    tail_start = max(0, len(vtotal_hist) - 20)
+    tail = vtotal_hist[tail_start:]
+    print("\nLast 20 V_total values:")
+    print(" ".join(f"{x:.3f}" for x in tail))
+
+    print("→ Note: Without uphill moves the system may become trapped in local minima.\n")
+
+
+# ────────────────────────────────────────────────
+print("🚀 RCFT 4.2 Strict – No Metropolis-Hastings, Pure Minimal-Loss Kernel\n")
+
+run_rcft_strict(beta=0.0,  label="1. Baseline (pure constraints)")
+run_rcft_strict(beta=1.0,  label="2. Balanced Coherence (sweet spot)")
+run_rcft_strict(beta=2.0,  label="3. Entropy-Dominated")
+run_rcft_strict(beta=1.0, memory_penalty=0.25, label="4. Balanced + Light Memory Penalty")
+
+print("\nDone. All runs use strict ΔV ≤ 0 acceptance only.")
+
+
+
+~~~~~~~~~
+
+
+
+results:
+ 
+🚀 RCFT 4.2 Strict – No Metropolis-Hastings, Pure Minimal-Loss Kernel
+=== 1. Baseline (pure constraints) | β = 0.0 | strict downhill only ===
+Final attractor : (0, 0, 0, 0, 0, 0)
+  V_base = 1
+  N_stable (basin) = 0
+  V_total = 1.000
+Avg V_total over run: 1.001
+Min V_total observed: 1.000
+Acceptance rate : 0.0% (only ΔV ≤ 0 moves)
+Final memory val : 0
+Last 20 V_total values:
+1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000
+→ Note: Without uphill moves the system may become trapped in local minima.
+=== 2. Balanced Coherence (sweet spot) | β = 1.0 | strict downhill only ===
+Final attractor : (0, 0, 0, 0, 0, 1)
+  V_base = 2
+  N_stable (basin) = 2
+  V_total = 0.901
+Avg V_total over run: 0.901
+Min V_total observed: 0.901
+Acceptance rate : 0.0% (only ΔV ≤ 0 moves)
+Final memory val : 0
+Last 20 V_total values:
+0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901
+→ Note: Without uphill moves the system may become trapped in local minima.
+=== 3. Entropy-Dominated | β = 2.0 | strict downhill only ===
+Final attractor : (1, 1, 0, 1, 1, 0)
+  V_base = 3
+  N_stable (basin) = 4
+  V_total = -0.219
+Avg V_total over run: -0.219
+Min V_total observed: -0.219
+Acceptance rate : 0.0% (only ΔV ≤ 0 moves)
+Final memory val : 4
+Last 20 V_total values:
+-0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219 -0.219
+→ Note: Without uphill moves the system may become trapped in local minima.
+=== 4. Balanced + Light Memory Penalty | β = 1.0 | strict downhill only ===
+Final attractor : (0, 1, 0, 0, 0, 0)
+  V_base = 2
+  N_stable (basin) = 2
+  V_total = 0.901
+Avg V_total over run: 0.901
+Min V_total observed: 0.901
+Acceptance rate : 0.0% (only ΔV ≤ 0 moves)
+Final memory val : 0
+Last 20 V_total values:
+0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901 0.901
+→ Note: Without uphill moves the system may become trapped in local minima.
+Done. All runs use strict ΔV ≤ 0 acceptance only.
+** Process exited - Return Code: 0 **
