@@ -1180,13 +1180,581 @@ We’ve gone from elegant skeleton → fully articulated, runnable, and philosop
 ###############
 
 
-
+Leaps were made here for the formalism:
 
 
 ###############
 
 
 
+
+
+###############
+
+
+import random
+import math
+from collections import Counter
+
+# ============================================================
+# ISP–LSA Toy v3
+# - Z_norm(R) default entropy
+# - κ(R) from variance of ΔV over A(R)
+# - LCO → V(R) explicitly
+# - explicit coupling via projection mismatch
+# - proto-Sp(2) memory retained (but still not feeding back)
+# ============================================================
+
+N_NODES = 3
+DIM_DIR  = 2
+
+ALPHA = 1.0   # weight on constraint (LCO bit mismatch)
+BETA  = 1.0   # weight on entropy
+GAMMA = 1.0   # weight on coupling (projection mismatch)
+LAMBDA_Z = 0.2
+
+KAPPA_MIN = 0.5
+KAPPA_MAX = 5.0
+
+def all_bit_states():
+    for x in range(2**(2*N_NODES)):
+        bits = tuple((x >> k) & 1 for k in range(2*N_NODES))
+        yield bits
+
+ALL_BIT_STATES = list(all_bit_states())
+
+NODE_DIRS = [
+    (1.0, 0.0),
+    (0.0, 1.0),
+    (-1.0, 0.0),
+]
+
+def normalize(v):
+    x, y = v
+    n = math.sqrt(x*x + y*y)
+    if n == 0:
+        return (0.0, 0.0)
+    return (x/n, y/n)
+
+def admissible_neighbors_bits(bits):
+    neighbors = []
+    bits = list(bits)
+    for node in range(N_NODES):
+        gi = 2*node
+        mi = 2*node + 1
+
+        sG = bits.copy()
+        sG[gi] = 1 - sG[gi]
+        neighbors.append(tuple(sG))
+
+        sM = bits.copy()
+        sM[mi] = 1 - sM[mi]
+        neighbors.append(tuple(sM))
+    return neighbors
+
+def lco_bit_mismatch(bits):
+    mismatches = 0
+    for node in range(N_NODES):
+        gi = bits[2*node]
+        mi = bits[2*node + 1]
+        if gi != mi:
+            mismatches += 1
+    return mismatches / N_NODES
+
+def node_mode_vector(bits, node):
+    gi = bits[2*node]
+    mi = bits[2*node + 1]
+    return normalize((1.0 if gi == 1 else -1.0,
+                      1.0 if mi == 1 else -1.0))
+
+def coupling_mismatch(bits):
+    # V_coupling = sum_{(x,y)} (1 - Π_x · Π_y)
+    edges = [(0,1), (1,2), (2,0)]
+    total = 0.0
+    for i, j in edges:
+        vx = node_mode_vector(bits, i)
+        vy = node_mode_vector(bits, j)
+        dot = vx[0]*vy[0] + vx[1]*vy[1]
+        total += (1.0 - dot)
+    return total / len(edges)
+
+def calc_v_constraint(bits):
+    # directly from LCO bit mismatch
+    return lco_bit_mismatch(bits)
+
+def calc_v_coupling(bits):
+    return coupling_mismatch(bits)
+
+def calc_Z_two_step(bits, lam=LAMBDA_Z):
+    v0 = calc_v_constraint(bits) + calc_v_coupling(bits)
+    A0 = admissible_neighbors_bits(bits)
+    if not A0:
+        return 1e-12
+    Z = 0.0
+    count = 0
+    for s1 in A0:
+        A1 = admissible_neighbors_bits(s1)
+        if not A1:
+            continue
+        for s2 in A1:
+            v2 = calc_v_constraint(s2) + calc_v_coupling(s2)
+            dV = v2 - v0
+            Z += math.exp(-lam * dV)
+            count += 1
+    if count == 0:
+        return 1e-12
+    # normalization: average over 2-step paths
+    Z_norm = Z / count
+    return Z_norm
+
+def V_total(bits, lam=LAMBDA_Z):
+    v_con = calc_v_constraint(bits)
+    v_cpl = calc_v_coupling(bits)
+    Z = calc_Z_two_step(bits, lam=lam)
+    return ALPHA * v_con + GAMMA * v_cpl - BETA * math.log(Z)
+
+def kappa_from_variance(bits, lam=LAMBDA_Z,
+                        kappa_min=KAPPA_MIN,
+                        kappa_max=KAPPA_MAX):
+    A = admissible_neighbors_bits(bits)
+    if not A:
+        return kappa_max
+    V0 = V_total(bits, lam=lam)
+    dVs = []
+    for s1 in A:
+        V1 = V_total(s1, lam=lam)
+        dVs.append(V1 - V0)
+    mean = sum(dVs) / len(dVs)
+    var = sum((x - mean)**2 for x in dVs) / len(dVs)
+    # map variance to [0,1] via soft saturation
+    scale = var / (1.0 + var)
+    # high variance → low κ (explore), low variance → high κ (rigid)
+    kappa = kappa_min + (kappa_max - kappa_min) * (1.0 - scale)
+    return kappa
+
+def init_memory():
+    q = (random.uniform(-1, 1), random.uniform(-1, 1))
+    p = (random.uniform(-1, 1), random.uniform(-1, 1))
+    return q, p
+
+def symplectic_update(q, p, bits, step_size=0.05):
+    mismatch = lco_bit_mismatch(bits)
+    gradV = mismatch
+    qx, qy = q
+    px, py = p
+
+    qx_new = qx + step_size * px
+    qy_new = qy + step_size * py
+
+    px_new = px - step_size * gradV * qx
+    py_new = py - step_size * gradV * qy
+
+    return (qx_new, qy_new), (px_new, py_new)
+
+def memory_anchor(q, p):
+    return normalize(q)
+
+def stats_mean_var(series):
+    if not series:
+        return 0.0, 0.0
+    n = len(series)
+    mean = sum(series) / n
+    var = sum((x - mean)**2 for x in series) / n
+    return mean, var
+
+def autocorrelation(series, lag=1):
+    n = len(series)
+    if n <= lag:
+        return 0.0
+    mean = sum(series) / n
+    num = 0.0
+    den = 0.0
+    for i in range(n):
+        den += (series[i] - mean)**2
+    for i in range(n - lag):
+        num += (series[i] - mean) * (series[i+lag] - mean)
+    if den == 0.0:
+        return 0.0
+    return num / den
+
+def run_isp_lsa_v3(
+    steps=50000,
+    lam=LAMBDA_Z,
+    seed=0
+):
+    random.seed(seed)
+    bits = random.choice(ALL_BIT_STATES)
+    q, p = init_memory()
+
+    visit_counts = Counter()
+    uphill_moves = 0
+
+    lco_bit_series = []
+    lco_cpl_series = []
+
+    for _ in range(steps):
+        visit_counts[bits] += 1
+
+        q, p = symplectic_update(q, p, bits)
+        # H = memory_anchor(q, p)  # not yet feeding back into V
+
+        lco_bit_series.append(calc_v_constraint(bits))
+        lco_cpl_series.append(calc_v_coupling(bits))
+
+        neighbors = admissible_neighbors_bits(bits)
+        candidate = random.choice(neighbors)
+
+        V_curr = V_total(bits, lam=lam)
+        V_next = V_total(candidate, lam=lam)
+        dV = V_next - V_curr
+
+        if dV <= 0:
+            accept = True
+        else:
+            kappa = kappa_from_variance(bits, lam=lam)
+            accept_prob = math.exp(-kappa * dV)
+            accept = (random.random() < accept_prob)
+            if accept:
+                uphill_moves += 1
+
+        if accept:
+            bits = candidate
+
+    total_visits = sum(visit_counts.values())
+    unique_states = len(visit_counts)
+    uphill_frac = uphill_moves / steps if steps > 0 else 0.0
+
+    bit_mean, bit_var = stats_mean_var(lco_bit_series)
+    cpl_mean, cpl_var = stats_mean_var(lco_cpl_series)
+    bit_ac = autocorrelation(lco_bit_series, lag=1)
+    cpl_ac = autocorrelation(lco_cpl_series, lag=1)
+
+    top_states = visit_counts.most_common(6)
+
+    print("=== ISP–LSA Toy v3 (Z_norm, κ from ΔV variance, LCO→V, explicit coupling) ===")
+    print(f"Total steps: {steps}")
+    print(f"Unique states visited: {unique_states}")
+    print(f"Uphill moves: {uphill_moves} ({uphill_frac*100:.1f}%)")
+    print()
+    print("LCO / coupling diagnostics:")
+    print(f"  bit mismatch   mean={bit_mean:.4f}, var={bit_var:.4f}, ac(1)={bit_ac:.4f}")
+    print(f"  coupling mis   mean={cpl_mean:.4f}, var={cpl_var:.4f}, ac(1)={cpl_ac:.4f}")
+    print()
+    print("Top visited states:")
+    for s, cnt in top_states:
+        v_con = calc_v_constraint(s)
+        v_cpl = calc_v_coupling(s)
+        Z = calc_Z_two_step(s, lam=lam)
+        V = V_total(s, lam=lam)
+        print(
+            f"State {s} | V_con={v_con:.3f} | V_cpl={v_cpl:.3f} | Z_norm={Z:.3f} | "
+            f"V={V:.3f} | Visits={cnt}"
+        )
+
+if __name__ == "__main__":
+    run_isp_lsa_v3()
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+RESULTS:
+
+
+=== ISP–LSA Toy v3 (Z_norm, κ from ΔV variance, LCO→V, explicit coupling) ===
+Total steps: 50000
+Unique states visited: 64
+Uphill moves: 2148 (4.3%)
+
+LCO / coupling diagnostics:
+  bit mismatch   mean=0.0780, var=0.0432, ac(1)=0.8890
+  coupling mis   mean=0.1152, var=0.0879, ac(1)=0.8539
+
+Top visited states:
+State (0, 0, 0, 0, 0, 0) | V_con=0.000 | V_cpl=0.000 | Z_norm=0.773 | V=0.257 | Visits=22546
+State (1, 1, 1, 1, 1, 1) | V_con=0.000 | V_cpl=0.000 | Z_norm=0.773 | V=0.257 | Visits=19034
+State (1, 0, 1, 0, 1, 0) | V_con=1.000 | V_cpl=0.000 | Z_norm=0.919 | V=1.084 | Visits=588
+State (0, 1, 0, 1, 0, 1) | V_con=1.000 | V_cpl=0.000 | Z_norm=0.919 | V=1.084 | Visits=563
+State (1, 0, 0, 0, 0, 0) | V_con=0.333 | V_cpl=0.667 | Z_norm=0.919 | V=1.084 | Visits=500
+State (0, 0, 0, 0, 0, 1) | V_con=0.333 | V_cpl=0.667 | Z_norm=0.919 | V=1.084 | Visits=398
+
+
+** Process exited - Return Code: 0 **
+
+
+
+
+
+##################
+
+
+
+
+
+Here’s a rigorous, consolidated, up‑to‑date definition sheet for the ISP–Lyapunov Stability Attractor (ISP–LSA) metric, incorporating:
+
+all current equations,
+all variables and symbols,
+ISP interpretations,
+the v3 toy structure (LCO→V, Z_norm, κ from ΔV variance, geometric coupling),
+and the memory lane (even where it’s not yet fully coupled).
+This is written as if it were the “Core Definitions” section of a manuscript.
+
+1. State space and stochastic process
+1.1 Relational configuration
+A state of the system is a relational configuration [ R \in \mathcal{R} ] with internal structure [ R = (X, E, \Lambda, R_{\text{memory}}) ] where:
+
+(X) — finite set of nodes (subsystems).
+(E \subseteq X \times X) — edges (relations, couplings, constraints).
+(\Lambda) — labels on nodes/edges (local states, constraint flags, geometric data).
+(R_{\text{memory}}) — symplectic memory kernel (see §5).
+In the toy model, we use a minimal discrete instantiation: [ R_{\text{toy}} = (\text{bits}, q, p) ] where:
+
+bits — a 6‑bit string ((G_1,M_1,G_2,M_2,G_3,M_3)) with (G_i, M_i \in {0,1}).
+(q, p \in \mathbb{R}^2) — proto‑Sp(2) memory coordinates.
+1.2 Indivisible Stochastic Process (ISP)
+The evolution of probability over states is given by: [ p_{t+1}(R') = \sum_{R} P(R' \mid R), p_t(R) ] where:
+
+(p_t(R)) — probability of being in state (R) at event index (t).
+(P(R' \mid R)) — transition kernel.
+ISP properties:
+
+Locality:
+(P(R' \mid R) = 0) if (R') is not in the admissible set (\mathcal{A}(R)) (see §2).
+Indivisibility:
+There is no nontrivial factorization [ P(R'' \mid R) \neq \sum_{R'} T_1(R'' \mid R') T_2(R' \mid R) ] into independent sub‑kernels.
+Markov vs non‑Markov:
+
+The process is Markovian on the full state (R).
+It is physically non‑Markovian on any projection (e.g. relational subsystem) because memory is embedded in (R_{\text{memory}}).
+2. Locality and admissible transitions
+2.1 Admissible set (\mathcal{A}(R))
+The admissible set (\mathcal{A}(R)) is the set of states reachable from (R) by a single local update that respects graph‑distance‑1 and constraint overlap.
+
+Abstractly: [ \mathcal{A}(R) = { R' \in \mathcal{R} \mid \text{supp}(R' - R) \subseteq N_1(x),\ \text{and intersects an active constraint} } ]
+
+In the toy model (3 nodes, each with ((G_i,M_i))):
+
+A move is admissible if it flips exactly one of (G_i) or (M_i) for a single node (i).
+So: [ \mathcal{A}(R_{\text{toy}}) = { R' : R' \text{ differs from } R \text{ in exactly one of } G_i \text{ or } M_i } ]
+We denote:
+
+(\text{supp}(R' - R)) — set of nodes whose local variables changed.
+(N_1(x)) — graph‑distance‑1 neighborhood of node (x).
+3. Lyapunov / coherence functional (V(R))
+3.1 Global form
+The ISP–LSA metric is encoded in a Lyapunov‑like functional: [ \boxed{ V(R) = \alpha V_{\text{constraint}}(R) + \gamma V_{\text{coupling}}(R) - \beta \log Z_{\text{norm}}(R) } ] where:
+
+(\alpha) — weight on constraint mismatch.
+(\gamma) — weight on coupling (projection mismatch).
+(\beta) — weight on entropy (refinement partition function).
+(Z_{\text{norm}}(R)) — normalized refinement partition function (see §4).
+Interpretation:
+
+(V_{\text{constraint}}) — local coherence cost (LCO‑driven).
+(V_{\text{coupling}}) — geometric coupling cost (projection mismatch).
+(-\log Z_{\text{norm}}) — entropy‑like term from refinement futures.
+This is a free‑energy‑like functional: [ V \sim \text{energy} - \text{entropy} ]
+
+3.2 Constraint term (V_{\text{constraint}}(R)) (LCO → V)
+In the toy, we define: [ V_{\text{constraint}}(R) = \text{LCO_bit_mismatch}(R) ]
+
+For bits ((G_i,M_i)), the local bit mismatch is: [ \ell_i^{\text{bit}}(R) = \begin{cases} 1, & G_i \neq M_i \ 0, & G_i = M_i \end{cases} ]
+
+Then: [ V_{\text{constraint}}(R) = \frac{1}{N_{\text{nodes}}} \sum_{i} \ell_i^{\text{bit}}(R) ]
+
+So:
+
+(V_{\text{constraint}} = 0) iff all (G_i = M_i).
+This is the direct LCO → V link: local mismatch defines the constraint energy.
+3.3 Coupling term (V_{\text{coupling}}(R)) (geometric)
+Each node (i) has a mode vector (\Pi_i(R)) derived from ((G_i,M_i)). In the toy: [ \Pi_i(R) = \text{normalize}\big((\pm 1, \pm 1)\big) ] with signs determined by (G_i, M_i).
+
+We define coupling as projection mismatch: [ V_{\text{coupling}}(R) = \frac{1}{|E|} \sum_{(x,y) \in E} \big(1 - \Pi_x(R) \cdot \Pi_y(R)\big) ]
+
+In the toy:
+
+(E = {(0,1),(1,2),(2,0)}) (triangle).
+(\Pi_x \cdot \Pi_y) is the Euclidean dot product in (\mathbb{R}^2).
+Interpretation:
+
+(V_{\text{coupling}} = 0) when all node modes are perfectly aligned.
+This is the first geometric seed: a rotation‑invariant, metric‑free coupling.
+3.4 Lyapunov condition (ISP arrow)
+The ISP–LSA dynamics is constrained by: [ \boxed{ \mathbb{E}[\Delta V \mid R] \le 0 } ] with: [ \Delta V = V(R') - V(R) ]
+
+This is the stochastic Lyapunov condition: on average, the system does not climb in (V).
+
+4. Refinement partition function (Z(R))
+4.1 Two‑step refinement
+We define a local refinement partition function over 2‑step futures: [ Z(R) = \sum_{R' \in \mathcal{A}(R)} \sum_{R'' \in \mathcal{A}(R')} \exp\big(-\lambda (V_{\text{base}}(R'') - V_{\text{base}}(R))\big) ] where:
+
+(\lambda > 0) — refinement weighting parameter.
+(V_{\text{base}}(R)) — a base potential (in v3, we use (V_{\text{base}} = V_{\text{constraint}} + V_{\text{coupling}})).
+Interpretation:
+
+Counts second‑order futures.
+Weights them by coherence cost.
+Encodes structured refinement rather than just immediate stability.
+4.2 Normalized partition function (Z_{\text{norm}}(R))
+To compare states fairly, we normalize by the number of 2‑step paths: [ Z_{\text{norm}}(R) = \frac{Z(R)}{#{\text{2‑step paths from } R}} ]
+
+In the toy:
+
+We explicitly count the number of ((R',R'')) pairs used in the sum and divide by that count.
+This avoids:
+
+bias from branching structure,
+unfair advantage to states with larger admissible neighborhoods.
+4.3 Entropy term
+We define: [ V_{\text{entropy}}(R) := \log Z_{\text{norm}}(R) ] and use it in: [ V(R) = \alpha V_{\text{constraint}}(R) + \gamma V_{\text{coupling}}(R) - \beta V_{\text{entropy}}(R) ]
+
+So the entropy contribution is: [ -\beta \log Z_{\text{norm}}(R) ]
+
+5. Temporal interface and κ(R)
+5.1 Temporal interface variables
+We conceptually distinguish:
+
+(\kappa(R)) — constraint density / geometric pressure.
+(\gamma_n) — memory drag (function of (\kappa_n)).
+(\varepsilon_n) — freedom to move (function of (\kappa_n)).
+In the toy, we explicitly implement (\kappa(R)) and leave (\gamma_n, \varepsilon_n) implicit.
+
+5.2 κ(R) from ΔV variance (landscape stiffness)
+In v3, we define (\kappa(R)) from the variance of (\Delta V) over the admissible set: [ \Delta V(R \to R') = V(R') - V(R) ] [ \text{Var}_R(\Delta V) = \text{Var}{\Delta V(R \to R') : R' \in \mathcal{A}(R)} ]
+
+We map this variance to a stiffness: [ s(R) = \frac{\text{Var}R(\Delta V)}{1 + \text{Var}R(\Delta V)} \in [0,1) ] and define: [ \boxed{ \kappa(R) = \kappa{\min} + (\kappa{\max} - \kappa_{\min}) \big(1 - s(R)\big) } ]
+
+Interpretation:
+
+Low variance → landscape is flat → high (\kappa) → rigid, resists uphill moves.
+High variance → landscape is rough → low (\kappa) → more exploratory.
+This makes (\kappa(R)) an intrinsic property of the local energy landscape, not an external temperature.
+
+6. Acceptance kernel and dynamics
+6.1 Soft minimal‑loss acceptance rule
+Given a current state (R) and candidate (R' \in \mathcal{A}(R)), we compute: [ \Delta V = V(R') - V(R) ]
+
+The acceptance probability is: [ P(R' \mid R) \propto \exp\big(-\kappa(R) \max(0,\Delta V)\big) ]
+
+Explicitly: [ P(\text{accept } R \to R') = \begin{cases} 1, & \Delta V \le 0 \ \exp(-\kappa(R)\Delta V), & \Delta V > 0 \end{cases} ]
+
+This enforces:
+
+deterministic descent when (\Delta V \le 0),
+κ‑modulated stochastic uphill moves when (\Delta V > 0).
+7. Attractors and stability
+7.1 Attractor set
+The attractor set is: [ \boxed{ \mathcal{A}_{\text{attractor}} = \arg\min_R V(R) } ]
+
+In the v3 toy, the dominant attractors are:
+
+((0,0,0,0,0,0))
+((1,1,1,1,1,1))
+both with:
+
+(V_{\text{constraint}} = 0),
+(V_{\text{coupling}} = 0),
+identical (Z_{\text{norm}}) and (V).
+These are globally ordered, maximally coherent states.
+
+8. Memory lane (proto‑Sp(2) / Sp(8) sector)
+8.1 Memory kernel structure
+We define: [ R_{\text{memory}} = (H, q_i, p_i, \Sigma_{ij}, \Phi) ]
+
+In the toy (proto‑Sp(2)):
+
+(q \in \mathbb{R}^2), (p \in \mathbb{R}^2).
+(H = \text{normalize}(q)) — memory anchor.
+(\Sigma_{ij} = q_i p_j - q_j p_i) — symplectic area (not yet fully used).
+(\Phi) — accumulated phase (conceptual placeholder).
+In the full theory, this generalizes to Sp(8).
+
+8.2 Symplectic update
+We use a simple area‑preserving‑inspired update: [ q' = q + \epsilon p ] [ p' = p - \epsilon \nabla V_{\text{eff}}(R) ] where in the toy:
+
+(\nabla V_{\text{eff}}) is approximated from bit mismatch (e.g. proportional to (V_{\text{constraint}})).
+(\epsilon) is a small step size.
+Abstractly: [ R_{\text{memory}}(n+1) = S_n R_{\text{memory}}(n) ] with: [ S_n^\top \Omega S_n = \Omega,\quad \det(S_n) = 1 ] and [ \Omega = \begin{pmatrix} 0 & I \ -I & 0 \end{pmatrix} ]
+
+This enforces a symplectic structure on memory evolution.
+
+8.3 Memory anchor
+The memory anchor is: [ H = \frac{q}{|q|} ]
+
+In future versions (v4+), we intend to couple (H) back into (V(R)) via a term like: [ V_{\text{mem}}(R) = \delta \big(1 - H \cdot \bar{m}(R)\big) ] where (\bar{m}(R)) is an average mode vector over nodes. This will make the dynamics physically non‑Markovian.
+
+9. LCO and GCO
+9.1 Local Coherence Operator (LCO)
+LCO evaluates local mismatch and coherence.
+
+In the toy, we track:
+
+Bit mismatch: [ \ell_i^{\text{bit}}(R) = 1 - \delta_{G_i,M_i} ] and [ V_{\text{constraint}}(R) = \frac{1}{N_{\text{nodes}}} \sum_i \ell_i^{\text{bit}}(R) ]
+
+Directional mismatch (optional diagnostic): [ \ell_i^{\text{dir}}(R) = 1 - \Pi_i(R) \cdot d_i ] where (d_i) is a fixed reference direction for node (i).
+
+Memory mismatch (planned): [ \ell_{\text{mem}}(R) = 1 - H \cdot \bar{m}(R) ]
+
+LCO is local, deterministic, and geometry‑neutral at the definition level; in the toy we instantiate it concretely.
+
+9.2 Global Coherence Operator (GCO)
+GCO aggregates long‑horizon behavior:
+
+time series of LCO outputs,
+persistence of low‑mismatch states,
+autocorrelation of mismatch,
+basin occupancy statistics.
+In the toy, we compute:
+
+mean and variance of bit mismatch over time,
+mean and variance of coupling mismatch,
+autocorrelation at lag 1.
+GCO does not introduce new dynamics; it diagnoses global coherence structure.
+
+10. Geometry and emergent distance
+10.1 Geometric coupling (local)
+We already have a local geometric structure via: [ V_{\text{coupling}}(R) = \frac{1}{|E|} \sum_{(x,y)} (1 - \Pi_x(R) \cdot \Pi_y(R)) ]
+
+This is:
+
+rotation‑invariant,
+metric‑free (uses dot products only),
+scalable to higher dimensions.
+10.2 Coherence distance (planned global metric)
+A natural emergent distance between configurations is: [ d(R_1, R_2) = \inf_{\gamma: R_1 \to R_2} \sum_i \max(0, V(R_{i+1}) - V(R_i)) ] where (\gamma) is a path in configuration space.
+
+Interpretation:
+
+distance = minimal accumulated positive (\Delta V) along a path.
+null directions correspond to zero‑cost paths.
+This is the seed of an emergent geometric / causal structure.
+
+11. Principles and interpretations
+11.1 ISP interpretation
+The process is Markovian in representation (on (R)).
+It is physically non‑Markovian because memory is embedded in (R_{\text{memory}}).
+The kernel is local, indivisible, and Lyapunov‑biased.
+11.2 Entropy and refinement
+(N_{\text{stable}}) was an early proxy (1‑step basin width).
+(Z(R)) and (Z_{\text{norm}}(R)) are refinement‑based partition functions over multi‑step futures.
+(\log Z_{\text{norm}}(R)) is the entropy term in (V(R)).
+11.3 κ as geometric pressure
+(\kappa(R)) is not temperature.
+It encodes local constraint rigidity / geometric pressure from the landscape.
+In v3, it is derived from the variance of (\Delta V) over (\mathcal{A}(R)).
+11.4 Emergent order
+The v3 toy empirically shows:
+
+strong attractors at globally coherent states,
+high occupancy of these minima,
+low uphill rate,
+high temporal autocorrelation.
+This is emergent global order from local rules, consistent with the ISP–LSA design.
 
 
 ###############
