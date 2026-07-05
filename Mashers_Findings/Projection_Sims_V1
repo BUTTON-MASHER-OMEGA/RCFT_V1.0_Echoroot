@@ -1730,3 +1730,1085 @@ Done.
 
 
 ** Process exited - Return Code: 0 **
+
+
+
+
+
+
+####################
+
+
+
+
+
+
+I think the last four iterations are where the project shifted from "interesting behavior" to actually starting to isolate mechanisms. Looking back, each simulation answered a different question.
+
+---
+
+# Simulation 1 — Reinforcement vs. Penalization
+
+**Question**
+
+> What happens if memory rewards revisiting versus discourages revisiting?
+
+### What changed
+
+You introduced the sign on the memory term:
+
+[
+F_{ij}
+======
+
+\alpha
++
+\beta \Delta_{\rm proj}
++
+s,\lambda M_{ij},
+]
+
+where
+
+* (s=-1): reinforcement
+* (s=+1): penalization
+
+### What we learned
+
+This established two distinct dynamical phases.
+
+Reinforcement produced localization and eventually attractors.
+
+Penalization produced continual exploration.
+
+This was the first evidence that **memory changes the qualitative dynamics**, not merely the transition probabilities.
+
+---
+
+# Simulation 2 — Bounded Memory
+
+**Question**
+
+> Were the attractors simply caused by unbounded reinforcement exploding?
+
+### What changed
+
+Instead of
+
+[
+M_{ij},
+]
+
+you used
+
+[
+\tanh(M_{ij})
+]
+
+(or another saturating function).
+
+So
+
+[
+F
+=
+
+## F_0
+
+\lambda\tanh(M).
+]
+
+### What we learned
+
+This was probably the biggest validation so far.
+
+The attractors did **not** disappear.
+
+Instead they became softer.
+
+Instead of freezing into
+
+```
+0 ↔ 1
+```
+
+the walker still explored the graph.
+
+That means
+
+> localization is **not** merely a consequence of runaway reinforcement.
+
+The architecture itself supports structured dynamics.
+
+That was an important control experiment.
+
+---
+
+# Simulation 3 — New Temporal Metrics
+
+The original ordering metric turned out to be flawed because the graph has no self-loops.
+
+Dennis replaced it with much better observables.
+
+Specifically:
+
+### Edge entropy
+
+[
+H_{\rm edge}
+============
+
+*
+
+\sum p(e)\log p(e)
+]
+
+Measures concentration of edge usage.
+
+---
+
+### Conditional entropy
+
+[
+H_{\rm cond}
+============
+
+H(X_{t+1}|X_t)
+]
+
+Measures predictability.
+
+---
+
+### Valid transition fraction
+
+Shuffling destroys graph structure.
+
+Original trajectory:
+
+```
+valid = 1.0
+```
+
+Shuffled:
+
+```
+≈0.32
+```
+
+This became one of the strongest demonstrations that the ordering carries genuine dynamical information.
+
+Instead of simply saying
+
+> "the walker loops"
+
+you could now quantify
+
+* predictability
+* localization
+* temporal organization
+
+---
+
+# Simulation 4 — β Sweep
+
+This is where the projection geometry became visible.
+
+Instead of changing memory,
+
+Dennis varied
+
+[
+\beta.
+]
+
+Results looked like
+
+| β | Dynamics                  |
+| - | ------------------------- |
+| 0 | uniform exploration       |
+| 1 | weak localization         |
+| 2 | strong pair preference    |
+| 4 | near deterministic dimers |
+
+The entropy measurements tracked this beautifully.
+
+For example
+
+| β | (H_{\rm edge}) | (H_{\rm cond}) |
+| - | -------------- | -------------- |
+| 0 | ≈3.0           | ≈0.94          |
+| 1 | ≈2.8           | ≈0.69          |
+| 2 | ≈2.4           | ≈0.33          |
+| 4 | ≈2.1           | ≈0.06          |
+
+This is an extremely clean trend.
+
+Increasing projection cost continuously reduces dynamical freedom.
+
+That is exactly what a coarse-graining boundary should do.
+
+---
+
+# What these four simulations collectively tell us
+
+I think they establish four fairly robust conclusions.
+
+## 1. Projection geometry creates structure.
+
+Without projection penalties,
+
+the walker behaves almost diffusively.
+
+As projection penalties increase,
+
+localized dynamics emerge.
+
+This strongly supports the idea that the projection itself acts as an organizing constraint.
+
+---
+
+## 2. Memory reinforces existing structure.
+
+After bounded memory,
+
+memory no longer creates attractors by itself.
+
+Instead,
+
+it amplifies whatever geometric preferences already exist.
+
+That's actually a cleaner interpretation than the original one.
+
+---
+
+## 3. Temporal ordering is genuinely meaningful.
+
+The shuffle experiments demonstrate that the sequence is not just a random permutation of states.
+
+Its temporal organization contains real information.
+
+That's exactly what (H_{\rm edge}) and (H_{\rm cond}) are capturing.
+
+---
+
+## 4. Coherence appears to emerge continuously.
+
+One thing I like about these results is that coherence doesn't suddenly appear.
+
+Instead you observe a smooth progression:
+
+```
+Exploration
+        ↓
+weak localization
+        ↓
+structured pathways
+        ↓
+near attractors
+```
+
+That is much more physically plausible than a binary "ordered/disordered" picture.
+
+---
+
+# The remaining open questions
+
+After these four simulations, I think the project has shifted from asking **"Does this happen?"** to **"Why does it happen?"**
+
+The biggest unresolved questions now are:
+
+1. **How much of the behavior comes from β versus memory?**
+
+   * You've shown β is a dominant control parameter in the bounded-memory regime, but you haven't yet mapped the full interaction between β, λ, and δ.
+
+2. **What is the right coherence functional?**
+
+   * You've collected several promising observables ((H_{\rm edge}), (H_{\rm cond}), localization, recurrence), but they haven't yet been synthesized into a single candidate Lyapunov-like quantity.
+
+3. **Do these behaviors persist on larger graphs?**
+
+   * The current 8-state graph is ideal for understanding mechanisms, but the next major test is whether similar phase behavior survives in more complex topologies.
+
+---
+
+## Overall assessment
+
+I think these four simulations form a coherent progression:
+
+* **Simulation 1** established that memory qualitatively changes the dynamics.
+* **Simulation 2** showed those dynamics are not an artifact of unbounded reinforcement.
+* **Simulation 3** introduced quantitative measures that capture temporal structure in a meaningful way.
+* **Simulation 4** isolated projection geometry as a primary organizing mechanism and demonstrated a smooth transition from exploratory to localized dynamics.
+
+That's a solid foundation. The next stage, in my view, is less about discovering *new* phenomena and more about turning these observations into a predictive framework—identifying scaling laws, defining a coherence functional, and testing whether the same mechanisms hold as the system becomes more realistic.
+
+
+
+
+
+
+####################
+
+
+
+
+### Simulation 1–2: kernels and coherence functional
+
+**What they are:**  
+These runs use a *reinforcing* memory on transitions, then look at the projected process \(O_t\) via first‑ and second‑order kernels and a coherence functional \(C(t)\).
+
+> “F_t(u_i -> u_j) = alpha*d_graph + beta*Delta_proj + lam*M_t  
+> Here M_t decreases cost with repeated use (reinforcing).”   
+
+Key points:
+
+- **First‑order kernels** on \(O_t\) show strong diagonal dominance even with \(\lambda=0\), and this strengthens with memory:
+  - No‑memory: average friction \( \approx 1.34 \), kernels already biased but relatively softer.   
+  - With‑memory: average friction drops to \( \approx 0.53 \), diagonals in \(K^{(1)}\) move closer to \(\sim 0.9\), showing stronger persistence in each projection class.
+- **Second‑order kernels** show genuine non‑Markov structure:
+  - \(P(O_{t+1}\mid O_t)\) vs \(P(O_{t+1}\mid O_{t-1},O_t)\) differ noticeably for many \((\text{Prev},\text{Cur})\) pairs, indicating memory‑induced history dependence in the projected dynamics.
+- **Coherence curve**:
+  - \(C(t) = -\frac{1}{t}\sum_{s\le t} F_s\) is less negative with memory (higher coherence, lower average friction), consistent with reinforcement carving lower‑cost paths.
+
+**What this established:**  
+- Memory reduces average friction and sharpens persistence in projection classes.  
+- The projected process is **non‑Markovian** in a controlled way—exactly the kind of “relational coherence” signal you wanted.
+
+---
+
+### Simulation 3: δ‑sweep with coherence measures
+
+**What it is:**  
+A δ‑sweep at fixed \(\lambda=1\), both penalizing and reinforcing memory, with a set of coherence‑style observables:
+
+> “C_F: average friction, C_P: projection persistence, C_M: memory concentration, C_H: negative conditional entropy, C_R: edge coverage, H_edge: edge entropy.”   
+
+Key patterns:
+
+- **Penalize (memory_sign = +1):**
+  - As \(\delta\) increases (longer memory), average friction \(C_F\) becomes more negative (costs rise), projection persistence \(C_P\) drops, and \(H_{\text{edge}}\) increases slightly.
+  - This is a **high‑friction exploration phase**: memory makes frequently used edges *more expensive*, pushing the walk to keep exploring.
+
+- **Reinforce (memory_sign = −1):**
+  - As \(\delta\) increases:
+    - \(C_F\) becomes strongly positive (effective friction drops),
+    - \(C_P \to 1.0\) (perfect projection persistence),
+    - \(C_H \to 0\) and \(H_{\text{edge}}\) collapses (\(\sim 0.69\)),
+    - \(C_R\) shrinks (few edges dominate).
+  - This is a **localization / attractor phase**: memory concentrates on a small set of edges, projection classes become almost perfectly sticky, and conditional entropy essentially vanishes.
+
+> “δ = 0.95 … C_P: 1.0000 … C_H: -0.0000 … H_edge: 0.6942”   
+
+**What this established:**
+
+- A clean **phase contrast** between penalize and reinforce:
+  - Penalize → exploration with rising friction and broad edge use.  
+  - Reinforce → low‑friction, high‑persistence, low‑entropy attractor behavior.
+- It also showed that **long memory (high δ)** is what sharpens these phases.
+
+---
+
+### Simulation 4: refactored bounded‑memory + ordering diagnostics
+
+**What it is:**  
+This is the refactored, config‑driven engine with bounded memory, explicit parameters, and the new ordering‑sensitivity metrics:
+
+> “Config: lam, delta, beta, alpha, T_tol, memory_sign, sat_mode, seed, num_steps.”   
+
+Key features:
+
+- **Config dataclass**: all parameters (λ, δ, β, memory_sign, sat_mode, etc.) are passed explicitly—no hidden globals.
+- **Bounded memory** via `saturate_memory` (tanh/frac/raw), integrated into friction.
+- **Ordering metrics**:
+  - \(H_{\text{edge}}\): edge entropy,
+  - valid fraction: fraction of transitions respecting the graph,
+  - \(H_{\text{cond}}\): conditional transition entropy.
+- **Shuffle test**: recomputes these metrics on shuffled hidden trajectories to quantify how much structure depends on temporal ordering.
+
+**What this established (with the β sweeps you ran on top):**
+
+- With bounded memory, the system still shows:
+  - strong edge concentration (low \(H_{\text{edge}}\)),
+  - low conditional entropy \(H_{\text{cond}}\),
+  - and clear β‑controlled transitions from exploration to attractor‑like behavior.
+- Shuffled controls consistently show:
+  - much higher \(H_{\text{edge}}\),
+  - much higher \(H_{\text{cond}}\),
+  - and lower valid fractions, confirming that the structure is genuinely temporal, not just static.
+
+---
+
+### Where these “standing simulations” leave us
+
+Putting these together:
+
+1. **V1 kernel/coherence sims (Sim 1–2)**  
+   - Show that reinforcement lowers friction and induces non‑Markovian structure in the projected process \(O_t\).  
+   - Coherence functional behaves sensibly as a Lyapunov‑like quantity.
+
+2. **δ‑sweep (Sim 3)**  
+   - Establishes a clear **phase distinction** between penalizing and reinforcing memory.  
+   - Long memory + reinforcement → strong localization, low entropy, high projection persistence.  
+   - Long memory + penalization → high‑friction exploration.
+
+3. **Refactored bounded‑memory + ordering metrics (Sim 4)**  
+   - Cleans up the implementation and gives robust diagnostics (edge entropy, conditional entropy, shuffle tests).  
+   - Shows that even with bounded memory, β and λ jointly control a transition from structured exploration to attractor‑like dynamics.
+
+These are exactly the simulations you want “locked into the journal” before pushing β and Γ further—they define:
+
+- the **mechanism space** (graph + projection + memory),
+- the **phase space** (explore vs localize),
+- and the **measurement space** (entropy, coherence, kernels, ordering sensitivity).
+
+If you’re up for it next, we can:
+
+- bolt a multi‑seed harness onto Simulation 4, and  
+- add a small Γ‑sweep runner that reuses the same diagnostics.
+
+
+
+
+
+
+
+#####################
+
+
+
+
+
+
+Matt, here’s the full **definitions update** you asked for — a clean, consolidated, “state of the theory” document that reflects *everything we’ve learned* across the V1 simulations, the δ‑sweep, the bounded‑memory refactor, and the β‑sweep.
+
+This is the version that belongs in the RCFT journal.
+
+---
+
+# **Relational Coherence Field Theory — Definitions Update (Post‑V1 Sims)**
+
+This update summarizes:
+
+- the **core mathematical objects** in the toy universe,
+- the **mechanisms** we introduced,
+- the **transitions** and **changes** made across simulations,
+- and the **current scientific interpretation** of the model.
+
+It reflects the entire evolution from the earliest V1 kernels to the modern bounded‑memory, entropy‑based phase‑diagram engine.
+
+---
+
+# **1. State Space and Graph Structure**
+
+### **1.1 States**
+\[
+\mathcal{S} = \{0,1,2,3,4,5,6,7\}
+\]
+
+Each state represents a “micro‑configuration” in the toy universe.
+
+### **1.2 Graph Topology**
+The graph is fixed and defines allowed transitions:
+\[
+i \to j \quad \text{iff} \quad j \in N(i)
+\]
+
+This graph has:
+
+- 8 states  
+- 20 directed edges  
+- no self‑loops  
+- local connectivity only  
+
+This topology has remained unchanged across all simulations.
+
+---
+
+# **2. Projection Map**
+
+### **2.1 Structured Projection**
+\[
+\pi(i) \in \{0,1,2,3\}
+\]
+
+with the pairing:
+\[
+\{0,1\}\to A,\quad \{2,3\}\to B,\quad \{4,5\}\to C,\quad \{6,7\}\to D
+\]
+
+This projection is **imposed**, not emergent.
+
+### **2.2 Projection Penalty**
+\[
+\Delta_\pi(i,j) =
+\begin{cases}
+0 & \pi(i)=\pi(j) \\
+1 & \pi(i)\neq\pi(j)
+\end{cases}
+\]
+
+The projection penalty is scaled by **β**, which later became a key control parameter.
+
+---
+
+# **3. Memory Mechanism**
+
+### **3.1 Raw Memory**
+Memory is stored on directed edges:
+\[
+M_{ij}(t+1) = \delta\, M_{ij}(t) + \mathbf{1}_{i\to j}
+\]
+
+where:
+
+- \(\delta\) = decay rate  
+- memory accumulates with repeated use  
+- memory decays exponentially  
+
+### **3.2 Saturated Memory**
+To prevent runaway reinforcement:
+\[
+\tilde{M}_{ij} = \tanh(M_{ij})
+\]
+
+This was a major improvement — it removed numerical blow‑up while preserving structure.
+
+### **3.3 Memory Sign**
+\[
+\text{memory\_sign} =
+\begin{cases}
++1 & \text{penalize memory} \\
+-1 & \text{reinforce memory}
+\end{cases}
+\]
+
+This creates two dynamical regimes:
+
+- **Penalize:** memory increases cost → exploration  
+- **Reinforce:** memory decreases cost → localization  
+
+---
+
+# **4. Friction / Cost Function**
+
+The core dynamical quantity:
+\[
+F_{ij} = \alpha + \beta\,\Delta_\pi(i,j) + \text{memory\_sign}\cdot\lambda\cdot\tilde{M}_{ij}
+\]
+
+Where:
+
+- \(\alpha = 1\) (graph cost)
+- \(\beta\) = projection penalty  
+- \(\lambda\) = memory strength  
+- \(\tilde{M}_{ij}\) = bounded memory  
+
+This equation is the heart of the model.
+
+---
+
+# **5. Transition Kernel**
+
+Transitions follow a Boltzmann distribution:
+\[
+P(i\to j) = \frac{\exp(-F_{ij}/T)}{\sum_{k\in N(i)}\exp(-F_{ik}/T)}
+\]
+
+with \(T = 1\).
+
+This defines a **stochastic walker** whose behavior depends on:
+
+- graph topology  
+- projection geometry  
+- memory  
+- temperature  
+
+---
+
+# **6. Observables and Diagnostics**
+
+### **6.1 Edge Entropy**
+\[
+H_{\text{edge}} = -\sum_{ij} p_{ij}\log p_{ij}
+\]
+
+Measures concentration vs diffusion of transitions.
+
+### **6.2 Conditional Entropy**
+\[
+H(X_{t+1}\mid X_t)
+\]
+
+Measures predictability of the next state.
+
+### **6.3 Valid Transition Fraction**
+Fraction of shuffled transitions that remain legal graph edges.
+
+### **6.4 Cycle Detector**
+Detects exact periodicity in the tail of the trajectory.
+
+### **6.5 Coherence Functional (V1 sims)**
+\[
+C(t) = -\frac{1}{t}\sum_{s\le t} F_s
+\]
+
+Measures average friction over time.
+
+### **6.6 First‑ and Second‑Order Kernels**
+\[
+K^{(1)}_{ab} = P(O_{t+1}=b\mid O_t=a)
+\]
+\[
+K^{(2)}_{abc} = P(O_{t+1}=c\mid O_t=a,O_{t-1}=b)
+\]
+
+Used to detect non‑Markovian structure.
+
+---
+
+# **7. Evolution of the Model Across Simulations**
+
+### **7.1 V1 Simulations**
+- Reinforcing memory without saturation  
+- First‑ and second‑order kernels  
+- Coherence functional  
+- Showed non‑Markovian structure and friction reduction  
+- But memory could blow up → numerical artifacts
+
+### **7.2 δ‑Sweep**
+- Penalize vs reinforce  
+- Showed clear phase contrast  
+- Reinforce + high δ → low entropy, high persistence  
+- Penalize + high δ → high friction, exploration
+
+### **7.3 Bounded Memory Refactor**
+- Introduced `Config` dataclass  
+- Removed global parameters  
+- Added tanh saturation  
+- Added entropy‑based ordering metrics  
+- Added shuffle test  
+- Produced robust, interpretable structure
+
+### **7.4 β‑Sweep**
+- Revealed the true phase diagram  
+- β controls projection geometry strength  
+- Memory × projection → attractor phase  
+- Memory alone → structured exploration  
+- Projection alone → geometric bias  
+- Interaction → localization
+
+---
+
+# **8. Current Scientific Interpretation**
+
+### **8.1 What is now strongly supported**
+- The structured phase is **not** a numerical artifact.  
+- Bounded reinforcement still produces localization.  
+- Projection geometry is a **control parameter**.  
+- Memory alone does **not** create attractors.  
+- Memory × projection creates **interaction‑driven ordering**.  
+- The system exhibits **phase transitions** as β and λ vary.
+
+### **8.2 What remains untested**
+- Robustness across seeds  
+- Γ‑collapse (\(\Gamma = \lambda/(1-\delta)\))  
+- Projection randomization  
+- Larger graphs  
+- Emergent projection (long‑term RCFT goal)
+
+---
+
+# **9. Where We Go Next**
+
+### **1. Multi‑seed statistics (highest priority)**  
+To test robustness and symmetry breaking.
+
+### **2. Γ‑collapse test**  
+To determine whether memory has a single effective control parameter.
+
+### **3. Projection variation**  
+To test whether the structured phase depends on the specific projection map.
+
+### **4. Only after that: emergent projection**  
+To test the deeper RCFT claim.
+
+---
+
+Matt, this is the cleanest and most complete definition set the project has ever had.  
+It captures the entire evolution of the toy universe and sets the stage for the next scientific leap.
+
+Whenever you’re ready, we can start implementing the multi‑seed harness or the Γ‑sweep.
+
+
+
+
+
+
+###############
+
+
+
+
+
+I actually think this is one of the healthiest documents that's come out of the project so far.
+
+Not because I agree with every proposed interpretation—but because it clearly separates **what the simulations demonstrate** from **what Benjamin hopes they may eventually imply**. That distinction is exactly what keeps an ambitious project scientifically grounded.
+
+Here's how I'd react to each section.
+
+---
+
+# Overall assessment
+
+I think the memo is adopting the correct philosophy:
+
+> **Treat every RCFT intuition as a hypothesis, not a conclusion.**
+
+That's exactly how I would proceed.
+
+It also aligns well with how we've naturally evolved over the last week. At first we were interpreting results almost immediately. Now we're asking:
+
+> "What exactly did this simulation prove?"
+
+That shift is a sign of a maturing research program.
+
+---
+
+# Hypothesis 1: Probability gradients as gravity
+
+I think the skepticism is exactly right.
+
+Currently the engine demonstrates
+
+[
+P(i\to j)\propto e^{-F_{ij}/T}
+]
+
+which is simply a biased stochastic dynamics.
+
+The interesting part is not that this is "gravity."
+
+The interesting part is that **geometry influences probability flow.**
+
+That's a much weaker—and much more defensible—statement.
+
+Only much later would you ask
+
+Can this recover
+
+* geodesics?
+* Newtonian gravity?
+* GR?
+* inverse-square scaling?
+
+Those are future validation questions.
+
+So I'd rephrase the current conclusion as
+
+> **Projection geometry induces effective probability gradients that organize trajectories.**
+
+That's solid.
+
+---
+
+# Hypothesis 2: Phase transitions as black holes
+
+Again, I agree with the caution.
+
+The toy model definitely shows
+
+exploration
+
+↓
+
+localization
+
+↓
+
+near-freezing
+
+That is a dynamical phase transition.
+
+Calling the localized phase
+
+"black holes"
+
+is currently metaphor.
+
+Useful metaphor.
+
+But still metaphor.
+
+The simulation has no
+
+* curvature
+* horizons
+* causal cones
+* metric tensor
+
+yet.
+
+So I would keep the intuition while avoiding the label.
+
+---
+
+# Hypothesis 3: Penalization as dark energy
+
+I actually think this is one of the strongest critiques.
+
+Our penalization runs showed
+
+global exploration.
+
+Benjamin wants
+
+local order
+
+inside
+
+global expansion.
+
+Those are very different.
+
+The next engine would need to demonstrate something like
+
+```
+Cluster A
+
+stable
+
+↓
+
+Cluster B
+
+stable
+
+↓
+
+distance between clusters increases
+```
+
+That would be fascinating.
+
+Right now we have
+
+```
+everything explores
+```
+
+Those aren't the same phenomenon.
+
+---
+
+# Hypothesis 4: Thermal noise as proto-agency
+
+I strongly agree with the memo here.
+
+Thermal noise is not agency.
+
+Thermal noise is
+
+exploration.
+
+Agency would require something like
+
+the system
+
+changes its own dynamics
+
+because of experience.
+
+For example
+
+* modifying λ
+* modifying β
+* modifying T
+* changing its own update rule
+
+based on its history.
+
+That would be adaptive dynamics.
+
+That's a completely different level.
+
+---
+
+# Hypothesis 5: The 600-cell
+
+This is where I think the memo becomes strategically valuable.
+
+Notice what it's saying.
+
+Don't build
+
+galaxies.
+
+Don't build
+
+black holes.
+
+Don't build
+
+dark energy.
+
+Instead ask
+
+> Does the exact same engine behave similarly on a much richer geometry?
+
+That is exactly the experiment I would prioritize.
+
+Because if the phenomena disappear,
+
+then everything downstream collapses.
+
+If they survive,
+
+then you have genuine evidence that the mechanism is geometric rather than an artifact of the 8-state toy.
+
+---
+
+# Conjecture 1: Nested frames
+
+This is probably the deepest open question.
+
+Right now
+
+```
+node
+
+↓
+
+node
+
+↓
+
+node
+```
+
+Everything is flat.
+
+Benjamin's intuition requires
+
+```
+subgraph
+
+inside
+
+subgraph
+
+inside
+
+subgraph
+```
+
+That's hierarchy.
+
+Nothing we've built yet naturally produces hierarchy.
+
+That is a completely different emergent property.
+
+---
+
+# Conjecture 2: Graph generation
+
+I completely agree with the caution.
+
+Right now
+
+the graph is fixed.
+
+Benjamin eventually wants
+
+graph evolution.
+
+Those are fundamentally different dynamical systems.
+
+I would absolutely avoid introducing graph growth until the fixed-graph theory is well understood.
+
+Otherwise, you'll have too many interacting variables to diagnose.
+
+---
+
+# What I think this changes for our roadmap
+
+Interestingly...
+
+almost nothing.
+
+And that's actually a good thing.
+
+I think the roadmap remains:
+
+## Phase 1 (current)
+
+Understand the engine.
+
+We're still here.
+
+---
+
+## Phase 2
+
+Characterize the phase diagram.
+
+We're almost done.
+
+---
+
+## Phase 3
+
+Define coherence.
+
+This is still the biggest theoretical objective.
+
+---
+
+## Phase 4
+
+Scale to richer geometry.
+
+This is where the 600-cell belongs.
+
+---
+
+## Phase 5
+
+Only after that...
+
+ask whether physical interpretations become plausible.
+
+---
+
+# One thing I'd add to the memo
+
+I think there is one missing hypothesis that has emerged naturally from our work.
+
+I'd call it:
+
+---
+
+### Hypothesis 6 — Coherence is a Lyapunov quantity
+
+The current simulations suggest that several observables evolve together:
+
+* edge entropy decreases,
+* conditional entropy decreases,
+* localization increases,
+* predictability increases.
+
+This raises the possibility that these are not independent diagnostics but different projections of a single underlying coherence functional (C).
+
+The key question becomes:
+
+[
+E[C_{t+1}] \ge E[C_t]?
+]
+
+under the admissible dynamics.
+
+If such a functional exists, it would provide a unifying mathematical object for RCFT, explaining why disparate measures of organization appear to move in concert. If it does not exist, then "coherence" is likely multidimensional and cannot be represented by a single scalar.
+
+---
+
+To me, that's now the most important theoretical question in the project. Everything else—whether the engine scales to a 600-cell, whether projection can emerge, or whether any physical interpretation is justified—will be much easier to assess once you know whether the dynamics are governed by an underlying coherence functional or by several competing organizational principles. That would connect the empirical simulation work directly back to the original RCFT objective without requiring speculative physical interpretations before the mathematics is ready.
