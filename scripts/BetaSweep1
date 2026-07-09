@@ -1,0 +1,317 @@
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # -1 reinforce, +1 penalize
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 20000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha * d_graph + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([
+        friction(u_i, u_j, mem_weights, cfg, proj_map)
+        for u_j in nbrs
+    ])
+    weights = np.exp(-costs / cfg.T_tol)
+    probs = weights / weights.sum()
+    return nbrs, probs
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    frictions = []
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        F_chosen = friction(u, u_next, mem_weights, cfg, proj_map)
+        frictions.append(F_chosen)
+
+        # exponential memory
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return (
+        np.array(hidden),
+        np.array(obs),
+        np.array(frictions),
+        dict(mem_weights),
+        dict(edge_counts),
+    )
+
+
+# ============================================================
+# 6. METRICS
+# ============================================================
+
+def entropy(p):
+    p = np.array(p, dtype=float)
+    p = p[p > 0]
+    if len(p) == 0:
+        return 0.0
+    return -np.sum(p * np.log(p))
+
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0
+    H = 0.0
+    for c in edge_counts.values():
+        p = c / total
+        H -= p * math.log(p + 1e-12)
+    return H
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+
+    return H
+
+
+def compute_state_entropy(hidden):
+    total = len(hidden)
+    if total == 0:
+        return 0.0
+    counts = defaultdict(int)
+    for u in hidden:
+        counts[u] += 1
+    p = [c / total for c in counts.values()]
+    return entropy(p)
+
+
+def largest_edge_occupancy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0, None
+    (edge, c) = max(edge_counts.items(), key=lambda x: x[1])
+    return c / total, edge
+
+
+def largest_state_occupancy(hidden):
+    total = len(hidden)
+    if total == 0:
+        return 0.0, None
+    counts = defaultdict(int)
+    for u in hidden:
+        counts[u] += 1
+    state, c = max(counts.items(), key=lambda x: x[1])
+    return c / total, state
+
+
+# ============================================================
+# 7. MULTI-SEED + β-SWEEP DRIVER
+# ============================================================
+
+def run_beta_sweep(
+    betas,
+    lam,
+    delta,
+    memory_sign=-1,
+    sat_mode="tanh",
+    num_steps=20000,
+    seeds=None,
+):
+    if seeds is None:
+        seeds = list(range(1, 101))  # default: 100 seeds
+
+    print("=== High-resolution β-sweep with multi-seed statistics ===")
+    print(f"lambda = {lam}, delta = {delta}, memory_sign = {memory_sign}, sat_mode = {sat_mode}")
+    print(f"num_steps = {num_steps}, seeds = {len(seeds)}")
+    print()
+
+    for beta in betas:
+        H_edge_list = []
+        H_cond_list = []
+        H_state_list = []
+        Neff_list = []
+        max_edge_occ_list = []
+        max_state_occ_list = []
+        dominant_edges = []
+        dominant_states = []
+
+        for seed in seeds:
+            cfg = Config(
+                lam=lam,
+                delta=delta,
+                beta=beta,
+                memory_sign=memory_sign,
+                sat_mode=sat_mode,
+                seed=seed,
+                num_steps=num_steps,
+            )
+
+            hidden, obs, F, mem_weights, edge_counts = simulate(cfg, proj_map=proj_structured)
+
+            H_edge = compute_edge_entropy(edge_counts)
+            H_cond = compute_conditional_entropy(hidden)
+            H_state = compute_state_entropy(hidden)
+            Neff = math.exp(H_edge)
+
+            max_edge_occ, max_edge = largest_edge_occupancy(edge_counts)
+            max_state_occ, max_state = largest_state_occupancy(hidden)
+
+            H_edge_list.append(H_edge)
+            H_cond_list.append(H_cond)
+            H_state_list.append(H_state)
+            Neff_list.append(Neff)
+            max_edge_occ_list.append(max_edge_occ)
+            max_state_occ_list.append(max_state_occ)
+            dominant_edges.append(max_edge)
+            dominant_states.append(max_state)
+
+        print(f"β = {beta:.2f}")
+        print(f"  <H_edge>:    {np.mean(H_edge_list):.4f}  (± {np.std(H_edge_list):.4f})")
+        print(f"  <H_cond>:    {np.mean(H_cond_list):.4f}  (± {np.std(H_cond_list):.4f})")
+        print(f"  <H_state>:   {np.mean(H_state_list):.4f}  (± {np.std(H_state_list):.4f})")
+        print(f"  <N_eff>:     {np.mean(Neff_list):.4f}    (± {np.std(Neff_list):.4f})")
+        print(f"  max edge occ (mean):   {np.mean(max_edge_occ_list):.4f}")
+        print(f"  max state occ (mean):  {np.mean(max_state_occ_list):.4f}")
+
+        # simple frequency summary of dominant edges / states
+        edge_counts_dom = defaultdict(int)
+        for e in dominant_edges:
+            edge_counts_dom[e] += 1
+        state_counts_dom = defaultdict(int)
+        for s in dominant_states:
+            state_counts_dom[s] += 1
+
+        top_edges = sorted(edge_counts_dom.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_states = sorted(state_counts_dom.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        print("  dominant edges (top 3):")
+        for (e, c) in top_edges:
+            print(f"    {e[0]}->{e[1]}: {c} seeds")
+
+        print("  dominant states (top 3):")
+        for (s, c) in top_states:
+            print(f"    {s}: {c} seeds")
+
+        print()
+
+
+# ============================================================
+# 8. MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    betas = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+    lam = 1.0
+    delta = 0.95
+    memory_sign = -1  # reinforce
+    sat_mode = "tanh"
+    num_steps = 20000
+    seeds = list(range(1, 101))  # 100 seeds
+
+    run_beta_sweep(
+        betas=betas,
+        lam=lam,
+        delta=delta,
+        memory_sign=memory_sign,
+        sat_mode=sat_mode,
+        num_steps=num_steps,
+        seeds=seeds,
+    )
