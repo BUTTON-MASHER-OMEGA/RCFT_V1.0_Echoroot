@@ -1,0 +1,2238 @@
+Relational Coherence Field Theory - V1 Simulations
+
+
+
+############
+
+
+##Simulation 1##
+
+
+
+import numpy as np
+from collections import defaultdict, Counter
+
+# ---------- 1. Model definition (same as before) ----------
+
+states = list(range(8))
+
+proj = {
+    0: 0,  # u1 -> A
+    1: 0,  # u2 -> A
+    2: 1,  # u3 -> B
+    3: 1,  # u4 -> B
+    4: 2,  # u5 -> C
+    5: 2,  # u6 -> C
+    6: 3,  # u7 -> D
+    7: 3,  # u8 -> D
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+alpha = 1.0
+beta  = 2.0
+lam   = 0.0
+T     = 1.0
+tau   = 5.0
+mem_window = 50
+
+
+# ---------- 2. Friction with REINFORCING memory ----------
+
+def friction(u_i, u_j, trans_counts, t):
+    """
+    F_t(u_i -> u_j) = alpha*d_graph + beta*Delta_proj + lam*M_t
+    Here M_t decreases cost with repeated use (reinforcing).
+    """
+    d_graph = 1.0
+    delta_proj = 0.0 if proj[u_i] == proj[u_j] else 1.0
+
+    n_ij = trans_counts[(u_i, u_j)]
+    # reinforcing: more use -> lower cost
+    M_t = - (1.0 - np.exp(-n_ij / tau))
+
+    return alpha * d_graph + beta * delta_proj + lam * M_t
+
+
+def transition_probs(u_i, trans_counts, t):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, trans_counts, t) for u_j in nbrs])
+    weights = np.exp(-costs / T)
+    Z = weights.sum()
+    probs = weights / Z
+    return {nbrs[k]: probs[k] for k in range(len(nbrs))}, costs, weights
+
+
+# ---------- 3. Simulation ----------
+
+def simulate(num_steps=10000, lam_value=0.0, seed=0):
+    global lam
+    lam = lam_value
+    rng = np.random.default_rng(seed)
+
+    trans_counts = defaultdict(int)
+    recent_transitions = []
+
+    u = 0  # start at u1
+    hidden_traj = [u]
+    obs_traj = [proj[u]]
+    friction_history = []
+
+    for t in range(1, num_steps + 1):
+        probs_dict, _, _ = transition_probs(u, trans_counts, t)
+        nbrs = list(probs_dict.keys())
+        probs = np.array(list(probs_dict.values()))
+
+        u_next = rng.choice(nbrs, p=probs)
+        F_chosen = friction(u, u_next, trans_counts, t)
+        friction_history.append(F_chosen)
+
+        trans_counts[(u, u_next)] += 1
+        recent_transitions.append((u, u_next))
+        if len(recent_transitions) > mem_window:
+            old_i, old_j = recent_transitions.pop(0)
+            trans_counts[(old_i, old_j)] -= 1
+
+        u = u_next
+        hidden_traj.append(u)
+        obs_traj.append(proj[u])
+
+    return np.array(hidden_traj), np.array(obs_traj), np.array(friction_history)
+
+
+# ---------- 4. Empirical kernels on O ----------
+
+def empirical_kernel_first_order(obs_traj, n_states=4):
+    K = np.zeros((n_states, n_states))
+    for t in range(len(obs_traj) - 1):
+        i = obs_traj[t]
+        j = obs_traj[t+1]
+        K[i, j] += 1
+    # normalize rows
+    row_sums = K.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1
+    return K / row_sums
+
+
+def empirical_kernel_second_order(obs_traj, n_states=4):
+    """
+    Estimate P(O_{t+1} | O_t, O_{t-1}) as a 4x4x4 tensor.
+    """
+    counts = np.zeros((n_states, n_states, n_states))
+    for t in range(2, len(obs_traj)):
+        i = obs_traj[t-2]
+        j = obs_traj[t-1]
+        k = obs_traj[t]
+        counts[i, j, k] += 1
+
+    # normalize over k for each (i,j)
+    sums = counts.sum(axis=2, keepdims=True)
+    sums[sums == 0] = 1
+    return counts / sums
+
+
+# ---------- 5. Coherence functional C(t) ----------
+
+def coherence_curve(friction_history):
+    """
+    C(t) = - (1/t) * sum_{s<=t} F_s
+    """
+    F = np.array(friction_history)
+    cumsum = np.cumsum(F)
+    t = np.arange(1, len(F)+1)
+    C = -cumsum / t
+    return C
+
+
+# ---------- 6. Run experiments ----------
+
+if __name__ == "__main__":
+    # No memory
+    h0, o0, F0 = simulate(num_steps=20000, lam_value=0.0, seed=1)
+    K1_0 = empirical_kernel_first_order(o0)
+    K2_0 = empirical_kernel_second_order(o0)
+
+    print("No-memory average friction:", F0.mean())
+    print("First-order kernel (lambda=0):")
+    print(K1_0)
+
+    # With memory (reinforcing)
+    h1, o1, F1 = simulate(num_steps=20000, lam_value=1.0, seed=1)
+    K1_1 = empirical_kernel_first_order(o1)
+    K2_1 = empirical_kernel_second_order(o1)
+
+    print("\nWith-memory average friction:", F1.mean())
+    print("First-order kernel (lambda=1):")
+    print(K1_1)
+
+    # Compare Markov vs non-Markov qualitatively
+    # For a few (O_{t-1}, O_t) pairs, compare P(O_{t+1}|O_t) vs P(O_{t+1}|O_t,O_{t-1})
+    labels = ["A","B","C","D"]
+    print("\nSample conditional comparisons (lambda=1):")
+    for prev in range(4):
+        for cur in range(4):
+            # skip pairs that almost never occur
+            if K2_1[prev, cur].sum() == 0:
+                continue
+            print(f"Prev={labels[prev]}, Cur={labels[cur]}")
+            print("  P(O_{t+1}|O_t=Cur):", K1_1[cur])
+            print("  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev):", K2_1[prev, cur])
+            print()
+
+    # Coherence curves
+    C0 = coherence_curve(F0)
+    C1 = coherence_curve(F1)
+    print("Final C(t) no-memory:", C0[-1])
+    print("Final C(t) with-memory:", C1[-1])
+
+
+
+~~~~~~~~~~~~~~
+
+
+Results:
+
+
+
+No-memory average friction: 1.3422
+First-order kernel (lambda=0):
+[[0.82556302 0.11655472 0.         0.05788226]
+ [0.11290323 0.82795699 0.05913978 0.        ]
+ [0.         0.05405405 0.83665417 0.10929177]
+ [0.06498865 0.         0.10975861 0.82525273]]
+
+With-memory average friction: 0.5338610833244869
+First-order kernel (lambda=1):
+[[0.90249433 0.06764928 0.         0.02985639]
+ [0.06708886 0.89748664 0.0354245  0.        ]
+ [0.         0.03143303 0.90257712 0.06598985]
+ [0.03882638 0.         0.07059343 0.89058019]]
+
+Sample conditional comparisons (lambda=1):
+Prev=A, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.90745394 0.06574539 0.         0.02680067]
+
+Prev=A, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.10614525 0.83798883 0.05586592 0.        ]
+
+Prev=A, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06329114 0.         0.11392405 0.82278481]
+
+Prev=B, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.87315634 0.09439528 0.         0.03244838]
+
+Prev=B, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06241729 0.90471989 0.03286281 0.        ]
+
+Prev=B, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.06703911 0.86592179 0.06703911]
+
+Prev=C, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.11180124 0.82608696 0.0621118  0.        ]
+
+Prev=C, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.02985075 0.90504002 0.06510924]
+
+Prev=C, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.0591716  0.         0.08579882 0.85502959]
+
+Prev=D, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.82386364 0.06818182 0.         0.10795455]
+
+Prev=D, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.       0.034375 0.8875   0.078125]
+
+Prev=D, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.03616547 0.         0.06762447 0.89621006]
+
+Final C(t) no-memory: -1.3422
+Final C(t) with-memory: -0.5338610833245108
+
+
+** Process exited - Return Code: 0 **
+
+
+
+
+
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+
+
+
+
+
+##Simulation 2##
+
+
+
+import numpy as np
+from collections import defaultdict, Counter
+
+# ---------- 1. Model definition (same as before) ----------
+
+states = list(range(8))
+
+proj = {
+    0: 0,  # u1 -> A
+    1: 0,  # u2 -> A
+    2: 1,  # u3 -> B
+    3: 1,  # u4 -> B
+    4: 2,  # u5 -> C
+    5: 2,  # u6 -> C
+    6: 3,  # u7 -> D
+    7: 3,  # u8 -> D
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+alpha = 1.0
+beta  = 2.0
+lam   = 0.0
+T     = 1.0
+tau   = 5.0
+mem_window = 50
+
+
+# ---------- 2. Friction with REINFORCING memory ----------
+
+def friction(u_i, u_j, trans_counts, t):
+    """
+    F_t(u_i -> u_j) = alpha*d_graph + beta*Delta_proj + lam*M_t
+    Here M_t decreases cost with repeated use (reinforcing).
+    """
+    d_graph = 1.0
+    delta_proj = 0.0 if proj[u_i] == proj[u_j] else 1.0
+
+    n_ij = trans_counts[(u_i, u_j)]
+    # reinforcing: more use -> lower cost
+    M_t = - (1.0 - np.exp(-n_ij / tau))
+
+    return alpha * d_graph + beta * delta_proj + lam * M_t
+
+
+def transition_probs(u_i, trans_counts, t):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, trans_counts, t) for u_j in nbrs])
+    weights = np.exp(-costs / T)
+    Z = weights.sum()
+    probs = weights / Z
+    return {nbrs[k]: probs[k] for k in range(len(nbrs))}, costs, weights
+
+
+# ---------- 3. Simulation ----------
+
+def simulate(num_steps=10000, lam_value=0.0, seed=0):
+    global lam
+    lam = lam_value
+    rng = np.random.default_rng(seed)
+
+    trans_counts = defaultdict(int)
+    recent_transitions = []
+
+    u = 0  # start at u1
+    hidden_traj = [u]
+    obs_traj = [proj[u]]
+    friction_history = []
+
+    for t in range(1, num_steps + 1):
+        probs_dict, _, _ = transition_probs(u, trans_counts, t)
+        nbrs = list(probs_dict.keys())
+        probs = np.array(list(probs_dict.values()))
+
+        u_next = rng.choice(nbrs, p=probs)
+        F_chosen = friction(u, u_next, trans_counts, t)
+        friction_history.append(F_chosen)
+
+        trans_counts[(u, u_next)] += 1
+        recent_transitions.append((u, u_next))
+        if len(recent_transitions) > mem_window:
+            old_i, old_j = recent_transitions.pop(0)
+            trans_counts[(old_i, old_j)] -= 1
+
+        u = u_next
+        hidden_traj.append(u)
+        obs_traj.append(proj[u])
+
+    return np.array(hidden_traj), np.array(obs_traj), np.array(friction_history)
+
+
+# ---------- 4. Empirical kernels on O ----------
+
+def empirical_kernel_first_order(obs_traj, n_states=4):
+    K = np.zeros((n_states, n_states))
+    for t in range(len(obs_traj) - 1):
+        i = obs_traj[t]
+        j = obs_traj[t+1]
+        K[i, j] += 1
+    # normalize rows
+    row_sums = K.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1
+    return K / row_sums
+
+
+def empirical_kernel_second_order(obs_traj, n_states=4):
+    """
+    Estimate P(O_{t+1} | O_t, O_{t-1}) as a 4x4x4 tensor.
+    """
+    counts = np.zeros((n_states, n_states, n_states))
+    for t in range(2, len(obs_traj)):
+        i = obs_traj[t-2]
+        j = obs_traj[t-1]
+        k = obs_traj[t]
+        counts[i, j, k] += 1
+
+    # normalize over k for each (i,j)
+    sums = counts.sum(axis=2, keepdims=True)
+    sums[sums == 0] = 1
+    return counts / sums
+
+
+# ---------- 5. Coherence functional C(t) ----------
+
+def coherence_curve(friction_history):
+    """
+    C(t) = - (1/t) * sum_{s<=t} F_s
+    """
+    F = np.array(friction_history)
+    cumsum = np.cumsum(F)
+    t = np.arange(1, len(F)+1)
+    C = -cumsum / t
+    return C
+
+
+# ---------- 6. Run experiments ----------
+
+if __name__ == "__main__":
+    # No memory
+    h0, o0, F0 = simulate(num_steps=20000, lam_value=0.0, seed=1)
+    K1_0 = empirical_kernel_first_order(o0)
+    K2_0 = empirical_kernel_second_order(o0)
+
+    print("No-memory average friction:", F0.mean())
+    print("First-order kernel (lambda=0):")
+    print(K1_0)
+
+    # With memory (reinforcing)
+    h1, o1, F1 = simulate(num_steps=20000, lam_value=1.0, seed=1)
+    K1_1 = empirical_kernel_first_order(o1)
+    K2_1 = empirical_kernel_second_order(o1)
+
+    print("\nWith-memory average friction:", F1.mean())
+    print("First-order kernel (lambda=1):")
+    print(K1_1)
+
+    # Compare Markov vs non-Markov qualitatively
+    # For a few (O_{t-1}, O_t) pairs, compare P(O_{t+1}|O_t) vs P(O_{t+1}|O_t,O_{t-1})
+    labels = ["A","B","C","D"]
+    print("\nSample conditional comparisons (lambda=1):")
+    for prev in range(4):
+        for cur in range(4):
+            # skip pairs that almost never occur
+            if K2_1[prev, cur].sum() == 0:
+                continue
+            print(f"Prev={labels[prev]}, Cur={labels[cur]}")
+            print("  P(O_{t+1}|O_t=Cur):", K1_1[cur])
+            print("  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev):", K2_1[prev, cur])
+            print()
+
+    # Coherence curves
+    C0 = coherence_curve(F0)
+    C1 = coherence_curve(F1)
+    print("Final C(t) no-memory:", C0[-1])
+    print("Final C(t) with-memory:", C1[-1])
+
+
+
+~~~~~~~~~~~~~~
+
+
+Results:
+
+
+
+No-memory average friction: 1.3422
+First-order kernel (lambda=0):
+[[0.82556302 0.11655472 0.         0.05788226]
+ [0.11290323 0.82795699 0.05913978 0.        ]
+ [0.         0.05405405 0.83665417 0.10929177]
+ [0.06498865 0.         0.10975861 0.82525273]]
+
+With-memory average friction: 0.5338610833244869
+First-order kernel (lambda=1):
+[[0.90249433 0.06764928 0.         0.02985639]
+ [0.06708886 0.89748664 0.0354245  0.        ]
+ [0.         0.03143303 0.90257712 0.06598985]
+ [0.03882638 0.         0.07059343 0.89058019]]
+
+Sample conditional comparisons (lambda=1):
+Prev=A, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.90745394 0.06574539 0.         0.02680067]
+
+Prev=A, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.10614525 0.83798883 0.05586592 0.        ]
+
+Prev=A, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06329114 0.         0.11392405 0.82278481]
+
+Prev=B, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.87315634 0.09439528 0.         0.03244838]
+
+Prev=B, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06241729 0.90471989 0.03286281 0.        ]
+
+Prev=B, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.06703911 0.86592179 0.06703911]
+
+Prev=C, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.11180124 0.82608696 0.0621118  0.        ]
+
+Prev=C, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.02985075 0.90504002 0.06510924]
+
+Prev=C, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.0591716  0.         0.08579882 0.85502959]
+
+Prev=D, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.82386364 0.06818182 0.         0.10795455]
+
+Prev=D, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.       0.034375 0.8875   0.078125]
+
+Prev=D, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.03616547 0.         0.06762447 0.89621006]
+
+Final C(t) no-memory: -1.3422
+Final C(t) with-memory: -0.5338610833245108
+
+
+** Process exited - Return Code: 0 **
+
+
+
+
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+
+
+
+
+
+##Simulation 3##
+
+
+
+Quick code update for discussion:
+
+
+import numpy as np
+from collections import defaultdict
+
+# ============================================
+# RCFT Toy Universe: δ-sweep for both signs
+# ============================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+alpha = 1.0
+beta  = 2.0
+T_tol = 1.0
+
+
+def friction(u_i, u_j, mem_weights, lam, proj_map, memory_sign):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_ij = mem_weights[(u_i, u_j)]
+    # memory_sign = +1 (penalize), -1 (reinforce)
+    return alpha * d_graph + beta * delta_proj + memory_sign * lam * M_ij
+
+
+def transition_probs(u_i, mem_weights, lam, proj_map, memory_sign):
+    nbrs = neighbors[u_i]
+    costs = np.array([
+        friction(u_i, u_j, mem_weights, lam, proj_map, memory_sign)
+        for u_j in nbrs
+    ])
+    weights = np.exp(-costs / T_tol)
+    probs = weights / weights.sum()
+    return nbrs, probs
+
+
+def simulate(num_steps=20000,
+             lam=1.0,
+             seed=0,
+             decay_rate=0.98,
+             proj_map=None,
+             memory_sign=+1):
+
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    frictions = []
+
+    pair_counts = defaultdict(int)
+    edge_counts = defaultdict(int)
+
+    for t in range(num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, lam, proj_map, memory_sign)
+        u_next = rng.choice(nbrs, p=probs)
+
+        F_chosen = friction(u, u_next, mem_weights, lam, proj_map, memory_sign)
+        frictions.append(F_chosen)
+
+        # exponential decay memory
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= decay_rate
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        pair_counts[(u, u_next)] += 1
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return (
+        np.array(hidden),
+        np.array(obs),
+        np.array(frictions),
+        dict(mem_weights),
+        dict(pair_counts),
+        dict(edge_counts),
+    )
+
+
+def entropy(p):
+    p = np.array(p, dtype=float)
+    p = p[p > 0]
+    if len(p) == 0:
+        return 0.0
+    return -np.sum(p * np.log(p))
+
+
+def coherence_measures(hidden, obs, frictions, mem_weights, pair_counts, edge_counts):
+    C_F = -frictions.mean()
+
+    O_t = obs[:-1]
+    O_tp1 = obs[1:]
+    C_P = 1.0 - (O_tp1 != O_t).mean()
+
+    weights = np.array([w for w in mem_weights.values() if w > 0], dtype=float)
+    C_M = np.sum((weights / weights.sum())**2) if weights.size > 0 else 0.0
+
+    total_pairs = sum(pair_counts.values())
+    if total_pairs == 0:
+        C_H = 0.0
+    else:
+        P_ij = {k: v / total_pairs for k, v in pair_counts.items()}
+        P_i = defaultdict(float)
+        for (i, j), p in P_ij.items():
+            P_i[i] += p
+
+        H_cond = 0.0
+        for i in states:
+            denom = P_i[i]
+            if denom == 0:
+                continue
+            cond_probs = [(P_ij.get((i, j), 0.0) / denom) for j in states]
+            H_cond += P_i[i] * entropy(cond_probs)
+        C_H = -H_cond
+
+    all_edges = sum(len(neighbors[i]) for i in states)
+    used_edges = sum(1 for w in mem_weights.values() if w > 0)
+    C_R = used_edges / all_edges if all_edges > 0 else 0.0
+
+    total_edge_traversals = sum(edge_counts.values())
+    if total_edge_traversals == 0:
+        H_edge = 0.0
+    else:
+        p_edges = np.array([c / total_edge_traversals for c in edge_counts.values()])
+        H_edge = entropy(p_edges)
+
+    return C_F, C_P, C_M, C_H, C_R, H_edge
+
+
+if __name__ == "__main__":
+    lam = 1.0
+    num_steps = 20000
+    deltas = [0.50, 0.70, 0.90, 0.95, 0.98, 0.99]
+
+    configs = [
+        (+1, "penalize"),
+        (-1, "reinforce"),
+    ]
+
+    print("=== RCFT δ-SWEEP (Structured Projection, Both Memory Signs) ===")
+    print(f"lambda = {lam}, T_tol = {T_tol}")
+    print()
+
+    for memory_sign, label in configs:
+        print(f"--- memory_sign = {label} ---")
+        for delta in deltas:
+            hidden, obs, F, mem_weights, pair_counts, edge_counts = simulate(
+                num_steps=num_steps,
+                lam=lam,
+                seed=1,
+                decay_rate=delta,
+                proj_map=proj_structured,
+                memory_sign=memory_sign,
+            )
+
+            C_F, C_P, C_M, C_H, C_R, H_edge = coherence_measures(
+                hidden, obs, F, mem_weights, pair_counts, edge_counts
+            )
+
+            print(f"δ = {delta:.2f}")
+            print(f"  C_F:    {C_F:.4f}")
+            print(f"  C_P:    {C_P:.4f}")
+            print(f"  C_M:    {C_M:.4f}")
+            print(f"  C_H:    {C_H:.4f}")
+            print(f"  C_R:    {C_R:.4f}")
+            print(f"  H_edge: {H_edge:.4f}")
+            print()
+        print()
+
+
+
+
+~~~~~~~~~~
+
+RESULTS:
+
+
+
+=== RCFT δ-SWEEP (Structured Projection, Both Memory Signs) ===
+lambda = 1.0, T_tol = 1.0
+
+--- memory_sign = penalize ---
+δ = 0.50
+  C_F:    -1.7156
+  C_P:    0.7728
+  C_M:    0.3340
+  C_H:    -0.6307
+  C_R:    0.7500
+  H_edge: 2.7069
+
+δ = 0.70
+  C_F:    -1.8839
+  C_P:    0.7395
+  C_M:    0.1874
+  C_H:    -0.6828
+  C_R:    0.9000
+  H_edge: 2.7578
+
+δ = 0.90
+  C_F:    -2.3036
+  C_P:    0.6727
+  C_M:    0.1100
+  C_H:    -0.7711
+  C_R:    1.0000
+  H_edge: 2.8437
+
+δ = 0.95
+  C_F:    -2.8191
+  C_P:    0.6152
+  C_M:    0.0638
+  C_H:    -0.8310
+  C_R:    1.0000
+  H_edge: 2.9015
+
+δ = 0.98
+  C_F:    -4.3129
+  C_P:    0.5287
+  C_M:    0.0573
+  C_H:    -0.8953
+  C_R:    1.0000
+  H_edge: 2.9619
+
+δ = 0.99
+  C_F:    -6.7681
+  C_P:    0.4766
+  C_M:    0.0525
+  C_H:    -0.9198
+  C_R:    1.0000
+  H_edge: 2.9837
+
+
+--- memory_sign = reinforce ---
+δ = 0.50
+  C_F:    -0.7727
+  C_P:    0.8856
+  C_M:    0.3336
+  C_H:    -0.4025
+  C_R:    0.4000
+  H_edge: 2.4802
+
+δ = 0.70
+  C_F:    -0.0875
+  C_P:    0.9294
+  C_M:    0.5156
+  C_H:    -0.2838
+  C_R:    0.2500
+  H_edge: 2.3622
+
+δ = 0.90
+  C_F:    3.6404
+  C_P:    0.9974
+  C_M:    0.5014
+  C_H:    -0.0185
+  C_R:    0.4500
+  H_edge: 1.9330
+
+δ = 0.95
+  C_F:    8.7325
+  C_P:    1.0000
+  C_M:    0.5003
+  C_H:    -0.0000
+  C_R:    0.1000
+  H_edge: 0.6942
+
+δ = 0.98
+  C_F:    23.6824
+  C_P:    1.0000
+  C_M:    0.5001
+  C_H:    -0.0000
+  C_R:    0.1000
+  H_edge: 0.6942
+
+δ = 0.99
+  C_F:    48.4937
+  C_P:    1.0000
+  C_M:    0.5000
+  C_H:    -0.0000
+  C_R:    0.1000
+  H_edge: 0.6942
+
+
+
+
+** Process exited - Return Code: 0 **
+
+
+
+
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+
+
+
+
+##Simulation 4##
+
+
+
+Code:
+
+
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # -1 reinforce, +1 penalize
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 20000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha * d_graph + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([
+        friction(u_i, u_j, mem_weights, cfg, proj_map)
+        for u_j in nbrs
+    ])
+    weights = np.exp(-costs / cfg.T_tol)
+    probs = weights / weights.sum()
+    return nbrs, probs
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    frictions = []
+    pair_counts = defaultdict(int)
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        F_chosen = friction(u, u_next, mem_weights, cfg, proj_map)
+        frictions.append(F_chosen)
+
+        # exponential memory
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        pair_counts[(u, u_next)] += 1
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return (
+        np.array(hidden),
+        np.array(obs),
+        np.array(frictions),
+        dict(mem_weights),
+        dict(pair_counts),
+        dict(edge_counts),
+    )
+
+
+# ============================================================
+# 6. ORDERING-SENSITIVITY METRICS
+# ============================================================
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0
+    H = 0.0
+    for c in edge_counts.values():
+        p = c / total
+        H -= p * math.log(p + 1e-12)
+    return H
+
+
+def compute_valid_fraction(hidden):
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+    valid = 0
+    for i in range(total):
+        u, v = hidden[i], hidden[i+1]
+        if v in neighbors[u]:
+            valid += 1
+    return valid / total
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+
+    return H
+
+
+# ============================================================
+# 7. ANALYSIS: ATTRACTORS + TEMPORAL STRUCTURE
+# ============================================================
+
+def analyze_run(hidden, edge_counts, obs, shuffle_trials=5):
+    print("=== Run Analysis ===")
+
+    uniq_states = len(set(hidden))
+    uniq_edges = len([e for e, c in edge_counts.items() if c > 0])
+
+    print(f"Unique states visited: {uniq_states}")
+    print(f"Unique edges visited:  {uniq_edges}")
+
+    print("\nTop edges:")
+    top = sorted(edge_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    for (i, j), c in top:
+        print(f"  {i}->{j}: {c}")
+
+    print("\nCycle length estimate:")
+    tail = hidden[-500:]
+    cycle_len = None
+    for k in range(2, 200):
+        if k * 2 <= len(tail):
+            if np.all(tail[-k:] == tail[-2*k:-k]):
+                cycle_len = k
+                break
+    if cycle_len is None:
+        print("  No small cycle detected (k <= 200).")
+    else:
+        print(f"  Estimated cycle length: {cycle_len}")
+
+    print("\nOrdering sensitivity (shuffle test):")
+
+    H_edge_orig = compute_edge_entropy(edge_counts)
+    valid_orig = compute_valid_fraction(hidden)
+    H_cond_orig = compute_conditional_entropy(hidden)
+
+    H_edge_shuf = []
+    valid_shuf = []
+    H_cond_shuf = []
+
+    for _ in range(shuffle_trials):
+        shuf = np.copy(hidden)
+        np.random.shuffle(shuf)
+
+        ec_shuf = defaultdict(int)
+        for i in range(len(shuf) - 1):
+            u, v = shuf[i], shuf[i+1]
+            ec_shuf[(u, v)] += 1
+
+        H_edge_shuf.append(compute_edge_entropy(ec_shuf))
+        valid_shuf.append(compute_valid_fraction(shuf))
+        H_cond_shuf.append(compute_conditional_entropy(shuf))
+
+    print(f"  H_edge (orig):      {H_edge_orig:.4f}")
+    print(f"  H_edge (shuf):      {np.mean(H_edge_shuf):.4f}")
+
+    print(f"  valid frac (orig):  {valid_orig:.4f}")
+    print(f"  valid frac (shuf):  {np.mean(valid_shuf):.4f}")
+
+    print(f"  H_cond (orig):      {H_cond_orig:.4f}")
+    print(f"  H_cond (shuf):      {np.mean(H_cond_shuf):.4f}")
+
+
+# ============================================================
+# 8. DRIVER: RUN + ANALYZE
+# ============================================================
+
+def run_and_analyze(cfg: Config):
+    label = "penalize" if cfg.memory_sign == +1 else "reinforce"
+
+    print("\n====================================")
+    print("Running simulation:")
+    print(f"  lambda       = {cfg.lam}")
+    print(f"  delta        = {cfg.delta}")
+    print(f"  memory_sign  = {cfg.memory_sign}  ({label})")
+    print(f"  beta         = {cfg.beta}")
+    print(f"  sat_mode     = {cfg.sat_mode}")
+    print("====================================\n")
+
+    hidden, obs, F, mem_weights, pair_counts, edge_counts = simulate(cfg, proj_map=proj_structured)
+
+    analyze_run(
+        hidden=hidden,
+        edge_counts=edge_counts,
+        obs=obs,
+        shuffle_trials=5,
+    )
+
+    print("\nDone.\n")
+
+
+# ============================================================
+# 9. BETA SWEEP (PROJECTION CONTROL)
+# ============================================================
+
+def run_beta_sweep():
+    betas = [0.0, 1.0, 2.0, 4.0]
+    experiments = [
+        (0.3, 0.90),
+        (1.0, 0.95),
+        (2.0, 0.98),
+    ]
+
+    for lam, delta in experiments:
+        for b in betas:
+            cfg = Config(
+                lam=lam,
+                delta=delta,
+                beta=b,
+                alpha=1.0,
+                T_tol=1.0,
+                memory_sign=-1,
+                sat_mode="tanh",
+                seed=1,
+                num_steps=20000,
+            )
+            print("\n####################################")
+            print(f"beta = {cfg.beta}, lambda = {cfg.lam}, delta = {cfg.delta}, sign = {cfg.memory_sign}")
+            print("####################################")
+            run_and_analyze(cfg)
+
+
+# ============================================================
+# 10. MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    run_beta_sweep()
+
+
+
+~~~~~~~~~~~~~~
+
+
+
+
+Results:
+
+
+
+
+####################################
+beta = 0.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1062
+  5->4: 1055
+  3->0: 1052
+  4->2: 1047
+  4->5: 1045
+  7->4: 1024
+  0->6: 1011
+  2->4: 1011
+  0->1: 1004
+  1->2: 1000
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9950
+  H_edge (shuf):      4.1158
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3270
+  H_cond (orig):      0.9364
+  H_cond (shuf):      2.0572
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1759
+  3->2: 1736
+  5->4: 1736
+  4->5: 1704
+  0->1: 1659
+  1->0: 1641
+  7->6: 1579
+  6->7: 1552
+  4->7: 595
+  3->0: 588
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.8484
+  H_edge (shuf):      4.1447
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3220
+  H_cond (orig):      0.7755
+  H_cond (shuf):      2.0718
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2185
+  5->4: 2183
+  0->1: 2168
+  1->0: 2145
+  7->6: 2131
+  6->7: 2115
+  2->3: 2095
+  3->2: 2090
+  6->0: 256
+  4->7: 250
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.5506
+  H_edge (shuf):      4.1549
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3181
+  H_cond (orig):      0.4725
+  H_cond (shuf):      2.0768
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2812
+  5->4: 2809
+  3->2: 2452
+  2->3: 2446
+  0->1: 2307
+  1->0: 2305
+  7->6: 2249
+  6->7: 2245
+  4->7: 37
+  2->4: 37
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.1762
+  H_edge (shuf):      4.1502
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3157
+  H_cond (orig):      0.1006
+  H_cond (shuf):      2.0745
+
+Done.
+
+
+####################################
+beta = 0.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1131
+  5->4: 1094
+  3->0: 1081
+  3->2: 1052
+  1->2: 1052
+  4->5: 1027
+  4->7: 1023
+  0->1: 1023
+  4->2: 1021
+  2->4: 1017
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9938
+  H_edge (shuf):      4.1172
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3314
+  H_cond (orig):      0.9346
+  H_cond (shuf):      2.0579
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  0->1: 1968
+  2->3: 1927
+  1->0: 1917
+  3->2: 1904
+  5->4: 1857
+  4->5: 1837
+  7->6: 1693
+  6->7: 1645
+  3->0: 497
+  1->2: 484
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.7597
+  H_edge (shuf):      4.1479
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3256
+  H_cond (orig):      0.6850
+  H_cond (shuf):      2.0733
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  5->4: 2422
+  4->5: 2408
+  3->2: 2357
+  2->3: 2344
+  0->1: 2261
+  1->0: 2255
+  7->6: 2112
+  6->7: 2080
+  4->7: 169
+  0->3: 166
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.4115
+  H_edge (shuf):      4.1545
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3175
+  H_cond (orig):      0.3337
+  H_cond (shuf):      2.0767
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 3296
+  5->4: 3295
+  7->6: 2588
+  6->7: 2585
+  3->2: 2329
+  2->3: 2328
+  0->1: 1696
+  1->0: 1693
+  2->4: 24
+  1->2: 23
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.1096
+  H_edge (shuf):      4.1043
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3193
+  H_cond (orig):      0.0569
+  H_cond (shuf):      2.0515
+
+Done.
+
+
+####################################
+beta = 0.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1161
+  5->4: 1098
+  4->2: 1078
+  2->4: 1073
+  3->2: 1066
+  0->1: 1063
+  0->6: 1053
+  6->0: 1047
+  3->0: 1046
+  1->2: 1034
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9920
+  H_edge (shuf):      4.1097
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3307
+  H_cond (orig):      0.9366
+  H_cond (shuf):      2.0543
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  5->4: 2216
+  4->5: 2193
+  2->3: 1969
+  0->1: 1960
+  3->2: 1918
+  1->0: 1898
+  7->6: 1797
+  6->7: 1763
+  6->5: 428
+  5->6: 404
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.6811
+  H_edge (shuf):      4.1479
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3197
+  H_cond (orig):      0.6065
+  H_cond (shuf):      2.0733
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2636
+  5->4: 2633
+  3->2: 2427
+  2->3: 2417
+  1->0: 2307
+  0->1: 2305
+  7->6: 2190
+  6->7: 2186
+  2->1: 94
+  1->2: 92
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.2778
+  H_edge (shuf):      4.1527
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3132
+  H_cond (orig):      0.2007
+  H_cond (shuf):      2.0757
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  1->0: 3440
+  0->1: 3438
+  3->2: 2454
+  2->3: 2452
+  5->4: 2169
+  4->5: 2168
+  6->7: 1904
+  7->6: 1904
+  2->4: 9
+  4->2: 9
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.0784
+  H_edge (shuf):      4.1062
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3186
+  H_cond (orig):      0.0247
+  H_cond (shuf):      2.0525
+
+Done.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+Extended Beta Sweep:
+
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # -1 reinforce, +1 penalize
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 2000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha * d_graph + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([
+        friction(u_i, u_j, mem_weights, cfg, proj_map)
+        for u_j in nbrs
+    ])
+    weights = np.exp(-costs / cfg.T_tol)
+    probs = weights / weights.sum()
+    return nbrs, probs
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    frictions = []
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        F_chosen = friction(u, u_next, mem_weights, cfg, proj_map)
+        frictions.append(F_chosen)
+
+        # exponential memory
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return (
+        np.array(hidden),
+        np.array(obs),
+        np.array(frictions),
+        dict(mem_weights),
+        dict(edge_counts),
+    )
+
+
+# ============================================================
+# 6. METRICS
+# ============================================================
+
+def entropy(p):
+    p = np.array(p, dtype=float)
+    p = p[p > 0]
+    if len(p) == 0:
+        return 0.0
+    return -np.sum(p * np.log(p))
+
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0
+    H = 0.0
+    for c in edge_counts.values():
+        p = c / total
+        H -= p * math.log(p + 1e-12)
+    return H
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+
+    return H
+
+
+def compute_state_entropy(hidden):
+    total = len(hidden)
+    if total == 0:
+        return 0.0
+    counts = defaultdict(int)
+    for u in hidden:
+        counts[u] += 1
+    p = [c / total for c in counts.values()]
+    return entropy(p)
+
+
+def largest_edge_occupancy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0, None
+    (edge, c) = max(edge_counts.items(), key=lambda x: x[1])
+    return c / total, edge
+
+
+def largest_state_occupancy(hidden):
+    total = len(hidden)
+    if total == 0:
+        return 0.0, None
+    counts = defaultdict(int)
+    for u in hidden:
+        counts[u] += 1
+    state, c = max(counts.items(), key=lambda x: x[1])
+    return c / total, state
+
+
+# ============================================================
+# 7. MULTI-SEED + β-SWEEP DRIVER
+# ============================================================
+
+def run_beta_sweep(
+    betas,
+    lam,
+    delta,
+    memory_sign=-1,
+    sat_mode="tanh",
+    num_steps=2000,
+    seeds=None,
+):
+    if seeds is None:
+        seeds = list(range(1, 101))  # default: 100 seeds
+
+    print("=== High-resolution β-sweep with multi-seed statistics ===")
+    print(f"lambda = {lam}, delta = {delta}, memory_sign = {memory_sign}, sat_mode = {sat_mode}")
+    print(f"num_steps = {num_steps}, seeds = {len(seeds)}")
+    print()
+
+    for beta in betas:
+        H_edge_list = []
+        H_cond_list = []
+        H_state_list = []
+        Neff_list = []
+        max_edge_occ_list = []
+        max_state_occ_list = []
+        dominant_edges = []
+        dominant_states = []
+
+        for seed in seeds:
+            cfg = Config(
+                lam=lam,
+                delta=delta,
+                beta=beta,
+                memory_sign=memory_sign,
+                sat_mode=sat_mode,
+                seed=seed,
+                num_steps=num_steps,
+            )
+
+            hidden, obs, F, mem_weights, edge_counts = simulate(cfg, proj_map=proj_structured)
+
+            H_edge = compute_edge_entropy(edge_counts)
+            H_cond = compute_conditional_entropy(hidden)
+            H_state = compute_state_entropy(hidden)
+            Neff = math.exp(H_edge)
+
+            max_edge_occ, max_edge = largest_edge_occupancy(edge_counts)
+            max_state_occ, max_state = largest_state_occupancy(hidden)
+
+            H_edge_list.append(H_edge)
+            H_cond_list.append(H_cond)
+            H_state_list.append(H_state)
+            Neff_list.append(Neff)
+            max_edge_occ_list.append(max_edge_occ)
+            max_state_occ_list.append(max_state_occ)
+            dominant_edges.append(max_edge)
+            dominant_states.append(max_state)
+
+        print(f"β = {beta:.2f}")
+        print(f"  <H_edge>:    {np.mean(H_edge_list):.4f}  (± {np.std(H_edge_list):.4f})")
+        print(f"  <H_cond>:    {np.mean(H_cond_list):.4f}  (± {np.std(H_cond_list):.4f})")
+        print(f"  <H_state>:   {np.mean(H_state_list):.4f}  (± {np.std(H_state_list):.4f})")
+        print(f"  <N_eff>:     {np.mean(Neff_list):.4f}    (± {np.std(Neff_list):.4f})")
+        print(f"  max edge occ (mean):   {np.mean(max_edge_occ_list):.4f}")
+        print(f"  max state occ (mean):  {np.mean(max_state_occ_list):.4f}")
+
+        # simple frequency summary of dominant edges / states
+        edge_counts_dom = defaultdict(int)
+        for e in dominant_edges:
+            edge_counts_dom[e] += 1
+        state_counts_dom = defaultdict(int)
+        for s in dominant_states:
+            state_counts_dom[s] += 1
+
+        top_edges = sorted(edge_counts_dom.items(), key=lambda x: x[1], reverse=True)[:3]
+        top_states = sorted(state_counts_dom.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        print("  dominant edges (top 3):")
+        for (e, c) in top_edges:
+            print(f"    {e[0]}->{e[1]}: {c} seeds")
+
+        print("  dominant states (top 3):")
+        for (s, c) in top_states:
+            print(f"    {s}: {c} seeds")
+
+        print()
+
+
+# ============================================================
+# 8. MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    betas = [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+    lam = 1.0
+    delta = 0.95
+    memory_sign = -1  # reinforce
+    sat_mode = "tanh"
+    num_steps = 2000
+    seeds = list(range(1, 101))  # 100 seeds
+
+    run_beta_sweep(
+        betas=betas,
+        lam=lam,
+        delta=delta,
+        memory_sign=memory_sign,
+        sat_mode=sat_mode,
+        num_steps=num_steps,
+        seeds=seeds,
+    )
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~
+
+
+
+
+
+RESULTS:
+
+
+=== High-resolution β-sweep with multi-seed statistics ===
+lambda = 1.0, delta = 0.95, memory_sign = -1, sat_mode = tanh
+num_steps = 2000, seeds = 100
+
+β = 0.00
+  <H_edge>:    2.9830  (± 0.0056)
+  <H_cond>:    0.9285  (± 0.0046)
+  <H_state>:   2.0546  (± 0.0053)
+  <N_eff>:     19.7479    (± 0.1105)
+  max edge occ (mean):   0.0647
+  max state occ (mean):  0.1649
+  dominant edges (top 3):
+    6->7: 12 seeds
+    5->6: 10 seeds
+    6->5: 8 seeds
+  dominant states (top 3):
+    6: 36 seeds
+    4: 25 seeds
+    0: 21 seeds
+
+β = 0.50
+  <H_edge>:    2.9089  (± 0.0141)
+  <H_cond>:    0.8449  (± 0.0144)
+  <H_state>:   2.0639  (± 0.0052)
+  <N_eff>:     18.3382    (± 0.2582)
+  max edge occ (mean):   0.0882
+  max state occ (mean):  0.1595
+  dominant edges (top 3):
+    4->5: 17 seeds
+    6->7: 14 seeds
+    0->1: 13 seeds
+  dominant states (top 3):
+    6: 33 seeds
+    4: 23 seeds
+    2: 23 seeds
+
+β = 1.00
+  <H_edge>:    2.7363  (± 0.0248)
+  <H_cond>:    0.6678  (± 0.0234)
+  <H_state>:   2.0685  (± 0.0068)
+  <N_eff>:     15.4339    (± 0.3806)
+  max edge occ (mean):   0.1106
+  max state occ (mean):  0.1537
+  dominant edges (top 3):
+    5->4: 17 seeds
+    6->7: 16 seeds
+    3->2: 16 seeds
+  dominant states (top 3):
+    2: 28 seeds
+    6: 27 seeds
+    4: 25 seeds
+
+β = 1.50
+  <H_edge>:    2.5403  (± 0.0288)
+  <H_cond>:    0.4750  (± 0.0225)
+  <H_state>:   2.0653  (± 0.0141)
+  <N_eff>:     12.6881    (± 0.3582)
+  max edge occ (mean):   0.1296
+  max state occ (mean):  0.1543
+  dominant edges (top 3):
+    6->7: 20 seeds
+    1->0: 17 seeds
+    2->3: 15 seeds
+  dominant states (top 3):
+    6: 30 seeds
+    0: 28 seeds
+    4: 21 seeds
+
+β = 2.00
+  <H_edge>:    2.3859  (± 0.0315)
+  <H_cond>:    0.3254  (± 0.0222)
+  <H_state>:   2.0605  (± 0.0182)
+  <N_eff>:     10.8743    (± 0.3379)
+  max edge occ (mean):   0.1435
+  max state occ (mean):  0.1577
+  dominant edges (top 3):
+    4->5: 15 seeds
+    7->6: 15 seeds
+    6->7: 14 seeds
+  dominant states (top 3):
+    4: 29 seeds
+    6: 28 seeds
+    0: 23 seeds
+
+β = 2.50
+  <H_edge>:    2.2648  (± 0.0365)
+  <H_cond>:    0.2150  (± 0.0198)
+  <H_state>:   2.0499  (± 0.0278)
+  <N_eff>:     9.6356    (± 0.3417)
+  max edge occ (mean):   0.1557
+  max state occ (mean):  0.1641
+  dominant edges (top 3):
+    6->7: 19 seeds
+    3->2: 17 seeds
+    0->1: 15 seeds
+  dominant states (top 3):
+    6: 30 seeds
+    2: 26 seeds
+    0: 22 seeds
+
+β = 3.00
+  <H_edge>:    2.1658  (± 0.0475)
+  <H_cond>:    0.1381  (± 0.0166)
+  <H_state>:   2.0277  (± 0.0403)
+  <N_eff>:     8.7315    (± 0.4049)
+  max edge occ (mean):   0.1707
+  max state occ (mean):  0.1754
+  dominant edges (top 3):
+    6->7: 17 seeds
+    0->1: 17 seeds
+    2->3: 17 seeds
+  dominant states (top 3):
+    0: 27 seeds
+    6: 26 seeds
+    2: 25 seeds
+
+β = 3.50
+  <H_edge>:    2.0919  (± 0.0792)
+  <H_cond>:    0.0897  (± 0.0144)
+  <H_state>:   2.0022  (± 0.0746)
+  <N_eff>:     8.1237    (± 0.5833)
+  max edge occ (mean):   0.1839
+  max state occ (mean):  0.1869
+  dominant edges (top 3):
+    0->1: 19 seeds
+    4->5: 14 seeds
+    6->7: 14 seeds
+  dominant states (top 3):
+    0: 29 seeds
+    4: 23 seeds
+    2: 22 seeds
+
+β = 4.00
+  <H_edge>:    2.0142  (± 0.1057)
+  <H_cond>:    0.0574  (± 0.0118)
+  <H_state>:   1.9568  (± 0.1013)
+  <N_eff>:     7.5351    (± 0.7566)
+  max edge occ (mean):   0.1970
+  max state occ (mean):  0.1988
+  dominant edges (top 3):
+    0->1: 23 seeds
+    6->7: 18 seeds
+    3->2: 13 seeds
+  dominant states (top 3):
+    0: 29 seeds
+    2: 21 seeds
+    6: 20 seeds
+
+
+
+** Process exited - Return Code: 0 **
+
+
+
+** Process exited - Return Code: 0 **
