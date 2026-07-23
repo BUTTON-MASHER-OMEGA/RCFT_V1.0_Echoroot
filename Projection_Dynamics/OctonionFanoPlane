@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCFT Tetrahedral Compression</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Glassmorphism UI Panels */
+        .glass-panel {
+            background: rgba(15, 15, 20, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            position: absolute;
+        }
+
+        #title-card {
+            top: 24px;
+            left: 24px;
+            padding: 20px 24px;
+            max-width: 380px;
+        }
+
+        #matrix-card {
+            top: 24px;
+            right: 24px;
+            padding: 20px;
+        }
+
+        #controls-card {
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px 32px;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1 { margin: 0 0 8px 0; font-size: 1.25rem; font-weight: 700; background: linear-gradient(90deg, #4ade80, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p { margin: 0; font-size: 0.875rem; color: #a1a1aa; line-height: 1.5; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* The 8x8 Matrix Grid */
+        #transition-matrix {
+            display: grid;
+            grid-template-columns: repeat(8, 24px);
+            grid-template-rows: repeat(8, 24px);
+            gap: 2px;
+            margin-top: 12px;
+        }
+
+        .matrix-cell {
+            width: 24px;
+            height: 24px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            transition: background-color 0.1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .matrix-label {
+            font-size: 0.75rem;
+            color: #71717a;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Custom Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+        input[type=range]:focus { outline: none; }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Node labels in 3D */
+        .node-label {
+            position: absolute;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0 0 4px #000;
+            transform: translate(-50%, -50%);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="title-card" class="glass-panel">
+        <h1>Tetrahedral Compression</h1>
+        <p><strong>Substrate:</strong> 8D Octonionic Gas ($Sp(8)$)</p>
+        <p><strong>Mechanism:</strong> Triangle Packing (Fano Plane Restriction)</p>
+        <p><strong>Emergence:</strong> 4D Quaternionic Observable Frame ($\mathbb{H}$)</p>
+        <div class="mt-3 text-xs text-zinc-400">
+            As thermodynamic friction increases, the non-associative $8 \times 8$ matrix prunes its chaotic connections. It finds a zero-defect Fano line (nodes 1, 2, 4) and binds it to the Real node (0), degenerating into an associative Quaternionic Tetrahedron.
+        </div>
+    </div>
+
+    <div id="matrix-card" class="glass-panel">
+        <div class="matrix-label">Transition Matrix $P_{ij}$</div>
+        <div id="transition-matrix">
+            <!-- Populated by JS -->
+        </div>
+        <div class="mt-3 flex justify-between items-center text-xs mono">
+            <span class="text-red-400">Friction High</span>
+            <span class="text-green-400">Associative Binding</span>
+        </div>
+    </div>
+
+    <div id="controls-card" class="glass-panel">
+        <div class="w-full flex justify-between items-end mb-1">
+            <span class="text-sm font-bold text-white tracking-wide uppercase">Topological Friction / Projection Penalty ($\beta$)</span>
+            <span id="beta-value" class="mono text-blue-400 font-bold">0.0%</span>
+        </div>
+        <input type="range" id="compression-slider" min="0" max="1" step="0.01" value="0">
+        <div class="slider-labels">
+            <span>Octonionic Gas (8D)</span>
+            <span>Tetrahedral Quaternions (4D)</span>
+        </div>
+    </div>
+
+    <!-- HTML Node Labels overlay -->
+    <div id="labels-container"></div>
+
+    <script>
+        // --- Setup Three.js Scene ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Add a subtle fog to fade out distant rejected nodes
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 15, 40);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(20, 20, 20);
+        scene.add(pointLight);
+        const pointLight2 = new THREE.PointLight(0x4ade80, 0.8);
+        pointLight2.position.set(-20, -10, -20);
+        scene.add(pointLight2);
+
+        // --- Data Definitions ---
+        // 8 Nodes: e0 (Real), e1-e7 (Imaginary)
+        const NUM_NODES = 8;
+        
+        // Target Quaternionic Subalgebra: Real(0) + Fano Line(1, 2, 4)
+        const QUATERNION_NODES = [0, 1, 2, 4];
+
+        // Random starting positions for the "Gas" state
+        const gasPositions = [];
+        for(let i=0; i<NUM_NODES; i++) {
+            gasPositions.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 30
+            ));
+        }
+
+        // Target positions for the "Tetrahedron" state
+        // Nodes 0, 1, 2, 4 form a perfect tetrahedron in the center.
+        // Nodes 3, 5, 6, 7 are pushed outward as "friction loss".
+        const tetraScale = 8;
+        const targetPositions = [];
+        for(let i=0; i<NUM_NODES; i++) {
+            if (i === 0) targetPositions.push(new THREE.Vector3(tetraScale, tetraScale, tetraScale));
+            else if (i === 1) targetPositions.push(new THREE.Vector3(tetraScale, -tetraScale, -tetraScale));
+            else if (i === 2) targetPositions.push(new THREE.Vector3(-tetraScale, tetraScale, -tetraScale));
+            else if (i === 4) targetPositions.push(new THREE.Vector3(-tetraScale, -tetraScale, tetraScale));
+            else {
+                // Rejected nodes get pushed far away and downwards
+                targetPositions.push(new THREE.Vector3(
+                    (Math.random() - 0.5) * 60,
+                    -30 - Math.random() * 20,
+                    (Math.random() - 0.5) * 60
+                ));
+            }
+        }
+
+        // --- Materials ---
+        const realMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xffffff, emissive: 0x444444, roughness: 0.2, metalness: 0.8 
+        });
+        const imagMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x3b82f6, emissive: 0x1d4ed8, roughness: 0.5, metalness: 0.5 
+        });
+        const targetImagMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x4ade80, emissive: 0x16a34a, roughness: 0.3, metalness: 0.7 
+        });
+
+        // --- Node Meshes ---
+        const nodes = [];
+        const labelsContainer = document.getElementById('labels-container');
+        const htmlLabels = [];
+
+        const sphereGeo = new THREE.SphereGeometry(1.2, 32, 32);
+
+        for(let i=0; i<NUM_NODES; i++) {
+            let mat = imagMaterial;
+            if (i === 0) mat = realMaterial;
+            else if (QUATERNION_NODES.includes(i)) mat = targetImagMaterial;
+
+            const mesh = new THREE.Mesh(sphereGeo, mat);
+            mesh.position.copy(gasPositions[i]);
+            scene.add(mesh);
+            nodes.push(mesh);
+
+            // Add HTML Label
+            const label = document.createElement('div');
+            label.className = 'node-label';
+            label.innerText = `e${i}`;
+            if(i === 0) label.style.color = '#fff';
+            else if (QUATERNION_NODES.includes(i)) label.style.color = '#4ade80';
+            else label.style.color = '#3b82f6';
+            labelsContainer.appendChild(label);
+            htmlLabels.push(label);
+        }
+
+        // --- Edges (The 8x8 Matrix connections) ---
+        const edges = []; // Store lines
+        const edgeData = []; // Store logic data
+
+        const lineMaterialBase = new THREE.LineBasicMaterial({ color: 0x555555, transparent: true, opacity: 0.2 });
+        const lineMaterialBound = new THREE.LineBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 1.0, linewidth: 2 });
+
+        for(let i=0; i<NUM_NODES; i++) {
+            for(let j=i+1; j<NUM_NODES; j++) {
+                const geo = new THREE.BufferGeometry().setFromPoints([nodes[i].position, nodes[j].position]);
+                
+                // Is this edge part of the Quaternionic Tetrahedron?
+                const isQuatEdge = QUATERNION_NODES.includes(i) && QUATERNION_NODES.includes(j);
+                
+                // Clone material so we can fade them individually
+                const mat = isQuatEdge ? lineMaterialBound.clone() : lineMaterialBase.clone();
+                mat.opacity = isQuatEdge ? 0.2 : 0.4; // Start state opacities
+
+                const line = new THREE.Line(geo, mat);
+                scene.add(line);
+                edges.push(line);
+                edgeData.push({ line, i, j, isQuatEdge });
+            }
+        }
+
+        // --- 8x8 Matrix UI ---
+        const matrixContainer = document.getElementById('transition-matrix');
+        const matrixCells = [];
+
+        for(let row=0; row<NUM_NODES; row++) {
+            matrixCells[row] = [];
+            for(let col=0; col<NUM_NODES; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'matrix-cell';
+                // Only show numbers on diagonal for aesthetics
+                if(row === col) cell.innerText = `e${row}`;
+                matrixContainer.appendChild(cell);
+                matrixCells[row][col] = cell;
+            }
+        }
+
+        // --- Animation / Update Logic ---
+        const slider = document.getElementById('compression-slider');
+        const betaValueDisplay = document.getElementById('beta-value');
+
+        // Noise offsets for the gas state
+        const timeOffsets = Array.from({length: NUM_NODES}, () => Math.random() * 100);
+
+        function updateScene() {
+            const progress = parseFloat(slider.value); // 0.0 to 1.0
+            
+            // UI Update
+            betaValueDisplay.innerText = `${(progress * 100).toFixed(1)}%`;
+            if(progress > 0.8) betaValueDisplay.style.color = '#4ade80';
+            else betaValueDisplay.style.color = '#60a5fa';
+
+            const time = Date.now() * 0.001;
+
+            // Update Nodes
+            for(let i=0; i<NUM_NODES; i++) {
+                // Add organic drift to the gas positions
+                const driftX = Math.sin(time + timeOffsets[i]) * 2 * (1 - progress);
+                const driftY = Math.cos(time * 0.8 + timeOffsets[i]) * 2 * (1 - progress);
+                const driftZ = Math.sin(time * 1.2 + timeOffsets[i]) * 2 * (1 - progress);
+
+                const currentGasPos = gasPositions[i].clone().add(new THREE.Vector3(driftX, driftY, driftZ));
+                
+                // Lerp between Gas and Tetrahedron based on slider
+                nodes[i].position.lerpVectors(currentGasPos, targetPositions[i], progress);
+
+                // Fade out rejected nodes
+                if (!QUATERNION_NODES.includes(i)) {
+                    nodes[i].material.opacity = 1.0 - (progress * 0.9); // fade to 10%
+                    nodes[i].material.transparent = true;
+                    htmlLabels[i].style.opacity = 0.8 - (progress * 0.8);
+                } else {
+                    htmlLabels[i].style.opacity = 0.8 + (progress * 0.2); // enhance text
+                }
+            }
+
+            // Update Edges (Lines)
+            edgeData.forEach(edge => {
+                const pos = edge.line.geometry.attributes.position;
+                pos.setXYZ(0, nodes[edge.i].position.x, nodes[edge.i].position.y, nodes[edge.i].position.z);
+                pos.setXYZ(1, nodes[edge.j].position.x, nodes[edge.j].position.y, nodes[edge.j].position.z);
+                pos.needsUpdate = true;
+
+                // Opacity logic
+                if (edge.isQuatEdge) {
+                    // Tetrahedron edges get stronger
+                    edge.line.material.opacity = 0.2 + (progress * 0.8);
+                } else {
+                    // Rejected edges fade out entirely
+                    edge.line.material.opacity = 0.4 * (1.0 - progress);
+                }
+            });
+
+            // Update 8x8 HTML Matrix
+            for(let row=0; row<NUM_NODES; row++) {
+                for(let col=0; col<NUM_NODES; col++) {
+                    const isQuat = QUATERNION_NODES.includes(row) && QUATERNION_NODES.includes(col);
+                    
+                    // Base chaotic noise
+                    let noise = Math.random() * 0.4 * (1 - progress); 
+                    
+                    let r, g, b, alpha;
+                    if (isQuat) {
+                        // Blend from chaotic gray/red to solid bright green
+                        r = 255 * (1 - progress) + 74 * progress;
+                        g = 255 * (1 - progress) + 222 * progress;
+                        b = 255 * (1 - progress) + 128 * progress;
+                        alpha = noise + (0.8 * progress);
+                    } else {
+                        // Fade to dark red (friction) then to black (pruned)
+                        r = 255 * (1 - progress) + 239 * progress; // Red
+                        g = 255 * (1 - progress) + 68 * progress;
+                        b = 255 * (1 - progress) + 68 * progress;
+                        // Fade alpha to 0
+                        alpha = noise + 0.1 * Math.max(0, 1 - progress*1.5); 
+                    }
+
+                    // Diagonal is always slightly visible
+                    if (row === col && !isQuat) alpha = Math.max(alpha, 0.1);
+
+                    matrixCells[row][col].style.backgroundColor = `rgba(${r},${g},${b},${alpha})`;
+                }
+            }
+
+            // Update HTML Label 2D screen positions
+            htmlLabels.forEach((label, i) => {
+                const vector = nodes[i].position.clone();
+                vector.project(camera);
+                
+                const x = (vector.x * .5 + .5) * window.innerWidth;
+                const y = (vector.y * -.5 + .5) * window.innerHeight;
+                
+                label.style.left = `${x}px`;
+                label.style.top = `${y}px`;
+                
+                // Hide if behind camera
+                if (vector.z > 1) {
+                    label.style.display = 'none';
+                } else {
+                    label.style.display = 'block';
+                }
+            });
+        }
+
+        // Main Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            updateScene();
+            renderer.render(scene, camera);
+        }
+
+        // Window resize handler
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
