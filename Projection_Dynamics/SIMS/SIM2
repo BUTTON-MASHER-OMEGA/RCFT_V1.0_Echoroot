@@ -1,0 +1,294 @@
+###SIMULATION2###
+
+import random
+import math
+from collections import Counter
+
+# ============================================================
+# ISP–LSA Toy v3
+# - Z_norm(R) default entropy
+# - κ(R) from variance of ΔV over A(R)
+# - LCO → V(R) explicitly
+# - explicit coupling via projection mismatch
+# - proto-Sp(2) memory retained (but still not feeding back)
+# ============================================================
+
+N_NODES = 3
+DIM_DIR  = 2
+
+ALPHA = 1.0   # weight on constraint (LCO bit mismatch)
+BETA  = 1.0   # weight on entropy
+GAMMA = 1.0   # weight on coupling (projection mismatch)
+LAMBDA_Z = 0.2
+
+KAPPA_MIN = 0.5
+KAPPA_MAX = 5.0
+
+def all_bit_states():
+    for x in range(2**(2*N_NODES)):
+        bits = tuple((x >> k) & 1 for k in range(2*N_NODES))
+        yield bits
+
+ALL_BIT_STATES = list(all_bit_states())
+
+NODE_DIRS = [
+    (1.0, 0.0),
+    (0.0, 1.0),
+    (-1.0, 0.0),
+]
+
+def normalize(v):
+    x, y = v
+    n = math.sqrt(x*x + y*y)
+    if n == 0:
+        return (0.0, 0.0)
+    return (x/n, y/n)
+
+def admissible_neighbors_bits(bits):
+    neighbors = []
+    bits = list(bits)
+    for node in range(N_NODES):
+        gi = 2*node
+        mi = 2*node + 1
+
+        sG = bits.copy()
+        sG[gi] = 1 - sG[gi]
+        neighbors.append(tuple(sG))
+
+        sM = bits.copy()
+        sM[mi] = 1 - sM[mi]
+        neighbors.append(tuple(sM))
+    return neighbors
+
+def lco_bit_mismatch(bits):
+    mismatches = 0
+    for node in range(N_NODES):
+        gi = bits[2*node]
+        mi = bits[2*node + 1]
+        if gi != mi:
+            mismatches += 1
+    return mismatches / N_NODES
+
+def node_mode_vector(bits, node):
+    gi = bits[2*node]
+    mi = bits[2*node + 1]
+    return normalize((1.0 if gi == 1 else -1.0,
+                      1.0 if mi == 1 else -1.0))
+
+def coupling_mismatch(bits):
+    # V_coupling = sum_{(x,y)} (1 - Π_x · Π_y)
+    edges = [(0,1), (1,2), (2,0)]
+    total = 0.0
+    for i, j in edges:
+        vx = node_mode_vector(bits, i)
+        vy = node_mode_vector(bits, j)
+        dot = vx[0]*vy[0] + vx[1]*vy[1]
+        total += (1.0 - dot)
+    return total / len(edges)
+
+def calc_v_constraint(bits):
+    # directly from LCO bit mismatch
+    return lco_bit_mismatch(bits)
+
+def calc_v_coupling(bits):
+    return coupling_mismatch(bits)
+
+def calc_Z_two_step(bits, lam=LAMBDA_Z):
+    v0 = calc_v_constraint(bits) + calc_v_coupling(bits)
+    A0 = admissible_neighbors_bits(bits)
+    if not A0:
+        return 1e-12
+    Z = 0.0
+    count = 0
+    for s1 in A0:
+        A1 = admissible_neighbors_bits(s1)
+        if not A1:
+            continue
+        for s2 in A1:
+            v2 = calc_v_constraint(s2) + calc_v_coupling(s2)
+            dV = v2 - v0
+            Z += math.exp(-lam * dV)
+            count += 1
+    if count == 0:
+        return 1e-12
+    # normalization: average over 2-step paths
+    Z_norm = Z / count
+    return Z_norm
+
+def V_total(bits, lam=LAMBDA_Z):
+    v_con = calc_v_constraint(bits)
+    v_cpl = calc_v_coupling(bits)
+    Z = calc_Z_two_step(bits, lam=lam)
+    return ALPHA * v_con + GAMMA * v_cpl - BETA * math.log(Z)
+
+def kappa_from_variance(bits, lam=LAMBDA_Z,
+                        kappa_min=KAPPA_MIN,
+                        kappa_max=KAPPA_MAX):
+    A = admissible_neighbors_bits(bits)
+    if not A:
+        return kappa_max
+    V0 = V_total(bits, lam=lam)
+    dVs = []
+    for s1 in A:
+        V1 = V_total(s1, lam=lam)
+        dVs.append(V1 - V0)
+    mean = sum(dVs) / len(dVs)
+    var = sum((x - mean)**2 for x in dVs) / len(dVs)
+    # map variance to [0,1] via soft saturation
+    scale = var / (1.0 + var)
+    # high variance → low κ (explore), low variance → high κ (rigid)
+    kappa = kappa_min + (kappa_max - kappa_min) * (1.0 - scale)
+    return kappa
+
+def init_memory():
+    q = (random.uniform(-1, 1), random.uniform(-1, 1))
+    p = (random.uniform(-1, 1), random.uniform(-1, 1))
+    return q, p
+
+def symplectic_update(q, p, bits, step_size=0.05):
+    mismatch = lco_bit_mismatch(bits)
+    gradV = mismatch
+    qx, qy = q
+    px, py = p
+
+    qx_new = qx + step_size * px
+    qy_new = qy + step_size * py
+
+    px_new = px - step_size * gradV * qx
+    py_new = py - step_size * gradV * qy
+
+    return (qx_new, qy_new), (px_new, py_new)
+
+def memory_anchor(q, p):
+    return normalize(q)
+
+def stats_mean_var(series):
+    if not series:
+        return 0.0, 0.0
+    n = len(series)
+    mean = sum(series) / n
+    var = sum((x - mean)**2 for x in series) / n
+    return mean, var
+
+def autocorrelation(series, lag=1):
+    n = len(series)
+    if n <= lag:
+        return 0.0
+    mean = sum(series) / n
+    num = 0.0
+    den = 0.0
+    for i in range(n):
+        den += (series[i] - mean)**2
+    for i in range(n - lag):
+        num += (series[i] - mean) * (series[i+lag] - mean)
+    if den == 0.0:
+        return 0.0
+    return num / den
+
+def run_isp_lsa_v3(
+    steps=50000,
+    lam=LAMBDA_Z,
+    seed=0
+):
+    random.seed(seed)
+    bits = random.choice(ALL_BIT_STATES)
+    q, p = init_memory()
+
+    visit_counts = Counter()
+    uphill_moves = 0
+
+    lco_bit_series = []
+    lco_cpl_series = []
+
+    for _ in range(steps):
+        visit_counts[bits] += 1
+
+        q, p = symplectic_update(q, p, bits)
+        # H = memory_anchor(q, p)  # not yet feeding back into V
+
+        lco_bit_series.append(calc_v_constraint(bits))
+        lco_cpl_series.append(calc_v_coupling(bits))
+
+        neighbors = admissible_neighbors_bits(bits)
+        candidate = random.choice(neighbors)
+
+        V_curr = V_total(bits, lam=lam)
+        V_next = V_total(candidate, lam=lam)
+        dV = V_next - V_curr
+
+        if dV <= 0:
+            accept = True
+        else:
+            kappa = kappa_from_variance(bits, lam=lam)
+            accept_prob = math.exp(-kappa * dV)
+            accept = (random.random() < accept_prob)
+            if accept:
+                uphill_moves += 1
+
+        if accept:
+            bits = candidate
+
+    total_visits = sum(visit_counts.values())
+    unique_states = len(visit_counts)
+    uphill_frac = uphill_moves / steps if steps > 0 else 0.0
+
+    bit_mean, bit_var = stats_mean_var(lco_bit_series)
+    cpl_mean, cpl_var = stats_mean_var(lco_cpl_series)
+    bit_ac = autocorrelation(lco_bit_series, lag=1)
+    cpl_ac = autocorrelation(lco_cpl_series, lag=1)
+
+    top_states = visit_counts.most_common(6)
+
+    print("=== ISP–LSA Toy v3 (Z_norm, κ from ΔV variance, LCO→V, explicit coupling) ===")
+    print(f"Total steps: {steps}")
+    print(f"Unique states visited: {unique_states}")
+    print(f"Uphill moves: {uphill_moves} ({uphill_frac*100:.1f}%)")
+    print()
+    print("LCO / coupling diagnostics:")
+    print(f"  bit mismatch   mean={bit_mean:.4f}, var={bit_var:.4f}, ac(1)={bit_ac:.4f}")
+    print(f"  coupling mis   mean={cpl_mean:.4f}, var={cpl_var:.4f}, ac(1)={cpl_ac:.4f}")
+    print()
+    print("Top visited states:")
+    for s, cnt in top_states:
+        v_con = calc_v_constraint(s)
+        v_cpl = calc_v_coupling(s)
+        Z = calc_Z_two_step(s, lam=lam)
+        V = V_total(s, lam=lam)
+        print(
+            f"State {s} | V_con={v_con:.3f} | V_cpl={v_cpl:.3f} | Z_norm={Z:.3f} | "
+            f"V={V:.3f} | Visits={cnt}"
+        )
+
+if __name__ == "__main__":
+    run_isp_lsa_v3()
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+RESULTS:
+
+
+=== ISP–LSA Toy v3 (Z_norm, κ from ΔV variance, LCO→V, explicit coupling) ===
+Total steps: 50000
+Unique states visited: 64
+Uphill moves: 2148 (4.3%)
+
+LCO / coupling diagnostics:
+  bit mismatch   mean=0.0780, var=0.0432, ac(1)=0.8890
+  coupling mis   mean=0.1152, var=0.0879, ac(1)=0.8539
+
+Top visited states:
+State (0, 0, 0, 0, 0, 0) | V_con=0.000 | V_cpl=0.000 | Z_norm=0.773 | V=0.257 | Visits=22546
+State (1, 1, 1, 1, 1, 1) | V_con=0.000 | V_cpl=0.000 | Z_norm=0.773 | V=0.257 | Visits=19034
+State (1, 0, 1, 0, 1, 0) | V_con=1.000 | V_cpl=0.000 | Z_norm=0.919 | V=1.084 | Visits=588
+State (0, 1, 0, 1, 0, 1) | V_con=1.000 | V_cpl=0.000 | Z_norm=0.919 | V=1.084 | Visits=563
+State (1, 0, 0, 0, 0, 0) | V_con=0.333 | V_cpl=0.667 | Z_norm=0.919 | V=1.084 | Visits=500
+State (0, 0, 0, 0, 0, 1) | V_con=0.333 | V_cpl=0.667 | Z_norm=0.919 | V=1.084 | Visits=398
+
+
+** Process exited - Return Code: 0 **
