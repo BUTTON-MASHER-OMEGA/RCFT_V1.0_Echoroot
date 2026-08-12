@@ -1,0 +1,846 @@
+###SIMULATION 5###
+
+Code:
+
+
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # -1 reinforce, +1 penalize
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 20000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha * d_graph + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([
+        friction(u_i, u_j, mem_weights, cfg, proj_map)
+        for u_j in nbrs
+    ])
+    weights = np.exp(-costs / cfg.T_tol)
+    probs = weights / weights.sum()
+    return nbrs, probs
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    frictions = []
+    pair_counts = defaultdict(int)
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        F_chosen = friction(u, u_next, mem_weights, cfg, proj_map)
+        frictions.append(F_chosen)
+
+        # exponential memory
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        pair_counts[(u, u_next)] += 1
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return (
+        np.array(hidden),
+        np.array(obs),
+        np.array(frictions),
+        dict(mem_weights),
+        dict(pair_counts),
+        dict(edge_counts),
+    )
+
+
+# ============================================================
+# 6. ORDERING-SENSITIVITY METRICS
+# ============================================================
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0
+    H = 0.0
+    for c in edge_counts.values():
+        p = c / total
+        H -= p * math.log(p + 1e-12)
+    return H
+
+
+def compute_valid_fraction(hidden):
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+    valid = 0
+    for i in range(total):
+        u, v = hidden[i], hidden[i+1]
+        if v in neighbors[u]:
+            valid += 1
+    return valid / total
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+
+    return H
+
+
+# ============================================================
+# 7. ANALYSIS: ATTRACTORS + TEMPORAL STRUCTURE
+# ============================================================
+
+def analyze_run(hidden, edge_counts, obs, shuffle_trials=5):
+    print("=== Run Analysis ===")
+
+    uniq_states = len(set(hidden))
+    uniq_edges = len([e for e, c in edge_counts.items() if c > 0])
+
+    print(f"Unique states visited: {uniq_states}")
+    print(f"Unique edges visited:  {uniq_edges}")
+
+    print("\nTop edges:")
+    top = sorted(edge_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    for (i, j), c in top:
+        print(f"  {i}->{j}: {c}")
+
+    print("\nCycle length estimate:")
+    tail = hidden[-500:]
+    cycle_len = None
+    for k in range(2, 200):
+        if k * 2 <= len(tail):
+            if np.all(tail[-k:] == tail[-2*k:-k]):
+                cycle_len = k
+                break
+    if cycle_len is None:
+        print("  No small cycle detected (k <= 200).")
+    else:
+        print(f"  Estimated cycle length: {cycle_len}")
+
+    print("\nOrdering sensitivity (shuffle test):")
+
+    H_edge_orig = compute_edge_entropy(edge_counts)
+    valid_orig = compute_valid_fraction(hidden)
+    H_cond_orig = compute_conditional_entropy(hidden)
+
+    H_edge_shuf = []
+    valid_shuf = []
+    H_cond_shuf = []
+
+    for _ in range(shuffle_trials):
+        shuf = np.copy(hidden)
+        np.random.shuffle(shuf)
+
+        ec_shuf = defaultdict(int)
+        for i in range(len(shuf) - 1):
+            u, v = shuf[i], shuf[i+1]
+            ec_shuf[(u, v)] += 1
+
+        H_edge_shuf.append(compute_edge_entropy(ec_shuf))
+        valid_shuf.append(compute_valid_fraction(shuf))
+        H_cond_shuf.append(compute_conditional_entropy(shuf))
+
+    print(f"  H_edge (orig):      {H_edge_orig:.4f}")
+    print(f"  H_edge (shuf):      {np.mean(H_edge_shuf):.4f}")
+
+    print(f"  valid frac (orig):  {valid_orig:.4f}")
+    print(f"  valid frac (shuf):  {np.mean(valid_shuf):.4f}")
+
+    print(f"  H_cond (orig):      {H_cond_orig:.4f}")
+    print(f"  H_cond (shuf):      {np.mean(H_cond_shuf):.4f}")
+
+
+# ============================================================
+# 8. DRIVER: RUN + ANALYZE
+# ============================================================
+
+def run_and_analyze(cfg: Config):
+    label = "penalize" if cfg.memory_sign == +1 else "reinforce"
+
+    print("\n====================================")
+    print("Running simulation:")
+    print(f"  lambda       = {cfg.lam}")
+    print(f"  delta        = {cfg.delta}")
+    print(f"  memory_sign  = {cfg.memory_sign}  ({label})")
+    print(f"  beta         = {cfg.beta}")
+    print(f"  sat_mode     = {cfg.sat_mode}")
+    print("====================================\n")
+
+    hidden, obs, F, mem_weights, pair_counts, edge_counts = simulate(cfg, proj_map=proj_structured)
+
+    analyze_run(
+        hidden=hidden,
+        edge_counts=edge_counts,
+        obs=obs,
+        shuffle_trials=5,
+    )
+
+    print("\nDone.\n")
+
+
+# ============================================================
+# 9. BETA SWEEP (PROJECTION CONTROL)
+# ============================================================
+
+def run_beta_sweep():
+    betas = [0.0, 1.0, 2.0, 4.0]
+    experiments = [
+        (0.3, 0.90),
+        (1.0, 0.95),
+        (2.0, 0.98),
+    ]
+
+    for lam, delta in experiments:
+        for b in betas:
+            cfg = Config(
+                lam=lam,
+                delta=delta,
+                beta=b,
+                alpha=1.0,
+                T_tol=1.0,
+                memory_sign=-1,
+                sat_mode="tanh",
+                seed=1,
+                num_steps=20000,
+            )
+            print("\n####################################")
+            print(f"beta = {cfg.beta}, lambda = {cfg.lam}, delta = {cfg.delta}, sign = {cfg.memory_sign}")
+            print("####################################")
+            run_and_analyze(cfg)
+
+
+# ============================================================
+# 10. MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    run_beta_sweep()
+
+
+
+~~~~~~~~~~~~~~
+
+
+
+
+Results:
+
+
+
+
+####################################
+beta = 0.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1062
+  5->4: 1055
+  3->0: 1052
+  4->2: 1047
+  4->5: 1045
+  7->4: 1024
+  0->6: 1011
+  2->4: 1011
+  0->1: 1004
+  1->2: 1000
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9950
+  H_edge (shuf):      4.1158
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3270
+  H_cond (orig):      0.9364
+  H_cond (shuf):      2.0572
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1759
+  3->2: 1736
+  5->4: 1736
+  4->5: 1704
+  0->1: 1659
+  1->0: 1641
+  7->6: 1579
+  6->7: 1552
+  4->7: 595
+  3->0: 588
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.8484
+  H_edge (shuf):      4.1447
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3220
+  H_cond (orig):      0.7755
+  H_cond (shuf):      2.0718
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2185
+  5->4: 2183
+  0->1: 2168
+  1->0: 2145
+  7->6: 2131
+  6->7: 2115
+  2->3: 2095
+  3->2: 2090
+  6->0: 256
+  4->7: 250
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.5506
+  H_edge (shuf):      4.1549
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3181
+  H_cond (orig):      0.4725
+  H_cond (shuf):      2.0768
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 0.3, delta = 0.9, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 0.3
+  delta        = 0.9
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2812
+  5->4: 2809
+  3->2: 2452
+  2->3: 2446
+  0->1: 2307
+  1->0: 2305
+  7->6: 2249
+  6->7: 2245
+  4->7: 37
+  2->4: 37
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.1762
+  H_edge (shuf):      4.1502
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3157
+  H_cond (orig):      0.1006
+  H_cond (shuf):      2.0745
+
+Done.
+
+
+####################################
+beta = 0.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1131
+  5->4: 1094
+  3->0: 1081
+  3->2: 1052
+  1->2: 1052
+  4->5: 1027
+  4->7: 1023
+  0->1: 1023
+  4->2: 1021
+  2->4: 1017
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9938
+  H_edge (shuf):      4.1172
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3314
+  H_cond (orig):      0.9346
+  H_cond (shuf):      2.0579
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  0->1: 1968
+  2->3: 1927
+  1->0: 1917
+  3->2: 1904
+  5->4: 1857
+  4->5: 1837
+  7->6: 1693
+  6->7: 1645
+  3->0: 497
+  1->2: 484
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.7597
+  H_edge (shuf):      4.1479
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3256
+  H_cond (orig):      0.6850
+  H_cond (shuf):      2.0733
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  5->4: 2422
+  4->5: 2408
+  3->2: 2357
+  2->3: 2344
+  0->1: 2261
+  1->0: 2255
+  7->6: 2112
+  6->7: 2080
+  4->7: 169
+  0->3: 166
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.4115
+  H_edge (shuf):      4.1545
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3175
+  H_cond (orig):      0.3337
+  H_cond (shuf):      2.0767
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 1.0, delta = 0.95, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 1.0
+  delta        = 0.95
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 3296
+  5->4: 3295
+  7->6: 2588
+  6->7: 2585
+  3->2: 2329
+  2->3: 2328
+  0->1: 1696
+  1->0: 1693
+  2->4: 24
+  1->2: 23
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.1096
+  H_edge (shuf):      4.1043
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3193
+  H_cond (orig):      0.0569
+  H_cond (shuf):      2.0515
+
+Done.
+
+
+####################################
+beta = 0.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 0.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  2->3: 1161
+  5->4: 1098
+  4->2: 1078
+  2->4: 1073
+  3->2: 1066
+  0->1: 1063
+  0->6: 1053
+  6->0: 1047
+  3->0: 1046
+  1->2: 1034
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.9920
+  H_edge (shuf):      4.1097
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3307
+  H_cond (orig):      0.9366
+  H_cond (shuf):      2.0543
+
+Done.
+
+
+####################################
+beta = 1.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 1.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  5->4: 2216
+  4->5: 2193
+  2->3: 1969
+  0->1: 1960
+  3->2: 1918
+  1->0: 1898
+  7->6: 1797
+  6->7: 1763
+  6->5: 428
+  5->6: 404
+
+Cycle length estimate:
+  No small cycle detected (k <= 200).
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.6811
+  H_edge (shuf):      4.1479
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3197
+  H_cond (orig):      0.6065
+  H_cond (shuf):      2.0733
+
+Done.
+
+
+####################################
+beta = 2.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 2.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  4->5: 2636
+  5->4: 2633
+  3->2: 2427
+  2->3: 2417
+  1->0: 2307
+  0->1: 2305
+  7->6: 2190
+  6->7: 2186
+  2->1: 94
+  1->2: 92
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.2778
+  H_edge (shuf):      4.1527
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3132
+  H_cond (orig):      0.2007
+  H_cond (shuf):      2.0757
+
+Done.
+
+
+####################################
+beta = 4.0, lambda = 2.0, delta = 0.98, sign = -1
+####################################
+
+====================================
+Running simulation:
+  lambda       = 2.0
+  delta        = 0.98
+  memory_sign  = -1  (reinforce)
+  beta         = 4.0
+  sat_mode     = tanh
+====================================
+
+=== Run Analysis ===
+Unique states visited: 8
+Unique edges visited:  20
+
+Top edges:
+  1->0: 3440
+  0->1: 3438
+  3->2: 2454
+  2->3: 2452
+  5->4: 2169
+  4->5: 2168
+  6->7: 1904
+  7->6: 1904
+  2->4: 9
+  4->2: 9
+
+Cycle length estimate:
+  Estimated cycle length: 2
+
+Ordering sensitivity (shuffle test):
+  H_edge (orig):      2.0784
+  H_edge (shuf):      4.1062
+  valid frac (orig):  1.0000
+  valid frac (shuf):  0.3186
+  H_cond (orig):      0.0247
+  H_cond (shuf):      2.0525
+
+Done.
+
+
+
+** Process exited - Return Code: 0 **
