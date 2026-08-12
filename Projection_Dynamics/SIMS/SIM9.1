@@ -1,0 +1,332 @@
+
+#  SIM9.1: Coherence Drift + Relational Consistency
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 0. GRAPH + PROJECTION MAP (adapt to your SIM8 graph)
+# ============================================================
+
+# Example 8-state graph (replace with your SIM8 neighbors)
+neighbors = {
+    0: [1,2],
+    1: [0,3],
+    2: [0,4],
+    3: [1,5],
+    4: [2,6],
+    5: [3,7],
+    6: [4,7],
+    7: [5,6],
+}
+
+# Hidden → projected basin label (same structure as SIM8)
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+# Basin mapping (observable sectors)
+DEFAULT_BASINS = {
+    0: [0,1],
+    1: [2,3],
+    2: [4,5],
+    3: [6,7],
+}
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 2000
+
+    # SIM9 additions
+    window: int = 200
+    kernel_update_every: int = 50
+    lambda_consistency: float = 1.0
+    basins: dict = None
+    weights: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+        if self.weights is None:
+            self.weights = {x: 1.0/len(self.basins) for x in self.basins}
+
+
+# ============================================================
+# 2. MEMORY SATURATION + FRICTION + TRANSITION (SIM1–8 style)
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    return M
+
+def friction(u_i, u_j, mem_weights, cfg: Config):
+    # projection penalty
+    delta_proj = 0.0 if proj_structured[u_i] == proj_structured[u_j] else 1.0
+    # memory term
+    M_raw = mem_weights.get((u_i, u_j), 0.0)
+    M_sat = saturate_memory(M_raw, cfg.sat_mode)
+    return cfg.alpha + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+def transition_probs(u_i, mem_weights, cfg: Config):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, mem_weights, cfg) for u_j in nbrs])
+    weights = np.exp(-costs / cfg.T_tol)
+    return nbrs, weights / weights.sum()
+
+
+# ============================================================
+# 3. LOCAL KERNEL ESTIMATION (SIM9)
+# ============================================================
+
+def estimate_basin_kernels(hidden, window, basins):
+    T = len(hidden)
+    start = max(0, T - window - 1)
+
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for t in range(start, T-1):
+        u, v = hidden[t], hidden[t+1]
+        trans_counts[(u,v)] += 1
+        from_counts[u] += 1
+
+    basin_kernels = {x: defaultdict(float) for x in basins}
+    for (u,v), c in trans_counts.items():
+        for x, states in basins.items():
+            if u in states:
+                basin_kernels[x][(u,v)] = c / max(1, from_counts[u])
+                break
+
+    return basin_kernels
+
+
+# ============================================================
+# 4. LOCAL COHERENCE (H_x, P_x, C_x)
+# ============================================================
+
+def compute_local_entropy_and_persistence(hidden, obs, basins):
+    basin_trans = {x: defaultdict(int) for x in basins}
+    basin_from  = {x: defaultdict(int) for x in basins}
+
+    counts_total = {x: 0 for x in basins}
+    counts_same  = {x: 0 for x in basins}
+
+    for t in range(len(hidden)-1):
+        u, v = hidden[t], hidden[t+1]
+        b = obs[t]
+        counts_total[b] += 1
+        if obs[t+1] == b:
+            counts_same[b] += 1
+
+        for x, states in basins.items():
+            if u in states:
+                basin_trans[x][(u,v)] += 1
+                basin_from[x][u] += 1
+                break
+
+    H_x = {}
+    P_x = {}
+    for x in basins:
+        H_sum = 0.0
+        n_src = 0
+        for u in basin_from[x]:
+            probs = []
+            for (uu,vv), c in basin_trans[x].items():
+                if uu == u:
+                    probs.append(c / basin_from[x][u])
+            if len(probs) == 0:
+                continue
+            p_arr = np.array(probs)
+            H_sum += -np.sum(p_arr * np.log(p_arr + 1e-12))
+            n_src += 1
+        H_x[x] = (H_sum / n_src) if n_src>0 else 0.0
+        P_x[x] = (counts_same[x] / counts_total[x]) if counts_total[x]>0 else 0.0
+
+    return H_x, P_x
+
+def compute_Cx(H_x, P_x, alpha):
+    return {x: -H_x[x] + alpha * P_x[x] for x in H_x}
+
+
+# ============================================================
+# 5. RELATIONAL CONSISTENCY (R_global, C_RCFT)
+# ============================================================
+
+def kernel_distance_L2(Kx, Ky):
+    keys = set(Kx.keys()) | set(Ky.keys())
+    return sum((Kx.get(k,0.0) - Ky.get(k,0.0))**2 for k in keys)
+
+def global_kernel_from_basins(basin_kernels):
+    global_counts = defaultdict(list)
+    for x, Kx in basin_kernels.items():
+        for (u,v), p in Kx.items():
+            global_counts[(u,v)].append(p)
+    return {k: sum(vals)/len(vals) for k, vals in global_counts.items()}
+
+def restrict_global_to_basin(K_global, basin_states):
+    return {(u,v): p for (u,v), p in K_global.items() if u in basin_states}
+
+def compute_R_global(basin_kernels, basins):
+    K_global = global_kernel_from_basins(basin_kernels)
+    residuals = []
+    for x, states in basins.items():
+        Kx = basin_kernels[x]
+        Kg_x = restrict_global_to_basin(K_global, states)
+        residuals.append(kernel_distance_L2(Kx, Kg_x))
+    return sum(residuals)/len(residuals), K_global
+
+
+# ============================================================
+# 6. SIM9 CORE SIMULATION (RCFT vs memoryless)
+# ============================================================
+
+def simulate_SIM9(cfg: Config, memoryless=False):
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    hidden = [0]
+    obs = [proj_structured[0]]
+
+    Cx_log = []
+    C_local_log = []
+    R_global_log = []
+    C_RCFT_log = []
+
+    for t in range(cfg.num_steps):
+        u = hidden[-1]
+        nbrs, probs = transition_probs(u, mem_weights, cfg)
+        u_next = rng.choice(nbrs, p=probs)
+
+        hidden.append(u_next)
+        obs.append(proj_structured[u_next])
+
+        # memory update
+        if not memoryless:
+            for k in list(mem_weights.keys()):
+                mem_weights[k] *= cfg.delta
+                if mem_weights[k] < 1e-12:
+                    del mem_weights[k]
+            mem_weights[(u, u_next)] += 1.0
+
+        # SIM9 diagnostics every kernel_update_every steps
+        if t % cfg.kernel_update_every == 0 and t > 0:
+            basin_kernels = estimate_basin_kernels(hidden, cfg.window, cfg.basins)
+            H_x, P_x = compute_local_entropy_and_persistence(hidden, obs, cfg.basins)
+            C_x = compute_Cx(H_x, P_x, cfg.alpha)
+            C_local = sum(cfg.weights[x] * C_x[x] for x in C_x)
+
+            R_global, K_global = compute_R_global(basin_kernels, cfg.basins)
+            C_RCFT = C_local - cfg.lambda_consistency * R_global
+
+            Cx_log.append(C_x)
+            C_local_log.append(C_local)
+            R_global_log.append(R_global)
+            C_RCFT_log.append(C_RCFT)
+
+    return {
+        "Cx_log": Cx_log,
+        "C_local_log": C_local_log,
+        "R_global_log": R_global_log,
+        "C_RCFT_log": C_RCFT_log,
+    }
+
+
+# ============================================================
+# 7. β-SWEEP DRIVER (SIM9)
+# ============================================================
+
+def run_beta_sweep_SIM9():
+    betas = np.arange(0.5, 2.05, 0.25)
+    seeds = range(1, 6)  # start small; scale up later
+
+    for beta in betas:
+        print(f"\n=== SIM9 β={beta:.2f} ===")
+        C_local_means = []
+        C_RCFT_means = []
+        R_global_means = []
+
+        for seed in seeds:
+            cfg = Config(lam=1.0, delta=0.95, beta=beta, seed=seed)
+            out = simulate_SIM9(cfg, memoryless=False)
+
+            C_local_means.append(np.mean(out["C_local_log"]))
+            C_RCFT_means.append(np.mean(out["C_RCFT_log"]))
+            R_global_means.append(np.mean(out["R_global_log"]))
+
+        print(f"  mean C_local = {np.mean(C_local_means):.4f}")
+        print(f"  mean C_RCFT  = {np.mean(C_RCFT_means):.4f}")
+        print(f"  mean R_global= {np.mean(R_global_means):.4f}")
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    run_beta_sweep_SIM9()
+
+
+
+
+##############
+
+
+
+Results:
+
+
+
+=== SIM9 β=0.50 ===
+  mean C_local = -0.3317
+  mean C_RCFT  = -0.3317
+  mean R_global= 0.0000
+
+=== SIM9 β=0.75 ===
+  mean C_local = -0.2637
+  mean C_RCFT  = -0.2637
+  mean R_global= 0.0000
+
+=== SIM9 β=1.00 ===
+  mean C_local = -0.1827
+  mean C_RCFT  = -0.1827
+  mean R_global= 0.0000
+
+=== SIM9 β=1.25 ===
+  mean C_local = -0.1181
+  mean C_RCFT  = -0.1181
+  mean R_global= 0.0000
+
+=== SIM9 β=1.50 ===
+  mean C_local = -0.0593
+  mean C_RCFT  = -0.0593
+  mean R_global= 0.0000
+
+=== SIM9 β=1.75 ===
+  mean C_local = -0.0040
+  mean C_RCFT  = -0.0040
+  mean R_global= 0.0000
+
+=== SIM9 β=2.00 ===
+  mean C_local = 0.0420
+  mean C_RCFT  = 0.0420
+  mean R_global= 0.0000
+
+
+** Process exited - Return Code: 0 **
