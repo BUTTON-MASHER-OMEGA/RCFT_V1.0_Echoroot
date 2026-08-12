@@ -1,0 +1,296 @@
+###SIMULATION7###
+
+
+High-resolution β sweep & critical scaling script  
+
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # reinforce
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 2000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, mem_weights, cfg, proj_map) for u_j in nbrs])
+    weights = np.exp(-costs / cfg.T_tol)
+    return nbrs, weights / weights.sum()
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        # memory update
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return np.array(hidden), np.array(obs), dict(edge_counts)
+
+
+# ============================================================
+# 6. METRICS
+# ============================================================
+
+def entropy(p):
+    p = np.array(p, dtype=float)
+    p = p[p > 0]
+    return -np.sum(p * np.log(p)) if len(p) else 0.0
+
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    return entropy([c / total for c in edge_counts.values()]) if total else 0.0
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+    return H
+
+
+def compute_dwell_time(obs):
+    dwell = []
+    cur = obs[0]
+    length = 1
+    for x in obs[1:]:
+        if x == cur:
+            length += 1
+        else:
+            dwell.append(length)
+            cur = x
+            length = 1
+    dwell.append(length)
+    return float(np.mean(dwell))
+
+
+def compute_escape_probability(obs, N_esc=50):
+    escapes = 0
+    trials = 0
+    T = len(obs)
+    for t in range(T - 1):
+        basin = obs[t]
+        segment = obs[t+1:min(T, t+1+N_esc)]
+        trials += 1
+        if np.any(segment != basin):
+            escapes += 1
+    return escapes / trials
+
+
+# ============================================================
+# 7. β-SWEEP
+# ============================================================
+
+def run_beta_sweep():
+    betas = np.arange(0.5, 2.05, 0.05)
+    seeds = range(1, 51)
+
+    print("=== RCFT β-critical sweep ===")
+    print("λ=1.0, δ=0.95, memory_sign=-1, 50 seeds, 2000 steps\n")
+
+    for beta in betas:
+        Hc, He, Ne, Dw, Esc = [], [], [], [], []
+
+        for seed in seeds:
+            cfg = Config(lam=1.0, delta=0.95, beta=beta, seed=seed)
+            hidden, obs, edge_counts = simulate(cfg)
+
+            Hc.append(compute_conditional_entropy(hidden))
+            He.append(compute_edge_entropy(edge_counts))
+            Ne.append(math.exp(He[-1]))
+            Dw.append(compute_dwell_time(obs))
+            Esc.append(compute_escape_probability(obs))
+
+        print(f"β={beta:.2f}")
+        print(f"  H_cond: mean={np.mean(Hc):.4f}, std={np.std(Hc):.4f}")
+        print(f"  H_edge: mean={np.mean(He):.4f}, std={np.std(He):.4f}")
+        print(f"  N_eff:  mean={np.mean(Ne):.4f}, std={np.std(Ne):.4f}")
+        print(f"  dwell:  mean={np.mean(Dw):.2f}, std={np.std(Dw):.2f}")
+        print(f"  escape: mean={np.mean(Esc):.4f}, std={np.std(Esc):.4f}")
+        print()
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    run_beta_sweep()
+
+
+
+
+~~~~~~~~~~~~~
+
+
+
+
+RESULTS:
+
+=== RCFT β-critical sweep === λ=1.0, δ=0.95, memory_sign=-1, 50 seeds, 2000 steps
+
+β=0.50 H_cond: mean=0.8444, std=0.0148 H_edge: mean=2.9085, std=0.0147 N_eff: mean=18.3305, std=0.2686 dwell: mean=2.45, std=0.11 escape: mean=0.9990, std=0.0012
+
+β=0.55 H_cond: mean=0.8290, std=0.0166 H_edge: mean=2.8933, std=0.0166 N_eff: mean=18.0561, std=0.2983 dwell: mean=2.56, std=0.12 escape: mean=0.9990, std=0.0010
+
+β=0.60 H_cond: mean=0.8122, std=0.0181 H_edge: mean=2.8774, std=0.0179 N_eff: mean=17.7701, std=0.3177 dwell: mean=2.69, std=0.14 escape: mean=0.9991, std=0.0010
+
+β=0.65 H_cond: mean=0.7953, std=0.0180 H_edge: mean=2.8612, std=0.0183 N_eff: mean=17.4861, std=0.3188 dwell: mean=2.82, std=0.14 escape: mean=0.9989, std=0.0012
+
+β=0.70 H_cond: mean=0.7786, std=0.0184 H_edge: mean=2.8447, std=0.0197 N_eff: mean=17.1992, std=0.3347 dwell: mean=2.94, std=0.15 escape: mean=0.9986, std=0.0020
+
+β=0.75 H_cond: mean=0.7601, std=0.0203 H_edge: mean=2.8276, std=0.0216 N_eff: mean=16.9083, std=0.3632 dwell: mean=3.10, std=0.17 escape: mean=0.9988, std=0.0014
+
+β=0.80 H_cond: mean=0.7448, std=0.0202 H_edge: mean=2.8128, std=0.0200 N_eff: mean=16.6597, std=0.3323 dwell: mean=3.23, std=0.17 escape: mean=0.9988, std=0.0014
+
+β=0.85 H_cond: mean=0.7251, std=0.0233 H_edge: mean=2.7935, std=0.0233 N_eff: mean=16.3430, std=0.3812 dwell: mean=3.40, std=0.21 escape: mean=0.9985, std=0.0016
+
+β=0.90 H_cond: mean=0.7074, std=0.0239 H_edge: mean=2.7756, std=0.0249 N_eff: mean=16.0540, std=0.3995 dwell: mean=3.55, std=0.22 escape: mean=0.9985, std=0.0017
+
+β=0.95 H_cond: mean=0.6874, std=0.0240 H_edge: mean=2.7559, std=0.0242 N_eff: mean=15.7403, std=0.3805 dwell: mean=3.74, std=0.24 escape: mean=0.9984, std=0.0017
+
+β=1.00 H_cond: mean=0.6676, std=0.0257 H_edge: mean=2.7365, std=0.0268 N_eff: mean=15.4390, std=0.4111 dwell: mean=3.94, std=0.27 escape: mean=0.9983, std=0.0018
+
+β=1.05 H_cond: mean=0.6470, std=0.0269 H_edge: mean=2.7153, std=0.0275 N_eff: mean=15.1143, std=0.4135 dwell: mean=4.16, std=0.31 escape: mean=0.9977, std=0.0032
+
+β=1.10 H_cond: mean=0.6272, std=0.0254 H_edge: mean=2.6958, std=0.0268 N_eff: mean=14.8229, std=0.3958 dwell: mean=4.39, std=0.30 escape: mean=0.9979, std=0.0019
+
+β=1.15 H_cond: mean=0.6063, std=0.0281 H_edge: mean=2.6742, std=0.0290 N_eff: mean=14.5072, std=0.4186 dwell: mean=4.64, std=0.36 escape: mean=0.9974, std=0.0030
+
+β=1.20 H_cond: mean=0.5866, std=0.0275 H_edge: mean=2.6548, std=0.0275 N_eff: mean=14.2273, std=0.3898 dwell: mean=4.90, std=0.39 escape: mean=0.9972, std=0.0033
+
+β=1.25 H_cond: mean=0.5669, std=0.0270 H_edge: mean=2.6347, std=0.0283 N_eff: mean=13.9446, std=0.3914 dwell: mean=5.17, std=0.41 escape: mean=0.9967, std=0.0038
+
+β=1.30 H_cond: mean=0.5464, std=0.0267 H_edge: mean=2.6129, std=0.0289 N_eff: mean=13.6437, std=0.3922 dwell: mean=5.48, std=0.43 escape: mean=0.9964, std=0.0041
+
+β=1.35 H_cond: mean=0.5292, std=0.0258 H_edge: mean=2.5957, std=0.0283 N_eff: mean=13.4116, std=0.3775 dwell: mean=5.76, std=0.44 escape: mean=0.9953, std=0.0047
+
+β=1.40 H_cond: mean=0.5103, std=0.0238 H_edge: mean=2.5766, std=0.0279 N_eff: mean=13.1573, std=0.3653 dwell: mean=6.09, std=0.44 escape: mean=0.9950, std=0.0051
+
+β=1.45 H_cond: mean=0.4915, std=0.0244 H_edge: mean=2.5565, std=0.0345 N_eff: mean=12.8987, std=0.4329 dwell: mean=6.45, std=0.49 escape: mean=0.9938, std=0.0059
+
+β=1.50 H_cond: mean=0.4745, std=0.0232 H_edge: mean=2.5397, std=0.0334 N_eff: mean=12.6829, std=0.4121 dwell: mean=6.79, std=0.49 escape: mean=0.9924, std=0.0070
+
+β=1.55 H_cond: mean=0.4575, std=0.0227 H_edge: mean=2.5234, std=0.0327 N_eff: mean=12.4770, std=0.3950 dwell: mean=7.17, std=0.52 escape: mean=0.9923, std=0.0069
+
+β=1.60 H_cond: mean=0.4402, std=0.0240 H_edge: mean=2.5058, std=0.0316 N_eff: mean=12.2590, std=0.3800 dwell: mean=7.60, std=0.62 escape: mean=0.9912, std=0.0080
+
+β=1.65 H_cond: mean=0.4254, std=0.0250 H_edge: mean=2.4925, std=0.0309 N_eff: mean=12.0967, std=0.3683 dwell: mean=7.99, std=0.70 escape: mean=0.9903, std=0.0090
+
+β=1.70 H_cond: mean=0.4074, std=0.0240 H_edge: mean=2.4726, std=0.0297 N_eff: mean=11.8589, std=0.3498 dwell: mean=8.50, std=0.74 escape: mean=0.9873, std=0.0122
+
+β=1.75 H_cond: mean=0.3914, std=0.0235 H_edge: mean=2.4559, std=0.0313 N_eff: mean=11.6626, std=0.3595 dwell: mean=8.99, std=0.80 escape: mean=0.9866, std=0.0129
+
+β=1.80 H_cond: mean=0.3783, std=0.0239 H_edge: mean=2.4419, std=0.0309 N_eff: mean=11.5002, std=0.3509 dwell: mean=9.44, std=0.90 escape: mean=0.9840, std=0.0132
+
+β=1.85 H_cond: mean=0.3634, std=0.0205 H_edge: mean=2.4271, std=0.0275 N_eff: mean=11.3304, std=0.3076 dwell: mean=9.96, std=0.83 escape: mean=0.9809, std=0.0153
+
+β=1.90 H_cond: mean=0.3477, std=0.0184 H_edge: mean=2.4104, std=0.0252 N_eff: mean=11.1418, std=0.2780 dwell: mean=10.57, std=0.81 escape: mean=0.9775, std=0.0169
+
+β=1.95 H_cond: mean=0.3375, std=0.0190 H_edge: mean=2.3977, std=0.0301 N_eff: mean=11.0025, std=0.3259 dwell: mean=11.02, std=0.91 escape: mean=0.9749, std=0.0175
+
+β=2.00 H_cond: mean=0.3240, std=0.0209 H_edge: mean=2.3845, std=0.0343 N_eff: mean=10.8604, std=0.3651 dwell: mean=11.67, std=1.07 escape: mean=0.9717, std=0.0174
+
+** Process exited - Return Code: 0 **
