@@ -1,0 +1,307 @@
+###SIMULATION 1###
+
+import random
+import math
+from collections import Counter
+
+random.seed(42)
+
+# ---------------------------------------------------------
+# 1. State, locality, and base potential
+# ---------------------------------------------------------
+
+def admissible_neighbors(state):
+    """
+    Admissible set A(R):
+    - graph-distance-1: flip bits at a single node i
+    - constraint-overlap: here every G_i, M_i participates in V_base
+    State: (G1,M1,G2,M2,G3,M3)
+    """
+    neighbors = []
+    # node indices: (G1,M1) -> (0,1), (G2,M2) -> (2,3), (G3,M3) -> (4,5)
+    node_pairs = [(0, 1), (2, 3), (4, 5)]
+    for gi, mi in node_pairs:
+        # flip G_i
+        s1 = list(state)
+        s1[gi] = 1 - s1[gi]
+        neighbors.append(tuple(s1))
+        # flip M_i
+        s2 = list(state)
+        s2[mi] = 1 - s2[mi]
+        neighbors.append(tuple(s2))
+    return neighbors
+
+
+def calc_v_base(state):
+    """
+    V_base = V_constraint + V_coupling
+    - constraint: G_i should match M_i
+    - coupling: frustrated triangle on M's
+    """
+    G1, M1, G2, M2, G3, M3 = state
+
+    # local coherence constraints
+    v_cons = (G1 != M1) + (G2 != M2) + (G3 != M3)
+
+    # frustrated triangle on M's
+    v_coup = 0
+    if M1 != M2: v_coup += 1
+    if M2 != M3: v_coup += 1
+    if M3 == M1: v_coup += 1  # frustration: M3 wants opposite of M1
+
+    return v_cons + v_coup
+
+
+# ---------------------------------------------------------
+# 2. 1-step N_stable and 2-step refinement Z(R)
+# ---------------------------------------------------------
+
+def calc_n_stable(state):
+    """
+    1-step basin-width proxy:
+    N_stable(R) = # { R' in A(R) : V_base(R') <= V_base(R) }
+    """
+    base = calc_v_base(state)
+    count = 0
+    for n in admissible_neighbors(state):
+        if calc_v_base(n) <= base:
+            count += 1
+    return count
+
+
+def calc_Z_two_step(state, lam=1.0):
+    """
+    2-step refinement partition proxy:
+    Z(R) = sum_{R' in A(R)} sum_{R'' in A(R')} exp(-lam * (V_base(R'') - V_base(R)))
+    """
+    base_R = calc_v_base(state)
+    Z = 0.0
+    for s1 in admissible_neighbors(state):
+        for s2 in admissible_neighbors(s1):
+            dV = calc_v_base(s2) - base_R
+            Z += math.exp(-lam * dV)
+    return Z
+
+
+# ---------------------------------------------------------
+# 3. Constraint density and kappa
+# ---------------------------------------------------------
+
+def constraint_density(state, kappa_min=0.1, kappa_max=3.0):
+    """
+    Constraint density kappa(R):
+    monotone in |A(R)| (fewer admissible moves -> higher kappa)
+    """
+    A_R = admissible_neighbors(state)
+    size = len(A_R)
+    # max possible size in this toy: 6 (3 nodes * 2 flips each)
+    A_max = 6
+    frac = 1.0 - size / A_max  # more constrained -> larger frac
+    return kappa_min + (kappa_max - kappa_min) * frac
+
+
+# ---------------------------------------------------------
+# 4. Total Lyapunov functionals (old vs new entropy)
+# ---------------------------------------------------------
+
+def V_total_Nstable(state, alpha=1.0, beta=1.0):
+    """
+    Old-style entropy:
+    V = alpha * V_base - beta * log(1 + N_stable)
+    """
+    v_base = calc_v_base(state)
+    n_stable = calc_n_stable(state)
+    entropy_term = math.log(1 + n_stable) if n_stable > 0 else 0.0
+    return alpha * v_base - beta * entropy_term
+
+
+def V_total_Z(state, alpha=1.0, beta=1.0, lam=1.0):
+    """
+    New 2-step refinement entropy:
+    V = alpha * V_base - beta * log(Z(R))
+    """
+    v_base = calc_v_base(state)
+    Z = calc_Z_two_step(state, lam=lam)
+    # small epsilon to avoid log(0)
+    entropy_term = math.log(Z + 1e-12)
+    return alpha * v_base - beta * entropy_term
+
+
+# ---------------------------------------------------------
+# 5. Simulation kernel
+# ---------------------------------------------------------
+
+def run_simulation(
+    steps=50000,
+    alpha=1.0,
+    beta=1.0,
+    lam=1.0,
+    use_Z_entropy=False,
+    kappa_mode="constant",  # "constant" or "dynamic"
+    kappa_const=1.0,
+    label=""
+):
+    """
+    ISP + Lyapunov dynamics with:
+    - choice of entropy: N_stable vs Z(R)
+    - choice of kappa: constant vs constraint-density-driven
+    """
+
+    def V(state):
+        if use_Z_entropy:
+            return V_total_Z(state, alpha=alpha, beta=beta, lam=lam)
+        else:
+            return V_total_Nstable(state, alpha=alpha, beta=beta)
+
+    current = tuple(random.randint(0, 1) for _ in range(6))
+    history = []
+    uphill_moves = 0
+    proposals = 0
+
+    for _ in range(steps):
+        history.append(current)
+        neighbors = admissible_neighbors(current)
+        proposed = random.choice(neighbors)
+        proposals += 1
+
+        V_curr = V(current)
+        V_prop = V(proposed)
+        dV = V_prop - V_curr
+
+        # choose kappa
+        if kappa_mode == "constant":
+            kappa = kappa_const
+        elif kappa_mode == "dynamic":
+            kappa = constraint_density(current)
+        else:
+            raise ValueError("kappa_mode must be 'constant' or 'dynamic'")
+
+        # minimal-loss + soft uphill acceptance
+        if dV <= 0:
+            accept = True
+        else:
+            accept = (random.random() < math.exp(-kappa * dV))
+
+        if accept:
+            current = proposed
+            if dV > 0:
+                uphill_moves += 1
+
+    counter = Counter(history)
+    top_states = counter.most_common(6)
+
+    print(f"\n=== {label} ===")
+    entropy_label = "Z(R) 2-step" if use_Z_entropy else "N_stable 1-step"
+    if kappa_mode == "constant":
+        kappa_label = f"constant (kappa={kappa_const})"
+    else:
+        kappa_label = "constraint-density-driven"
+    print(f"Entropy: {entropy_label}")
+    print(f"kappa mode: {kappa_mode} [{kappa_label}]")
+    print(f"Total steps: {steps:,}")
+    print(f"Unique states visited: {len(counter)}")
+    print(f"Uphill moves: {uphill_moves:,} ({uphill_moves / proposals:.1%})")
+
+    print("\nTop visited states:")
+    for state, visits in top_states:
+        v_base = calc_v_base(state)
+        n_stable = calc_n_stable(state)
+        Z_val = calc_Z_two_step(state, lam=lam)
+        V_old = V_total_Nstable(state, alpha=alpha, beta=beta)
+        V_new = V_total_Z(state, alpha=alpha, beta=beta, lam=lam)
+        print(
+            f"State {state} | V_base={v_base} | N_stable={n_stable} | Z={Z_val:.3f} | "
+            f"V_Nstable={V_old:.3f} | V_Z={V_new:.3f} | Visits={visits}"
+        )
+
+
+# ---------------------------------------------------------
+# 6. Run side-by-side experiments
+# ---------------------------------------------------------
+
+if __name__ == "__main__":
+    print("RCFT Next-Gen Toy – Locality-locked, 2-step Z(R), dynamic kappa\n")
+
+    steps = 50000
+    alpha = 1.0
+    beta = 1.0
+    lam = 1.0
+
+    # 1) N_stable entropy, constant kappa
+    run_simulation(
+        steps=steps,
+        alpha=alpha,
+        beta=beta,
+        lam=lam,
+        use_Z_entropy=False,
+        kappa_mode="constant",
+        kappa_const=1.0,
+        label="A. N_stable, constant kappa=1.0"
+    )
+
+    # 2) N_stable entropy, dynamic kappa(R)
+    run_simulation(
+        steps=steps,
+        alpha=alpha,
+        beta=beta,
+        lam=lam,
+        use_Z_entropy=False,
+        kappa_mode="dynamic",
+        label="B. N_stable, dynamic kappa(R)"
+    )
+
+    # 3) Z(R) entropy, constant kappa
+    run_simulation(
+        steps=steps,
+        alpha=alpha,
+        beta=beta,
+        lam=lam,
+        use_Z_entropy=True,
+        kappa_mode="constant",
+        kappa_const=1.0,
+        label="C. Z(R), constant kappa=1.0"
+    )
+
+    # 4) Z(R) entropy, dynamic kappa(R)
+    run_simulation(
+        steps=steps,
+        alpha=alpha,
+        beta=beta,
+        lam=lam,
+        use_Z_entropy=True,
+        kappa_mode="dynamic",
+        label="D. Z(R), dynamic kappa(R)"
+    )
+
+    print("\nDone.")
+
+
+
+~~~~~~~~
+
+
+
+Results:
+
+
+RCFT Next-Gen Toy – Locality-locked, 2-step Z(R), dynamic kappa
+
+=== A. N_stable, constant kappa=1.0 === Entropy: N_stable 1-step kappa mode: constant [constant (kappa=1.0)] Total steps: 50,000 Unique states visited: 64 Uphill moves: 18,154 (36.3%)
+
+Top visited states: State (0, 0, 0, 1, 1, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1521 State (1, 0, 1, 1, 1, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1463 State (1, 0, 0, 0, 0, 0) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1462 State (0, 1, 1, 1, 1, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1414 State (1, 1, 1, 0, 0, 0) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1398 State (0, 0, 1, 0, 1, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=1384
+
+=== B. N_stable, dynamic kappa(R) === Entropy: N_stable 1-step kappa mode: dynamic [constraint-density-driven] Total steps: 50,000 Unique states visited: 64 Uphill moves: 24,043 (48.1%)
+
+Top visited states: State (1, 1, 1, 1, 0, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=922 State (1, 0, 0, 0, 0, 0) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=892 State (1, 1, 1, 0, 0, 0) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=886 State (1, 1, 1, 1, 0, 0) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=880 State (1, 0, 0, 0, 0, 1) | V_base=3 | N_stable=3 | Z=69.146 | V_Nstable=1.614 | V_Z=-1.236 | Visits=877 State (0, 0, 0, 0, 0, 1) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=875
+
+=== C. Z(R), constant kappa=1.0 === Entropy: Z(R) 2-step kappa mode: constant [constant (kappa=1.0)] Total steps: 50,000 Unique states visited: 64 Uphill moves: 22,530 (45.1%)
+
+Top visited states: State (1, 1, 0, 0, 0, 0) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1165 State (0, 0, 0, 0, 1, 1) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1138 State (1, 1, 1, 1, 0, 0) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1137 State (0, 0, 0, 0, 0, 0) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1121 State (0, 0, 1, 1, 1, 1) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1062 State (1, 1, 1, 1, 1, 1) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=1017
+
+=== D. Z(R), dynamic kappa(R) === Entropy: Z(R) 2-step kappa mode: dynamic [constraint-density-driven] Total steps: 50,000 Unique states visited: 64 Uphill moves: 24,738 (49.5%)
+
+Top visited states: State (0, 1, 1, 0, 0, 0) | V_base=3 | N_stable=4 | Z=69.146 | V_Nstable=1.391 | V_Z=-1.236 | Visits=877 State (1, 0, 0, 0, 1, 0) | V_base=3 | N_stable=4 | Z=69.146 | V_Nstable=1.391 | V_Z=-1.236 | Visits=865 State (0, 1, 1, 1, 0, 0) | V_base=2 | N_stable=1 | Z=23.661 | V_Nstable=1.307 | V_Z=-1.164 | Visits=853 State (1, 1, 1, 1, 0, 0) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=847 State (1, 1, 0, 1, 0, 0) | V_base=2 | N_stable=2 | Z=23.661 | V_Nstable=0.901 | V_Z=-1.164 | Visits=843 State (0, 0, 0, 0, 1, 1) | V_base=1 | N_stable=0 | Z=12.817 | V_Nstable=1.000 | V_Z=-1.551 | Visits=831
+
+Done.
+
+** Process exited - Return Code: 0 **
