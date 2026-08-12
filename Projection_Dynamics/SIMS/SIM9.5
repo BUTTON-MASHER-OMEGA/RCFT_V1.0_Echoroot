@@ -1,0 +1,625 @@
+############################################################
+#  SIM9.5 — RCFT Coherence–Valence–Consistency ε-Lyapunov Probe
+#  Full, patched version (SIM9.1–9.4 integrated + ε-grid)
+############################################################
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+# -----------------------------------------------------------
+# 0. GRAPH + BASINS
+# -----------------------------------------------------------
+
+neighbors = {
+    0:[1,2], 1:[0,3], 2:[0,4], 3:[1,5],
+    4:[2,6], 5:[3,7], 6:[4,7], 7:[5,6]
+}
+
+proj_structured = {
+    0:0,1:0, 2:1,3:1, 4:2,5:2, 6:3,7:3
+}
+
+DEFAULT_BASINS = {
+    0:[0,1], 1:[2,3], 2:[4,5], 3:[6,7]
+}
+
+# -----------------------------------------------------------
+# 1. CONFIG
+# -----------------------------------------------------------
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+    seed: int = 1
+
+    num_steps_burnin: int = 2000
+    num_steps_recovery: int = 300
+
+    window: int = 200
+    kernel_update_every: int = 50
+    basins: dict = None
+    weights: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+        if self.weights is None:
+            self.weights = {x:1.0/len(self.basins) for x in self.basins}
+
+# -----------------------------------------------------------
+# 2. MEMORY / TRANSITION
+# -----------------------------------------------------------
+
+def saturate_memory(M, mode="tanh"):
+    return np.tanh(M) if mode=="tanh" else M
+
+def friction(u_i,u_j,mem,cfg):
+    delta_proj = 0 if proj_structured[u_i]==proj_structured[u_j] else 1
+    M = saturate_memory(mem.get((u_i,u_j),0.0), cfg.sat_mode)
+    return cfg.alpha + cfg.beta*delta_proj + cfg.memory_sign*cfg.lam*M
+
+def transition_probs(u,mem,cfg):
+    nbrs = neighbors[u]
+    costs = np.array([friction(u,v,mem,cfg) for v in nbrs])
+    w = np.exp(-costs/cfg.T_tol)
+    return nbrs, w/w.sum()
+
+# -----------------------------------------------------------
+# 3. COHERENCE + VALENCE + CONSISTENCY
+# -----------------------------------------------------------
+
+def estimate_global_obs_kernel(obs,window):
+    T=len(obs)
+    start=max(0,T-window-1)
+    tc=defaultdict(int); fc=defaultdict(int)
+    for t in range(start,T-1):
+        b,bn=obs[t],obs[t+1]
+        tc[(b,bn)] += 1
+        fc[b] += 1
+    K={}
+    for (b,bn),c in tc.items():
+        K[(b,bn)] = c/max(1,fc[b])
+    return K
+
+def estimate_basin_kernels(hidden,window,basins):
+    T=len(hidden)
+    start=max(0,T-window-1)
+    tc=defaultdict(int); fc=defaultdict(int)
+    for t in range(start,T-1):
+        u,v=hidden[t],hidden[t+1]
+        tc[(u,v)] += 1
+        fc[u] += 1
+    BK={x:defaultdict(float) for x in basins}
+    for (u,v),c in tc.items():
+        for x,states in basins.items():
+            if u in states:
+                BK[x][(u,v)] = c/max(1,fc[u])
+                break
+    return BK
+
+def lift_global_obs_to_hidden(Kobs,basins):
+    Kh={}
+    for x,states in basins.items():
+        for u in states:
+            for (b,bn),p in Kobs.items():
+                if b==x:
+                    for y,states_y in basins.items():
+                        if y==bn:
+                            for v in states_y:
+                                Kh[(u,v)] = p/max(1,len(states_y))
+    return Kh
+
+def kernel_distance_L2(Kx,Ky):
+    keys=set(Kx.keys())|set(Ky.keys())
+    return sum((Kx.get(k,0)-Ky.get(k,0))**2 for k in keys)
+
+def compute_R_global(BK,Kh,basins):
+    res=[]
+    for x,states in basins.items():
+        Kx=BK[x]
+        Kg={k:p for k,p in Kh.items() if k[0] in states}
+        res.append(kernel_distance_L2(Kx,Kg))
+    return sum(res)/len(res)
+
+def compute_local_entropy_and_persistence(hidden,obs,basins):
+    bt={x:defaultdict(int) for x in basins}
+    bf={x:defaultdict(int) for x in basins}
+    ct={x:0 for x in basins}
+    cs={x:0 for x in basins}
+
+    for t in range(len(hidden)-1):
+        u,v=hidden[t],hidden[t+1]
+        b=obs[t]
+        ct[b]+=1
+        if obs[t+1]==b: cs[b]+=1
+        for x,states in basins.items():
+            if u in states:
+                bt[x][(u,v)] += 1
+                bf[x][u] += 1
+                break
+
+    H={}; P={}
+    for x in basins:
+        Hsum=0; nsrc=0
+        for u in bf[x]:
+            probs=[bt[x][(u,v)]/bf[x][u] for (uu,v) in bt[x] if uu==u]
+            if len(probs)==0: continue
+            p=np.array(probs)
+            Hsum += -np.sum(p*np.log(p+1e-12))
+            nsrc+=1
+        H[x]=Hsum/nsrc if nsrc>0 else 0
+        P[x]=cs[x]/ct[x] if ct[x]>0 else 0
+    return H,P
+
+def compute_Cx(H,P,alpha):
+    return {x:-H[x]+alpha*P[x] for x in H}
+
+def compute_valence(mem,cfg):
+    Veff={x:0 for x in cfg.basins}
+    Vadm={x:0 for x in cfg.basins}
+    cnt={x:0 for x in cfg.basins}
+
+    for x,states in cfg.basins.items():
+        for u in states:
+            nbrs,probs=transition_probs(u,mem,cfg)
+            p=np.array(probs)
+            Hloc=-np.sum(p*np.log(p+1e-12))
+            Veff[x]+=np.exp(Hloc)
+            Vadm[x]+=sum(1 for v in nbrs if friction(u,v,mem,cfg)<=cfg.T_tol)
+            cnt[x]+=1
+
+    for x in cfg.basins:
+        if cnt[x]>0:
+            Veff[x]/=cnt[x]
+            Vadm[x]/=cnt[x]
+    return Veff,Vadm
+
+# -----------------------------------------------------------
+# 4. run_phase — guaranteed logging
+# -----------------------------------------------------------
+
+def run_phase(cfg,hidden,obs,mem,steps):
+    rng=np.random.default_rng(cfg.seed)
+
+    Cx_log=[]; Cl_log=[]; Rg_log=[]
+    Veff_log=[]; Vadm_log=[]
+
+    for t in range(steps):
+        u=hidden[-1]
+        nbrs,probs=transition_probs(u,mem,cfg)
+        u_next=rng.choice(nbrs,p=probs)
+
+        hidden.append(u_next)
+        obs.append(proj_structured[u_next])
+
+        for k in list(mem.keys()):
+            mem[k]*=cfg.delta
+            if mem[k]<1e-12: del mem[k]
+        mem[(u,u_next)] += 1.0
+
+        if t%cfg.kernel_update_every==0:
+            Kobs=estimate_global_obs_kernel(obs,cfg.window)
+            Kh=lift_global_obs_to_hidden(Kobs,cfg.basins)
+            BK=estimate_basin_kernels(hidden,cfg.window,cfg.basins)
+            H,P=compute_local_entropy_and_persistence(hidden,obs,cfg.basins)
+            Cx=compute_Cx(H,P,cfg.alpha)
+            Cl=sum(cfg.weights[x]*Cx[x] for x in Cx)
+            Rg=compute_R_global(BK,Kh,cfg.basins)
+            Veff,Vadm=compute_valence(mem,cfg)
+
+            Cx_log.append(Cx)
+            Cl_log.append(Cl)
+            Rg_log.append(Rg)
+            Veff_log.append(Veff)
+            Vadm_log.append(Vadm)
+
+    if len(Cx_log)==0:
+        Kobs=estimate_global_obs_kernel(obs,cfg.window)
+        Kh=lift_global_obs_to_hidden(Kobs,cfg.basins)
+        BK=estimate_basin_kernels(hidden,cfg.window,cfg.basins)
+        H,P=compute_local_entropy_and_persistence(hidden,obs,cfg.basins)
+        Cx=compute_Cx(H,P,cfg.alpha)
+        Cl=sum(cfg.weights[x]*Cx[x] for x in Cx)
+        Rg=compute_R_global(BK,Kh,cfg.basins)
+        Veff,Vadm=compute_valence(mem,cfg)
+
+        Cx_log=[Cx]
+        Cl_log=[Cl]
+        Rg_log=[Rg]
+        Veff_log=[Veff]
+        Vadm_log=[Vadm]
+
+    return {
+        "hidden":hidden,
+        "obs":obs,
+        "mem":mem,
+        "Cx":Cx_log[-1],
+        "Cl":Cl_log[-1],
+        "Rg":Rg_log[-1],
+        "Veff":Veff_log[-1],
+        "Vadm":Vadm_log[-1],
+    }
+
+# -----------------------------------------------------------
+# 5. ε helpers + perturb operators
+# -----------------------------------------------------------
+
+def sanitize_eps_numeric(eps):
+    if isinstance(eps,(int,float)):
+        return eps
+    return 1.0
+
+def eps_state(hidden,obs,cfg,eps):
+    u=hidden[-1]
+    if eps==0:
+        return hidden,obs
+    if eps=="random":
+        u_new=np.random.choice(list(neighbors.keys()))
+    else:
+        u_new=u
+        for _ in range(int(eps)):
+            u_new=np.random.choice(neighbors[u_new])
+    hidden[-1]=u_new
+    obs[-1]=proj_structured[u_new]
+    return hidden,obs
+
+def eps_kernel(mem,cfg,eps):
+    eps_num=sanitize_eps_numeric(eps)
+    if eps_num==0:
+        return mem
+    new=defaultdict(float)
+    for (u,v),w in mem.items():
+        U=1.0/len(neighbors[u])
+        new[(u,v)] = (1-eps_num)*w + eps_num*U
+    return new
+
+def eps_memory(mem,eps):
+    eps_num=sanitize_eps_numeric(eps)
+    if eps_num==0:
+        return mem
+    new=defaultdict(float)
+    for (u,v),w in mem.items():
+        new[(u,v)] = max(0.0, w + eps_num*np.random.normal())
+    return new
+
+# -----------------------------------------------------------
+# 6. SIM9.5 — burn-in → ε-perturb → recovery
+# -----------------------------------------------------------
+
+def simulate_SIM9_5(cfg,eps,ptype):
+    hidden=[0]; obs=[proj_structured[0]]
+    mem=defaultdict(float)
+
+    burn=run_phase(cfg,hidden,obs,mem,cfg.num_steps_burnin)
+
+    hidden_eps=burn["hidden"]
+    obs_eps=burn["obs"]
+    mem_eps=burn["mem"]
+
+    if ptype=="state":
+        hidden_eps,obs_eps=eps_state(hidden_eps,obs_eps,cfg,eps)
+    elif ptype=="kernel":
+        mem_eps=eps_kernel(mem_eps,cfg,eps)
+    elif ptype=="memory":
+        mem_eps=eps_memory(mem_eps,eps)
+
+    post=run_phase(cfg,hidden_eps,obs_eps,mem_eps,1)
+    rec=run_phase(cfg,hidden_eps,obs_eps,mem_eps,cfg.num_steps_recovery)
+
+    deltaC = rec["Cl"] - post["Cl"]
+    denom = eps if isinstance(eps,(int,float)) and eps!=0 else 1.0
+    gradC = deltaC/denom
+
+    deltaCx={x:rec["Cx"][x]-post["Cx"][x] for x in rec["Cx"]}
+    gradCx={x:deltaCx[x]/denom for x in deltaCx}
+
+    return {
+        "eps":eps,
+        "ptype":ptype,
+        "deltaC":deltaC,
+        "gradC":gradC,
+        "deltaCx":deltaCx,
+        "gradCx":gradCx,
+        "Veff_rec":rec["Veff"],
+        "Rglob_rec":rec["Rg"],
+    }
+
+# -----------------------------------------------------------
+# 7. GRID DRIVER
+# -----------------------------------------------------------
+
+def run_SIM9_5_grid():
+    betas=[0.5,1.0,1.5,2.0]
+    eps_grid=[0,1,2,0.1,0.2,"random"]
+    ptypes=["state","kernel","memory"]
+
+    for beta in betas:
+        print(f"\n=== SIM9.5 β={beta} ===")
+        cfg=Config(lam=1.0,delta=0.95,beta=beta,seed=1)
+
+        for p in ptypes:
+            print(f"\n  -- perturb_type = {p} --")
+            for eps in eps_grid:
+                out=simulate_SIM9_5(cfg,eps,p)
+                print(f"    ε={eps}: ΔC={out['deltaC']:.6f}, ΔC/ε={out['gradC']:.6f}")
+                print(f"       basin0 ΔC={out['deltaCx'][0]:.6f}, ΔC/ε={out['gradCx'][0]:.6f}")
+                print(f"       basin0 V_eff_rec={out['Veff_rec'][0]:.4f}, R_global_rec={out['Rglob_rec']:.4f}")
+
+# -----------------------------------------------------------
+# MAIN
+# -----------------------------------------------------------
+
+if __name__=="__main__":
+    run_SIM9_5_grid()
+
+
+
+
+
+###################
+
+
+
+
+RESULTS:
+
+
+
+
+=== SIM9.5 β=0.5 ===
+
+  -- perturb_type = state --
+    ε=0: ΔC=-0.005969, ΔC/ε=-0.005969
+       basin0 ΔC=-0.010075, ΔC/ε=-0.010075
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=1: ΔC=-0.005798, ΔC/ε=-0.005798
+       basin0 ΔC=0.001427, ΔC/ε=0.001427
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5895
+    ε=2: ΔC=-0.006091, ΔC/ε=-0.003045
+       basin0 ΔC=-0.011689, ΔC/ε=-0.005845
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.1: ΔC=-0.005969, ΔC/ε=-0.059686
+       basin0 ΔC=-0.010075, ΔC/ε=-0.100755
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.2: ΔC=-0.005969, ΔC/ε=-0.029843
+       basin0 ΔC=-0.010075, ΔC/ε=-0.050377
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=random: ΔC=-0.006091, ΔC/ε=-0.006091
+       basin0 ΔC=-0.011689, ΔC/ε=-0.011689
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+
+  -- perturb_type = kernel --
+    ε=0: ΔC=-0.005969, ΔC/ε=-0.005969
+       basin0 ΔC=-0.010075, ΔC/ε=-0.010075
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=1: ΔC=-0.006411, ΔC/ε=-0.006411
+       basin0 ΔC=-0.010075, ΔC/ε=-0.010075
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=2: ΔC=-0.007285, ΔC/ε=-0.003643
+       basin0 ΔC=-0.015997, ΔC/ε=-0.007999
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.1: ΔC=-0.005969, ΔC/ε=-0.059686
+       basin0 ΔC=-0.010075, ΔC/ε=-0.100755
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.2: ΔC=-0.005969, ΔC/ε=-0.029843
+       basin0 ΔC=-0.010075, ΔC/ε=-0.050377
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=random: ΔC=-0.006411, ΔC/ε=-0.006411
+       basin0 ΔC=-0.010075, ΔC/ε=-0.010075
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+
+  -- perturb_type = memory --
+    ε=0: ΔC=-0.005969, ΔC/ε=-0.005969
+       basin0 ΔC=-0.010075, ΔC/ε=-0.010075
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=1: ΔC=-0.006382, ΔC/ε=-0.006382
+       basin0 ΔC=-0.011518, ΔC/ε=-0.011518
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=2: ΔC=-0.006216, ΔC/ε=-0.003108
+       basin0 ΔC=-0.015076, ΔC/ε=-0.007538
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.1: ΔC=-0.005969, ΔC/ε=-0.059686
+       basin0 ΔC=-0.010075, ΔC/ε=-0.100755
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=0.2: ΔC=-0.004600, ΔC/ε=-0.022999
+       basin0 ΔC=-0.012110, ΔC/ε=-0.060548
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+    ε=random: ΔC=-0.004600, ΔC/ε=-0.004600
+       basin0 ΔC=-0.012110, ΔC/ε=-0.012110
+       basin0 V_eff_rec=1.8118, R_global_rec=0.5799
+
+=== SIM9.5 β=1.0 ===
+
+  -- perturb_type = state --
+    ε=0: ΔC=-0.004551, ΔC/ε=-0.004551
+       basin0 ΔC=0.015459, ΔC/ε=0.015459
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=1: ΔC=-0.001771, ΔC/ε=-0.001771
+       basin0 ΔC=0.019090, ΔC/ε=0.019090
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=2: ΔC=-0.004551, ΔC/ε=-0.002275
+       basin0 ΔC=0.015459, ΔC/ε=0.007729
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=0.1: ΔC=-0.004551, ΔC/ε=-0.045506
+       basin0 ΔC=0.015459, ΔC/ε=0.154587
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=0.2: ΔC=-0.004551, ΔC/ε=-0.022753
+       basin0 ΔC=0.015459, ΔC/ε=0.077294
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=random: ΔC=-0.001729, ΔC/ε=-0.001729
+       basin0 ΔC=0.019163, ΔC/ε=0.019163
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+
+  -- perturb_type = kernel --
+    ε=0: ΔC=-0.004551, ΔC/ε=-0.004551
+       basin0 ΔC=0.015459, ΔC/ε=0.015459
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=1: ΔC=-0.003592, ΔC/ε=-0.003592
+       basin0 ΔC=0.020057, ΔC/ε=0.020057
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=2: ΔC=-0.004980, ΔC/ε=-0.002490
+       basin0 ΔC=0.015849, ΔC/ε=0.007924
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7715
+    ε=0.1: ΔC=-0.004551, ΔC/ε=-0.045506
+       basin0 ΔC=0.015459, ΔC/ε=0.154587
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=0.2: ΔC=-0.004551, ΔC/ε=-0.022753
+       basin0 ΔC=0.015459, ΔC/ε=0.077294
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=random: ΔC=-0.003592, ΔC/ε=-0.003592
+       basin0 ΔC=0.020057, ΔC/ε=0.020057
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+
+  -- perturb_type = memory --
+    ε=0: ΔC=-0.004551, ΔC/ε=-0.004551
+       basin0 ΔC=0.015459, ΔC/ε=0.015459
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=1: ΔC=-0.000856, ΔC/ε=-0.000856
+       basin0 ΔC=0.020057, ΔC/ε=0.020057
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=2: ΔC=-0.007281, ΔC/ε=-0.003640
+       basin0 ΔC=0.008044, ΔC/ε=0.004022
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=0.1: ΔC=-0.004551, ΔC/ε=-0.045506
+       basin0 ΔC=0.015459, ΔC/ε=0.154587
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+    ε=0.2: ΔC=-0.000252, ΔC/ε=-0.001260
+       basin0 ΔC=0.010907, ΔC/ε=0.054537
+       basin0 V_eff_rec=1.5091, R_global_rec=0.7316
+    ε=random: ΔC=-0.000856, ΔC/ε=-0.000856
+       basin0 ΔC=0.020057, ΔC/ε=0.020057
+       basin0 V_eff_rec=1.5067, R_global_rec=0.7654
+
+=== SIM9.5 β=1.5 ===
+
+  -- perturb_type = state --
+    ε=0: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=1: ΔC=-0.001530, ΔC/ε=-0.001530
+       basin0 ΔC=0.008247, ΔC/ε=0.008247
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=2: ΔC=-0.001790, ΔC/ε=-0.000895
+       basin0 ΔC=0.006303, ΔC/ε=0.003151
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.1: ΔC=-0.001814, ΔC/ε=-0.018140
+       basin0 ΔC=0.005649, ΔC/ε=0.056490
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.2: ΔC=-0.001814, ΔC/ε=-0.009070
+       basin0 ΔC=0.005649, ΔC/ε=0.028245
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=random: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+
+  -- perturb_type = kernel --
+    ε=0: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=1: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=2: ΔC=-0.001596, ΔC/ε=-0.000798
+       basin0 ΔC=0.009514, ΔC/ε=0.004757
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.1: ΔC=-0.001814, ΔC/ε=-0.018140
+       basin0 ΔC=0.005649, ΔC/ε=0.056490
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.2: ΔC=-0.001814, ΔC/ε=-0.009070
+       basin0 ΔC=0.005649, ΔC/ε=0.028245
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=random: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+
+  -- perturb_type = memory --
+    ε=0: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=1: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=2: ΔC=-0.001814, ΔC/ε=-0.000907
+       basin0 ΔC=0.005649, ΔC/ε=0.002824
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.1: ΔC=-0.001814, ΔC/ε=-0.018140
+       basin0 ΔC=0.005649, ΔC/ε=0.056490
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=0.2: ΔC=-0.001814, ΔC/ε=-0.009070
+       basin0 ΔC=0.005649, ΔC/ε=0.028245
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+    ε=random: ΔC=-0.001814, ΔC/ε=-0.001814
+       basin0 ΔC=0.005649, ΔC/ε=0.005649
+       basin0 V_eff_rec=1.3773, R_global_rec=0.7259
+
+=== SIM9.5 β=2.0 ===
+
+  -- perturb_type = state --
+    ε=0: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=1: ΔC=-0.001677, ΔC/ε=-0.001677
+       basin0 ΔC=-0.001844, ΔC/ε=-0.001844
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=2: ΔC=0.000778, ΔC/ε=0.000389
+       basin0 ΔC=-0.001381, ΔC/ε=-0.000691
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=0.1: ΔC=0.000721, ΔC/ε=0.007212
+       basin0 ΔC=-0.001381, ΔC/ε=-0.013814
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=0.2: ΔC=0.000721, ΔC/ε=0.003606
+       basin0 ΔC=-0.001381, ΔC/ε=-0.006907
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=random: ΔC=-0.002273, ΔC/ε=-0.002273
+       basin0 ΔC=-0.008936, ΔC/ε=-0.008936
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+
+  -- perturb_type = kernel --
+    ε=0: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=1: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=2: ΔC=0.000115, ΔC/ε=0.000058
+       basin0 ΔC=-0.001381, ΔC/ε=-0.000691
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=0.1: ΔC=0.000721, ΔC/ε=0.007212
+       basin0 ΔC=-0.001381, ΔC/ε=-0.013814
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=0.2: ΔC=0.000721, ΔC/ε=0.003606
+       basin0 ΔC=-0.001381, ΔC/ε=-0.006907
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=random: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+
+  -- perturb_type = memory --
+    ε=0: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=1: ΔC=0.000721, ΔC/ε=0.000721
+       basin0 ΔC=-0.001381, ΔC/ε=-0.001381
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=2: ΔC=-0.000061, ΔC/ε=-0.000030
+       basin0 ΔC=-0.000420, ΔC/ε=-0.000210
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7546
+    ε=0.1: ΔC=0.000721, ΔC/ε=0.007212
+       basin0 ΔC=-0.001381, ΔC/ε=-0.013814
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=0.2: ΔC=0.000721, ΔC/ε=0.003606
+       basin0 ΔC=-0.001381, ΔC/ε=-0.006907
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7722
+    ε=random: ΔC=-0.000061, ΔC/ε=-0.000061
+       basin0 ΔC=-0.000420, ΔC/ε=-0.000420
+       basin0 V_eff_rec=1.2629, R_global_rec=0.7546
+
+
+** Process exited - Return Code: 0 **
