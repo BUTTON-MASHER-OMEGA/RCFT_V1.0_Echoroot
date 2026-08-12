@@ -1,0 +1,1619 @@
+############################################################
+# SIM11.1 — Basin-Local Lyapunov Restoring-Point Probe
+#
+# Primary question:
+#
+#   Does each local basin possess its own stochastic
+#   restoring point in:
+#
+#       Z_x = (C_x, log V_eff,x)
+#
+# rather than the system possessing one global Lyapunov basin?
+#
+#
+# Core protocol:
+#
+#   1. Burn in.
+#   2. Estimate a basin-local reference point Z_x* from the
+#      late burn-in trajectory.
+#   3. Apply ONE controlled local state perturbation.
+#   4. Remove the perturbation.
+#   5. Measure return distance d_x(t).
+#   6. Measure cross-basin leakage.
+#   7. Compare against:
+#          a) an unperturbed control
+#          b) a memoryless/null condition delta = 0
+#
+#
+# Main fixed parameters:
+#
+#   beta  = 1.38
+#   eta_V = 0.50
+#   eps   = 0.20
+#
+# No H4.
+# No octonions.
+# No R_global.
+# No kernel/memory perturbation sweep.
+# No giant parameter cube.
+############################################################
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + OBSERVABLE BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    # Existing RCFT toy parameters
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    # SIM11 fixed stability probe
+    eta_V: float = 0.50
+    kappa: float = 1.0
+    eps: float = 0.20
+
+    # Simulation lengths
+    num_steps_burnin: int = 2000
+    num_steps_recovery: int = 500
+
+    # Observable estimation
+    window: int = 200
+    diagnostic_every: int = 10
+
+    # Reference-point construction
+    reference_samples: int = 20
+
+    # Recovery criterion
+    recovery_fraction_target: float = 0.25
+
+    # Numerical guard
+    tiny: float = 1e-12
+
+    basins: dict = None
+    weights: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+        if self.weights is None:
+            self.weights = {
+                x: 1.0 / len(self.basins)
+                for x in self.basins
+            }
+
+
+# ============================================================
+# 2. BASIC RCFT DYNAMICS
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+    """
+    Existing toy friction architecture:
+
+        F_ij = alpha
+             + beta * Delta_projection(i,j)
+             + memory_sign * lam * M_sat(i,j)
+    """
+
+    projection_crossing = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+    M_raw = mem.get((u_i, u_j), 0.0)
+    M_sat = saturate_memory(M_raw, cfg.sat_mode)
+
+    return (
+        cfg.alpha
+        + cfg.beta * projection_crossing
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+    nbrs = neighbors[u]
+
+    costs = np.array(
+        [friction(u, v, mem, cfg) for v in nbrs],
+        dtype=float
+    )
+
+    # Numerically stable Boltzmann weights
+    logits = -costs / cfg.T_tol
+    logits -= np.max(logits)
+
+    weights = np.exp(logits)
+
+    return nbrs, weights / weights.sum()
+
+
+def update_memory(mem, u, v, cfg, memory_enabled=True):
+    """
+    Non-Markovian memory update.
+
+    If memory_enabled=False:
+        memory remains identically zero.
+    """
+
+    if not memory_enabled:
+        mem.clear()
+        return
+
+    for key in list(mem.keys()):
+        mem[key] *= cfg.delta
+
+        if abs(mem[key]) < cfg.tiny:
+            del mem[key]
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. LOCAL OBSERVABLES
+# ============================================================
+
+def recent_transition_data(hidden, window):
+    """
+    Returns transitions from the latest sliding window.
+    """
+
+    T = len(hidden)
+    start = max(0, T - window - 1)
+
+    return [
+        (hidden[t], hidden[t + 1])
+        for t in range(start, T - 1)
+    ]
+
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    basins,
+    window
+):
+    """
+    Compute basin-local:
+
+        H_x = mean conditional transition entropy
+
+        P_x = probability that a transition originating
+              in basin x remains in basin x
+
+    IMPORTANT:
+    Both are computed on the SAME recent sliding window.
+    """
+
+    transitions = recent_transition_data(hidden, window)
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_total = {
+        x: 0
+        for x in basins
+    }
+
+    basin_same = {
+        x: 0
+        for x in basins
+    }
+
+    state_to_basin = {}
+
+    for x, states in basins.items():
+        for u in states:
+            state_to_basin[u] = x
+
+    for u, v in transitions:
+        x = state_to_basin[u]
+
+        basin_trans[x][(u, v)] += 1
+        basin_from[x][u] += 1
+
+        basin_total[x] += 1
+
+        if state_to_basin[v] == x:
+            basin_same[x] += 1
+
+    H = {}
+    P = {}
+
+    for x in basins:
+        source_entropies = []
+
+        for u, count_u in basin_from[x].items():
+            probs = []
+
+            for v in neighbors[u]:
+                c = basin_trans[x].get((u, v), 0)
+
+                if c > 0:
+                    probs.append(c / count_u)
+
+            if probs:
+                p = np.array(probs, dtype=float)
+
+                H_u = -np.sum(
+                    p * np.log(p + 1e-12)
+                )
+
+                source_entropies.append(H_u)
+
+        if source_entropies:
+            H[x] = float(np.mean(source_entropies))
+        else:
+            H[x] = 0.0
+
+        if basin_total[x] > 0:
+            P[x] = basin_same[x] / basin_total[x]
+        else:
+            P[x] = 0.0
+
+    return H, P
+
+
+def compute_Cx(H, P, alpha):
+    """
+    Local coherence:
+
+        C_x = -H_x + alpha P_x
+    """
+
+    return {
+        x: -H[x] + alpha * P[x]
+        for x in H
+    }
+
+
+def compute_valence(mem, cfg):
+    """
+    Effective valence:
+
+        V_eff = exp(H_out)
+
+    where H_out is the entropy of the instantaneous
+    outgoing transition distribution.
+
+    Averaged over hidden states in each basin.
+    """
+
+    Veff = {}
+
+    for x, states in cfg.basins.items():
+        values = []
+
+        for u in states:
+            _, probs = transition_probs(u, mem, cfg)
+
+            probs = np.asarray(probs, dtype=float)
+
+            H_out = -np.sum(
+                probs * np.log(probs + cfg.tiny)
+            )
+
+            values.append(np.exp(H_out))
+
+        Veff[x] = (
+            float(np.mean(values))
+            if values
+            else 1.0
+        )
+
+    return Veff
+
+
+def compute_local_snapshot(hidden, mem, cfg):
+    """
+    One diagnostic snapshot.
+
+    Returns:
+
+        Cx
+        Veff
+        logV
+        Lyapunov candidate Vx
+
+    Conventional Lyapunov candidate:
+
+        V_x = -C_x + eta_V log(V_eff,x)
+
+    Lower V_x is interpreted as more stable.
+    """
+
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        cfg.basins,
+        cfg.window
+    )
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+    logV = {
+        x: np.log(
+            max(Veff[x], cfg.tiny)
+        )
+        for x in cfg.basins
+    }
+
+    Vx = {
+        x: (
+            -Cx[x]
+            + cfg.eta_V * logV[x]
+        )
+        for x in cfg.basins
+    }
+
+    return {
+        "Cx": Cx,
+        "Veff": Veff,
+        "logV": logV,
+        "Vx": Vx,
+    }
+
+
+# ============================================================
+# 4. DYNAMICAL PHASE RUNNER
+# ============================================================
+
+def run_steps(
+    cfg,
+    hidden,
+    mem,
+    rng,
+    num_steps,
+    memory_enabled=True,
+    log_diagnostics=True
+):
+    """
+    Advance one continuous trajectory.
+
+    IMPORTANT:
+    RNG is passed into this function rather than recreated.
+    This prevents identical random streams from being reused
+    across burn-in/post/recovery phases.
+    """
+
+    logs = []
+
+    for step in range(num_steps):
+        u = hidden[-1]
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+        u_next = int(
+            rng.choice(nbrs, p=probs)
+        )
+
+        hidden.append(u_next)
+
+        update_memory(
+            mem,
+            u,
+            u_next,
+            cfg,
+            memory_enabled=memory_enabled
+        )
+
+        if (
+            log_diagnostics
+            and
+            (
+                step % cfg.diagnostic_every == 0
+                or step == num_steps - 1
+            )
+        ):
+            snap = compute_local_snapshot(
+                hidden,
+                mem,
+                cfg
+            )
+
+            snap["step"] = step
+
+            logs.append(snap)
+
+    return logs
+
+
+# ============================================================
+# 5. REFERENCE POINT
+# ============================================================
+
+def build_reference_point(
+    diagnostic_logs,
+    cfg
+):
+    """
+    Estimate Z_x* from the late burn-in average.
+
+        Z_x* = (
+            C_x*,
+            log V_eff,x*
+        )
+
+    This is substantially better than using one noisy
+    terminal burn-in snapshot.
+    """
+
+    n = min(
+        cfg.reference_samples,
+        len(diagnostic_logs)
+    )
+
+    if n == 0:
+        raise RuntimeError(
+            "No burn-in diagnostics available."
+        )
+
+    late_logs = diagnostic_logs[-n:]
+
+    C_star = {}
+    logV_star = {}
+    Vstar = {}
+
+    for x in cfg.basins:
+        C_star[x] = float(
+            np.mean([
+                snap["Cx"][x]
+                for snap in late_logs
+            ])
+        )
+
+        logV_star[x] = float(
+            np.mean([
+                snap["logV"][x]
+                for snap in late_logs
+            ])
+        )
+
+        Vstar[x] = (
+            -C_star[x]
+            + cfg.eta_V * logV_star[x]
+        )
+
+    return {
+        "C_star": C_star,
+        "logV_star": logV_star,
+        "V_star": Vstar,
+    }
+
+
+# ============================================================
+# 6. DISTANCE FROM LOCAL STABILITY POINT
+# ============================================================
+
+def distance_to_reference(
+    snapshot,
+    reference,
+    cfg
+):
+    """
+    Basin-local distance:
+
+        d_x =
+        sqrt(
+            (C_x - C_x*)^2
+            +
+            kappa (
+                logV_x - logV_x*
+            )^2
+        )
+    """
+
+    d = {}
+
+    for x in cfg.basins:
+        dC = (
+            snapshot["Cx"][x]
+            - reference["C_star"][x]
+        )
+
+        dW = (
+            snapshot["logV"][x]
+            - reference["logV_star"][x]
+        )
+
+        d[x] = np.sqrt(
+            dC ** 2
+            + cfg.kappa * dW ** 2
+        )
+
+    return d
+
+
+# ============================================================
+# 7. CONTROLLED LOCAL PERTURBATION
+# ============================================================
+
+def local_state_perturbation(
+    hidden,
+    target_basin,
+    eps,
+    cfg,
+    rng
+):
+    """
+    Controlled LOCAL perturbation.
+
+    We perturb only the terminal hidden state.
+
+    With probability eps:
+        move the system to the OTHER state in the same
+        target basin.
+
+    This is deliberately much cleaner than choosing an
+    arbitrary state anywhere in the graph.
+
+    If the current state is not in target_basin, choose one
+    state inside target_basin first.
+
+    Returns True if a perturbation was actually applied.
+    """
+
+    if rng.random() >= eps:
+        return False
+
+    states = list(
+        cfg.basins[target_basin]
+    )
+
+    current = hidden[-1]
+
+    if current in states:
+        candidates = [
+            u for u in states
+            if u != current
+        ]
+
+        if candidates:
+            hidden[-1] = int(
+                rng.choice(candidates)
+            )
+        else:
+            return False
+
+    else:
+        hidden[-1] = int(
+            rng.choice(states)
+        )
+
+    return True
+
+
+# ============================================================
+# 8. RECOVERY STATISTICS
+# ============================================================
+
+def recovery_statistics(
+    distance_log,
+    target_basin,
+    cfg
+):
+    """
+    distance_log:
+        list of dictionaries {basin: distance}
+
+    Metrics:
+
+        d_post
+        d_final
+        recovery fraction r_x
+
+        tau_x:
+            first diagnostic index where distance drops
+            below q * d_post
+
+        leakage:
+            max response of non-target basin
+            relative to target response
+    """
+
+    if not distance_log:
+        raise RuntimeError(
+            "Recovery distance log is empty."
+        )
+
+    d_post = distance_log[0][target_basin]
+
+    d_final = distance_log[-1][target_basin]
+
+    if d_post > cfg.tiny:
+        recovery_fraction = (
+            d_post - d_final
+        ) / d_post
+    else:
+        recovery_fraction = np.nan
+
+    threshold = (
+        cfg.recovery_fraction_target
+        * d_post
+    )
+
+    tau = None
+
+    for idx, d in enumerate(distance_log):
+        if d[target_basin] <= threshold:
+            tau = idx * cfg.diagnostic_every
+            break
+
+    target_peak = max(
+        d[target_basin]
+        for d in distance_log
+    )
+
+    leakage = {}
+
+    for y in cfg.basins:
+        if y == target_basin:
+            continue
+
+        other_peak = max(
+            d[y]
+            for d in distance_log
+        )
+
+        if target_peak > cfg.tiny:
+            leakage[y] = (
+                other_peak / target_peak
+            )
+        else:
+            leakage[y] = np.nan
+
+    mean_leakage = (
+        float(
+            np.nanmean(
+                list(leakage.values())
+            )
+        )
+        if leakage
+        else np.nan
+    )
+
+    max_leakage = (
+        float(
+            np.nanmax(
+                list(leakage.values())
+            )
+        )
+        if leakage
+        else np.nan
+    )
+
+    return {
+        "d_post": d_post,
+        "d_final": d_final,
+        "recovery_fraction": recovery_fraction,
+        "tau": tau,
+        "leakage": leakage,
+        "mean_leakage": mean_leakage,
+        "max_leakage": max_leakage,
+    }
+
+
+# ============================================================
+# 9. SINGLE SIM11 EXPERIMENT
+# ============================================================
+
+def simulate_SIM11(
+    cfg,
+    seed,
+    target_basin,
+    perturb=True,
+    memory_enabled=True
+):
+    """
+    One complete SIM11 run.
+
+    Conditions:
+
+        perturb=True
+            local perturbation experiment
+
+        perturb=False
+            unperturbed temporal control
+
+        memory_enabled=False
+            memoryless/null experiment
+    """
+
+    rng = np.random.default_rng(seed)
+
+    hidden = [0]
+    mem = defaultdict(float)
+
+    # --------------------------------------------------------
+    # A. BURN-IN
+    # --------------------------------------------------------
+
+    burn_logs = run_steps(
+        cfg,
+        hidden,
+        mem,
+        rng,
+        cfg.num_steps_burnin,
+        memory_enabled=memory_enabled,
+        log_diagnostics=True
+    )
+
+    reference = build_reference_point(
+        burn_logs,
+        cfg
+    )
+
+    # Copy terminal state so the perturbation is explicit
+    hidden_rec = list(hidden)
+    mem_rec = defaultdict(
+        float,
+        mem
+    )
+
+    # --------------------------------------------------------
+    # B. LOCAL PERTURBATION
+    # --------------------------------------------------------
+
+    perturb_applied = False
+
+    if perturb:
+        perturb_applied = local_state_perturbation(
+            hidden_rec,
+            target_basin,
+            cfg.eps,
+            cfg,
+            rng
+        )
+
+    # Snapshot immediately after perturbation.
+    post_snapshot = compute_local_snapshot(
+        hidden_rec,
+        mem_rec,
+        cfg
+    )
+
+    post_distance = distance_to_reference(
+        post_snapshot,
+        reference,
+        cfg
+    )
+
+    # --------------------------------------------------------
+    # C. RECOVERY
+    # --------------------------------------------------------
+
+    rec_logs = run_steps(
+        cfg,
+        hidden_rec,
+        mem_rec,
+        rng,
+        cfg.num_steps_recovery,
+        memory_enabled=memory_enabled,
+        log_diagnostics=True
+    )
+
+    distance_log = [
+        post_distance
+    ]
+
+    for snap in rec_logs:
+        distance_log.append(
+            distance_to_reference(
+                snap,
+                reference,
+                cfg
+            )
+        )
+
+    stats = recovery_statistics(
+        distance_log,
+        target_basin,
+        cfg
+    )
+
+    # --------------------------------------------------------
+    # D. LOCAL LYAPUNOV DRIFT
+    # --------------------------------------------------------
+
+    V_post = post_snapshot["Vx"][
+        target_basin
+    ]
+
+    V_final = rec_logs[-1]["Vx"][
+        target_basin
+    ]
+
+    delta_V = V_final - V_post
+
+    # Conventional Lyapunov restoring sign:
+    #
+    #     delta_V < 0
+    #
+    # indicates movement toward lower potential.
+    #
+    # Distance recovery is the primary metric, however.
+
+    return {
+        "seed": seed,
+        "target_basin": target_basin,
+        "perturb": perturb,
+        "perturb_applied": perturb_applied,
+        "memory_enabled": memory_enabled,
+
+        "reference": reference,
+        "post_snapshot": post_snapshot,
+        "recovery_logs": rec_logs,
+        "distance_log": distance_log,
+
+        "delta_V": delta_V,
+
+        **stats,
+    }
+
+
+# ============================================================
+# 10. ENSEMBLE SUMMARY
+# ============================================================
+
+def summarize_runs(runs):
+    """
+    Aggregate SIM11 ensemble statistics.
+    """
+
+    valid = [
+        r for r in runs
+        if not np.isnan(
+            r["recovery_fraction"]
+        )
+    ]
+
+    if not valid:
+        return None
+
+    recovery = np.array([
+        r["recovery_fraction"]
+        for r in valid
+    ])
+
+    dpost = np.array([
+        r["d_post"]
+        for r in valid
+    ])
+
+    dfinal = np.array([
+        r["d_final"]
+        for r in valid
+    ])
+
+    deltaV = np.array([
+        r["delta_V"]
+        for r in valid
+    ])
+
+    leakage = np.array([
+        r["mean_leakage"]
+        for r in valid
+    ])
+
+    tau_values = [
+        r["tau"]
+        for r in valid
+        if r["tau"] is not None
+    ]
+
+    return {
+        "n": len(valid),
+
+        "mean_d_post":
+            float(np.mean(dpost)),
+
+        "mean_d_final":
+            float(np.mean(dfinal)),
+
+        "mean_recovery_fraction":
+            float(np.mean(recovery)),
+
+        "median_recovery_fraction":
+            float(np.median(recovery)),
+
+        "fraction_positive_recovery":
+            float(np.mean(recovery > 0)),
+
+        "fraction_half_recovery":
+            float(np.mean(recovery >= 0.5)),
+
+        "mean_delta_V":
+            float(np.mean(deltaV)),
+
+        "fraction_delta_V_negative":
+            float(np.mean(deltaV < 0)),
+
+        "mean_leakage":
+            float(np.nanmean(leakage)),
+
+        "median_tau":
+            (
+                float(np.median(tau_values))
+                if tau_values
+                else np.nan
+            ),
+    }
+
+
+# ============================================================
+# 11. PRIMARY SIM11 DRIVER
+# ============================================================
+
+def run_SIM11(
+    seeds=range(1, 51)
+):
+    """
+    Primary SIM11 experiment.
+
+    Fixed:
+        beta  = 1.38
+        eta_V = 0.50
+        eps   = 0.20
+
+    For each basin:
+
+        A. RCFT + perturbation
+        B. RCFT + no perturbation
+        C. memoryless + perturbation
+
+    The point is NOT parameter optimization.
+
+    The point is causal discrimination.
+    """
+
+    cfg = Config(
+        beta=1.38,
+        eta_V=0.50,
+        eps=0.20,
+        delta=0.95
+    )
+
+    print("=" * 72)
+    print("SIM11 — Basin-Local Lyapunov Restoring-Point Probe")
+    print("=" * 72)
+
+    print(
+        f"beta={cfg.beta}, "
+        f"eta_V={cfg.eta_V}, "
+        f"eps={cfg.eps}"
+    )
+
+    print(
+        f"burn-in={cfg.num_steps_burnin}, "
+        f"recovery={cfg.num_steps_recovery}, "
+        f"seeds={len(list(seeds))}"
+    )
+
+    print()
+
+    all_results = {}
+
+    for target_basin in cfg.basins:
+
+        print(
+            f"\n{'='*60}\n"
+            f"TARGET BASIN {target_basin}\n"
+            f"{'='*60}"
+        )
+
+        # ----------------------------------------------------
+        # A. RCFT + LOCAL PERTURBATION
+        # ----------------------------------------------------
+
+        perturbed_runs = []
+
+        for seed in seeds:
+            out = simulate_SIM11(
+                cfg,
+                seed=seed,
+                target_basin=target_basin,
+                perturb=True,
+                memory_enabled=True
+            )
+
+            # Only include trials where the Bernoulli
+            # perturbation actually occurred.
+            if out["perturb_applied"]:
+                perturbed_runs.append(out)
+
+        perturbed_summary = summarize_runs(
+            perturbed_runs
+        )
+
+        # ----------------------------------------------------
+        # B. UNPERTURBED CONTROL
+        # ----------------------------------------------------
+
+        control_runs = []
+
+        for seed in seeds:
+            out = simulate_SIM11(
+                cfg,
+                seed=seed,
+                target_basin=target_basin,
+                perturb=False,
+                memory_enabled=True
+            )
+
+            control_runs.append(out)
+
+        control_summary = summarize_runs(
+            control_runs
+        )
+
+        # ----------------------------------------------------
+        # C. MEMORYLESS NULL
+        # ----------------------------------------------------
+
+        memoryless_runs = []
+
+        for seed in seeds:
+            out = simulate_SIM11(
+                cfg,
+                seed=seed,
+                target_basin=target_basin,
+                perturb=True,
+                memory_enabled=False
+            )
+
+            if out["perturb_applied"]:
+                memoryless_runs.append(out)
+
+        memoryless_summary = summarize_runs(
+            memoryless_runs
+        )
+
+        all_results[target_basin] = {
+            "perturbed": perturbed_runs,
+            "control": control_runs,
+            "memoryless": memoryless_runs,
+
+            "perturbed_summary":
+                perturbed_summary,
+
+            "control_summary":
+                control_summary,
+
+            "memoryless_summary":
+                memoryless_summary,
+        }
+
+        # ----------------------------------------------------
+        # PRINT COMPACT RESULTS
+        # ----------------------------------------------------
+
+        print("\nRCFT + LOCAL PERTURBATION")
+
+        if perturbed_summary:
+            for k, v in perturbed_summary.items():
+                print(
+                    f"  {k:30s}: {v}"
+                )
+        else:
+            print(
+                "  No perturbations occurred."
+            )
+
+        print("\nUNPERTURBED CONTROL")
+
+        if control_summary:
+            for k, v in control_summary.items():
+                print(
+                    f"  {k:30s}: {v}"
+                )
+
+        print("\nMEMORYLESS + LOCAL PERTURBATION")
+
+        if memoryless_summary:
+            for k, v in memoryless_summary.items():
+                print(
+                    f"  {k:30s}: {v}"
+                )
+        else:
+            print(
+                "  No perturbations occurred."
+            )
+
+        # ----------------------------------------------------
+        # SIMPLE EFFECT COMPARISONS
+        # ----------------------------------------------------
+
+        if (
+            perturbed_summary
+            and control_summary
+        ):
+            excess_recovery = (
+                perturbed_summary[
+                    "mean_recovery_fraction"
+                ]
+                -
+                control_summary[
+                    "mean_recovery_fraction"
+                ]
+            )
+
+            print(
+                "\nPerturbation-specific recovery "
+                f"vs control: {excess_recovery:.6f}"
+            )
+
+        if (
+            perturbed_summary
+            and memoryless_summary
+        ):
+            memory_advantage = (
+                perturbed_summary[
+                    "mean_recovery_fraction"
+                ]
+                -
+                memoryless_summary[
+                    "mean_recovery_fraction"
+                ]
+            )
+
+            print(
+                "Memory recovery advantage: "
+                f"{memory_advantage:.6f}"
+            )
+
+    return all_results
+
+
+# ============================================================
+# 12. OPTIONAL STRICT LOCALITY TEST
+# ============================================================
+
+def locality_score(run):
+    """
+    A very simple locality indicator.
+
+    High score:
+        target basin dominates response.
+
+    Defined as:
+
+        S_local = 1 / (1 + mean_leakage)
+
+    Range:
+        approximately 0 to 1
+
+    1 = highly local
+    lower = more distributed response
+    """
+
+    leak = run["mean_leakage"]
+
+    if np.isnan(leak):
+        return np.nan
+
+    return 1.0 / (1.0 + leak)
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    results = run_SIM11()
+
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+Run started
+Initializing environment
+Installing packages
+Running code
+========================================================================
+
+SIM11 — Basin-Local Lyapunov Restoring-Point Probe
+
+========================================================================
+
+beta=1.38, eta_V=0.5, eps=0.2
+
+burn-in=2000, recovery=500, seeds=50
+
+1059 |
+
+
+============================================================
+TARGET BASIN 0
+============================================================
+
+RCFT + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.12154019483874003
+
+  mean_d_final                  : 0.15305473920119803
+
+  mean_recovery_fraction        : -0.892867904055933
+
+  median_recovery_fraction      : -0.10482106188689005
+
+  fraction_positive_recovery    : 0.5
+
+  fraction_half_recovery        : 0.0
+
+  mean_delta_V                  : 0.10220512173332652
+
+  fraction_delta_V_negative     : 0.16666666666666666
+
+  mean_leakage                  : 1.08424977535562
+
+  median_tau                    : 280.0
+
+
+UNPERTURBED CONTROL
+  n                             : 50
+
+  mean_d_post                   : 0.12592986685756777
+
+  mean_d_final                  : 0.13748460937695006
+
+  mean_recovery_fraction        : -0.5308966106790135
+
+  median_recovery_fraction      : -0.199857596942112
+
+  fraction_positive_recovery    : 0.46
+
+  fraction_half_recovery        : 0.24
+
+  mean_delta_V                  : 0.010896018028306986
+
+  fraction_delta_V_negative     : 0.44
+
+  mean_leakage                  : 0.9824190728366812
+
+  median_tau                    : 220.0
+
+
+MEMORYLESS + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.05194264632310588
+
+  mean_d_final                  : 0.10965216259883154
+
+  mean_recovery_fraction        : -6.191371432610226
+
+  median_recovery_fraction      : -4.189638281999848
+
+  fraction_positive_recovery    : 0.16666666666666666
+
+  fraction_half_recovery        : 0.0
+
+  mean_delta_V                  : 0.06488750085612732
+
+  fraction_delta_V_negative     : 0.3333333333333333
+
+  mean_leakage                  : 0.6792105488830108
+
+  median_tau                    : 110.0
+
+
+Perturbation-specific recovery vs control: -0.361971
+Memory recovery advantage: 5.298504
+
+
+============================================================
+TARGET BASIN 1
+============================================================
+
+RCFT + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.09258558731119092
+
+  mean_d_final                  : 0.1810135703834832
+
+  mean_recovery_fraction        : -1.8194347044969292
+
+  median_recovery_fraction      : -0.5867968617228521
+
+  fraction_positive_recovery    : 0.0
+
+  fraction_half_recovery        : 0.0
+
+  mean_delta_V                  : 0.14334133618317368
+
+  fraction_delta_V_negative     : 0.3333333333333333
+
+  mean_leakage                  : 1.2134730955499418
+
+  median_tau                    : 310.0
+
+
+UNPERTURBED CONTROL
+  n                             : 50
+
+  mean_d_post                   : 0.08872115864987659
+
+  mean_d_final                  : 0.13884114366287292
+
+  mean_recovery_fraction        : -1.1809341300028877
+
+  median_recovery_fraction      : -0.3862802311130461
+
+  fraction_positive_recovery    : 0.36
+
+  fraction_half_recovery        : 0.16
+
+  mean_delta_V                  : 0.0238800274979495
+
+  fraction_delta_V_negative     : 0.42
+
+  mean_leakage                  : 1.3165987458901605
+
+  median_tau                    : 240.0
+
+
+MEMORYLESS + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.029275927129619923
+
+  mean_d_final                  : 0.04437045688557232
+
+  mean_recovery_fraction        : -1.3729715172319716
+
+  median_recovery_fraction      : -0.4066462253536516
+
+  fraction_positive_recovery    : 0.3333333333333333
+
+  fraction_half_recovery        : 0.16666666666666666
+
+  mean_delta_V                  : -0.036289681448263535
+
+  fraction_delta_V_negative     : 0.6666666666666666
+
+  mean_leakage                  : 2.0413813573716224
+
+  median_tau                    : 40.0
+
+
+Perturbation-specific recovery vs control: -0.638501
+Memory recovery advantage: -0.446463
+
+
+============================================================
+TARGET BASIN 2
+============================================================
+
+RCFT + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.11741108573002317
+
+  mean_d_final                  : 0.11015852817289752
+
+  mean_recovery_fraction        : -1.0363587710156146
+
+  median_recovery_fraction      : -0.576244753615431
+
+  fraction_positive_recovery    : 0.3333333333333333
+
+  fraction_half_recovery        : 0.16666666666666666
+
+  mean_delta_V                  : 0.10305051547004883
+
+  fraction_delta_V_negative     : 0.3333333333333333
+
+  mean_leakage                  : 1.4625274090299465
+
+  median_tau                    : 310.0
+
+
+UNPERTURBED CONTROL
+  n                             : 50
+
+  mean_d_post                   : 0.08513372648111385
+
+  mean_d_final                  : 0.11210174161644672
+
+  mean_recovery_fraction        : -1.9167200079388274
+
+  median_recovery_fraction      : -0.20617188109302412
+
+  fraction_positive_recovery    : 0.4
+
+  fraction_half_recovery        : 0.24
+
+  mean_delta_V                  : 0.005942197928823559
+
+  fraction_delta_V_negative     : 0.44
+
+  mean_leakage                  : 1.4736545146761386
+
+  median_tau                    : 190.0
+
+
+MEMORYLESS + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.03110948348603898
+
+  mean_d_final                  : 0.02816547569381167
+
+  mean_recovery_fraction        : -0.21464347710568463
+
+  median_recovery_fraction      : 0.010614036669413907
+
+  fraction_positive_recovery    : 0.5
+
+  fraction_half_recovery        : 0.16666666666666666
+
+  mean_delta_V                  : 0.03651544048538798
+
+  fraction_delta_V_negative     : 0.3333333333333333
+
+  mean_leakage                  : 2.1291106943628413
+
+  median_tau                    : 145.0
+
+
+Perturbation-specific recovery vs control: 0.880361
+Memory recovery advantage: -0.821715
+
+
+============================================================
+TARGET BASIN 3
+============================================================
+
+RCFT + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.10768735365266725
+
+  mean_d_final                  : 0.17475816781660636
+
+  mean_recovery_fraction        : -1.1018459513290102
+
+  median_recovery_fraction      : -1.368577042337204
+
+  fraction_positive_recovery    : 0.3333333333333333
+
+  fraction_half_recovery        : 0.0
+
+  mean_delta_V                  : 0.10382583135363373
+
+  fraction_delta_V_negative     : 0.3333333333333333
+
+  mean_leakage                  : 0.8228488021239434
+
+  median_tau                    : 260.0
+
+
+UNPERTURBED CONTROL
+  n                             : 50
+
+  mean_d_post                   : 0.11568650334440043
+
+  mean_d_final                  : 0.17677135690752444
+
+  mean_recovery_fraction        : -1.82326771619481
+
+  median_recovery_fraction      : -0.5963938343675634
+
+  fraction_positive_recovery    : 0.34
+
+  fraction_half_recovery        : 0.12
+
+  mean_delta_V                  : -0.00845254403079706
+
+  fraction_delta_V_negative     : 0.46
+
+  mean_leakage                  : 0.962911632811048
+
+  median_tau                    : 210.0
+
+
+MEMORYLESS + LOCAL PERTURBATION
+  n                             : 6
+
+  mean_d_post                   : 0.06650995309651929
+
+  mean_d_final                  : 0.09323375627768755
+
+  mean_recovery_fraction        : -0.9095275476844696
+
+  median_recovery_fraction      : -0.707184727612194
+
+  fraction_positive_recovery    : 0.3333333333333333
+
+  fraction_half_recovery        : 0.3333333333333333
+
+  mean_delta_V                  : 0.03319483660465278
+
+  fraction_delta_V_negative     : 0.16666666666666666
+
+  mean_leakage                  : 0.8570774642192687
+
+  median_tau                    : 120.0
+
+
+Perturbation-specific recovery vs control: 0.721422
+Memory recovery advantage: -0.192318
