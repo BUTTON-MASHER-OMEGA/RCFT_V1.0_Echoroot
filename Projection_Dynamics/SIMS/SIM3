@@ -1,0 +1,265 @@
+###SIMULATION3###
+
+
+import numpy as np
+from collections import defaultdict, Counter
+
+# ---------- 1. Model definition (same as before) ----------
+
+states = list(range(8))
+
+proj = {
+    0: 0,  # u1 -> A
+    1: 0,  # u2 -> A
+    2: 1,  # u3 -> B
+    3: 1,  # u4 -> B
+    4: 2,  # u5 -> C
+    5: 2,  # u6 -> C
+    6: 3,  # u7 -> D
+    7: 3,  # u8 -> D
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+alpha = 1.0
+beta  = 2.0
+lam   = 0.0
+T     = 1.0
+tau   = 5.0
+mem_window = 50
+
+
+# ---------- 2. Friction with REINFORCING memory ----------
+
+def friction(u_i, u_j, trans_counts, t):
+    """
+    F_t(u_i -> u_j) = alpha*d_graph + beta*Delta_proj + lam*M_t
+    Here M_t decreases cost with repeated use (reinforcing).
+    """
+    d_graph = 1.0
+    delta_proj = 0.0 if proj[u_i] == proj[u_j] else 1.0
+
+    n_ij = trans_counts[(u_i, u_j)]
+    # reinforcing: more use -> lower cost
+    M_t = - (1.0 - np.exp(-n_ij / tau))
+
+    return alpha * d_graph + beta * delta_proj + lam * M_t
+
+
+def transition_probs(u_i, trans_counts, t):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, trans_counts, t) for u_j in nbrs])
+    weights = np.exp(-costs / T)
+    Z = weights.sum()
+    probs = weights / Z
+    return {nbrs[k]: probs[k] for k in range(len(nbrs))}, costs, weights
+
+
+# ---------- 3. Simulation ----------
+
+def simulate(num_steps=10000, lam_value=0.0, seed=0):
+    global lam
+    lam = lam_value
+    rng = np.random.default_rng(seed)
+
+    trans_counts = defaultdict(int)
+    recent_transitions = []
+
+    u = 0  # start at u1
+    hidden_traj = [u]
+    obs_traj = [proj[u]]
+    friction_history = []
+
+    for t in range(1, num_steps + 1):
+        probs_dict, _, _ = transition_probs(u, trans_counts, t)
+        nbrs = list(probs_dict.keys())
+        probs = np.array(list(probs_dict.values()))
+
+        u_next = rng.choice(nbrs, p=probs)
+        F_chosen = friction(u, u_next, trans_counts, t)
+        friction_history.append(F_chosen)
+
+        trans_counts[(u, u_next)] += 1
+        recent_transitions.append((u, u_next))
+        if len(recent_transitions) > mem_window:
+            old_i, old_j = recent_transitions.pop(0)
+            trans_counts[(old_i, old_j)] -= 1
+
+        u = u_next
+        hidden_traj.append(u)
+        obs_traj.append(proj[u])
+
+    return np.array(hidden_traj), np.array(obs_traj), np.array(friction_history)
+
+
+# ---------- 4. Empirical kernels on O ----------
+
+def empirical_kernel_first_order(obs_traj, n_states=4):
+    K = np.zeros((n_states, n_states))
+    for t in range(len(obs_traj) - 1):
+        i = obs_traj[t]
+        j = obs_traj[t+1]
+        K[i, j] += 1
+    # normalize rows
+    row_sums = K.sum(axis=1, keepdims=True)
+    row_sums[row_sums == 0] = 1
+    return K / row_sums
+
+
+def empirical_kernel_second_order(obs_traj, n_states=4):
+    """
+    Estimate P(O_{t+1} | O_t, O_{t-1}) as a 4x4x4 tensor.
+    """
+    counts = np.zeros((n_states, n_states, n_states))
+    for t in range(2, len(obs_traj)):
+        i = obs_traj[t-2]
+        j = obs_traj[t-1]
+        k = obs_traj[t]
+        counts[i, j, k] += 1
+
+    # normalize over k for each (i,j)
+    sums = counts.sum(axis=2, keepdims=True)
+    sums[sums == 0] = 1
+    return counts / sums
+
+
+# ---------- 5. Coherence functional C(t) ----------
+
+def coherence_curve(friction_history):
+    """
+    C(t) = - (1/t) * sum_{s<=t} F_s
+    """
+    F = np.array(friction_history)
+    cumsum = np.cumsum(F)
+    t = np.arange(1, len(F)+1)
+    C = -cumsum / t
+    return C
+
+
+# ---------- 6. Run experiments ----------
+
+if __name__ == "__main__":
+    # No memory
+    h0, o0, F0 = simulate(num_steps=20000, lam_value=0.0, seed=1)
+    K1_0 = empirical_kernel_first_order(o0)
+    K2_0 = empirical_kernel_second_order(o0)
+
+    print("No-memory average friction:", F0.mean())
+    print("First-order kernel (lambda=0):")
+    print(K1_0)
+
+    # With memory (reinforcing)
+    h1, o1, F1 = simulate(num_steps=20000, lam_value=1.0, seed=1)
+    K1_1 = empirical_kernel_first_order(o1)
+    K2_1 = empirical_kernel_second_order(o1)
+
+    print("\nWith-memory average friction:", F1.mean())
+    print("First-order kernel (lambda=1):")
+    print(K1_1)
+
+    # Compare Markov vs non-Markov qualitatively
+    # For a few (O_{t-1}, O_t) pairs, compare P(O_{t+1}|O_t) vs P(O_{t+1}|O_t,O_{t-1})
+    labels = ["A","B","C","D"]
+    print("\nSample conditional comparisons (lambda=1):")
+    for prev in range(4):
+        for cur in range(4):
+            # skip pairs that almost never occur
+            if K2_1[prev, cur].sum() == 0:
+                continue
+            print(f"Prev={labels[prev]}, Cur={labels[cur]}")
+            print("  P(O_{t+1}|O_t=Cur):", K1_1[cur])
+            print("  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev):", K2_1[prev, cur])
+            print()
+
+    # Coherence curves
+    C0 = coherence_curve(F0)
+    C1 = coherence_curve(F1)
+    print("Final C(t) no-memory:", C0[-1])
+    print("Final C(t) with-memory:", C1[-1])
+
+
+
+~~~~~~~~~~~~~~
+
+
+Results:
+
+
+
+No-memory average friction: 1.3422
+First-order kernel (lambda=0):
+[[0.82556302 0.11655472 0.         0.05788226]
+ [0.11290323 0.82795699 0.05913978 0.        ]
+ [0.         0.05405405 0.83665417 0.10929177]
+ [0.06498865 0.         0.10975861 0.82525273]]
+
+With-memory average friction: 0.5338610833244869
+First-order kernel (lambda=1):
+[[0.90249433 0.06764928 0.         0.02985639]
+ [0.06708886 0.89748664 0.0354245  0.        ]
+ [0.         0.03143303 0.90257712 0.06598985]
+ [0.03882638 0.         0.07059343 0.89058019]]
+
+Sample conditional comparisons (lambda=1):
+Prev=A, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.90745394 0.06574539 0.         0.02680067]
+
+Prev=A, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.10614525 0.83798883 0.05586592 0.        ]
+
+Prev=A, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06329114 0.         0.11392405 0.82278481]
+
+Prev=B, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.87315634 0.09439528 0.         0.03244838]
+
+Prev=B, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.06241729 0.90471989 0.03286281 0.        ]
+
+Prev=B, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.06703911 0.86592179 0.06703911]
+
+Prev=C, Cur=B
+  P(O_{t+1}|O_t=Cur): [0.06708886 0.89748664 0.0354245  0.        ]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.11180124 0.82608696 0.0621118  0.        ]
+
+Prev=C, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.         0.02985075 0.90504002 0.06510924]
+
+Prev=C, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.0591716  0.         0.08579882 0.85502959]
+
+Prev=D, Cur=A
+  P(O_{t+1}|O_t=Cur): [0.90249433 0.06764928 0.         0.02985639]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.82386364 0.06818182 0.         0.10795455]
+
+Prev=D, Cur=C
+  P(O_{t+1}|O_t=Cur): [0.         0.03143303 0.90257712 0.06598985]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.       0.034375 0.8875   0.078125]
+
+Prev=D, Cur=D
+  P(O_{t+1}|O_t=Cur): [0.03882638 0.         0.07059343 0.89058019]
+  P(O_{t+1}|O_t=Cur,O_{t-1}=Prev): [0.03616547 0.         0.06762447 0.89621006]
+
+Final C(t) no-memory: -1.3422
+Final C(t) with-memory: -0.5338610833245108
+
+
+** Process exited - Return Code: 0 **
