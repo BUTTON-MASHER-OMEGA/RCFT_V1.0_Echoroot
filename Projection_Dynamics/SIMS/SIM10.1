@@ -1,0 +1,2598 @@
+############################################################
+#  SIM10.1 — Stability-Zone & Drift-Geometry Probe
+############################################################
+#
+#  Updated RCFT notation:
+#
+#      L_{ηV,x}
+#          = C_x
+#            - η_V log(V_eff,x)
+#            - λ_R R_global
+#
+#  η_V:
+#      coherence–valence coupling probe coordinate
+#
+#  γ_mem:
+#      RESERVED for LCO memory weighting
+#
+#  Convention:
+#      ΔL_{ηV} > 0  -> recovery / increase in stability score
+#      ΔL_{ηV} < 0  -> decay / decrease in stability score
+#
+#  Equivalent conventional Lyapunov potential:
+#
+#      V_x = -L_{ηV,x}
+#
+#  so that:
+#
+#      ΔV_x < 0  -> Lyapunov-like restoration
+############################################################
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# -----------------------------------------------------------
+# 0. GRAPH + BASINS
+# -----------------------------------------------------------
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# -----------------------------------------------------------
+# 1. CONFIG
+# -----------------------------------------------------------
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+
+    alpha: float = 1.0
+    T_tol: float = 1.0
+
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+    seed: int = 1
+
+    num_steps_burnin: int = 2000
+    num_steps_recovery: int = 300
+
+    window: int = 200
+    kernel_update_every: int = 50
+
+    basins: dict = None
+    weights: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+        if self.weights is None:
+            self.weights = {
+                x: 1.0 / len(self.basins)
+                for x in self.basins
+            }
+
+
+# -----------------------------------------------------------
+# 2. MEMORY / FRICTION / TRANSITION
+# -----------------------------------------------------------
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+    M = saturate_memory(
+        mem.get((u_i, u_j), 0.0),
+        cfg.sat_mode
+    )
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M
+    )
+
+
+def transition_probs(u, mem, cfg):
+    nbrs = neighbors[u]
+
+    costs = np.array([
+        friction(u, v, mem, cfg)
+        for v in nbrs
+    ])
+
+    weights = np.exp(-costs / cfg.T_tol)
+
+    return nbrs, weights / weights.sum()
+
+
+# -----------------------------------------------------------
+# 3. GLOBAL OBSERVABLE KERNEL
+# -----------------------------------------------------------
+
+def estimate_global_obs_kernel(obs, window):
+    T = len(obs)
+    start = max(0, T - window - 1)
+
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for t in range(start, T - 1):
+        b = obs[t]
+        b_next = obs[t + 1]
+
+        trans_counts[(b, b_next)] += 1
+        from_counts[b] += 1
+
+    K = {}
+
+    for (b, b_next), count in trans_counts.items():
+        K[(b, b_next)] = (
+            count / max(1, from_counts[b])
+        )
+
+    return K
+
+
+# -----------------------------------------------------------
+# 4. BASIN KERNELS
+# -----------------------------------------------------------
+
+def estimate_basin_kernels(hidden, window, basins):
+    T = len(hidden)
+    start = max(0, T - window - 1)
+
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for t in range(start, T - 1):
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    basin_kernels = {
+        x: defaultdict(float)
+        for x in basins
+    }
+
+    for (u, v), count in trans_counts.items():
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_kernels[x][(u, v)] = (
+                    count / max(1, from_counts[u])
+                )
+
+                break
+
+    return basin_kernels
+
+
+# -----------------------------------------------------------
+# 5. LIFT OBSERVABLE KERNEL TO HIDDEN SPACE
+# -----------------------------------------------------------
+
+def lift_global_obs_to_hidden(Kobs, basins):
+    Kh = {}
+
+    for x, states_x in basins.items():
+
+        for u in states_x:
+
+            for (b, b_next), p in Kobs.items():
+
+                if b != x:
+                    continue
+
+                for y, states_y in basins.items():
+
+                    if y == b_next:
+
+                        for v in states_y:
+
+                            Kh[(u, v)] = (
+                                p / max(1, len(states_y))
+                            )
+
+    return Kh
+
+
+# -----------------------------------------------------------
+# 6. CONSISTENCY RESIDUAL
+# -----------------------------------------------------------
+
+def kernel_distance_L2(Kx, Ky):
+    keys = set(Kx.keys()) | set(Ky.keys())
+
+    return sum(
+        (
+            Kx.get(k, 0.0)
+            - Ky.get(k, 0.0)
+        ) ** 2
+        for k in keys
+    )
+
+
+def compute_R_global(
+    basin_kernels,
+    K_global_hidden,
+    basins
+):
+    residuals = []
+
+    for x, states in basins.items():
+
+        Kx = basin_kernels[x]
+
+        Kg_x = {
+            k: p
+            for k, p in K_global_hidden.items()
+            if k[0] in states
+        }
+
+        residuals.append(
+            kernel_distance_L2(Kx, Kg_x)
+        )
+
+    return (
+        sum(residuals)
+        / len(residuals)
+    )
+
+
+# -----------------------------------------------------------
+# 7. LOCAL ENTROPY + PERSISTENCE
+# -----------------------------------------------------------
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins
+):
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+    for t in range(len(hidden) - 1):
+
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        b = obs[t]
+
+        counts_total[b] += 1
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_trans[x][(u, v)] += 1
+                basin_from[x][u] += 1
+
+                break
+
+    H = {}
+    P = {}
+
+    for x in basins:
+
+        H_sum = 0.0
+        n_src = 0
+
+        for u in basin_from[x]:
+
+            probs = [
+                basin_trans[x][(u, v)]
+                / basin_from[x][u]
+
+                for (uu, v)
+                in basin_trans[x]
+
+                if uu == u
+            ]
+
+            if len(probs) == 0:
+                continue
+
+            p = np.array(probs)
+
+            H_sum += -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+            n_src += 1
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+        P[x] = (
+            counts_same[x]
+            / counts_total[x]
+
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+    return H, P
+
+
+# -----------------------------------------------------------
+# 8. COHERENCE
+# -----------------------------------------------------------
+
+def compute_Cx(H, P, alpha):
+    return {
+        x: -H[x] + alpha * P[x]
+        for x in H
+    }
+
+
+# -----------------------------------------------------------
+# 9. EFFECTIVE VALENCE
+# -----------------------------------------------------------
+
+def compute_valence(mem, cfg):
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+
+            nbrs, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+            p = np.array(probs)
+
+            H_local = -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+            Veff[x] += np.exp(H_local)
+            counts[x] += 1
+
+    for x in cfg.basins:
+
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+    return Veff
+
+
+# -----------------------------------------------------------
+# 10. PHASE RUN
+# -----------------------------------------------------------
+
+def run_phase(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    steps
+):
+
+    rng = np.random.default_rng(cfg.seed)
+
+    Cx_log = []
+    Rg_log = []
+    Veff_log = []
+
+    for t in range(steps):
+
+        u = hidden[-1]
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+        u_next = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+        hidden.append(u_next)
+
+        obs.append(
+            proj_structured[u_next]
+        )
+
+        # Memory decay
+        for k in list(mem.keys()):
+
+            mem[k] *= cfg.delta
+
+            if mem[k] < 1e-12:
+                del mem[k]
+
+        # Historical reinforcement
+        mem[(u, u_next)] += 1.0
+
+        if (
+            t % cfg.kernel_update_every
+            == 0
+        ):
+
+            Kobs = estimate_global_obs_kernel(
+                obs,
+                cfg.window
+            )
+
+            Kh = lift_global_obs_to_hidden(
+                Kobs,
+                cfg.basins
+            )
+
+            BK = estimate_basin_kernels(
+                hidden,
+                cfg.window,
+                cfg.basins
+            )
+
+            H, P = (
+                compute_local_entropy_and_persistence(
+                    hidden,
+                    obs,
+                    cfg.basins
+                )
+            )
+
+            Cx = compute_Cx(
+                H,
+                P,
+                cfg.alpha
+            )
+
+            Rg = compute_R_global(
+                BK,
+                Kh,
+                cfg.basins
+            )
+
+            Veff = compute_valence(
+                mem,
+                cfg
+            )
+
+            Cx_log.append(Cx)
+            Rg_log.append(Rg)
+            Veff_log.append(Veff)
+
+    # Safety fallback
+    if len(Cx_log) == 0:
+
+        Kobs = estimate_global_obs_kernel(
+            obs,
+            cfg.window
+        )
+
+        Kh = lift_global_obs_to_hidden(
+            Kobs,
+            cfg.basins
+        )
+
+        BK = estimate_basin_kernels(
+            hidden,
+            cfg.window,
+            cfg.basins
+        )
+
+        H, P = (
+            compute_local_entropy_and_persistence(
+                hidden,
+                obs,
+                cfg.basins
+            )
+        )
+
+        Cx = compute_Cx(
+            H,
+            P,
+            cfg.alpha
+        )
+
+        Rg = compute_R_global(
+            BK,
+            Kh,
+            cfg.basins
+        )
+
+        Veff = compute_valence(
+            mem,
+            cfg
+        )
+
+        Cx_log = [Cx]
+        Rg_log = [Rg]
+        Veff_log = [Veff]
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "Cx_log": Cx_log,
+        "Rg_log": Rg_log,
+        "Veff_log": Veff_log,
+    }
+
+
+# -----------------------------------------------------------
+# 11. ε PERTURBATIONS
+# -----------------------------------------------------------
+
+def mix_state(
+    hidden,
+    obs,
+    eps,
+    rng
+):
+    """
+    ε is interpreted as the probability
+    that the terminal hidden state is replaced.
+    """
+
+    if eps <= 0.0:
+        return hidden, obs
+
+    if rng.random() < eps:
+
+        u_new = rng.choice(
+            list(neighbors.keys())
+        )
+
+        hidden[-1] = u_new
+        obs[-1] = proj_structured[u_new]
+
+    return hidden, obs
+
+
+def mix_kernel(mem, eps):
+    """
+    Continuous interpolation between
+    learned memory weights and a
+    locally uniform reference weight.
+    """
+
+    if eps <= 0.0:
+        return mem
+
+    new_mem = defaultdict(float)
+
+    for (u, v), w in mem.items():
+
+        U = 1.0 / len(neighbors[u])
+
+        new_mem[(u, v)] = (
+            (1.0 - eps) * w
+            + eps * U
+        )
+
+    return new_mem
+
+
+def mix_memory(mem, eps, rng):
+    """
+    Continuous stochastic perturbation
+    of memory weights.
+    """
+
+    if eps <= 0.0:
+        return mem
+
+    new_mem = defaultdict(float)
+
+    for (u, v), w in mem.items():
+
+        perturbed = (
+            w
+            + eps * rng.normal(scale=1.0)
+        )
+
+        new_mem[(u, v)] = max(
+            0.0,
+            perturbed
+        )
+
+    return new_mem
+
+
+# -----------------------------------------------------------
+# 12. UPDATED COUPLED STABILITY SCORE
+#
+#     L_{ηV,x}
+#
+# -----------------------------------------------------------
+
+def compute_L_etaV(
+    Cx,
+    Veff,
+    R_global,
+    eta_V,
+    lambda_R
+):
+    """
+    RCFT coupled coherence–valence–
+    consistency stability score.
+
+    Larger L_etaV is interpreted as
+    greater local structural stability.
+    """
+
+    Lx = {}
+
+    for x in Cx:
+
+        V = max(
+            Veff.get(x, 1e-6),
+            1e-6
+        )
+
+        Lx[x] = (
+            Cx[x]
+            - eta_V * np.log(V)
+            - lambda_R * R_global
+        )
+
+    return Lx
+
+
+# -----------------------------------------------------------
+# 13. OPTIONAL CONVENTIONAL LYAPUNOV POTENTIAL
+#
+#     V_x = -L_{ηV,x}
+#
+# -----------------------------------------------------------
+
+def compute_lyapunov_potential(
+    Cx,
+    Veff,
+    R_global,
+    eta_V,
+    lambda_R
+):
+
+    Lx = compute_L_etaV(
+        Cx,
+        Veff,
+        R_global,
+        eta_V,
+        lambda_R
+    )
+
+    return {
+        x: -Lx[x]
+        for x in Lx
+    }
+
+
+# -----------------------------------------------------------
+# 14. DRIFT COMPONENTS
+# -----------------------------------------------------------
+
+def drift_components(
+    C_post,
+    V_post,
+    R_post,
+    C_rec,
+    V_rec,
+    R_rec,
+    eta_V,
+    lambda_R
+):
+
+    # Coherence drift
+    dC = {
+        x:
+        C_rec[x]
+        - C_post[x]
+
+        for x in C_post
+    }
+
+    # Log-valence drift
+    dW = {
+        x:
+        np.log(
+            max(V_rec[x], 1e-6)
+        )
+        -
+        np.log(
+            max(V_post[x], 1e-6)
+        )
+
+        for x in V_post
+    }
+
+    # Consistency residual drift
+    dR = (
+        R_rec
+        - R_post
+    )
+
+    # Coupled score drift
+    dL = {
+        x:
+        dC[x]
+        - eta_V * dW[x]
+        - lambda_R * dR
+
+        for x in dC
+    }
+
+    # Conventional Lyapunov-potential drift
+    dV = {
+        x: -dL[x]
+        for x in dL
+    }
+
+    return (
+        dC,
+        dW,
+        dR,
+        dL,
+        dV
+    )
+
+
+# -----------------------------------------------------------
+# 15. SINGLE SIM10 RUN
+#
+# Burn-in
+#   ↓
+# ε perturbation
+#   ↓
+# post-perturb snapshot
+#   ↓
+# recovery
+#   ↓
+# basin-resolved drift
+# -----------------------------------------------------------
+
+def simulate_SIM10(
+    cfg,
+    eps,
+    ptype,
+    eta_V,
+    lambda_R
+):
+
+    # Independent perturbation RNG
+    rng = np.random.default_rng(
+        cfg.seed + 10000
+    )
+
+    hidden = [0]
+
+    obs = [
+        proj_structured[0]
+    ]
+
+    mem = defaultdict(float)
+
+    # -------------------------
+    # Burn-in
+    # -------------------------
+
+    burn = run_phase(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        cfg.num_steps_burnin
+    )
+
+    hidden_eps = burn["hidden"]
+    obs_eps = burn["obs"]
+    mem_eps = burn["mem"]
+
+    # -------------------------
+    # ε perturbation
+    # -------------------------
+
+    if ptype == "state":
+
+        hidden_eps, obs_eps = mix_state(
+            hidden_eps,
+            obs_eps,
+            eps,
+            rng
+        )
+
+    elif ptype == "kernel":
+
+        mem_eps = mix_kernel(
+            mem_eps,
+            eps
+        )
+
+    elif ptype == "memory":
+
+        mem_eps = mix_memory(
+            mem_eps,
+            eps,
+            rng
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown perturbation type: {ptype}"
+        )
+
+    # -------------------------
+    # Immediate post state
+    # -------------------------
+
+    post = run_phase(
+        cfg,
+        hidden_eps,
+        obs_eps,
+        mem_eps,
+        1
+    )
+
+    # -------------------------
+    # Recovery
+    # -------------------------
+
+    rec = run_phase(
+        cfg,
+        hidden_eps,
+        obs_eps,
+        mem_eps,
+        cfg.num_steps_recovery
+    )
+
+    # -------------------------
+    # Extract observables
+    # -------------------------
+
+    C_post = post["Cx_log"][-1]
+    V_post = post["Veff_log"][-1]
+    R_post = post["Rg_log"][-1]
+
+    C_rec = rec["Cx_log"][-1]
+    V_rec = rec["Veff_log"][-1]
+    R_rec = rec["Rg_log"][-1]
+
+    (
+        dC,
+        dW,
+        dR,
+        dL,
+        dV
+    ) = drift_components(
+        C_post,
+        V_post,
+        R_post,
+        C_rec,
+        V_rec,
+        R_rec,
+        eta_V,
+        lambda_R
+    )
+
+    # -------------------------
+    # Basin statistics
+    # -------------------------
+
+    weights = cfg.weights
+
+    mean_dL = sum(
+        weights[x] * dL[x]
+        for x in dL
+    )
+
+    # Since larger L is "better":
+    # minimum ΔL = worst basin
+    min_dL = min(
+        dL.values()
+    )
+
+    max_dL = max(
+        dL.values()
+    )
+
+    var_dL = sum(
+        weights[x]
+        * (dL[x] - mean_dL) ** 2
+
+        for x in dL
+    )
+
+    sigma_L = np.sqrt(
+        var_dL
+    )
+
+    # Conventional potential:
+    # ΔV < 0 is restoring
+    mean_dV = sum(
+        weights[x] * dV[x]
+        for x in dV
+    )
+
+    max_dV = max(
+        dV.values()
+    )
+
+    return {
+        "eps": eps,
+        "ptype": ptype,
+
+        "eta_V": eta_V,
+        "lambda_R": lambda_R,
+
+        "dC": dC,
+        "dlogV": dW,
+        "dR": dR,
+
+        "dL_etaV": dL,
+        "dV_lyapunov": dV,
+
+        "mean_dL": mean_dL,
+
+        # Correct worst-basin statistic
+        "worst_dL": min_dL,
+
+        # Best basin, retained diagnostically
+        "best_dL": max_dL,
+
+        "sigma_L": sigma_L,
+
+        "mean_dV": mean_dV,
+        "worst_dV": max_dV,
+    }
+
+
+# -----------------------------------------------------------
+# 16. GRID DRIVER
+#
+# We SCAN η_V.
+#
+# We are NOT asserting η_V is a freely
+# tunable physical coupling.
+#
+# It is an experimental coordinate used
+# to map the admissible coherence–valence
+# stability structure.
+# -----------------------------------------------------------
+
+def run_SIM10_grid():
+
+    betas = np.linspace(
+        0.25,
+        2.50,
+        5
+    )
+
+    etaV_grid = np.linspace(
+        -2.0,
+        2.0,
+        9
+    )
+
+    eps_grid = [
+        0.0,
+        0.1,
+        0.2,
+        0.5
+    ]
+
+    perturbation_types = [
+        "state",
+        "kernel",
+        "memory"
+    ]
+
+    lambda_R = 0.1
+
+    for beta in betas:
+
+        print(
+            f"\n"
+            f"====================================\n"
+            f"SIM10  β={beta:.2f}\n"
+            f"===================================="
+        )
+
+        cfg = Config(
+            lam=1.0,
+            delta=0.95,
+            beta=beta,
+            seed=1
+        )
+
+        for eta_V in etaV_grid:
+
+            print(
+                f"\n"
+                f"η_V={eta_V:.2f}, "
+                f"λ_R={lambda_R}"
+            )
+
+            for ptype in perturbation_types:
+
+                print(
+                    f"  -- perturb_type = "
+                    f"{ptype} --"
+                )
+
+                for eps in eps_grid:
+
+                    out = simulate_SIM10(
+                        cfg,
+                        eps,
+                        ptype,
+                        eta_V,
+                        lambda_R
+                    )
+
+                    print(
+                        f"    ε={eps:.2f}: "
+                        f"mean ΔL_ηV="
+                        f"{out['mean_dL']:.6f}, "
+                        f"worst ΔL_ηV="
+                        f"{out['worst_dL']:.6f}, "
+                        f"best ΔL_ηV="
+                        f"{out['best_dL']:.6f}, "
+                        f"σ_L="
+                        f"{out['sigma_L']:.6f}"
+                    )
+
+
+# -----------------------------------------------------------
+# MAIN
+# -----------------------------------------------------------
+
+if __name__ == "__main__":
+    run_SIM10_grid()
+
+
+
+
+
+
+
+~~~~~~~~~~~
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+====================================
+SIM10  β=0.25
+====================================
+
+η_V=-2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+    ε=0.10: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+    ε=0.20: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+    ε=0.50: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+    ε=0.10: mean ΔL_ηV=-0.000818, worst ΔL_ηV=-0.019407, best ΔL_ηV=0.020375, σ_L=0.014194
+
+    ε=0.20: mean ΔL_ηV=-0.005429, worst ΔL_ηV=-0.029722, best ΔL_ηV=0.011326, σ_L=0.015036
+
+    ε=0.50: mean ΔL_ηV=-0.017946, worst ΔL_ηV=-0.062864, best ΔL_ηV=0.001483, σ_L=0.026290
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.008860, best ΔL_ηV=0.029991, σ_L=0.015302
+
+    ε=0.10: mean ΔL_ηV=0.003593, worst ΔL_ηV=-0.012575, best ΔL_ηV=0.030885, σ_L=0.016389
+
+    ε=0.20: mean ΔL_ηV=0.002325, worst ΔL_ηV=-0.019791, best ΔL_ηV=0.031600, σ_L=0.018534
+
+    ε=0.50: mean ΔL_ηV=-0.010316, worst ΔL_ηV=-0.078329, best ΔL_ηV=0.034031, σ_L=0.041468
+
+
+η_V=-1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+    ε=0.10: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+    ε=0.20: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+    ε=0.50: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+    ε=0.10: mean ΔL_ηV=0.000393, worst ΔL_ηV=-0.015486, best ΔL_ηV=0.016289, σ_L=0.011284
+
+    ε=0.20: mean ΔL_ηV=-0.003066, worst ΔL_ηV=-0.023222, best ΔL_ηV=0.009502, σ_L=0.012207
+
+    ε=0.50: mean ΔL_ηV=-0.012670, worst ΔL_ηV=-0.049259, best ΔL_ηV=0.003170, σ_L=0.021437
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.007576, best ΔL_ηV=0.023501, σ_L=0.011737
+
+    ε=0.10: mean ΔL_ηV=0.003701, worst ΔL_ηV=-0.010362, best ΔL_ηV=0.024171, σ_L=0.012659
+
+    ε=0.20: mean ΔL_ηV=0.002750, worst ΔL_ηV=-0.015774, best ΔL_ηV=0.024708, σ_L=0.014426
+
+    ε=0.50: mean ΔL_ηV=-0.006731, worst ΔL_ηV=-0.059678, best ΔL_ηV=0.026531, σ_L=0.032042
+
+
+η_V=-1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+    ε=0.10: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+    ε=0.20: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+    ε=0.50: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+    ε=0.10: mean ΔL_ηV=0.001604, worst ΔL_ηV=-0.011566, best ΔL_ηV=0.012203, σ_L=0.008532
+
+    ε=0.20: mean ΔL_ηV=-0.000702, worst ΔL_ηV=-0.016723, best ΔL_ηV=0.007678, σ_L=0.009454
+
+    ε=0.50: mean ΔL_ηV=-0.007393, worst ΔL_ηV=-0.035655, best ΔL_ηV=0.004857, σ_L=0.016586
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.006292, best ΔL_ηV=0.017011, σ_L=0.008389
+
+    ε=0.10: mean ΔL_ηV=0.003809, worst ΔL_ηV=-0.008150, best ΔL_ηV=0.017458, σ_L=0.009116
+
+    ε=0.20: mean ΔL_ηV=0.003175, worst ΔL_ηV=-0.011758, best ΔL_ηV=0.017815, σ_L=0.010464
+
+    ε=0.50: mean ΔL_ηV=-0.003145, worst ΔL_ηV=-0.041027, best ΔL_ηV=0.019031, σ_L=0.022647
+
+
+η_V=-0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+    ε=0.10: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+    ε=0.20: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+    ε=0.50: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+    ε=0.10: mean ΔL_ηV=0.002814, worst ΔL_ηV=-0.007645, best ΔL_ηV=0.008117, σ_L=0.006152
+
+    ε=0.20: mean ΔL_ηV=0.001662, worst ΔL_ηV=-0.010224, best ΔL_ηV=0.005954, σ_L=0.006871
+
+    ε=0.50: mean ΔL_ηV=-0.002116, worst ΔL_ηV=-0.022050, best ΔL_ηV=0.006544, σ_L=0.011738
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004026, worst ΔL_ηV=-0.005008, best ΔL_ηV=0.010521, σ_L=0.005653
+
+    ε=0.10: mean ΔL_ηV=0.003917, worst ΔL_ηV=-0.005937, best ΔL_ηV=0.010744, σ_L=0.006099
+
+    ε=0.20: mean ΔL_ηV=0.003600, worst ΔL_ηV=-0.007741, best ΔL_ηV=0.010923, σ_L=0.006901
+
+    ε=0.50: mean ΔL_ηV=0.000440, worst ΔL_ηV=-0.022376, best ΔL_ηV=0.011531, σ_L=0.013347
+
+
+η_V=0.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.10: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.20: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.50: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.10: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.20: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.50: mean ΔL_ηV=0.003161, worst ΔL_ηV=-0.008445, best ΔL_ηV=0.008534, σ_L=0.006904
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.10: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.20: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+    ε=0.50: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.003724, best ΔL_ηV=0.007959, σ_L=0.004745
+
+
+η_V=0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+    ε=0.10: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+    ε=0.20: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+    ε=0.50: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+    ε=0.10: mean ΔL_ηV=0.005236, worst ΔL_ηV=-0.000055, best ΔL_ηV=0.010818, σ_L=0.005175
+
+    ε=0.20: mean ΔL_ηV=0.006389, worst ΔL_ηV=0.002207, best ΔL_ηV=0.010610, σ_L=0.003910
+
+    ε=0.50: mean ΔL_ηV=0.008438, worst ΔL_ηV=0.005159, best ΔL_ηV=0.010787, σ_L=0.002166
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.002459, best ΔL_ηV=0.011004, σ_L=0.006485
+
+    ε=0.10: mean ΔL_ηV=0.004133, worst ΔL_ηV=-0.002682, best ΔL_ηV=0.010730, σ_L=0.006250
+
+    ε=0.20: mean ΔL_ηV=0.004450, worst ΔL_ηV=-0.002861, best ΔL_ηV=0.010372, σ_L=0.005844
+
+    ε=0.50: mean ΔL_ηV=0.007611, worst ΔL_ηV=-0.003469, best ΔL_ηV=0.014927, σ_L=0.006780
+
+
+η_V=1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+    ε=0.10: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+    ε=0.20: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+    ε=0.50: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+    ε=0.10: mean ΔL_ηV=0.006447, worst ΔL_ηV=-0.004141, best ΔL_ηV=0.013801, σ_L=0.007116
+
+    ε=0.20: mean ΔL_ηV=0.008753, worst ΔL_ηV=0.000384, best ΔL_ηV=0.013384, σ_L=0.005052
+
+    ε=0.50: mean ΔL_ηV=0.013715, worst ΔL_ηV=0.011453, best ΔL_ηV=0.018764, σ_L=0.002980
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004025, worst ΔL_ηV=-0.008949, best ΔL_ηV=0.014173, σ_L=0.009517
+
+    ε=0.10: mean ΔL_ηV=0.004241, worst ΔL_ηV=-0.009396, best ΔL_ηV=0.013625, σ_L=0.009318
+
+    ε=0.20: mean ΔL_ηV=0.004875, worst ΔL_ηV=-0.009753, best ΔL_ηV=0.012907, σ_L=0.009085
+
+    ε=0.50: mean ΔL_ηV=0.011196, worst ΔL_ηV=-0.010969, best ΔL_ηV=0.033578, σ_L=0.015765
+
+
+η_V=1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+    ε=0.10: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+    ε=0.20: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+    ε=0.50: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+    ε=0.10: mean ΔL_ηV=0.007658, worst ΔL_ηV=-0.008227, best ΔL_ηV=0.016783, σ_L=0.009701
+
+    ε=0.20: mean ΔL_ηV=0.011116, worst ΔL_ηV=-0.001440, best ΔL_ηV=0.016158, σ_L=0.007296
+
+    ε=0.50: mean ΔL_ηV=0.018992, worst ΔL_ηV=0.013293, best ΔL_ηV=0.032369, σ_L=0.007761
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.015439, best ΔL_ηV=0.017341, σ_L=0.012964
+
+    ε=0.10: mean ΔL_ηV=0.004350, worst ΔL_ηV=-0.016109, best ΔL_ηV=0.016520, σ_L=0.012877
+
+    ε=0.20: mean ΔL_ηV=0.005301, worst ΔL_ηV=-0.016645, best ΔL_ηV=0.015443, σ_L=0.012949
+
+    ε=0.50: mean ΔL_ηV=0.014781, worst ΔL_ηV=-0.018469, best ΔL_ηV=0.052229, σ_L=0.025103
+
+
+η_V=2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+    ε=0.10: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+    ε=0.20: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+    ε=0.50: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+    ε=0.10: mean ΔL_ηV=0.008869, worst ΔL_ηV=-0.012313, best ΔL_ηV=0.019766, σ_L=0.012537
+
+    ε=0.20: mean ΔL_ηV=0.013480, worst ΔL_ηV=-0.003264, best ΔL_ηV=0.022273, σ_L=0.009920
+
+    ε=0.50: mean ΔL_ηV=0.024269, worst ΔL_ηV=0.014980, best ΔL_ηV=0.045973, σ_L=0.012599
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004024, worst ΔL_ηV=-0.021929, best ΔL_ηV=0.020510, σ_L=0.016569
+
+    ε=0.10: mean ΔL_ηV=0.004458, worst ΔL_ηV=-0.022823, best ΔL_ηV=0.019414, σ_L=0.016615
+
+    ε=0.20: mean ΔL_ηV=0.005726, worst ΔL_ηV=-0.023538, best ΔL_ηV=0.017979, σ_L=0.017017
+
+    ε=0.50: mean ΔL_ηV=0.018367, worst ΔL_ηV=-0.025969, best ΔL_ηV=0.070880, σ_L=0.034510
+
+
+====================================
+SIM10  β=0.81
+====================================
+
+η_V=-2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+    ε=0.10: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+    ε=0.20: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+    ε=0.50: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+    ε=0.10: mean ΔL_ηV=-0.096203, worst ΔL_ηV=-0.254262, best ΔL_ηV=-0.029673, σ_L=0.092494
+
+    ε=0.20: mean ΔL_ηV=-0.103302, worst ΔL_ηV=-0.267701, best ΔL_ηV=-0.031825, σ_L=0.096587
+
+    ε=0.50: mean ΔL_ηV=-0.123922, worst ΔL_ηV=-0.308849, best ΔL_ηV=-0.039872, σ_L=0.109764
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.088816, worst ΔL_ηV=-0.241211, best ΔL_ηV=-0.027422, σ_L=0.088815
+
+    ε=0.10: mean ΔL_ηV=-0.069270, worst ΔL_ηV=-0.223274, best ΔL_ηV=-0.000762, σ_L=0.089570
+
+    ε=0.20: mean ΔL_ηV=-0.062882, worst ΔL_ηV=-0.224596, best ΔL_ηV=0.015407, σ_L=0.094896
+
+    ε=0.50: mean ΔL_ηV=-0.058772, worst ΔL_ηV=-0.223282, best ΔL_ηV=0.016344, σ_L=0.096890
+
+
+η_V=-1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+    ε=0.10: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+    ε=0.20: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+    ε=0.50: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+    ε=0.10: mean ΔL_ηV=-0.076911, worst ΔL_ηV=-0.191195, best ΔL_ηV=-0.026121, σ_L=0.067359
+
+    ε=0.20: mean ΔL_ηV=-0.082235, worst ΔL_ηV=-0.201274, best ΔL_ηV=-0.027734, σ_L=0.070488
+
+    ε=0.50: mean ΔL_ηV=-0.097700, worst ΔL_ηV=-0.232135, best ΔL_ηV=-0.033769, σ_L=0.080495
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.071293, worst ΔL_ηV=-0.181394, best ΔL_ηV=-0.024379, σ_L=0.064560
+
+    ε=0.10: mean ΔL_ηV=-0.053666, worst ΔL_ηV=-0.163695, best ΔL_ηV=-0.003651, σ_L=0.064072
+
+    ε=0.20: mean ΔL_ηV=-0.048875, worst ΔL_ηV=-0.164687, best ΔL_ηV=0.008476, σ_L=0.068098
+
+    ε=0.50: mean ΔL_ηV=-0.045557, worst ΔL_ηV=-0.162830, best ΔL_ηV=0.009250, σ_L=0.069231
+
+
+η_V=-1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+    ε=0.10: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+    ε=0.20: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+    ε=0.50: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+    ε=0.10: mean ΔL_ηV=-0.057619, worst ΔL_ηV=-0.128128, best ΔL_ηV=-0.022568, σ_L=0.042447
+
+    ε=0.20: mean ΔL_ηV=-0.061169, worst ΔL_ηV=-0.134847, best ΔL_ηV=-0.023644, σ_L=0.044607
+
+    ε=0.50: mean ΔL_ηV=-0.071479, worst ΔL_ηV=-0.155421, best ΔL_ηV=-0.027667, σ_L=0.051428
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.053769, worst ΔL_ηV=-0.121577, best ΔL_ηV=-0.021336, σ_L=0.040521
+
+    ε=0.10: mean ΔL_ηV=-0.038061, worst ΔL_ηV=-0.104117, best ΔL_ηV=-0.006540, σ_L=0.038590
+
+    ε=0.20: mean ΔL_ηV=-0.034867, worst ΔL_ηV=-0.104778, best ΔL_ηV=0.001545, σ_L=0.041321
+
+    ε=0.50: mean ΔL_ηV=-0.032341, worst ΔL_ηV=-0.102378, best ΔL_ηV=0.002155, σ_L=0.041596
+
+
+η_V=-0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+    ε=0.10: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+    ε=0.20: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+    ε=0.50: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+    ε=0.10: mean ΔL_ηV=-0.038327, worst ΔL_ηV=-0.065061, best ΔL_ηV=-0.019015, σ_L=0.018667
+
+    ε=0.20: mean ΔL_ηV=-0.040102, worst ΔL_ηV=-0.068420, best ΔL_ηV=-0.019553, σ_L=0.019819
+
+    ε=0.50: mean ΔL_ηV=-0.045257, worst ΔL_ηV=-0.078708, best ΔL_ηV=-0.021564, σ_L=0.023328
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.036245, worst ΔL_ηV=-0.061760, best ΔL_ηV=-0.018293, σ_L=0.017603
+
+    ε=0.10: mean ΔL_ηV=-0.022456, worst ΔL_ηV=-0.044538, best ΔL_ηV=-0.009429, σ_L=0.013214
+
+    ε=0.20: mean ΔL_ηV=-0.020859, worst ΔL_ηV=-0.044869, best ΔL_ηV=-0.005386, σ_L=0.014678
+
+    ε=0.50: mean ΔL_ηV=-0.019125, worst ΔL_ηV=-0.041926, best ΔL_ηV=-0.004939, σ_L=0.014127
+
+
+η_V=0.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+    ε=0.10: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+    ε=0.20: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+    ε=0.50: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+    ε=0.10: mean ΔL_ηV=-0.019036, worst ΔL_ηV=-0.039202, best ΔL_ηV=-0.001994, σ_L=0.013324
+
+    ε=0.20: mean ΔL_ηV=-0.019036, worst ΔL_ηV=-0.039202, best ΔL_ηV=-0.001994, σ_L=0.013324
+
+    ε=0.50: mean ΔL_ηV=-0.019036, worst ΔL_ηV=-0.039202, best ΔL_ηV=-0.001994, σ_L=0.013324
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.018722, worst ΔL_ηV=-0.038558, best ΔL_ηV=-0.001943, σ_L=0.013108
+
+    ε=0.10: mean ΔL_ηV=-0.006852, worst ΔL_ηV=-0.015968, best ΔL_ηV=0.015040, σ_L=0.012705
+
+    ε=0.20: mean ΔL_ηV=-0.006852, worst ΔL_ηV=-0.015968, best ΔL_ηV=0.015040, σ_L=0.012705
+
+    ε=0.50: mean ΔL_ηV=-0.005909, worst ΔL_ηV=-0.015968, best ΔL_ηV=0.018526, σ_L=0.014176
+
+
+η_V=0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+    ε=0.10: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+    ε=0.20: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+    ε=0.50: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+    ε=0.10: mean ΔL_ηV=0.000256, worst ΔL_ηV=-0.031982, best ΔL_ηV=0.061073, σ_L=0.035901
+
+    ε=0.20: mean ΔL_ηV=0.002031, worst ΔL_ηV=-0.029600, best ΔL_ηV=0.064433, σ_L=0.036660
+
+    ε=0.50: mean ΔL_ηV=0.007186, worst ΔL_ηV=-0.023045, best ΔL_ηV=0.074720, σ_L=0.039305
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.001198, worst ΔL_ηV=-0.033753, best ΔL_ηV=0.057875, σ_L=0.035040
+
+    ε=0.10: mean ΔL_ηV=0.008753, worst ΔL_ηV=-0.015206, best ΔL_ηV=0.074619, σ_L=0.038075
+
+    ε=0.20: mean ΔL_ηV=0.007156, worst ΔL_ηV=-0.019249, best ΔL_ηV=0.074950, σ_L=0.039311
+
+    ε=0.50: mean ΔL_ηV=0.007307, worst ΔL_ηV=-0.021593, best ΔL_ηV=0.078978, σ_L=0.041646
+
+
+η_V=1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+    ε=0.10: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+    ε=0.20: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+    ε=0.50: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+    ε=0.10: mean ΔL_ηV=0.019548, worst ΔL_ηV=-0.024762, best ΔL_ηV=0.124141, σ_L=0.060684
+
+    ε=0.20: mean ΔL_ηV=0.023098, worst ΔL_ηV=-0.019998, best ΔL_ηV=0.130860, σ_L=0.062387
+
+    ε=0.50: mean ΔL_ηV=0.033408, worst ΔL_ηV=-0.007659, best ΔL_ηV=0.151434, σ_L=0.068163
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.016326, worst ΔL_ηV=-0.028947, best ΔL_ηV=0.117692, σ_L=0.058972
+
+    ε=0.10: mean ΔL_ηV=0.024357, worst ΔL_ηV=-0.018095, best ΔL_ηV=0.134198, σ_L=0.063556
+
+    ε=0.20: mean ΔL_ηV=0.021163, worst ΔL_ηV=-0.026180, best ΔL_ηV=0.134859, σ_L=0.066085
+
+    ε=0.50: mean ΔL_ηV=0.020522, worst ΔL_ηV=-0.027219, best ΔL_ηV=0.139430, σ_L=0.069282
+
+
+η_V=1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+    ε=0.10: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+    ε=0.20: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+    ε=0.50: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+    ε=0.10: mean ΔL_ηV=0.038840, worst ΔL_ηV=-0.017543, best ΔL_ηV=0.187208, σ_L=0.085781
+
+    ε=0.20: mean ΔL_ηV=0.044164, worst ΔL_ηV=-0.010397, best ΔL_ηV=0.197287, σ_L=0.088442
+
+    ε=0.50: mean ΔL_ηV=0.059629, worst ΔL_ηV=-0.001746, best ΔL_ηV=0.228148, σ_L=0.097373
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.033849, worst ΔL_ηV=-0.024141, best ΔL_ηV=0.177509, σ_L=0.083197
+
+    ε=0.10: mean ΔL_ηV=0.039962, worst ΔL_ηV=-0.020984, best ΔL_ηV=0.193776, σ_L=0.089053
+
+    ε=0.20: mean ΔL_ηV=0.035171, worst ΔL_ηV=-0.033111, best ΔL_ηV=0.194768, σ_L=0.092883
+
+    ε=0.50: mean ΔL_ηV=0.033738, worst ΔL_ηV=-0.033315, best ΔL_ηV=0.199882, σ_L=0.096941
+
+
+η_V=2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+    ε=0.10: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+    ε=0.20: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+    ε=0.50: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+    ε=0.10: mean ΔL_ηV=0.058132, worst ΔL_ηV=-0.010323, best ΔL_ηV=0.250275, σ_L=0.110980
+
+    ε=0.20: mean ΔL_ηV=0.065231, worst ΔL_ηV=-0.002898, best ΔL_ηV=0.263713, σ_L=0.114602
+
+    ε=0.50: mean ΔL_ηV=0.085851, worst ΔL_ηV=0.004167, best ΔL_ηV=0.304862, σ_L=0.126692
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.051373, worst ΔL_ηV=-0.019336, best ΔL_ηV=0.237326, σ_L=0.107516
+
+    ε=0.10: mean ΔL_ηV=0.055567, worst ΔL_ηV=-0.023873, best ΔL_ηV=0.253355, σ_L=0.114556
+
+    ε=0.20: mean ΔL_ηV=0.049179, worst ΔL_ηV=-0.040042, best ΔL_ηV=0.254677, σ_L=0.119687
+
+    ε=0.50: mean ΔL_ηV=0.046954, worst ΔL_ηV=-0.040410, best ΔL_ηV=0.260334, σ_L=0.124608
+
+
+====================================
+SIM10  β=1.38
+====================================
+
+η_V=-2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+    ε=0.10: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+    ε=0.20: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+    ε=0.50: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+    ε=0.10: mean ΔL_ηV=0.021960, worst ΔL_ηV=-0.042701, best ΔL_ηV=0.057305, σ_L=0.040192
+
+    ε=0.20: mean ΔL_ηV=0.012745, worst ΔL_ηV=-0.044604, best ΔL_ηV=0.049606, σ_L=0.036404
+
+    ε=0.50: mean ΔL_ηV=-0.017929, worst ΔL_ηV=-0.050246, best ΔL_ηV=0.025707, σ_L=0.028079
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.030937, worst ΔL_ηV=-0.040851, best ΔL_ηV=0.077209, σ_L=0.044717
+
+    ε=0.10: mean ΔL_ηV=0.022179, worst ΔL_ηV=-0.046966, best ΔL_ηV=0.057046, σ_L=0.040915
+
+    ε=0.20: mean ΔL_ηV=0.014419, worst ΔL_ηV=-0.051675, best ΔL_ηV=0.056910, σ_L=0.040441
+
+    ε=0.50: mean ΔL_ηV=0.004904, worst ΔL_ηV=-0.037463, best ΔL_ηV=0.058315, σ_L=0.043013
+
+
+η_V=-1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+    ε=0.10: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+    ε=0.20: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+    ε=0.50: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+    ε=0.10: mean ΔL_ηV=0.013668, worst ΔL_ηV=-0.034492, best ΔL_ηV=0.040269, σ_L=0.029510
+
+    ε=0.20: mean ΔL_ηV=0.006757, worst ΔL_ηV=-0.035920, best ΔL_ηV=0.031762, σ_L=0.026491
+
+    ε=0.50: mean ΔL_ηV=-0.016248, worst ΔL_ηV=-0.040151, best ΔL_ηV=0.013838, σ_L=0.019689
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.020401, worst ΔL_ηV=-0.033105, best ΔL_ηV=0.055197, σ_L=0.033065
+
+    ε=0.10: mean ΔL_ηV=0.013832, worst ΔL_ηV=-0.037691, best ΔL_ηV=0.037342, σ_L=0.030171
+
+    ε=0.20: mean ΔL_ηV=0.008012, worst ΔL_ηV=-0.041223, best ΔL_ηV=0.037240, σ_L=0.029801
+
+    ε=0.50: mean ΔL_ηV=0.000876, worst ΔL_ηV=-0.030807, best ΔL_ηV=0.038293, σ_L=0.031779
+
+
+η_V=-1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+    ε=0.10: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+    ε=0.20: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+    ε=0.50: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+    ε=0.10: mean ΔL_ηV=0.005376, worst ΔL_ηV=-0.026284, best ΔL_ηV=0.023233, σ_L=0.019011
+
+    ε=0.20: mean ΔL_ηV=0.000769, worst ΔL_ηV=-0.027236, best ΔL_ηV=0.013918, σ_L=0.016764
+
+    ε=0.50: mean ΔL_ηV=-0.014568, worst ΔL_ηV=-0.030056, best ΔL_ηV=0.001969, σ_L=0.011430
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.009865, worst ΔL_ηV=-0.025359, best ΔL_ηV=0.033185, σ_L=0.021585
+
+    ε=0.10: mean ΔL_ηV=0.005486, worst ΔL_ηV=-0.028417, best ΔL_ηV=0.017980, σ_L=0.019614
+
+    ε=0.20: mean ΔL_ηV=0.001606, worst ΔL_ηV=-0.030771, best ΔL_ηV=0.017570, σ_L=0.019349
+
+    ε=0.50: mean ΔL_ηV=-0.003152, worst ΔL_ηV=-0.024151, best ΔL_ηV=0.018272, σ_L=0.020724
+
+
+η_V=-0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+    ε=0.10: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+    ε=0.20: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+    ε=0.50: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+    ε=0.10: mean ΔL_ηV=-0.002915, worst ΔL_ηV=-0.018076, best ΔL_ηV=0.006197, σ_L=0.009334
+
+    ε=0.20: mean ΔL_ηV=-0.005219, worst ΔL_ηV=-0.018552, best ΔL_ηV=0.001341, σ_L=0.007945
+
+    ε=0.50: mean ΔL_ηV=-0.012887, worst ΔL_ηV=-0.019962, best ΔL_ηV=-0.009761, σ_L=0.004173
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.000671, worst ΔL_ηV=-0.017613, best ΔL_ηV=0.011173, σ_L=0.010838
+
+    ε=0.10: mean ΔL_ηV=-0.002860, worst ΔL_ηV=-0.019142, best ΔL_ηV=0.006196, σ_L=0.009863
+
+    ε=0.20: mean ΔL_ηV=-0.004800, worst ΔL_ηV=-0.020319, best ΔL_ηV=0.006464, σ_L=0.009714
+
+    ε=0.50: mean ΔL_ηV=-0.007179, worst ΔL_ηV=-0.017495, best ΔL_ηV=0.007254, σ_L=0.010433
+
+
+η_V=0.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.10: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.20: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.50: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.10: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.20: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.50: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.10: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.20: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+    ε=0.50: mean ΔL_ηV=-0.011207, worst ΔL_ηV=-0.021770, best ΔL_ηV=-0.002351, σ_L=0.006927
+
+
+η_V=0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+    ε=0.10: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+    ε=0.20: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+    ε=0.50: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+    ε=0.10: mean ΔL_ηV=-0.019499, worst ΔL_ηV=-0.040703, best ΔL_ηV=-0.001659, σ_L=0.015620
+
+    ε=0.20: mean ΔL_ηV=-0.017195, worst ΔL_ηV=-0.039614, best ΔL_ηV=-0.001183, σ_L=0.015350
+
+    ε=0.50: mean ΔL_ηV=-0.009526, worst ΔL_ηV=-0.033639, best ΔL_ηV=0.005059, σ_L=0.014911
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.021743, worst ΔL_ηV=-0.041575, best ΔL_ηV=-0.002122, σ_L=0.016046
+
+    ε=0.10: mean ΔL_ηV=-0.019553, worst ΔL_ηV=-0.041474, best ΔL_ηV=-0.000593, σ_L=0.015390
+
+    ε=0.20: mean ΔL_ηV=-0.017613, worst ΔL_ηV=-0.041440, best ΔL_ηV=0.000584, σ_L=0.015339
+
+    ε=0.50: mean ΔL_ηV=-0.015235, worst ΔL_ηV=-0.041791, best ΔL_ηV=-0.003008, σ_L=0.015713
+
+
+η_V=1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+    ε=0.10: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+    ε=0.20: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+    ε=0.50: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+    ε=0.10: mean ΔL_ηV=-0.027790, worst ΔL_ηV=-0.059636, best ΔL_ηV=0.006549, σ_L=0.025983
+
+    ε=0.20: mean ΔL_ηV=-0.023183, worst ΔL_ηV=-0.057457, best ΔL_ηV=0.007501, σ_L=0.025021
+
+    ε=0.50: mean ΔL_ηV=-0.007846, worst ΔL_ηV=-0.045508, best ΔL_ηV=0.012469, σ_L=0.023248
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.032279, worst ΔL_ηV=-0.061380, best ΔL_ηV=0.005624, σ_L=0.027311
+
+    ε=0.10: mean ΔL_ηV=-0.027900, worst ΔL_ηV=-0.061178, best ΔL_ηV=0.008682, σ_L=0.025765
+
+    ε=0.20: mean ΔL_ηV=-0.024020, worst ΔL_ηV=-0.061109, best ΔL_ηV=0.011036, σ_L=0.025617
+
+    ε=0.50: mean ΔL_ηV=-0.019262, worst ΔL_ηV=-0.061812, best ΔL_ηV=0.003851, σ_L=0.026563
+
+
+η_V=1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+    ε=0.10: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+    ε=0.20: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+    ε=0.50: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+    ε=0.10: mean ΔL_ηV=-0.036082, worst ΔL_ηV=-0.078569, best ΔL_ηV=0.014758, σ_L=0.036625
+
+    ε=0.20: mean ΔL_ηV=-0.029171, worst ΔL_ηV=-0.075301, best ΔL_ηV=0.016185, σ_L=0.034918
+
+    ε=0.50: mean ΔL_ηV=-0.006165, worst ΔL_ηV=-0.057377, best ΔL_ηV=0.020416, σ_L=0.031661
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.042815, worst ΔL_ηV=-0.081185, best ΔL_ηV=0.013370, σ_L=0.038901
+
+    ε=0.10: mean ΔL_ηV=-0.036246, worst ΔL_ηV=-0.080882, best ΔL_ηV=0.017956, σ_L=0.036456
+
+    ε=0.20: mean ΔL_ηV=-0.030426, worst ΔL_ηV=-0.080779, best ΔL_ηV=0.021488, σ_L=0.036206
+
+    ε=0.50: mean ΔL_ηV=-0.023290, worst ΔL_ηV=-0.081833, best ΔL_ηV=0.010710, σ_L=0.037737
+
+
+η_V=2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+    ε=0.10: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+    ε=0.20: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+    ε=0.50: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+    ε=0.10: mean ΔL_ηV=-0.044373, worst ΔL_ηV=-0.097502, best ΔL_ηV=0.022966, σ_L=0.047358
+
+    ε=0.20: mean ΔL_ηV=-0.035159, worst ΔL_ηV=-0.093145, best ΔL_ηV=0.024869, σ_L=0.044892
+
+    ε=0.50: mean ΔL_ηV=-0.004485, worst ΔL_ηV=-0.069246, best ΔL_ηV=0.030511, σ_L=0.040101
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.053351, worst ΔL_ηV=-0.100991, best ΔL_ηV=0.021116, σ_L=0.050593
+
+    ε=0.10: mean ΔL_ηV=-0.044593, worst ΔL_ηV=-0.100586, best ΔL_ηV=0.027231, σ_L=0.047248
+
+    ε=0.20: mean ΔL_ηV=-0.036833, worst ΔL_ηV=-0.100449, best ΔL_ηV=0.031940, σ_L=0.046895
+
+    ε=0.50: mean ΔL_ηV=-0.027317, worst ΔL_ηV=-0.101854, best ΔL_ηV=0.017570, σ_L=0.049013
+
+
+====================================
+SIM10  β=1.94
+====================================
+
+η_V=-2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+    ε=0.10: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+    ε=0.20: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+    ε=0.50: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+    ε=0.10: mean ΔL_ηV=-0.038707, worst ΔL_ηV=-0.262597, best ΔL_ηV=0.070676, σ_L=0.132593
+
+    ε=0.20: mean ΔL_ηV=-0.043162, worst ΔL_ηV=-0.260611, best ΔL_ηV=0.063726, σ_L=0.128268
+
+    ε=0.50: mean ΔL_ηV=-0.053032, worst ΔL_ηV=-0.255009, best ΔL_ηV=0.054771, σ_L=0.119284
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.035289, worst ΔL_ηV=-0.265247, best ΔL_ηV=0.073482, σ_L=0.136502
+
+    ε=0.10: mean ΔL_ηV=-0.037492, worst ΔL_ηV=-0.257660, best ΔL_ηV=0.079404, σ_L=0.130669
+
+    ε=0.20: mean ΔL_ηV=-0.036995, worst ΔL_ηV=-0.252198, best ΔL_ηV=0.085697, σ_L=0.128133
+
+    ε=0.50: mean ΔL_ηV=-0.032958, worst ΔL_ηV=-0.236402, best ΔL_ηV=0.102183, σ_L=0.125318
+
+
+η_V=-1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+    ε=0.10: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+    ε=0.20: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+    ε=0.50: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+    ε=0.10: mean ΔL_ηV=-0.023948, worst ΔL_ηV=-0.191972, best ΔL_ηV=0.056919, σ_L=0.099397
+
+    ε=0.20: mean ΔL_ηV=-0.027548, worst ΔL_ηV=-0.190587, best ΔL_ηV=0.050681, σ_L=0.095981
+
+    ε=0.50: mean ΔL_ηV=-0.034951, worst ΔL_ηV=-0.186386, best ΔL_ηV=0.043965, σ_L=0.089197
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.021385, worst ΔL_ηV=-0.193960, best ΔL_ηV=0.059024, σ_L=0.102342
+
+    ε=0.10: mean ΔL_ηV=-0.023038, worst ΔL_ηV=-0.188270, best ΔL_ηV=0.063465, σ_L=0.097920
+
+    ε=0.20: mean ΔL_ηV=-0.022665, worst ΔL_ηV=-0.184174, best ΔL_ηV=0.068185, σ_L=0.095983
+
+    ε=0.50: mean ΔL_ηV=-0.019896, worst ΔL_ηV=-0.172430, best ΔL_ηV=0.079524, σ_L=0.093589
+
+
+η_V=-1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+    ε=0.10: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+    ε=0.20: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+    ε=0.50: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+    ε=0.10: mean ΔL_ηV=-0.009190, worst ΔL_ηV=-0.121348, best ΔL_ηV=0.043162, σ_L=0.066212
+
+    ε=0.20: mean ΔL_ηV=-0.011935, worst ΔL_ηV=-0.120563, best ΔL_ηV=0.037636, σ_L=0.063722
+
+    ε=0.50: mean ΔL_ηV=-0.016871, worst ΔL_ηV=-0.117762, best ΔL_ηV=0.033159, σ_L=0.059140
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.007481, worst ΔL_ηV=-0.122673, best ΔL_ηV=0.044565, σ_L=0.068192
+
+    ε=0.10: mean ΔL_ηV=-0.008583, worst ΔL_ηV=-0.118879, best ΔL_ηV=0.047526, σ_L=0.065181
+
+    ε=0.20: mean ΔL_ηV=-0.008334, worst ΔL_ηV=-0.116149, best ΔL_ηV=0.050672, σ_L=0.063845
+
+    ε=0.50: mean ΔL_ηV=-0.006833, worst ΔL_ηV=-0.108459, best ΔL_ηV=0.056865, σ_L=0.061885
+
+
+η_V=-0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+    ε=0.10: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+    ε=0.20: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+    ε=0.50: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+    ε=0.10: mean ΔL_ηV=0.005568, worst ΔL_ηV=-0.050723, best ΔL_ηV=0.029405, σ_L=0.033071
+
+    ε=0.20: mean ΔL_ηV=0.003678, worst ΔL_ηV=-0.050539, best ΔL_ηV=0.025656, σ_L=0.031576
+
+    ε=0.50: mean ΔL_ηV=0.001210, worst ΔL_ηV=-0.049139, best ΔL_ηV=0.022353, σ_L=0.029203
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.006423, worst ΔL_ηV=-0.051386, best ΔL_ηV=0.032498, σ_L=0.034086
+
+    ε=0.10: mean ΔL_ηV=0.005872, worst ΔL_ηV=-0.049489, best ΔL_ηV=0.031587, σ_L=0.032487
+
+    ε=0.20: mean ΔL_ηV=0.005996, worst ΔL_ηV=-0.048124, best ΔL_ηV=0.033160, σ_L=0.031752
+
+    ε=0.50: mean ΔL_ηV=0.006229, worst ΔL_ηV=-0.044487, best ΔL_ηV=0.034206, σ_L=0.030292
+
+
+η_V=0.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.10: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.20: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.50: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.10: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.20: mean ΔL_ηV=0.019291, worst ΔL_ηV=0.011547, best ΔL_ηV=0.023382, σ_L=0.004710
+
+    ε=0.50: mean ΔL_ηV=0.019291, worst ΔL_ηV=0.011547, best ΔL_ηV=0.023382, σ_L=0.004710
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.10: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.20: mean ΔL_ηV=0.020326, worst ΔL_ηV=0.015648, best ΔL_ηV=0.023168, σ_L=0.002969
+
+    ε=0.50: mean ΔL_ηV=0.019291, worst ΔL_ηV=0.011547, best ΔL_ηV=0.023382, σ_L=0.004710
+
+
+η_V=0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+    ε=0.10: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+    ε=0.20: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+    ε=0.50: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+    ε=0.10: mean ΔL_ηV=0.035085, worst ΔL_ηV=0.001890, best ΔL_ηV=0.090525, σ_L=0.033606
+
+    ε=0.20: mean ΔL_ηV=0.034904, worst ΔL_ηV=-0.001498, best ΔL_ηV=0.089508, σ_L=0.033702
+
+    ε=0.50: mean ΔL_ηV=0.037372, worst ΔL_ηV=0.000740, best ΔL_ηV=0.088108, σ_L=0.031710
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.034230, worst ΔL_ηV=0.001189, best ΔL_ηV=0.091188, σ_L=0.034511
+
+    ε=0.10: mean ΔL_ηV=0.034781, worst ΔL_ηV=-0.000291, best ΔL_ηV=0.089291, σ_L=0.033298
+
+    ε=0.20: mean ΔL_ηV=0.034657, worst ΔL_ηV=-0.001865, best ΔL_ηV=0.087926, σ_L=0.032834
+
+    ε=0.50: mean ΔL_ηV=0.032353, worst ΔL_ηV=-0.011112, best ΔL_ηV=0.083456, σ_L=0.033817
+
+
+η_V=1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+    ε=0.10: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+    ε=0.20: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+    ε=0.50: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+    ε=0.10: mean ΔL_ηV=0.049843, worst ΔL_ηV=-0.011867, best ΔL_ηV=0.161150, σ_L=0.066749
+
+    ε=0.20: mean ΔL_ηV=0.050517, worst ΔL_ηV=-0.014543, best ΔL_ηV=0.159532, σ_L=0.065864
+
+    ε=0.50: mean ΔL_ηV=0.055453, worst ΔL_ηV=-0.010066, best ΔL_ηV=0.156731, σ_L=0.061667
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.048134, worst ΔL_ηV=-0.013270, best ΔL_ηV=0.162475, σ_L=0.068619
+
+    ε=0.10: mean ΔL_ηV=0.049235, worst ΔL_ηV=-0.016231, best ΔL_ηV=0.158681, σ_L=0.065994
+
+    ε=0.20: mean ΔL_ηV=0.048987, worst ΔL_ηV=-0.019377, best ΔL_ηV=0.155951, σ_L=0.064930
+
+    ε=0.50: mean ΔL_ηV=0.045416, worst ΔL_ηV=-0.033771, best ΔL_ηV=0.147427, σ_L=0.065435
+
+
+η_V=1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+    ε=0.10: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+    ε=0.20: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+    ε=0.50: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+    ε=0.10: mean ΔL_ηV=0.064601, worst ΔL_ηV=-0.025624, best ΔL_ηV=0.231774, σ_L=0.099934
+
+    ε=0.20: mean ΔL_ηV=0.066131, worst ΔL_ηV=-0.027588, best ΔL_ηV=0.229556, σ_L=0.098126
+
+    ε=0.50: mean ΔL_ηV=0.073534, worst ΔL_ηV=-0.020872, best ΔL_ηV=0.225354, σ_L=0.091729
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.062037, worst ΔL_ηV=-0.027729, best ΔL_ηV=0.233762, σ_L=0.102768
+
+    ε=0.10: mean ΔL_ηV=0.063690, worst ΔL_ηV=-0.032170, best ΔL_ηV=0.228072, σ_L=0.098733
+
+    ε=0.20: mean ΔL_ηV=0.063317, worst ΔL_ηV=-0.036890, best ΔL_ηV=0.223976, σ_L=0.097069
+
+    ε=0.50: mean ΔL_ηV=0.058478, worst ΔL_ηV=-0.056430, best ΔL_ηV=0.211399, σ_L=0.097143
+
+
+η_V=2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+    ε=0.10: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+    ε=0.20: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+    ε=0.50: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+    ε=0.10: mean ΔL_ηV=0.079359, worst ΔL_ηV=-0.039381, best ΔL_ηV=0.302399, σ_L=0.133130
+
+    ε=0.20: mean ΔL_ηV=0.081744, worst ΔL_ηV=-0.040633, best ΔL_ηV=0.299580, σ_L=0.130414
+
+    ε=0.50: mean ΔL_ηV=0.091614, worst ΔL_ηV=-0.031678, best ΔL_ηV=0.293978, σ_L=0.121817
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.075941, worst ΔL_ηV=-0.042187, best ΔL_ηV=0.305049, σ_L=0.136928
+
+    ε=0.10: mean ΔL_ηV=0.078145, worst ΔL_ηV=-0.048109, best ΔL_ηV=0.297462, σ_L=0.131483
+
+    ε=0.20: mean ΔL_ηV=0.077647, worst ΔL_ηV=-0.054402, best ΔL_ηV=0.292000, σ_L=0.129219
+
+    ε=0.50: mean ΔL_ηV=0.071540, worst ΔL_ηV=-0.079089, best ΔL_ηV=0.275370, σ_L=0.128874
+
+
+====================================
+SIM10  β=2.50
+====================================
+
+η_V=-2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+    ε=0.10: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+    ε=0.20: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+    ε=0.50: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+    ε=0.10: mean ΔL_ηV=-0.006509, worst ΔL_ηV=-0.228241, best ΔL_ηV=0.191140, σ_L=0.148769
+
+    ε=0.20: mean ΔL_ηV=-0.009470, worst ΔL_ηV=-0.231743, best ΔL_ηV=0.182091, σ_L=0.147118
+
+    ε=0.50: mean ΔL_ηV=-0.018087, worst ΔL_ηV=-0.242356, best ΔL_ηV=0.154173, σ_L=0.142593
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.003527, worst ΔL_ηV=-0.224802, best ΔL_ηV=0.200003, σ_L=0.150468
+
+    ε=0.10: mean ΔL_ηV=-0.004246, worst ΔL_ηV=-0.225623, best ΔL_ηV=0.202722, σ_L=0.151624
+
+    ε=0.20: mean ΔL_ηV=-0.004382, worst ΔL_ηV=-0.229196, best ΔL_ηV=0.205402, σ_L=0.153845
+
+    ε=0.50: mean ΔL_ηV=0.002517, worst ΔL_ηV=-0.215183, best ΔL_ηV=0.209217, σ_L=0.150198
+
+
+η_V=-1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+    ε=0.10: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+    ε=0.20: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+    ε=0.50: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+    ε=0.10: mean ΔL_ηV=-0.004207, worst ΔL_ηV=-0.168799, best ΔL_ηV=0.142400, σ_L=0.110404
+
+    ε=0.20: mean ΔL_ηV=-0.006428, worst ΔL_ηV=-0.171426, best ΔL_ηV=0.135613, σ_L=0.109166
+
+    ε=0.50: mean ΔL_ηV=-0.012891, worst ΔL_ηV=-0.179385, best ΔL_ηV=0.114675, σ_L=0.105774
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.001971, worst ΔL_ηV=-0.166220, best ΔL_ηV=0.149047, σ_L=0.111679
+
+    ε=0.10: mean ΔL_ηV=-0.002510, worst ΔL_ηV=-0.166836, best ΔL_ηV=0.151087, σ_L=0.112545
+
+    ε=0.20: mean ΔL_ηV=-0.002612, worst ΔL_ηV=-0.169515, best ΔL_ηV=0.153096, σ_L=0.114210
+
+    ε=0.50: mean ΔL_ηV=0.002562, worst ΔL_ηV=-0.159006, best ΔL_ηV=0.155958, σ_L=0.111483
+
+
+η_V=-1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+    ε=0.10: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+    ε=0.20: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+    ε=0.50: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+    ε=0.10: mean ΔL_ηV=-0.001906, worst ΔL_ηV=-0.109357, best ΔL_ηV=0.093660, σ_L=0.072044
+
+    ε=0.20: mean ΔL_ηV=-0.003386, worst ΔL_ηV=-0.111108, best ΔL_ηV=0.089136, σ_L=0.071218
+
+    ε=0.50: mean ΔL_ηV=-0.007694, worst ΔL_ηV=-0.116415, best ΔL_ηV=0.075177, σ_L=0.068960
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=-0.000414, worst ΔL_ηV=-0.107638, best ΔL_ηV=0.098092, σ_L=0.072895
+
+    ε=0.10: mean ΔL_ηV=-0.000774, worst ΔL_ηV=-0.108048, best ΔL_ηV=0.099451, σ_L=0.073470
+
+    ε=0.20: mean ΔL_ηV=-0.000842, worst ΔL_ηV=-0.109835, best ΔL_ηV=0.100791, σ_L=0.074579
+
+    ε=0.50: mean ΔL_ηV=0.002608, worst ΔL_ηV=-0.102828, best ΔL_ηV=0.102699, σ_L=0.072772
+
+
+η_V=-0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+    ε=0.10: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+    ε=0.20: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+    ε=0.50: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+    ε=0.10: mean ΔL_ηV=0.000396, worst ΔL_ηV=-0.049915, best ΔL_ηV=0.044921, σ_L=0.033704
+
+    ε=0.20: mean ΔL_ηV=-0.000344, worst ΔL_ηV=-0.050791, best ΔL_ηV=0.042658, σ_L=0.033290
+
+    ε=0.50: mean ΔL_ηV=-0.002498, worst ΔL_ηV=-0.053444, best ΔL_ηV=0.035679, σ_L=0.032168
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.001142, worst ΔL_ηV=-0.049056, best ΔL_ηV=0.047136, σ_L=0.034132
+
+    ε=0.10: mean ΔL_ηV=0.000962, worst ΔL_ηV=-0.049261, best ΔL_ηV=0.047816, σ_L=0.034416
+
+    ε=0.20: mean ΔL_ηV=0.000928, worst ΔL_ηV=-0.050154, best ΔL_ηV=0.048486, σ_L=0.034968
+
+    ε=0.50: mean ΔL_ηV=0.002653, worst ΔL_ηV=-0.046651, best ΔL_ηV=0.049440, σ_L=0.034083
+
+
+η_V=0.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.10: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.20: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.50: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.10: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.20: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.50: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.10: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.20: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+    ε=0.50: mean ΔL_ηV=0.002698, worst ΔL_ηV=-0.003819, best ΔL_ηV=0.009526, σ_L=0.005107
+
+
+η_V=0.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+    ε=0.10: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+    ε=0.20: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+    ε=0.50: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+    ε=0.10: mean ΔL_ηV=0.005000, worst ΔL_ηV=-0.052559, best ΔL_ηV=0.068968, σ_L=0.043135
+
+    ε=0.20: mean ΔL_ηV=0.005740, worst ΔL_ηV=-0.050297, best ΔL_ηV=0.069844, σ_L=0.042725
+
+    ε=0.50: mean ΔL_ηV=0.007895, worst ΔL_ηV=-0.043317, best ΔL_ηV=0.072497, σ_L=0.041585
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.004255, worst ΔL_ηV=-0.054775, best ΔL_ηV=0.068108, σ_L=0.043554
+
+    ε=0.10: mean ΔL_ηV=0.004434, worst ΔL_ηV=-0.055454, best ΔL_ηV=0.068314, σ_L=0.043850
+
+    ε=0.20: mean ΔL_ηV=0.004468, worst ΔL_ηV=-0.056124, best ΔL_ηV=0.069207, σ_L=0.044407
+
+    ε=0.50: mean ΔL_ηV=0.002744, worst ΔL_ηV=-0.057078, best ΔL_ηV=0.065704, σ_L=0.043463
+
+
+η_V=1.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+    ε=0.10: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+    ε=0.20: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+    ε=0.50: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+    ε=0.10: mean ΔL_ηV=0.007302, worst ΔL_ηV=-0.101299, best ΔL_ηV=0.128410, σ_L=0.081483
+
+    ε=0.20: mean ΔL_ηV=0.008783, worst ΔL_ηV=-0.096774, best ΔL_ηV=0.130161, σ_L=0.080661
+
+    ε=0.50: mean ΔL_ηV=0.013091, worst ΔL_ηV=-0.082815, best ΔL_ηV=0.135467, σ_L=0.078388
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.005811, worst ΔL_ηV=-0.105730, best ΔL_ηV=0.126690, σ_L=0.082327
+
+    ε=0.10: mean ΔL_ηV=0.006170, worst ΔL_ηV=-0.107090, best ΔL_ηV=0.127101, σ_L=0.082913
+
+    ε=0.20: mean ΔL_ηV=0.006238, worst ΔL_ηV=-0.108430, best ΔL_ηV=0.128887, σ_L=0.084026
+
+    ε=0.50: mean ΔL_ηV=0.002789, worst ΔL_ηV=-0.110337, best ΔL_ηV=0.121881, σ_L=0.082162
+
+
+η_V=1.50, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+    ε=0.10: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+    ε=0.20: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+    ε=0.50: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+    ε=0.10: mean ΔL_ηV=0.009604, worst ΔL_ηV=-0.150038, best ΔL_ηV=0.187851, σ_L=0.119845
+
+    ε=0.20: mean ΔL_ηV=0.011825, worst ΔL_ηV=-0.143252, best ΔL_ηV=0.190478, σ_L=0.118611
+
+    ε=0.50: mean ΔL_ηV=0.018287, worst ΔL_ηV=-0.122313, best ΔL_ηV=0.198438, σ_L=0.115204
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.007368, worst ΔL_ηV=-0.156685, best ΔL_ηV=0.185272, σ_L=0.121112
+
+    ε=0.10: mean ΔL_ηV=0.007907, worst ΔL_ηV=-0.158725, best ΔL_ηV=0.185888, σ_L=0.121989
+
+    ε=0.20: mean ΔL_ηV=0.008008, worst ΔL_ηV=-0.160735, best ΔL_ηV=0.188568, σ_L=0.123659
+
+    ε=0.50: mean ΔL_ηV=0.002835, worst ΔL_ηV=-0.163596, best ΔL_ηV=0.178058, σ_L=0.120874
+
+
+η_V=2.00, λ_R=0.1
+  -- perturb_type = state --
+
+    ε=0.00: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+    ε=0.10: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+    ε=0.20: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+    ε=0.50: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+  -- perturb_type = kernel --
+
+    ε=0.00: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+    ε=0.10: mean ΔL_ηV=0.011906, worst ΔL_ηV=-0.198778, best ΔL_ηV=0.247293, σ_L=0.158211
+
+    ε=0.20: mean ΔL_ηV=0.014867, worst ΔL_ηV=-0.189729, best ΔL_ηV=0.250796, σ_L=0.156565
+
+    ε=0.50: mean ΔL_ηV=0.023484, worst ΔL_ηV=-0.161811, best ΔL_ηV=0.261408, σ_L=0.152023
+
+  -- perturb_type = memory --
+
+    ε=0.00: mean ΔL_ηV=0.008924, worst ΔL_ηV=-0.207641, best ΔL_ηV=0.243854, σ_L=0.159902
+
+    ε=0.10: mean ΔL_ηV=0.009643, worst ΔL_ηV=-0.210360, best ΔL_ηV=0.244676, σ_L=0.161069
+
+    ε=0.20: mean ΔL_ηV=0.009778, worst ΔL_ηV=-0.213040, best ΔL_ηV=0.248248, σ_L=0.163295
+
+    ε=0.50: mean ΔL_ηV=0.002880, worst ΔL_ηV=-0.216855, best ΔL_ηV=0.234235, σ_L=0.159590
