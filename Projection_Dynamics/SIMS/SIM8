@@ -1,0 +1,836 @@
+import numpy as np
+import math
+from collections import defaultdict
+from dataclasses import dataclass
+import itertools
+
+# ============================================================
+# 1. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float
+    delta: float
+    beta: float
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1  # reinforce
+    sat_mode: str = "tanh"
+    seed: int = 1
+    num_steps: int = 2000
+
+
+# ============================================================
+# 2. GRAPH + PROJECTION
+# ============================================================
+
+states = list(range(8))
+
+proj_structured = {
+    0: 0, 1: 0,  # basin A
+    2: 1, 3: 1,  # basin B
+    4: 2, 5: 2,  # basin C
+    6: 3, 7: 3,  # basin D
+}
+
+neighbors = {
+    0: [1, 3, 6],
+    1: [0, 2],
+    2: [1, 3, 4],
+    3: [0, 2],
+    4: [5, 7, 2],
+    5: [4, 6],
+    6: [5, 7, 0],
+    7: [4, 6],
+}
+
+basins = {
+    0: [0, 1],  # A
+    1: [2, 3],  # B
+    2: [4, 5],  # C
+    3: [6, 7],  # D
+}
+
+
+# ============================================================
+# 3. MEMORY SATURATION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    elif mode == "frac":
+        return M / (1.0 + M) if M > 0 else 0.0
+    else:
+        return M
+
+
+# ============================================================
+# 4. FRICTION + TRANSITION PROBABILITIES
+# ============================================================
+
+def friction(u_i, u_j, mem_weights, cfg: Config, proj_map):
+    d_graph = 1.0
+    delta_proj = 0.0 if proj_map[u_i] == proj_map[u_j] else 1.0
+    M_raw = mem_weights[(u_i, u_j)]
+    M_sat = saturate_memory(M_raw, mode=cfg.sat_mode)
+    return cfg.alpha + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u_i, mem_weights, cfg: Config, proj_map):
+    nbrs = neighbors[u_i]
+    costs = np.array([friction(u_i, u_j, mem_weights, cfg, proj_map) for u_j in nbrs])
+    weights = np.exp(-costs / cfg.T_tol)
+    return nbrs, weights / weights.sum()
+
+
+# ============================================================
+# 5. SIMULATION ENGINE
+# ============================================================
+
+def simulate(cfg: Config, proj_map=None):
+    if proj_map is None:
+        proj_map = proj_structured
+
+    rng = np.random.default_rng(cfg.seed)
+    mem_weights = defaultdict(float)
+
+    u = 0
+    hidden = [u]
+    obs = [proj_map[u]]
+    edge_counts = defaultdict(int)
+
+    for _ in range(cfg.num_steps):
+        nbrs, probs = transition_probs(u, mem_weights, cfg, proj_map)
+        u_next = rng.choice(nbrs, p=probs)
+
+        # memory update
+        for key in list(mem_weights.keys()):
+            mem_weights[key] *= cfg.delta
+            if mem_weights[key] < 1e-12:
+                del mem_weights[key]
+        mem_weights[(u, u_next)] += 1.0
+
+        edge_counts[(u, u_next)] += 1
+
+        u = u_next
+        hidden.append(u)
+        obs.append(proj_map[u])
+
+    return np.array(hidden), np.array(obs), dict(edge_counts)
+
+
+# ============================================================
+# 6. METRICS (GLOBAL)
+# ============================================================
+
+def entropy(p):
+    p = np.array(p, dtype=float)
+    p = p[p > 0]
+    return -np.sum(p * np.log(p)) if len(p) else 0.0
+
+
+def compute_edge_entropy(edge_counts):
+    total = sum(edge_counts.values())
+    if total == 0:
+        return 0.0
+    p = [c / total for c in edge_counts.values()]
+    return entropy(p)
+
+
+def compute_conditional_entropy(hidden):
+    trans_counts = defaultdict(int)
+    from_counts = defaultdict(int)
+
+    for i in range(len(hidden) - 1):
+        u, v = hidden[i], hidden[i+1]
+        trans_counts[(u, v)] += 1
+        from_counts[u] += 1
+
+    H = 0.0
+    total = len(hidden) - 1
+    if total <= 0:
+        return 0.0
+
+    for (u, v), c in trans_counts.items():
+        p_uv = c / total
+        p_v_given_u = c / from_counts[u]
+        H -= p_uv * math.log(p_v_given_u + 1e-12)
+    return H
+
+
+def compute_dwell_time(obs):
+    dwell = []
+    cur = obs[0]
+    length = 1
+    for x in obs[1:]:
+        if x == cur:
+            length += 1
+        else:
+            dwell.append(length)
+            cur = x
+            length = 1
+    dwell.append(length)
+    return float(np.mean(dwell))
+
+
+def compute_escape_probability(obs, N_esc=50):
+    escapes = 0
+    trials = 0
+    T = len(obs)
+    for t in range(T - 1):
+        basin = obs[t]
+        segment = obs[t+1:min(T, t+1+N_esc)]
+        trials += 1
+        if np.any(segment != basin):
+            escapes += 1
+    return escapes / trials
+
+
+# ============================================================
+# 7. LOCAL KERNELS & PERSISTENCE (BASIN-LEVEL)
+# ============================================================
+
+def basin_transition_kernel(hidden, basins):
+    basin_trans_counts = {x: defaultdict(int) for x in basins.keys()}
+    basin_from_counts = {x: defaultdict(int) for x in basins.keys()}
+
+    for t in range(len(hidden) - 1):
+        u, v = hidden[t], hidden[t+1]
+        for x, states_x in basins.items():
+            if u in states_x:
+                basin_trans_counts[x][(u, v)] += 1
+                basin_from_counts[x][u] += 1
+                break
+
+    basin_kernels = {x: defaultdict(float) for x in basins.keys()}
+    for x in basins.keys():
+        for (u, v), c in basin_trans_counts[x].items():
+            basin_kernels[x][(u, v)] = c / basin_from_counts[x][u]
+    return basin_kernels
+
+
+def basin_persistence(obs):
+    T = len(obs) - 1
+    if T <= 0:
+        return {x: 0.0 for x in range(4)}
+
+    counts_total = {x: 0 for x in range(4)}
+    counts_same = {x: 0 for x in range(4)}
+
+    for t in range(T):
+        b_t = obs[t]
+        b_tp1 = obs[t+1]
+        counts_total[b_t] += 1
+        if b_tp1 == b_t:
+            counts_same[b_t] += 1
+
+    persistence = {}
+    for x in range(4):
+        if counts_total[x] == 0:
+            persistence[x] = 0.0
+        else:
+            persistence[x] = counts_same[x] / counts_total[x]
+    return persistence
+
+
+def entropy_from_kernel(kernel_x):
+    by_u = defaultdict(list)
+    for (u, v), p_uv in kernel_x.items():
+        by_u[u].append(p_uv)
+
+    H = 0.0
+    total_u = 0
+    for u, probs in by_u.items():
+        p_arr = np.array(probs, dtype=float)
+        p_arr = p_arr[p_arr > 0]
+        if len(p_arr) == 0:
+            continue
+        H_u = -np.sum(p_arr * np.log(p_arr))
+        H += H_u
+        total_u += 1
+
+    if total_u == 0:
+        return 0.0
+    return H / total_u
+
+
+def local_coherence(hidden, obs, basins, alpha=1.0):
+    basin_kernels = basin_transition_kernel(hidden, basins)
+    persistence = basin_persistence(obs)
+
+    C_x = {}
+    for x in basins.keys():
+        H_x = entropy_from_kernel(basin_kernels[x])
+        C_x[x] = -H_x + alpha * persistence[x]
+    return C_x, basin_kernels
+
+
+# ============================================================
+# 8. COMPATIBILITY FUNCTIONALS K_value, K_dyn
+# ============================================================
+
+def K_value(C_x):
+    pairs = list(itertools.combinations(C_x.keys(), 2))
+    if not pairs:
+        return 0.0
+    s = 0.0
+    for x, y in pairs:
+        diff = C_x[x] - C_x[y]
+        s += diff * diff
+    return -s / len(pairs)
+
+
+def kernel_distance_L2(kernel_x, kernel_y):
+    keys = set(kernel_x.keys()) | set(kernel_y.keys())
+    s = 0.0
+    for k in keys:
+        px = kernel_x.get(k, 0.0)
+        py = kernel_y.get(k, 0.0)
+        diff = px - py
+        s += diff * diff
+    return s
+
+
+def K_dyn(basin_kernels, basins):
+    pairs = list(itertools.combinations(basins.keys(), 2))
+    if not pairs:
+        return 0.0
+    s = 0.0
+    for x, y in pairs:
+        d_xy = kernel_distance_L2(basin_kernels[x], basin_kernels[y])
+        s += d_xy
+    return -s / len(pairs)
+
+
+# ============================================================
+# 9. β-SWEEP WITH LOCAL COHERENCE & COMPATIBILITY
+# ============================================================
+
+def run_beta_sweep():
+    betas = np.arange(0.5, 2.05, 0.05)
+    seeds = range(1, 51)
+
+    print("=== RCFT β-critical sweep with local coherence & compatibility ===")
+    print("λ=1.0, δ=0.95, memory_sign=-1, 50 seeds, 2000 steps\n")
+
+    for beta in betas:
+        Hc_list = []
+        He_list = []
+        Ne_list = []
+        Dw_list = []
+        Esc_list = []
+
+        # local coherence & compatibility
+        Cx_all = []          # list of dicts per seed
+        Kval_list = []
+        Kdyn_list = []
+
+        for seed in seeds:
+            cfg = Config(lam=1.0, delta=0.95, beta=beta, seed=seed)
+            hidden, obs, edge_counts = simulate(cfg)
+
+            # global metrics
+            Hc = compute_conditional_entropy(hidden)
+            He = compute_edge_entropy(edge_counts)
+            Ne = math.exp(He)
+            Dw = compute_dwell_time(obs)
+            Esc = compute_escape_probability(obs)
+
+            Hc_list.append(Hc)
+            He_list.append(He)
+            Ne_list.append(Ne)
+            Dw_list.append(Dw)
+            Esc_list.append(Esc)
+
+            # local coherence + compatibility
+            C_x, basin_kernels = local_coherence(hidden, obs, basins, alpha=1.0)
+            K_val = K_value(C_x)
+            K_d = K_dyn(basin_kernels, basins)
+
+            Cx_all.append(C_x)
+            Kval_list.append(K_val)
+            Kdyn_list.append(K_d)
+
+        print(f"β={beta:.2f}")
+        print(f"  H_cond: mean={np.mean(Hc_list):.4f}, std={np.std(Hc_list):.4f}")
+        print(f"  H_edge: mean={np.mean(He_list):.4f}, std={np.std(He_list):.4f}")
+        print(f"  N_eff:  mean={np.mean(Ne_list):.4f}, std={np.std(Ne_list):.4f}")
+        print(f"  dwell:  mean={np.mean(Dw_list):.2f}, std={np.std(Dw_list):.2f}")
+        print(f"  escape: mean={np.mean(Esc_list):.4f}, std={np.std(Esc_list):.4f}")
+
+        # aggregate local coherence per basin
+        Cx_means = {x: np.mean([C_x[x] for C_x in Cx_all]) for x in basins.keys()}
+        Cx_stds = {x: np.std([C_x[x] for C_x in Cx_all]) for x in basins.keys()}
+
+        print("  local coherence per basin (mean ± std):")
+        for x in basins.keys():
+            print(f"    basin {x}: {Cx_means[x]:.4f} ± {Cx_stds[x]:.4f}")
+
+        print(f"  K_value: mean={np.mean(Kval_list):.4f}, std={np.std(Kval_list):.4f}")
+        print(f"  K_dyn:   mean={np.mean(Kdyn_list):.4f}, std={np.std(Kdyn_list):.4f}")
+        print()
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+    run_beta_sweep()
+
+
+
+
+
+
+##########################
+
+
+
+
+
+RESULTS:
+
+
+=== RCFT β-critical sweep with local coherence & compatibility ===
+λ=1.0, δ=0.95, memory_sign=-1, 50 seeds, 2000 steps
+
+β=0.50
+  H_cond: mean=0.8444, std=0.0148
+  H_edge: mean=2.9085, std=0.0147
+  N_eff:  mean=18.3305, std=0.2686
+  dwell:  mean=2.45, std=0.11
+  escape: mean=0.9990, std=0.0012
+  local coherence per basin (mean ± std):
+    basin 0: -0.2280 ± 0.0596
+    basin 1: -0.2406 ± 0.0580
+    basin 2: -0.2279 ± 0.0544
+    basin 3: -0.2193 ± 0.0605
+  K_value: mean=-0.0066, std=0.0043
+  K_dyn:   mean=-1.9221, std=0.0453
+
+β=0.55
+  H_cond: mean=0.8290, std=0.0166
+  H_edge: mean=2.8933, std=0.0166
+  N_eff:  mean=18.0561, std=0.2983
+  dwell:  mean=2.56, std=0.12
+  escape: mean=0.9990, std=0.0010
+  local coherence per basin (mean ± std):
+    basin 0: -0.1946 ± 0.0573
+    basin 1: -0.2084 ± 0.0559
+    basin 2: -0.2005 ± 0.0598
+    basin 3: -0.1839 ± 0.0649
+  K_value: mean=-0.0067, std=0.0050
+  K_dyn:   mean=-1.9685, std=0.0528
+
+β=0.60
+  H_cond: mean=0.8122, std=0.0181
+  H_edge: mean=2.8774, std=0.0179
+  N_eff:  mean=17.7701, std=0.3177
+  dwell:  mean=2.69, std=0.14
+  escape: mean=0.9991, std=0.0010
+  local coherence per basin (mean ± std):
+    basin 0: -0.1704 ± 0.0601
+    basin 1: -0.1716 ± 0.0619
+    basin 2: -0.1608 ± 0.0600
+    basin 3: -0.1519 ± 0.0702
+  K_value: mean=-0.0074, std=0.0059
+  K_dyn:   mean=-2.0177, std=0.0572
+
+β=0.65
+  H_cond: mean=0.7953, std=0.0180
+  H_edge: mean=2.8612, std=0.0183
+  N_eff:  mean=17.4861, std=0.3188
+  dwell:  mean=2.82, std=0.14
+  escape: mean=0.9989, std=0.0012
+  local coherence per basin (mean ± std):
+    basin 0: -0.1416 ± 0.0567
+    basin 1: -0.1349 ± 0.0655
+    basin 2: -0.1271 ± 0.0578
+    basin 3: -0.1197 ± 0.0658
+  K_value: mean=-0.0072, std=0.0060
+  K_dyn:   mean=-2.0683, std=0.0567
+
+β=0.70
+  H_cond: mean=0.7786, std=0.0184
+  H_edge: mean=2.8447, std=0.0197
+  N_eff:  mean=17.1992, std=0.3347
+  dwell:  mean=2.94, std=0.15
+  escape: mean=0.9986, std=0.0020
+  local coherence per basin (mean ± std):
+    basin 0: -0.1055 ± 0.0573
+    basin 1: -0.1055 ± 0.0650
+    basin 2: -0.0990 ± 0.0538
+    basin 3: -0.0919 ± 0.0655
+  K_value: mean=-0.0069, std=0.0059
+  K_dyn:   mean=-2.1167, std=0.0565
+
+β=0.75
+  H_cond: mean=0.7601, std=0.0203
+  H_edge: mean=2.8276, std=0.0216
+  N_eff:  mean=16.9083, std=0.3632
+  dwell:  mean=3.10, std=0.17
+  escape: mean=0.9988, std=0.0014
+  local coherence per basin (mean ± std):
+    basin 0: -0.0728 ± 0.0602
+    basin 1: -0.0754 ± 0.0633
+    basin 2: -0.0646 ± 0.0592
+    basin 3: -0.0541 ± 0.0691
+  K_value: mean=-0.0073, std=0.0063
+  K_dyn:   mean=-2.1719, std=0.0622
+
+β=0.80
+  H_cond: mean=0.7448, std=0.0202
+  H_edge: mean=2.8128, std=0.0200
+  N_eff:  mean=16.6597, std=0.3323
+  dwell:  mean=3.23, std=0.17
+  escape: mean=0.9988, std=0.0014
+  local coherence per basin (mean ± std):
+    basin 0: -0.0438 ± 0.0575
+    basin 1: -0.0428 ± 0.0621
+    basin 2: -0.0416 ± 0.0575
+    basin 3: -0.0305 ± 0.0688
+  K_value: mean=-0.0068, std=0.0046
+  K_dyn:   mean=-2.2176, std=0.0609
+
+β=0.85
+  H_cond: mean=0.7251, std=0.0233
+  H_edge: mean=2.7935, std=0.0233
+  N_eff:  mean=16.3430, std=0.3812
+  dwell:  mean=3.40, std=0.21
+  escape: mean=0.9985, std=0.0016
+  local coherence per basin (mean ± std):
+    basin 0: -0.0132 ± 0.0611
+    basin 1: -0.0108 ± 0.0661
+    basin 2: -0.0022 ± 0.0646
+    basin 3: 0.0017 ± 0.0750
+  K_value: mean=-0.0076, std=0.0068
+  K_dyn:   mean=-2.2753, std=0.0707
+
+β=0.90
+  H_cond: mean=0.7074, std=0.0239
+  H_edge: mean=2.7756, std=0.0249
+  N_eff:  mean=16.0540, std=0.3995
+  dwell:  mean=3.55, std=0.22
+  escape: mean=0.9985, std=0.0017
+  local coherence per basin (mean ± std):
+    basin 0: 0.0105 ± 0.0650
+    basin 1: 0.0166 ± 0.0650
+    basin 2: 0.0254 ± 0.0701
+    basin 3: 0.0409 ± 0.0670
+  K_value: mean=-0.0078, std=0.0064
+  K_dyn:   mean=-2.3264, std=0.0725
+
+β=0.95
+  H_cond: mean=0.6874, std=0.0240
+  H_edge: mean=2.7559, std=0.0242
+  N_eff:  mean=15.7403, std=0.3805
+  dwell:  mean=3.74, std=0.24
+  escape: mean=0.9984, std=0.0017
+  local coherence per basin (mean ± std):
+    basin 0: 0.0361 ± 0.0685
+    basin 1: 0.0540 ± 0.0611
+    basin 2: 0.0590 ± 0.0716
+    basin 3: 0.0739 ± 0.0687
+  K_value: mean=-0.0082, std=0.0072
+  K_dyn:   mean=-2.3832, std=0.0737
+
+β=1.00
+  H_cond: mean=0.6676, std=0.0257
+  H_edge: mean=2.7365, std=0.0268
+  N_eff:  mean=15.4390, std=0.4111
+  dwell:  mean=3.94, std=0.27
+  escape: mean=0.9983, std=0.0018
+  local coherence per basin (mean ± std):
+    basin 0: 0.0646 ± 0.0643
+    basin 1: 0.0815 ± 0.0660
+    basin 2: 0.0988 ± 0.0687
+    basin 3: 0.1090 ± 0.0652
+  K_value: mean=-0.0078, std=0.0063
+  K_dyn:   mean=-2.4421, std=0.0765
+
+β=1.05
+  H_cond: mean=0.6470, std=0.0269
+  H_edge: mean=2.7153, std=0.0275
+  N_eff:  mean=15.1143, std=0.4135
+  dwell:  mean=4.16, std=0.31
+  escape: mean=0.9977, std=0.0032
+  local coherence per basin (mean ± std):
+    basin 0: 0.1079 ± 0.0707
+    basin 1: 0.1100 ± 0.0594
+    basin 2: 0.1273 ± 0.0758
+    basin 3: 0.1392 ± 0.0668
+  K_value: mean=-0.0078, std=0.0072
+  K_dyn:   mean=-2.5008, std=0.0811
+
+β=1.10
+  H_cond: mean=0.6272, std=0.0254
+  H_edge: mean=2.6958, std=0.0268
+  N_eff:  mean=14.8229, std=0.3958
+  dwell:  mean=4.39, std=0.30
+  escape: mean=0.9979, std=0.0019
+  local coherence per basin (mean ± std):
+    basin 0: 0.1422 ± 0.0707
+    basin 1: 0.1476 ± 0.0627
+    basin 2: 0.1512 ± 0.0637
+    basin 3: 0.1675 ± 0.0675
+  K_value: mean=-0.0077, std=0.0061
+  K_dyn:   mean=-2.5572, std=0.0740
+
+β=1.15
+  H_cond: mean=0.6063, std=0.0281
+  H_edge: mean=2.6742, std=0.0290
+  N_eff:  mean=14.5072, std=0.4186
+  dwell:  mean=4.64, std=0.36
+  escape: mean=0.9974, std=0.0030
+  local coherence per basin (mean ± std):
+    basin 0: 0.1801 ± 0.0718
+    basin 1: 0.1749 ± 0.0706
+    basin 2: 0.1775 ± 0.0694
+    basin 3: 0.2035 ± 0.0655
+  K_value: mean=-0.0079, std=0.0069
+  K_dyn:   mean=-2.6168, std=0.0825
+
+β=1.20
+  H_cond: mean=0.5866, std=0.0275
+  H_edge: mean=2.6548, std=0.0275
+  N_eff:  mean=14.2273, std=0.3898
+  dwell:  mean=4.90, std=0.39
+  escape: mean=0.9972, std=0.0033
+  local coherence per basin (mean ± std):
+    basin 0: 0.2115 ± 0.0693
+    basin 1: 0.2091 ± 0.0747
+    basin 2: 0.2053 ± 0.0711
+    basin 3: 0.2307 ± 0.0676
+  K_value: mean=-0.0086, std=0.0080
+  K_dyn:   mean=-2.6724, std=0.0809
+
+β=1.25
+  H_cond: mean=0.5669, std=0.0270
+  H_edge: mean=2.6347, std=0.0283
+  N_eff:  mean=13.9446, std=0.3914
+  dwell:  mean=5.17, std=0.41
+  escape: mean=0.9967, std=0.0038
+  local coherence per basin (mean ± std):
+    basin 0: 0.2401 ± 0.0657
+    basin 1: 0.2421 ± 0.0690
+    basin 2: 0.2354 ± 0.0758
+    basin 3: 0.2563 ± 0.0690
+  K_value: mean=-0.0084, std=0.0076
+  K_dyn:   mean=-2.7269, std=0.0799
+
+β=1.30
+  H_cond: mean=0.5464, std=0.0267
+  H_edge: mean=2.6129, std=0.0289
+  N_eff:  mean=13.6437, std=0.3922
+  dwell:  mean=5.48, std=0.43
+  escape: mean=0.9964, std=0.0041
+  local coherence per basin (mean ± std):
+    basin 0: 0.2740 ± 0.0738
+    basin 1: 0.2742 ± 0.0703
+    basin 2: 0.2670 ± 0.0703
+    basin 3: 0.2784 ± 0.0723
+  K_value: mean=-0.0094, std=0.0070
+  K_dyn:   mean=-2.7832, std=0.0756
+
+β=1.35
+  H_cond: mean=0.5292, std=0.0258
+  H_edge: mean=2.5957, std=0.0283
+  N_eff:  mean=13.4116, std=0.3775
+  dwell:  mean=5.76, std=0.44
+  escape: mean=0.9953, std=0.0047
+  local coherence per basin (mean ± std):
+    basin 0: 0.3059 ± 0.0696
+    basin 1: 0.3023 ± 0.0585
+    basin 2: 0.2939 ± 0.0667
+    basin 3: 0.2981 ± 0.0696
+  K_value: mean=-0.0079, std=0.0059
+  K_dyn:   mean=-2.8327, std=0.0709
+
+β=1.40
+  H_cond: mean=0.5103, std=0.0238
+  H_edge: mean=2.5766, std=0.0279
+  N_eff:  mean=13.1573, std=0.3653
+  dwell:  mean=6.09, std=0.44
+  escape: mean=0.9950, std=0.0051
+  local coherence per basin (mean ± std):
+    basin 0: 0.3286 ± 0.0617
+    basin 1: 0.3288 ± 0.0588
+    basin 2: 0.3214 ± 0.0619
+    basin 3: 0.3353 ± 0.0636
+  K_value: mean=-0.0071, std=0.0056
+  K_dyn:   mean=-2.8856, std=0.0628
+
+β=1.45
+  H_cond: mean=0.4915, std=0.0244
+  H_edge: mean=2.5565, std=0.0345
+  N_eff:  mean=12.8987, std=0.4329
+  dwell:  mean=6.45, std=0.49
+  escape: mean=0.9938, std=0.0059
+  local coherence per basin (mean ± std):
+    basin 0: 0.3534 ± 0.0561
+    basin 1: 0.3578 ± 0.0624
+    basin 2: 0.3485 ± 0.0637
+    basin 3: 0.3615 ± 0.0613
+  K_value: mean=-0.0069, std=0.0046
+  K_dyn:   mean=-2.9354, std=0.0626
+
+β=1.50
+  H_cond: mean=0.4745, std=0.0232
+  H_edge: mean=2.5397, std=0.0334
+  N_eff:  mean=12.6829, std=0.4121
+  dwell:  mean=6.79, std=0.49
+  escape: mean=0.9924, std=0.0070
+  local coherence per basin (mean ± std):
+    basin 0: 0.3749 ± 0.0649
+    basin 1: 0.3862 ± 0.0582
+    basin 2: 0.3723 ± 0.0593
+    basin 3: 0.3840 ± 0.0602
+  K_value: mean=-0.0072, std=0.0048
+  K_dyn:   mean=-2.9802, std=0.0586
+
+β=1.55
+  H_cond: mean=0.4575, std=0.0227
+  H_edge: mean=2.5234, std=0.0327
+  N_eff:  mean=12.4770, std=0.3950
+  dwell:  mean=7.17, std=0.52
+  escape: mean=0.9923, std=0.0069
+  local coherence per basin (mean ± std):
+    basin 0: 0.3986 ± 0.0570
+    basin 1: 0.4086 ± 0.0568
+    basin 2: 0.3950 ± 0.0615
+    basin 3: 0.4133 ± 0.0551
+  K_value: mean=-0.0066, std=0.0048
+  K_dyn:   mean=-3.0261, std=0.0550
+
+β=1.60
+  H_cond: mean=0.4402, std=0.0240
+  H_edge: mean=2.5058, std=0.0316
+  N_eff:  mean=12.2590, std=0.3800
+  dwell:  mean=7.60, std=0.62
+  escape: mean=0.9912, std=0.0080
+  local coherence per basin (mean ± std):
+    basin 0: 0.4242 ± 0.0631
+    basin 1: 0.4279 ± 0.0551
+    basin 2: 0.4198 ± 0.0578
+    basin 3: 0.4393 ± 0.0545
+  K_value: mean=-0.0065, std=0.0043
+  K_dyn:   mean=-3.0707, std=0.0569
+
+β=1.65
+  H_cond: mean=0.4254, std=0.0250
+  H_edge: mean=2.4925, std=0.0309
+  N_eff:  mean=12.0967, std=0.3683
+  dwell:  mean=7.99, std=0.70
+  escape: mean=0.9903, std=0.0090
+  local coherence per basin (mean ± std):
+    basin 0: 0.4503 ± 0.0619
+    basin 1: 0.4494 ± 0.0501
+    basin 2: 0.4438 ± 0.0578
+    basin 3: 0.4545 ± 0.0555
+  K_value: mean=-0.0056, std=0.0032
+  K_dyn:   mean=-3.1114, std=0.0611
+
+β=1.70
+  H_cond: mean=0.4074, std=0.0240
+  H_edge: mean=2.4726, std=0.0297
+  N_eff:  mean=11.8589, std=0.3498
+  dwell:  mean=8.50, std=0.74
+  escape: mean=0.9873, std=0.0122
+  local coherence per basin (mean ± std):
+    basin 0: 0.4780 ± 0.0586
+    basin 1: 0.4737 ± 0.0543
+    basin 2: 0.4684 ± 0.0590
+    basin 3: 0.4768 ± 0.0593
+  K_value: mean=-0.0062, std=0.0043
+  K_dyn:   mean=-3.1575, std=0.0596
+
+β=1.75
+  H_cond: mean=0.3914, std=0.0235
+  H_edge: mean=2.4559, std=0.0313
+  N_eff:  mean=11.6626, std=0.3595
+  dwell:  mean=8.99, std=0.80
+  escape: mean=0.9866, std=0.0129
+  local coherence per basin (mean ± std):
+    basin 0: 0.4967 ± 0.0584
+    basin 1: 0.4989 ± 0.0500
+    basin 2: 0.4864 ± 0.0594
+    basin 3: 0.5021 ± 0.0548
+  K_value: mean=-0.0058, std=0.0038
+  K_dyn:   mean=-3.1975, std=0.0582
+
+β=1.80
+  H_cond: mean=0.3783, std=0.0239
+  H_edge: mean=2.4419, std=0.0309
+  N_eff:  mean=11.5002, std=0.3509
+  dwell:  mean=9.44, std=0.90
+  escape: mean=0.9840, std=0.0132
+  local coherence per basin (mean ± std):
+    basin 0: 0.5145 ± 0.0656
+    basin 1: 0.5115 ± 0.0525
+    basin 2: 0.5056 ± 0.0604
+    basin 3: 0.5222 ± 0.0523
+  K_value: mean=-0.0063, std=0.0044
+  K_dyn:   mean=-3.2296, std=0.0595
+
+β=1.85
+  H_cond: mean=0.3634, std=0.0205
+  H_edge: mean=2.4271, std=0.0275
+  N_eff:  mean=11.3304, std=0.3076
+  dwell:  mean=9.96, std=0.83
+  escape: mean=0.9809, std=0.0153
+  local coherence per basin (mean ± std):
+    basin 0: 0.5293 ± 0.0648
+    basin 1: 0.5363 ± 0.0511
+    basin 2: 0.5281 ± 0.0566
+    basin 3: 0.5421 ± 0.0514
+  K_value: mean=-0.0067, std=0.0053
+  K_dyn:   mean=-3.2670, std=0.0484
+
+β=1.90
+  H_cond: mean=0.3477, std=0.0184
+  H_edge: mean=2.4104, std=0.0252
+  N_eff:  mean=11.1418, std=0.2780
+  dwell:  mean=10.57, std=0.81
+  escape: mean=0.9775, std=0.0169
+  local coherence per basin (mean ± std):
+    basin 0: 0.5508 ± 0.0672
+    basin 1: 0.5525 ± 0.0562
+    basin 2: 0.5530 ± 0.0551
+    basin 3: 0.5618 ± 0.0432
+  K_value: mean=-0.0069, std=0.0054
+  K_dyn:   mean=-3.3039, std=0.0439
+
+β=1.95
+  H_cond: mean=0.3375, std=0.0190
+  H_edge: mean=2.3977, std=0.0301
+  N_eff:  mean=11.0025, std=0.3259
+  dwell:  mean=11.02, std=0.91
+  escape: mean=0.9749, std=0.0175
+  local coherence per basin (mean ± std):
+    basin 0: 0.5593 ± 0.0635
+    basin 1: 0.5680 ± 0.0528
+    basin 2: 0.5698 ± 0.0562
+    basin 3: 0.5738 ± 0.0479
+  K_value: mean=-0.0066, std=0.0054
+  K_dyn:   mean=-3.3279, std=0.0446
+
+β=2.00
+  H_cond: mean=0.3240, std=0.0209
+  H_edge: mean=2.3845, std=0.0343
+  N_eff:  mean=10.8604, std=0.3651
+  dwell:  mean=11.67, std=1.07
+  escape: mean=0.9717, std=0.0174
+  local coherence per basin (mean ± std):
+    basin 0: 0.5771 ± 0.0621
+    basin 1: 0.5824 ± 0.0557
+    basin 2: 0.5921 ± 0.0577
+    basin 3: 0.5916 ± 0.0536
+  K_value: mean=-0.0070, std=0.0067
+  K_dyn:   mean=-3.3602, std=0.0481
+
+
+
+** Process exited - Return Code: 0 **
