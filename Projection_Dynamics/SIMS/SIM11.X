@@ -1,6 +1,6 @@
 
 ############################################################
-#  SIM11.2 — Basin-Local Invariant-Set Probe
+#  SIM11.X — Basin-Local Invariant-Set Probe
 #
 #  Purpose:
 #    Determine what kind of local stability object exists in
