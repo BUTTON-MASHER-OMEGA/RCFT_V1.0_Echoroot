@@ -1,0 +1,1312 @@
+############################################################
+#  SIM11.2 — Recurrent-Mode Stability Probe
+#
+#  Goal:
+#    Test whether basin-local recurrent structure found in
+#    SIM11.1 survives a local perturbation.
+#
+#  Core question:
+#
+#    Does the system return to the SAME RECURRENT MODE
+#    rather than the same point?
+#
+#  We measure:
+#
+#    1. pre-perturb recurrence strength
+#    2. post-recovery recurrence strength
+#    3. dominant recurrence frequency before/after
+#    4. relative frequency error
+#    5. target-basin displacement
+#    6. non-target displacement / locality
+#
+#  Deliberately NOT included:
+#
+#    - beta sweep
+#    - eta_V sweep
+#    - epsilon sweep
+#    - R_global
+#    - H4 / E8
+#    - physical E = h nu interpretation
+#
+############################################################
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIG
+# ============================================================
+
+@dataclass
+class Config:
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    seed: int = 1
+
+    burnin_steps: int = 3000
+
+    # pre-perturb observation window
+    pre_steps: int = 3000
+
+    # recovery observation window
+    recovery_steps: int = 3000
+
+    # fixed perturbation magnitude
+    eps: float = 0.2
+
+    # diagnostics
+    diagnostic_every: int = 5
+
+    # local coherence rolling window
+    stats_window: int = 100
+
+    # autocorrelation range
+    max_lag: int = 120
+
+    # ignore tiny lags when searching for recurrence peak
+    min_peak_lag: int = 3
+
+    # threshold for saying recurrence "recovered"
+    recurrence_ratio_threshold: float = 0.75
+
+    # threshold for acceptable frequency preservation
+    frequency_error_threshold: float = 0.15
+
+    basins: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+# ============================================================
+# 2. MEMORY / FRICTION / TRANSITION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+    if mode == "tanh":
+        return np.tanh(M)
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+    M_raw = mem.get((u_i, u_j), 0.0)
+    M_sat = saturate_memory(M_raw, cfg.sat_mode)
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+    nbrs = neighbors[u]
+
+    costs = np.array(
+        [friction(u, v, mem, cfg) for v in nbrs],
+        dtype=float
+    )
+
+    weights = np.exp(-costs / cfg.T_tol)
+    probs = weights / weights.sum()
+
+    return nbrs, probs
+
+
+def update_memory(mem, u, v, cfg):
+    for k in list(mem.keys()):
+        mem[k] *= cfg.delta
+
+        if mem[k] < 1e-12:
+            del mem[k]
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. LOCAL COHERENCE
+# ============================================================
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins,
+    window=None
+):
+    if window is None:
+        start = 0
+    else:
+        start = max(
+            0,
+            len(hidden) - window - 1
+        )
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+    for t in range(
+        start,
+        len(hidden) - 1
+    ):
+        u = hidden[t]
+        v = hidden[t + 1]
+        b = obs[t]
+
+        counts_total[b] += 1
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+        for x, states in basins.items():
+            if u in states:
+                basin_trans[x][(u, v)] += 1
+                basin_from[x][u] += 1
+                break
+
+    H = {}
+    P = {}
+
+    for x in basins:
+        H_sum = 0.0
+        n_src = 0
+
+        for u in basin_from[x]:
+            probs = []
+
+            for (uu, vv), c in basin_trans[x].items():
+                if uu == u:
+                    probs.append(
+                        c / basin_from[x][u]
+                    )
+
+            if len(probs) == 0:
+                continue
+
+            p = np.array(
+                probs,
+                dtype=float
+            )
+
+            H_sum += -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+            n_src += 1
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+        P[x] = (
+            counts_same[x] / counts_total[x]
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+    return H, P
+
+
+def compute_Cx(H, P, alpha):
+    return {
+        x: -H[x] + alpha * P[x]
+        for x in H
+    }
+
+
+# ============================================================
+# 4. EFFECTIVE VALENCE
+# ============================================================
+
+def compute_valence(mem, cfg):
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+            _, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+            p = np.array(
+                probs,
+                dtype=float
+            )
+
+            H_loc = -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+            Veff[x] += np.exp(H_loc)
+            counts[x] += 1
+
+    for x in cfg.basins:
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+    return Veff
+
+
+# ============================================================
+# 5. LOCAL STATE
+#
+#    Z_x = (C_x, log V_eff,x)
+# ============================================================
+
+def compute_Z(hidden, obs, mem, cfg):
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        obs,
+        cfg.basins,
+        window=cfg.stats_window
+    )
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+    Z = {}
+
+    for x in cfg.basins:
+        V = max(
+            Veff[x],
+            1e-12
+        )
+
+        Z[x] = np.array(
+            [
+                Cx[x],
+                np.log(V)
+            ],
+            dtype=float
+        )
+
+    return Z
+
+
+# ============================================================
+# 6. RUN STEPS WITH OPTIONAL LOGGING
+# ============================================================
+
+def run_steps(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    rng,
+    steps,
+    log_diagnostics=False
+):
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+    time_log = []
+
+    for t in range(steps):
+        u = hidden[-1]
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+        v = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+        hidden.append(v)
+        obs.append(
+            proj_structured[v]
+        )
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+        if (
+            log_diagnostics
+            and t % cfg.diagnostic_every == 0
+        ):
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+            time_log.append(t)
+
+            for x in cfg.basins:
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+    if log_diagnostics:
+        for x in Z_logs:
+            Z_logs[x] = np.array(
+                Z_logs[x],
+                dtype=float
+            )
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "times": np.array(
+            time_log,
+            dtype=int
+        ),
+        "Z": Z_logs,
+    }
+
+
+# ============================================================
+# 7. LOCAL PERTURBATION
+#
+#    Minimal implementation:
+#    with probability eps, move current hidden state to the
+#    other state inside target basin.
+#
+#    This ensures perturbation remains LOCAL to the target
+#    basin and does not directly jump across sectors.
+# ============================================================
+
+def apply_local_perturbation(
+    hidden,
+    obs,
+    target_basin,
+    eps,
+    rng
+):
+    u_current = hidden[-1]
+
+    basin_states = DEFAULT_BASINS[
+        target_basin
+    ]
+
+    # If current state is not in target basin,
+    # move into one target state first.
+    if u_current not in basin_states:
+        u_base = rng.choice(
+            basin_states
+        )
+    else:
+        u_base = u_current
+
+    perturb_applied = False
+
+    if rng.random() < eps:
+        candidates = [
+            u
+            for u in basin_states
+            if u != u_base
+        ]
+
+        if len(candidates) > 0:
+            u_new = rng.choice(
+                candidates
+            )
+        else:
+            u_new = u_base
+
+        hidden[-1] = u_new
+        obs[-1] = proj_structured[
+            u_new
+        ]
+
+        perturb_applied = True
+
+    return perturb_applied
+
+
+# ============================================================
+# 8. AUTOCORRELATION
+# ============================================================
+
+def autocorrelation(
+    series,
+    max_lag
+):
+    x = np.asarray(
+        series,
+        dtype=float
+    )
+
+    if len(x) < 3:
+        return np.array([1.0])
+
+    x = x - np.mean(x)
+
+    denom = np.dot(
+        x,
+        x
+    )
+
+    if denom <= 1e-15:
+        return np.ones(
+            min(
+                max_lag + 1,
+                len(x)
+            )
+        )
+
+    max_lag = min(
+        max_lag,
+        len(x) - 1
+    )
+
+    ac = np.empty(
+        max_lag + 1,
+        dtype=float
+    )
+
+    ac[0] = 1.0
+
+    for lag in range(
+        1,
+        max_lag + 1
+    ):
+        ac[lag] = (
+            np.dot(
+                x[:-lag],
+                x[lag:]
+            )
+            / denom
+        )
+
+    return ac
+
+
+# ============================================================
+# 9. DOMINANT RECURRENCE MODE
+#
+#    We use the strongest positive autocorrelation peak
+#    beyond min_peak_lag.
+#
+#    Frequency here is dimensionless:
+#
+#        nu = 1 / period
+#
+#    where period is measured in simulation steps.
+# ============================================================
+
+def dominant_recurrence_mode(
+    series,
+    cfg
+):
+    ac = autocorrelation(
+        series,
+        cfg.max_lag
+    )
+
+    start = cfg.min_peak_lag
+
+    if len(ac) <= start:
+        return {
+            "strength": 0.0,
+            "lag": np.nan,
+            "period_steps": np.nan,
+            "frequency": np.nan,
+            "ac": ac,
+        }
+
+    candidate = ac[
+        start:
+    ]
+
+    best_offset = int(
+        np.argmax(candidate)
+    )
+
+    lag = start + best_offset
+
+    strength = ac[lag]
+
+    period_steps = (
+        lag
+        * cfg.diagnostic_every
+    )
+
+    frequency = (
+        1.0 / period_steps
+        if period_steps > 0
+        else np.nan
+    )
+
+    return {
+        "strength": strength,
+        "lag": lag,
+        "period_steps": period_steps,
+        "frequency": frequency,
+        "ac": ac,
+    }
+
+
+# ============================================================
+# 10. COMBINE C + W RECURRENCE INFORMATION
+#
+#     We keep this simple:
+#     detect dominant mode from C_x.
+#
+#     log(V_eff) is still retained as a secondary diagnostic.
+# ============================================================
+
+def characterize_basin_mode(
+    Z,
+    cfg
+):
+    if len(Z) < 10:
+        return None
+
+    C = Z[:, 0]
+    W = Z[:, 1]
+
+    mode_C = dominant_recurrence_mode(
+        C,
+        cfg
+    )
+
+    mode_W = dominant_recurrence_mode(
+        W,
+        cfg
+    )
+
+    return {
+        "C_strength": mode_C["strength"],
+        "C_lag": mode_C["lag"],
+        "C_period_steps": mode_C["period_steps"],
+        "C_frequency": mode_C["frequency"],
+
+        "W_strength": mode_W["strength"],
+        "W_lag": mode_W["lag"],
+        "W_period_steps": mode_W["period_steps"],
+        "W_frequency": mode_W["frequency"],
+    }
+
+
+# ============================================================
+# 11. SIMPLE DISPLACEMENT / LOCALITY MEASURE
+# ============================================================
+
+def mean_state_distance(
+    Z_pre,
+    Z_post
+):
+    mu_pre = np.mean(
+        Z_pre,
+        axis=0
+    )
+
+    mu_post = np.mean(
+        Z_post,
+        axis=0
+    )
+
+    return np.linalg.norm(
+        mu_post - mu_pre
+    )
+
+
+# ============================================================
+# 12. SINGLE SIM11.2 RUN
+# ============================================================
+
+def simulate_SIM11_2(
+    cfg,
+    target_basin
+):
+    rng = np.random.default_rng(
+        cfg.seed
+    )
+
+    hidden = [0]
+    obs = [
+        proj_structured[0]
+    ]
+    mem = defaultdict(float)
+
+    # --------------------------------------------------------
+    # Burn-in
+    # --------------------------------------------------------
+
+    burn = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.burnin_steps,
+        log_diagnostics=False
+    )
+
+    hidden = burn["hidden"]
+    obs = burn["obs"]
+    mem = burn["mem"]
+
+    # --------------------------------------------------------
+    # Pre-perturb recurrence window
+    # --------------------------------------------------------
+
+    pre = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.pre_steps,
+        log_diagnostics=True
+    )
+
+    hidden = pre["hidden"]
+    obs = pre["obs"]
+    mem = pre["mem"]
+
+    # Characterize pre modes
+    pre_modes = {}
+
+    for x in cfg.basins:
+        pre_modes[x] = characterize_basin_mode(
+            pre["Z"][x],
+            cfg
+        )
+
+    # --------------------------------------------------------
+    # Local perturbation
+    # --------------------------------------------------------
+
+    perturb_applied = apply_local_perturbation(
+        hidden,
+        obs,
+        target_basin,
+        cfg.eps,
+        rng
+    )
+
+    # --------------------------------------------------------
+    # Recovery
+    # --------------------------------------------------------
+
+    rec = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.recovery_steps,
+        log_diagnostics=True
+    )
+
+    post_modes = {}
+
+    for x in cfg.basins:
+        post_modes[x] = characterize_basin_mode(
+            rec["Z"][x],
+            cfg
+        )
+
+    # --------------------------------------------------------
+    # Target frequency comparison
+    # --------------------------------------------------------
+
+    pre_target = pre_modes[
+        target_basin
+    ]
+
+    post_target = post_modes[
+        target_basin
+    ]
+
+    nu_pre = pre_target[
+        "C_frequency"
+    ]
+
+    nu_post = post_target[
+        "C_frequency"
+    ]
+
+    if (
+        np.isfinite(nu_pre)
+        and np.isfinite(nu_post)
+        and abs(nu_pre) > 1e-15
+    ):
+        frequency_error = (
+            abs(
+                nu_post - nu_pre
+            )
+            / abs(nu_pre)
+        )
+    else:
+        frequency_error = np.nan
+
+    recurrence_ratio = (
+        post_target[
+            "C_strength"
+        ]
+        /
+        max(
+            abs(
+                pre_target[
+                    "C_strength"
+                ]
+            ),
+            1e-12
+        )
+    )
+
+    recurrence_recovered = (
+        recurrence_ratio
+        >= cfg.recurrence_ratio_threshold
+    )
+
+    frequency_recovered = (
+        np.isfinite(
+            frequency_error
+        )
+        and frequency_error
+        <= cfg.frequency_error_threshold
+    )
+
+    # --------------------------------------------------------
+    # Locality
+    # --------------------------------------------------------
+
+    displacements = {}
+
+    for x in cfg.basins:
+        displacements[x] = mean_state_distance(
+            pre["Z"][x],
+            rec["Z"][x]
+        )
+
+    target_displacement = displacements[
+        target_basin
+    ]
+
+    other_displacements = [
+        displacements[x]
+        for x in cfg.basins
+        if x != target_basin
+    ]
+
+    mean_non_target_displacement = (
+        np.mean(
+            other_displacements
+        )
+        if len(other_displacements) > 0
+        else 0.0
+    )
+
+    locality_ratio = (
+        target_displacement
+        /
+        max(
+            mean_non_target_displacement,
+            1e-12
+        )
+    )
+
+    return {
+        "seed": cfg.seed,
+        "target_basin": target_basin,
+        "perturb_applied": perturb_applied,
+
+        "pre_strength": pre_target[
+            "C_strength"
+        ],
+
+        "post_strength": post_target[
+            "C_strength"
+        ],
+
+        "recurrence_ratio": recurrence_ratio,
+
+        "recurrence_recovered":
+            recurrence_recovered,
+
+        "nu_pre": nu_pre,
+        "nu_post": nu_post,
+
+        "frequency_error":
+            frequency_error,
+
+        "frequency_recovered":
+            frequency_recovered,
+
+        "target_displacement":
+            target_displacement,
+
+        "mean_non_target_displacement":
+            mean_non_target_displacement,
+
+        "locality_ratio":
+            locality_ratio,
+
+        "pre_modes": pre_modes,
+        "post_modes": post_modes,
+
+        "pre_Z": pre["Z"],
+        "post_Z": rec["Z"],
+    }
+
+
+# ============================================================
+# 13. ENSEMBLE SUMMARY
+# ============================================================
+
+def summarize_results(
+    rows
+):
+    if len(rows) == 0:
+        return None
+
+    valid_freq = [
+        r
+        for r in rows
+        if np.isfinite(
+            r["frequency_error"]
+        )
+    ]
+
+    def mean_key(
+        key,
+        subset=None
+    ):
+        use = (
+            rows
+            if subset is None
+            else subset
+        )
+
+        vals = [
+            r[key]
+            for r in use
+            if np.isfinite(
+                r[key]
+            )
+        ]
+
+        if len(vals) == 0:
+            return np.nan
+
+        return np.mean(
+            vals
+        )
+
+    return {
+        "n": len(rows),
+
+        "perturb_applied_fraction":
+            np.mean(
+                [
+                    r[
+                        "perturb_applied"
+                    ]
+                    for r in rows
+                ]
+            ),
+
+        "mean_pre_strength":
+            mean_key(
+                "pre_strength"
+            ),
+
+        "mean_post_strength":
+            mean_key(
+                "post_strength"
+            ),
+
+        "mean_recurrence_ratio":
+            mean_key(
+                "recurrence_ratio"
+            ),
+
+        "fraction_recurrence_recovered":
+            np.mean(
+                [
+                    r[
+                        "recurrence_recovered"
+                    ]
+                    for r in rows
+                ]
+            ),
+
+        "mean_nu_pre":
+            mean_key(
+                "nu_pre",
+                valid_freq
+            ),
+
+        "mean_nu_post":
+            mean_key(
+                "nu_post",
+                valid_freq
+            ),
+
+        "mean_frequency_error":
+            mean_key(
+                "frequency_error",
+                valid_freq
+            ),
+
+        "fraction_frequency_recovered":
+            (
+                np.mean(
+                    [
+                        r[
+                            "frequency_recovered"
+                        ]
+                        for r in valid_freq
+                    ]
+                )
+                if len(valid_freq) > 0
+                else np.nan
+            ),
+
+        "mean_target_displacement":
+            mean_key(
+                "target_displacement"
+            ),
+
+        "mean_non_target_displacement":
+            mean_key(
+                "mean_non_target_displacement"
+            ),
+
+        "mean_locality_ratio":
+            mean_key(
+                "locality_ratio"
+            ),
+    }
+
+
+# ============================================================
+# 14. FULL SIM11.2 DRIVER
+# ============================================================
+
+def run_SIM11_2(
+    seeds=50,
+    beta=1.38,
+    eps=0.2
+):
+    print(
+        "=" * 72
+    )
+
+    print(
+        "\nSIM11.2 — Recurrent-Mode Stability Probe\n"
+    )
+
+    print(
+        "=" * 72
+    )
+
+    print(
+        f"\nbeta={beta}"
+    )
+
+    print(
+        f"eps={eps}"
+    )
+
+    print(
+        f"seeds={seeds}"
+    )
+
+    print(
+        "\nQuestion:"
+    )
+
+    print(
+        "Does a locally perturbed basin recover its recurrent mode "
+        "and characteristic recurrence frequency?\n"
+    )
+
+    all_results = {}
+
+    for target_basin in DEFAULT_BASINS:
+
+        rows = []
+
+        for seed in range(
+            1,
+            seeds + 1
+        ):
+            cfg = Config(
+                beta=beta,
+                eps=eps,
+                seed=seed
+            )
+
+            out = simulate_SIM11_2(
+                cfg,
+                target_basin
+            )
+
+            rows.append(
+                out
+            )
+
+        all_results[
+            target_basin
+        ] = rows
+
+        summary = summarize_results(
+            rows
+        )
+
+        print(
+            "\n"
+            + "=" * 60
+        )
+
+        print(
+            f"TARGET BASIN {target_basin}"
+        )
+
+        print(
+            "=" * 60
+        )
+
+        print(
+            f"n                               : {summary['n']}"
+        )
+
+        print(
+            f"perturb applied fraction        : {summary['perturb_applied_fraction']:.3f}"
+        )
+
+        print(
+            f"mean pre recurrence strength    : {summary['mean_pre_strength']:.6f}"
+        )
+
+        print(
+            f"mean post recurrence strength   : {summary['mean_post_strength']:.6f}"
+        )
+
+        print(
+            f"mean recurrence ratio           : {summary['mean_recurrence_ratio']:.6f}"
+        )
+
+        print(
+            f"fraction recurrence recovered   : {summary['fraction_recurrence_recovered']:.3f}"
+        )
+
+        print(
+            f"mean nu_pre                     : {summary['mean_nu_pre']:.8f}"
+        )
+
+        print(
+            f"mean nu_post                    : {summary['mean_nu_post']:.8f}"
+        )
+
+        print(
+            f"mean relative frequency error   : {summary['mean_frequency_error']:.6f}"
+        )
+
+        print(
+            f"fraction frequency recovered    : {summary['fraction_frequency_recovered']:.3f}"
+        )
+
+        print(
+            f"mean target displacement        : {summary['mean_target_displacement']:.6f}"
+        )
+
+        print(
+            f"mean non-target displacement    : {summary['mean_non_target_displacement']:.6f}"
+        )
+
+        print(
+            f"mean locality ratio             : {summary['mean_locality_ratio']:.6f}"
+        )
+
+    return all_results
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    results = run_SIM11_2(
+        seeds=50,
+        beta=1.38,
+        eps=0.2
+    )
+
+
+
+
+
+
+
+######################
+
+
+
+
+
+
+
+Results:
+
+======================================================================== 
+ SIM11.2 — Recurrent-Mode Stability Probe 
+======================================================================== 
+ beta=1.38
+eps=0.2 
+seeds=50 
+ Question:
+Does a locally perturbed basin recover its recurrent mode and characteristic recurrence frequency? 
+ ============================================================
+TARGET BASIN 0 
+============================================================ 
+n                               : 50 
+perturb applied fraction        : 0.200 
+mean pre recurrence strength    : 0.765768 
+mean post recurrence strength   : 0.742673 
+mean recurrence ratio           : 0.973187 
+fraction recurrence recovered   : 1.000 
+mean nu_pre                     : 0.06666667 
+mean nu_post                    : 0.06666667 
+mean relative frequency error   : 0.000000 
+fraction frequency recovered    : 1.000 
+mean target displacement        : 0.049608 
+mean non-target displacement    : 0.038614 
+mean locality ratio             : 1.639332 
+ ============================================================
+TARGET BASIN 1 
+============================================================ 
+n                               : 50 
+perturb applied fraction        : 0.180 
+mean pre recurrence strength    : 0.685756 
+mean post recurrence strength   : 0.675241 
+mean recurrence ratio           : 0.990052 
+fraction recurrence recovered   : 1.000 
+mean nu_pre                     : 0.06666667 
+mean nu_post                    : 0.06666667 
+mean relative frequency error   : 0.000000 
+fraction frequency recovered    : 1.000 
+mean target displacement        : 0.032681 
+mean non-target displacement    : 0.044326 
+mean locality ratio             : 0.850393 
+ ============================================================
+TARGET BASIN 2 
+============================================================ 
+n                               : 50 
+perturb applied fraction        : 0.240 
+mean pre recurrence strength    : 0.676155 
+mean post recurrence strength   : 0.670572 
+mean recurrence ratio           : 0.998513 
+fraction recurrence recovered   : 0.980 
+mean nu_pre                     : 0.06666667 
+mean nu_post                    : 0.06666667 
+mean relative frequency error   : 0.000000 
+fraction frequency recovered    : 1.000 
+mean target displacement        : 0.038480 
+mean non-target displacement    : 0.042348 
+mean locality ratio             : 1.173900 
+ ============================================================
+TARGET BASIN 3 
+============================================================ 
+n                               : 50 
+perturb applied fraction        : 0.240 
+mean pre recurrence strength    : 0.756050 
+mean post recurrence strength   : 0.757913 
+mean recurrence ratio           : 1.011159 
+fraction recurrence recovered   : 1.000 
+mean nu_pre                     : 0.06666667 
+mean nu_post                    : 0.06666667 
+mean relative frequency error   : 0.000000 
+fraction frequency recovered    : 1.000 
+mean target displacement        : 0.046633 
+mean non-target displacement    : 0.040434 
+mean locality ratio             : 1.353966
