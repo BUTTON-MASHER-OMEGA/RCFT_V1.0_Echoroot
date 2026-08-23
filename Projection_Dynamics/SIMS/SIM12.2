@@ -1,0 +1,2709 @@
+############################################################
+#  SIM12.2 — Transverse Restoring-Drift Probe
+#
+#  PURPOSE
+#  -------
+#  SIM12:
+#      identified bounded, anisotropic basin-local geometry.
+#
+#  SIM12.1:
+#      identified stable principal coherence-valence axes:
+#
+#          Z_x = (C_x, log V_eff,x)
+#
+#      with
+#
+#          Z_x - mu_x
+#              = q_parallel e_parallel
+#              + q_perp e_perp
+#
+#  SIM12.2 now asks:
+#
+#      If the ACTUAL dynamics are locally displaced
+#      transverse to the learned manifold, does the
+#      native stochastic process restore toward it?
+#
+#
+#  Candidate local Lyapunov distance:
+#
+#          V_perp,x = q_perp,x^2
+#
+#
+#  IMPORTANT
+#  ---------
+#  We do NOT directly modify C or V_eff.
+#
+#  Instead, we perturb the underlying local memory structure,
+#  select the local memory kick producing the strongest
+#  transverse displacement, and then release the system.
+#
+#  A paired control receives the same recovery random numbers.
+#
+#
+#  DELIBERATELY FIXED
+#  ------------------
+#      beta = 1.38
+#      one kick magnitude
+#      one perturbation family: local memory attenuation
+#      no eta_V
+#      no R_global
+#      no beta sweep
+#      no H4 / E8 assumptions
+#
+#
+#  PRIMARY QUESTION
+#  ----------------
+#
+#      Does V_perp decrease after a transverse displacement?
+#
+############################################################
+
+
+import copy
+import numpy as np
+
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIG
+# ============================================================
+
+@dataclass
+class Config:
+
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+
+    alpha: float = 1.0
+    T_tol: float = 1.0
+
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    seed: int = 1
+
+    # --------------------------------------------------------
+    # Baseline construction
+    # --------------------------------------------------------
+
+    burnin_steps: int = 3000
+
+    reference_steps: int = 4000
+
+    # --------------------------------------------------------
+    # Recovery
+    # --------------------------------------------------------
+
+    recovery_steps: int = 500
+
+    diagnostic_every: int = 5
+
+    stats_window: int = 100
+
+    # --------------------------------------------------------
+    # Local transverse kick
+    # --------------------------------------------------------
+    #
+    # Memory values on the selected local edge class
+    # are multiplied by:
+    #
+    #       1 - kick_fraction
+    #
+    # So 0.50 means a 50% attenuation.
+    #
+    # We do NOT sweep this in SIM12.2.
+    # --------------------------------------------------------
+
+    kick_fraction: float = 0.50
+
+    # Require the induced displacement to point reasonably
+    # close to e_perp.
+    min_transverse_alignment: float = 0.80
+
+    # Avoid trials in which the intervention creates
+    # essentially zero displacement.
+    min_delta_V_perp: float = 1e-7
+
+    # --------------------------------------------------------
+    # Early restoring-drift measurement
+    # --------------------------------------------------------
+
+    early_diagnostics: int = 20
+
+    basins: dict = None
+
+    def __post_init__(self):
+
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+# ============================================================
+# 2. MEMORY / TRANSITION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+
+    if mode == "tanh":
+        return np.tanh(M)
+
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+
+    M_raw = mem.get(
+        (u_i, u_j),
+        0.0
+    )
+
+
+    M_sat = saturate_memory(
+        M_raw,
+        cfg.sat_mode
+    )
+
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+
+    nbrs = neighbors[u]
+
+
+    costs = np.array(
+        [
+            friction(u, v, mem, cfg)
+            for v in nbrs
+        ],
+        dtype=float
+    )
+
+
+    weights = np.exp(
+        -costs / cfg.T_tol
+    )
+
+
+    probs = weights / weights.sum()
+
+
+    return nbrs, probs
+
+
+def update_memory(mem, u, v, cfg):
+
+    for k in list(mem.keys()):
+
+        mem[k] *= cfg.delta
+
+        if mem[k] < 1e-12:
+            del mem[k]
+
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. COMMON-RANDOM-NUMBER SAMPLING
+#
+# Instead of rng.choice, recovery branches receive the same
+# uniform random numbers.
+#
+# Their transition probabilities may differ, but stochastic
+# forcing is paired as closely as possible.
+# ============================================================
+
+def sample_from_probs(
+    nbrs,
+    probs,
+    r
+):
+
+    cumulative = np.cumsum(
+        probs
+    )
+
+
+    i = int(
+        np.searchsorted(
+            cumulative,
+            r,
+            side="right"
+        )
+    )
+
+
+    i = min(
+        i,
+        len(nbrs) - 1
+    )
+
+
+    return nbrs[i]
+
+
+# ============================================================
+# 4. LOCAL ENTROPY + PERSISTENCE
+# ============================================================
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins,
+    window=None
+):
+
+    if window is None:
+
+        start = 0
+
+    else:
+
+        start = max(
+            0,
+            len(hidden) - window - 1
+        )
+
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+
+    for t in range(
+        start,
+        len(hidden) - 1
+    ):
+
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        b = obs[t]
+
+        counts_total[b] += 1
+
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_trans[x][
+                    (u, v)
+                ] += 1
+
+                basin_from[x][u] += 1
+
+                break
+
+
+    H = {}
+    P = {}
+
+
+    for x in basins:
+
+        H_sum = 0.0
+        n_src = 0
+
+
+        for u in basin_from[x]:
+
+            probs = []
+
+
+            for (uu, vv), c in basin_trans[x].items():
+
+                if uu == u:
+
+                    probs.append(
+                        c / basin_from[x][u]
+                    )
+
+
+            if len(probs) == 0:
+                continue
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_sum += -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+
+            n_src += 1
+
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+
+        P[x] = (
+            counts_same[x]
+            / counts_total[x]
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+
+    return H, P
+
+
+# ============================================================
+# 5. COHERENCE
+# ============================================================
+
+def compute_Cx(H, P, alpha):
+
+    return {
+        x:
+            -H[x]
+            + alpha * P[x]
+
+        for x in H
+    }
+
+
+# ============================================================
+# 6. EFFECTIVE VALENCE
+# ============================================================
+
+def compute_valence(
+    mem,
+    cfg
+):
+
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+
+            _, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_loc = -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+
+            Veff[x] += np.exp(
+                H_loc
+            )
+
+
+            counts[x] += 1
+
+
+    for x in cfg.basins:
+
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+
+    return Veff
+
+
+# ============================================================
+# 7. LOCAL DIAGNOSTIC STATE
+#
+#      Z_x = (C_x, log V_eff,x)
+# ============================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    mem,
+    cfg
+):
+
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        obs,
+        cfg.basins,
+        window=cfg.stats_window
+    )
+
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+
+    Z = {}
+
+
+    for x in cfg.basins:
+
+        V = max(
+            Veff[x],
+            1e-12
+        )
+
+
+        Z[x] = np.array(
+            [
+                Cx[x],
+                np.log(V)
+            ],
+            dtype=float
+        )
+
+
+    return Z
+
+
+# ============================================================
+# 8. ORDINARY BASELINE RUNNER
+# ============================================================
+
+def run_random_steps(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    rng,
+    steps,
+    log_diagnostics=False
+):
+
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+
+    for t in range(steps):
+
+        u = hidden[-1]
+
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+
+        v = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+
+        hidden.append(v)
+
+
+        obs.append(
+            proj_structured[v]
+        )
+
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+
+        if (
+            log_diagnostics
+            and
+            t % cfg.diagnostic_every == 0
+        ):
+
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+
+            for x in cfg.basins:
+
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+
+    if log_diagnostics:
+
+        for x in Z_logs:
+
+            Z_logs[x] = np.asarray(
+                Z_logs[x],
+                dtype=float
+            )
+
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "Z": Z_logs
+    }
+
+
+# ============================================================
+# 9. PAIRED RECOVERY RUNNER
+# ============================================================
+
+def run_paired_recovery(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    uniforms
+):
+
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+
+    # Record initial post-intervention point.
+    Z0 = compute_Z(
+        hidden,
+        obs,
+        mem,
+        cfg
+    )
+
+
+    for x in cfg.basins:
+
+        Z_logs[x].append(
+            Z0[x]
+        )
+
+
+    for t, r in enumerate(uniforms):
+
+        u = hidden[-1]
+
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+
+        v = sample_from_probs(
+            nbrs,
+            probs,
+            r
+        )
+
+
+        hidden.append(v)
+
+
+        obs.append(
+            proj_structured[v]
+        )
+
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+
+        if (
+            (t + 1)
+            % cfg.diagnostic_every
+            == 0
+        ):
+
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+
+            for x in cfg.basins:
+
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+
+    for x in Z_logs:
+
+        Z_logs[x] = np.asarray(
+            Z_logs[x],
+            dtype=float
+        )
+
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "Z": Z_logs
+    }
+
+
+# ============================================================
+# 10. PRINCIPAL AXES
+# ============================================================
+
+def principal_axes(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    mu = np.mean(
+        Z,
+        axis=0
+    )
+
+
+    centered = Z - mu
+
+
+    cov = np.cov(
+        centered.T
+    )
+
+
+    eigvals, eigvecs = np.linalg.eigh(
+        cov
+    )
+
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+
+    eigvals = eigvals[
+        order
+    ]
+
+
+    eigvecs = eigvecs[
+        :,
+        order
+    ]
+
+
+    e_parallel = eigvecs[:, 0]
+    e_perp = eigvecs[:, 1]
+
+
+    # Sign convention only for reproducible reporting.
+    if e_parallel[0] < 0:
+        e_parallel *= -1.0
+
+
+    # Enforce right-handed basis when possible.
+    det = (
+        e_parallel[0] * e_perp[1]
+        -
+        e_parallel[1] * e_perp[0]
+    )
+
+
+    if det < 0:
+        e_perp *= -1.0
+
+
+    return {
+        "mu": mu,
+        "cov": cov,
+        "eigvals": eigvals,
+        "e_parallel": e_parallel,
+        "e_perp": e_perp,
+    }
+
+
+# ============================================================
+# 11. LOCAL MANIFOLD COORDINATES
+# ============================================================
+
+def manifold_coordinates(
+    Z,
+    axes
+):
+
+    centered = (
+        np.asarray(
+            Z,
+            dtype=float
+        )
+        -
+        axes["mu"]
+    )
+
+
+    q_parallel = (
+        centered
+        @ axes["e_parallel"]
+    )
+
+
+    q_perp = (
+        centered
+        @ axes["e_perp"]
+    )
+
+
+    return (
+        q_parallel,
+        q_perp
+    )
+
+
+def q_perp_single(
+    Z,
+    axes
+):
+
+    centered = (
+        np.asarray(
+            Z,
+            dtype=float
+        )
+        -
+        axes["mu"]
+    )
+
+
+    return float(
+        np.dot(
+            centered,
+            axes["e_perp"]
+        )
+    )
+
+
+# ============================================================
+# 12. LOCAL MEMORY EDGE CLASSES
+#
+# Within each basin there are:
+#
+#   internal edges:
+#       remain inside the same projected basin
+#
+#   boundary edges:
+#       cross projection/basin structure
+#
+# These provide two simple local interventions.
+# ============================================================
+
+def basin_edge_class(
+    basin,
+    edge_class,
+    cfg
+):
+
+    states = cfg.basins[
+        basin
+    ]
+
+
+    edges = []
+
+
+    for u in states:
+
+        for v in neighbors[u]:
+
+            same_projection = (
+                proj_structured[u]
+                ==
+                proj_structured[v]
+            )
+
+
+            if (
+                edge_class == "internal"
+                and
+                same_projection
+            ):
+
+                edges.append(
+                    (u, v)
+                )
+
+
+            elif (
+                edge_class == "boundary"
+                and
+                not same_projection
+            ):
+
+                edges.append(
+                    (u, v)
+                )
+
+
+    return edges
+
+
+# ============================================================
+# 13. LOCAL MEMORY ATTENUATION
+# ============================================================
+
+def attenuate_local_memory(
+    mem,
+    basin,
+    edge_class,
+    cfg
+):
+
+    new_mem = defaultdict(
+        float,
+        mem
+    )
+
+
+    edges = basin_edge_class(
+        basin,
+        edge_class,
+        cfg
+    )
+
+
+    multiplier = (
+        1.0
+        -
+        cfg.kick_fraction
+    )
+
+
+    for edge in edges:
+
+        if edge in new_mem:
+
+            new_mem[edge] *= multiplier
+
+
+            if new_mem[edge] < 1e-12:
+                del new_mem[edge]
+
+
+    return new_mem
+
+
+# ============================================================
+# 14. CALIBRATE THE TRANSVERSE KICK
+#
+# We try only TWO simple interventions:
+#
+#       attenuate internal memory
+#       attenuate boundary memory
+#
+# and select the one that:
+#
+#   1. increases q_perp^2 the most,
+#   2. remains aligned with e_perp.
+#
+# This is calibration of the actuator, not optimization
+# of the recovery result.
+# ============================================================
+
+def choose_transverse_kick(
+    hidden,
+    obs,
+    mem,
+    target,
+    axes,
+    cfg
+):
+
+    Z_base_all = compute_Z(
+        hidden,
+        obs,
+        mem,
+        cfg
+    )
+
+
+    Z_base = Z_base_all[
+        target
+    ]
+
+
+    q_base = q_perp_single(
+        Z_base,
+        axes
+    )
+
+
+    V_base = q_base ** 2
+
+
+    candidates = []
+
+
+    for edge_class in [
+        "internal",
+        "boundary"
+    ]:
+
+        mem_candidate = attenuate_local_memory(
+            mem,
+            target,
+            edge_class,
+            cfg
+        )
+
+
+        Z_candidate_all = compute_Z(
+            hidden,
+            obs,
+            mem_candidate,
+            cfg
+        )
+
+
+        Z_candidate = Z_candidate_all[
+            target
+        ]
+
+
+        delta_Z = (
+            Z_candidate
+            -
+            Z_base
+        )
+
+
+        delta_norm = np.linalg.norm(
+            delta_Z
+        )
+
+
+        if delta_norm > 1e-15:
+
+            alignment = abs(
+                np.dot(
+                    delta_Z / delta_norm,
+                    axes["e_perp"]
+                )
+            )
+
+        else:
+
+            alignment = 0.0
+
+
+        q_candidate = q_perp_single(
+            Z_candidate,
+            axes
+        )
+
+
+        V_candidate = (
+            q_candidate ** 2
+        )
+
+
+        delta_V = (
+            V_candidate
+            -
+            V_base
+        )
+
+
+        candidates.append(
+            {
+                "edge_class":
+                    edge_class,
+
+                "mem":
+                    mem_candidate,
+
+                "Z":
+                    Z_candidate,
+
+                "delta_Z":
+                    delta_Z,
+
+                "alignment":
+                    alignment,
+
+                "q_post":
+                    q_candidate,
+
+                "V_post":
+                    V_candidate,
+
+                "delta_V":
+                    delta_V,
+            }
+        )
+
+
+    # Prefer valid transverse candidates.
+    valid = [
+        c
+        for c in candidates
+
+        if (
+            c["alignment"]
+            >=
+            cfg.min_transverse_alignment
+        )
+    ]
+
+
+    if len(valid) == 0:
+
+        valid = candidates
+
+
+    best = max(
+        valid,
+        key=lambda c: c["delta_V"]
+    )
+
+
+    best["q_base"] = q_base
+    best["V_base"] = V_base
+
+
+    best["valid"] = (
+        best["alignment"]
+        >= cfg.min_transverse_alignment
+        and
+        best["delta_V"]
+        >= cfg.min_delta_V_perp
+    )
+
+
+    return best
+
+
+# ============================================================
+# 15. RECOVERY METRICS
+# ============================================================
+
+def restoring_metrics(
+    Z_pert,
+    Z_ctrl,
+    axes,
+    cfg
+):
+
+    qpar_p, qperp_p = (
+        manifold_coordinates(
+            Z_pert,
+            axes
+        )
+    )
+
+
+    qpar_c, qperp_c = (
+        manifold_coordinates(
+            Z_ctrl,
+            axes
+        )
+    )
+
+
+    Vp = qperp_p ** 2
+
+    Vc = qperp_c ** 2
+
+
+    # --------------------------------------------------------
+    # Initial and final transverse distance
+    # --------------------------------------------------------
+
+    V_post = float(
+        Vp[0]
+    )
+
+
+    V_final = float(
+        Vp[-1]
+    )
+
+
+    contraction_ratio = (
+        V_final
+        /
+        max(
+            V_post,
+            1e-12
+        )
+    )
+
+
+    final_fraction_removed = (
+        1.0
+        -
+        contraction_ratio
+    )
+
+
+    # --------------------------------------------------------
+    # Half-recovery time
+    #
+    # First time:
+    #
+    #      V(t) <= 0.5 V_post
+    # --------------------------------------------------------
+
+    half_threshold = (
+        0.5 * V_post
+    )
+
+
+    half_indices = np.where(
+        Vp <= half_threshold
+    )[0]
+
+
+    if len(half_indices) > 0:
+
+        tau_half = (
+            int(
+                half_indices[0]
+            )
+            *
+            cfg.diagnostic_every
+        )
+
+    else:
+
+        tau_half = np.nan
+
+
+    # --------------------------------------------------------
+    # Early stochastic Lyapunov drift
+    #
+    #      ΔV = V(t+1) - V(t)
+    #
+    # Negative is restoring.
+    # --------------------------------------------------------
+
+    n_early = min(
+        cfg.early_diagnostics,
+        len(Vp) - 1
+    )
+
+
+    if n_early > 0:
+
+        dV_early = (
+            Vp[1:n_early + 1]
+            -
+            Vp[:n_early]
+        )
+
+
+        mean_early_dV = float(
+            np.mean(
+                dV_early
+            )
+        )
+
+
+        frac_negative_dV = float(
+            np.mean(
+                dV_early < 0
+            )
+        )
+
+
+        # Equivalent signed drift:
+        #
+        #      q * Δq < 0
+        #
+        # indicates motion toward q=0.
+        dq_early = (
+            qperp_p[1:n_early + 1]
+            -
+            qperp_p[:n_early]
+        )
+
+
+        restoring_products = (
+            qperp_p[:n_early]
+            *
+            dq_early
+        )
+
+
+        mean_qdq = float(
+            np.mean(
+                restoring_products
+            )
+        )
+
+
+        frac_qdq_negative = float(
+            np.mean(
+                restoring_products < 0
+            )
+        )
+
+    else:
+
+        mean_early_dV = np.nan
+        frac_negative_dV = np.nan
+        mean_qdq = np.nan
+        frac_qdq_negative = np.nan
+
+
+    # --------------------------------------------------------
+    # Paired-control excess distance
+    #
+    # Perturbed vs identical stochastic forcing control.
+    # --------------------------------------------------------
+
+    excess_V = (
+        Vp - Vc
+    )
+
+
+    excess_post = float(
+        excess_V[0]
+    )
+
+
+    excess_final = float(
+        excess_V[-1]
+    )
+
+
+    if abs(excess_post) > 1e-12:
+
+        excess_remaining_ratio = (
+            excess_final
+            /
+            excess_post
+        )
+
+    else:
+
+        excess_remaining_ratio = np.nan
+
+
+    # Normalized excess area:
+    #
+    # Small value = perturbation effect disappears quickly.
+    if (
+        len(excess_V) > 1
+        and
+        abs(excess_post) > 1e-12
+    ):
+
+        excess_auc = float(
+            np.mean(
+                excess_V
+            )
+            /
+            excess_post
+        )
+
+    else:
+
+        excess_auc = np.nan
+
+
+    # --------------------------------------------------------
+    # Longitudinal motion is allowed.
+    #
+    # We report it rather than penalize it.
+    # --------------------------------------------------------
+
+    longitudinal_displacement = float(
+        abs(
+            qpar_p[-1]
+            -
+            qpar_p[0]
+        )
+    )
+
+
+    transverse_displacement_final = float(
+        abs(
+            qperp_p[-1]
+        )
+    )
+
+
+    return {
+        "V_post":
+            V_post,
+
+        "V_final":
+            V_final,
+
+        "contraction_ratio":
+            contraction_ratio,
+
+        "fraction_removed":
+            final_fraction_removed,
+
+        "tau_half":
+            tau_half,
+
+        "mean_early_dV":
+            mean_early_dV,
+
+        "fraction_early_dV_negative":
+            frac_negative_dV,
+
+        "mean_q_dq":
+            mean_qdq,
+
+        "fraction_q_dq_negative":
+            frac_qdq_negative,
+
+        "control_excess_post":
+            excess_post,
+
+        "control_excess_final":
+            excess_final,
+
+        "control_excess_remaining_ratio":
+            excess_remaining_ratio,
+
+        "normalized_excess_auc":
+            excess_auc,
+
+        "longitudinal_displacement":
+            longitudinal_displacement,
+
+        "final_abs_q_perp":
+            transverse_displacement_final,
+
+        "qperp_pert":
+            qperp_p,
+
+        "qperp_ctrl":
+            qperp_c,
+
+        "Vpert":
+            Vp,
+
+        "Vctrl":
+            Vc,
+    }
+
+
+# ============================================================
+# 16. SINGLE SEED BASELINE
+# ============================================================
+
+def build_baseline(
+    cfg
+):
+
+    rng = np.random.default_rng(
+        cfg.seed
+    )
+
+
+    hidden = [0]
+
+    obs = [
+        proj_structured[0]
+    ]
+
+    mem = defaultdict(float)
+
+
+    # --------------------------------------------------------
+    # Burn in
+    # --------------------------------------------------------
+
+    burn = run_random_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.burnin_steps,
+        log_diagnostics=False
+    )
+
+
+    # --------------------------------------------------------
+    # Learn invariant manifold
+    # --------------------------------------------------------
+
+    reference = run_random_steps(
+        cfg,
+        burn["hidden"],
+        burn["obs"],
+        burn["mem"],
+        rng,
+        cfg.reference_steps,
+        log_diagnostics=True
+    )
+
+
+    axes = {}
+
+
+    for x in cfg.basins:
+
+        axes[x] = principal_axes(
+            reference["Z"][x]
+        )
+
+
+    return {
+        "hidden":
+            reference["hidden"],
+
+        "obs":
+            reference["obs"],
+
+        "mem":
+            reference["mem"],
+
+        "axes":
+            axes,
+    }
+
+
+# ============================================================
+# 17. ONE TARGET BASIN EXPERIMENT
+# ============================================================
+
+def run_target_experiment(
+    baseline,
+    target,
+    cfg
+):
+
+    # --------------------------------------------------------
+    # Copy common endpoint
+    # --------------------------------------------------------
+
+    hidden0 = list(
+        baseline["hidden"]
+    )
+
+
+    obs0 = list(
+        baseline["obs"]
+    )
+
+
+    mem0 = defaultdict(
+        float,
+        baseline["mem"]
+    )
+
+
+    axes = baseline[
+        "axes"
+    ][target]
+
+
+    # --------------------------------------------------------
+    # Calibrate one local transverse kick
+    # --------------------------------------------------------
+
+    kick = choose_transverse_kick(
+        hidden0,
+        obs0,
+        mem0,
+        target,
+        axes,
+        cfg
+    )
+
+
+    # --------------------------------------------------------
+    # Paired recovery random numbers
+    # --------------------------------------------------------
+
+    recovery_rng = np.random.default_rng(
+        cfg.seed * 1000
+        + target * 37
+        + 17
+    )
+
+
+    uniforms = recovery_rng.random(
+        cfg.recovery_steps
+    )
+
+
+    # --------------------------------------------------------
+    # Perturbed branch
+    # --------------------------------------------------------
+
+    hidden_p = list(
+        hidden0
+    )
+
+    obs_p = list(
+        obs0
+    )
+
+    mem_p = defaultdict(
+        float,
+        kick["mem"]
+    )
+
+
+    pert = run_paired_recovery(
+        cfg,
+        hidden_p,
+        obs_p,
+        mem_p,
+        uniforms
+    )
+
+
+    # --------------------------------------------------------
+    # Control branch
+    # --------------------------------------------------------
+
+    hidden_c = list(
+        hidden0
+    )
+
+    obs_c = list(
+        obs0
+    )
+
+    mem_c = defaultdict(
+        float,
+        mem0
+    )
+
+
+    ctrl = run_paired_recovery(
+        cfg,
+        hidden_c,
+        obs_c,
+        mem_c,
+        uniforms
+    )
+
+
+    metrics = restoring_metrics(
+        pert["Z"][target],
+        ctrl["Z"][target],
+        axes,
+        cfg
+    )
+
+
+    return {
+        "target":
+            target,
+
+        "valid":
+            kick["valid"],
+
+        "kick_edge_class":
+            kick["edge_class"],
+
+        "kick_alignment":
+            kick["alignment"],
+
+        "kick_delta_V":
+            kick["delta_V"],
+
+        "q_base":
+            kick["q_base"],
+
+        "q_post":
+            kick["q_post"],
+
+        "metrics":
+            metrics,
+    }
+
+
+# ============================================================
+# 18. SINGLE SEED — ALL TARGET BASINS
+# ============================================================
+
+def simulate_SIM12_2(
+    cfg
+):
+
+    baseline = build_baseline(
+        cfg
+    )
+
+
+    targets = {}
+
+
+    for target in cfg.basins:
+
+        targets[target] = (
+            run_target_experiment(
+                baseline,
+                target,
+                cfg
+            )
+        )
+
+
+    return {
+        "seed":
+            cfg.seed,
+
+        "targets":
+            targets,
+    }
+
+
+# ============================================================
+# 19. SAFE AGGREGATION
+# ============================================================
+
+def safe_mean(values):
+
+    a = np.asarray(
+        values,
+        dtype=float
+    )
+
+
+    a = a[
+        np.isfinite(a)
+    ]
+
+
+    if len(a) == 0:
+        return np.nan
+
+
+    return float(
+        np.mean(a)
+    )
+
+
+def safe_median(values):
+
+    a = np.asarray(
+        values,
+        dtype=float
+    )
+
+
+    a = a[
+        np.isfinite(a)
+    ]
+
+
+    if len(a) == 0:
+        return np.nan
+
+
+    return float(
+        np.median(a)
+    )
+
+
+def safe_fraction(condition_values):
+
+    values = np.asarray(
+        condition_values,
+        dtype=float
+    )
+
+
+    values = values[
+        np.isfinite(values)
+    ]
+
+
+    if len(values) == 0:
+        return np.nan
+
+
+    return float(
+        np.mean(values)
+    )
+
+
+# ============================================================
+# 20. TARGET SUMMARY
+# ============================================================
+
+def summarize_target(
+    rows,
+    target
+):
+
+    experiments = [
+        r["targets"][target]
+        for r in rows
+    ]
+
+
+    valid = [
+        e
+        for e in experiments
+        if e["valid"]
+    ]
+
+
+    if len(valid) == 0:
+
+        return {
+            "n_total": len(experiments),
+            "n_valid": 0,
+        }
+
+
+    ms = [
+        e["metrics"]
+        for e in valid
+    ]
+
+
+    internal_count = sum(
+        1
+        for e in valid
+        if e["kick_edge_class"]
+        == "internal"
+    )
+
+
+    boundary_count = sum(
+        1
+        for e in valid
+        if e["kick_edge_class"]
+        == "boundary"
+    )
+
+
+    return {
+
+        "n_total":
+            len(experiments),
+
+        "n_valid":
+            len(valid),
+
+        "valid_fraction":
+            len(valid)
+            / len(experiments),
+
+        "mean_alignment":
+            safe_mean(
+                [
+                    e["kick_alignment"]
+                    for e in valid
+                ]
+            ),
+
+        "mean_kick_delta_V":
+            safe_mean(
+                [
+                    e["kick_delta_V"]
+                    for e in valid
+                ]
+            ),
+
+        "internal_kicks":
+            internal_count,
+
+        "boundary_kicks":
+            boundary_count,
+
+        # ----------------------------------------------------
+        # Main Lyapunov-distance results
+        # ----------------------------------------------------
+
+        "mean_V_post":
+            safe_mean(
+                [
+                    m["V_post"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_V_final":
+            safe_mean(
+                [
+                    m["V_final"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_contraction_ratio":
+            safe_mean(
+                [
+                    m["contraction_ratio"]
+                    for m in ms
+                ]
+            ),
+
+        "median_contraction_ratio":
+            safe_median(
+                [
+                    m["contraction_ratio"]
+                    for m in ms
+                ]
+            ),
+
+        "fraction_final_contracted":
+            safe_fraction(
+                [
+                    float(
+                        m["V_final"]
+                        <
+                        m["V_post"]
+                    )
+
+                    for m in ms
+                ]
+            ),
+
+        "mean_fraction_removed":
+            safe_mean(
+                [
+                    m["fraction_removed"]
+                    for m in ms
+                ]
+            ),
+
+        "median_tau_half":
+            safe_median(
+                [
+                    m["tau_half"]
+                    for m in ms
+                ]
+            ),
+
+        # ----------------------------------------------------
+        # Early drift
+        # ----------------------------------------------------
+
+        "mean_early_dV":
+            safe_mean(
+                [
+                    m["mean_early_dV"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_fraction_early_dV_negative":
+            safe_mean(
+                [
+                    m[
+                        "fraction_early_dV_negative"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_q_dq":
+            safe_mean(
+                [
+                    m["mean_q_dq"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_fraction_q_dq_negative":
+            safe_mean(
+                [
+                    m[
+                        "fraction_q_dq_negative"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        # ----------------------------------------------------
+        # Paired control
+        # ----------------------------------------------------
+
+        "mean_control_excess_post":
+            safe_mean(
+                [
+                    m[
+                        "control_excess_post"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_control_excess_final":
+            safe_mean(
+                [
+                    m[
+                        "control_excess_final"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_excess_remaining_ratio":
+            safe_mean(
+                [
+                    m[
+                        "control_excess_remaining_ratio"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_normalized_excess_auc":
+            safe_mean(
+                [
+                    m[
+                        "normalized_excess_auc"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        # ----------------------------------------------------
+        # Freedom along manifold
+        # ----------------------------------------------------
+
+        "mean_longitudinal_displacement":
+            safe_mean(
+                [
+                    m[
+                        "longitudinal_displacement"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_final_abs_q_perp":
+            safe_mean(
+                [
+                    m[
+                        "final_abs_q_perp"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "internal_kicks":
+            internal_count,
+
+        "boundary_kicks":
+            boundary_count,
+    }
+
+
+# ============================================================
+# 21. DRIVER
+# ============================================================
+
+def run_SIM12_2(
+    seeds=50,
+    beta=1.38
+):
+
+    print(
+        "=" * 76
+    )
+
+
+    print(
+        "\n"
+        "SIM12.2 — Transverse Restoring-Drift Probe"
+        "\n"
+    )
+
+
+    print(
+        "=" * 76
+    )
+
+
+    print(
+        f"\nbeta={beta}"
+    )
+
+
+    print(
+        f"seeds={seeds}"
+    )
+
+
+    print(
+        "\nOne fixed local memory kick."
+    )
+
+
+    print(
+        "Paired unperturbed control."
+    )
+
+
+    print(
+        "No eta_V."
+    )
+
+
+    print(
+        "No global Lyapunov assumption."
+    )
+
+
+    print(
+        "\nQuestion:"
+    )
+
+
+    print(
+        "If a basin is displaced transverse to its learned "
+        "coherence-valence manifold, does the native dynamics "
+        "restore toward that manifold?"
+    )
+
+
+    rows = []
+
+
+    for seed in range(
+        1,
+        seeds + 1
+    ):
+
+        cfg = Config(
+            beta=beta,
+            seed=seed
+        )
+
+
+        out = simulate_SIM12_2(
+            cfg
+        )
+
+
+        rows.append(
+            out
+        )
+
+
+    # --------------------------------------------------------
+    # Basin summaries
+    # --------------------------------------------------------
+
+    for target in DEFAULT_BASINS:
+
+        s = summarize_target(
+            rows,
+            target
+        )
+
+
+        print(
+            "\n"
+            + "=" * 60
+        )
+
+
+        print(
+            f"TARGET BASIN {target}"
+        )
+
+
+        print(
+            "=" * 60
+        )
+
+
+        print(
+            f"total trials                      : "
+            f"{s['n_total']}"
+        )
+
+
+        print(
+            f"valid transverse kicks            : "
+            f"{s['n_valid']}"
+        )
+
+
+        if s["n_valid"] == 0:
+
+            print(
+                "No valid transverse interventions."
+            )
+
+            continue
+
+
+        print(
+            f"valid fraction                    : "
+            f"{s['valid_fraction']:.3f}"
+        )
+
+
+        print(
+            f"mean transverse alignment         : "
+            f"{s['mean_alignment']:.6f}"
+        )
+
+
+        print(
+            f"mean induced ΔV_perp              : "
+            f"{s['mean_kick_delta_V']:.8f}"
+        )
+
+
+        print(
+            f"internal kicks selected           : "
+            f"{s['internal_kicks']}"
+        )
+
+
+        print(
+            f"boundary kicks selected           : "
+            f"{s['boundary_kicks']}"
+        )
+
+
+        print(
+            "\nTRANSVERSE LYAPUNOV DISTANCE"
+        )
+
+
+        print(
+            f"mean V_perp post                  : "
+            f"{s['mean_V_post']:.8f}"
+        )
+
+
+        print(
+            f"mean V_perp final                 : "
+            f"{s['mean_V_final']:.8f}"
+        )
+
+
+        print(
+            f"mean contraction ratio            : "
+            f"{s['mean_contraction_ratio']:.6f}"
+        )
+
+
+        print(
+            f"median contraction ratio          : "
+            f"{s['median_contraction_ratio']:.6f}"
+        )
+
+
+        print(
+            f"fraction final V_perp contracted  : "
+            f"{s['fraction_final_contracted']:.3f}"
+        )
+
+
+        print(
+            f"mean fraction V_perp removed      : "
+            f"{s['mean_fraction_removed']:.6f}"
+        )
+
+
+        print(
+            f"median half-recovery time         : "
+            f"{s['median_tau_half']:.3f}"
+        )
+
+
+        print(
+            "\nEARLY RESTORING DRIFT"
+        )
+
+
+        print(
+            f"mean early ΔV_perp                : "
+            f"{s['mean_early_dV']:.8f}"
+        )
+
+
+        print(
+            f"fraction early ΔV < 0             : "
+            f"{s['mean_fraction_early_dV_negative']:.3f}"
+        )
+
+
+        print(
+            f"mean q_perp * Δq_perp             : "
+            f"{s['mean_q_dq']:.8f}"
+        )
+
+
+        print(
+            f"fraction q_perp*Δq_perp < 0       : "
+            f"{s['mean_fraction_q_dq_negative']:.3f}"
+        )
+
+
+        print(
+            "\nPAIRED CONTROL"
+        )
+
+
+        print(
+            f"mean excess V post                : "
+            f"{s['mean_control_excess_post']:.8f}"
+        )
+
+
+        print(
+            f"mean excess V final               : "
+            f"{s['mean_control_excess_final']:.8f}"
+        )
+
+
+        print(
+            f"mean excess remaining ratio       : "
+            f"{s['mean_excess_remaining_ratio']:.6f}"
+        )
+
+
+        print(
+            f"normalized excess AUC             : "
+            f"{s['mean_normalized_excess_auc']:.6f}"
+        )
+
+
+        print(
+            "\nMOTION ALONG MANIFOLD"
+        )
+
+
+        print(
+            f"mean longitudinal displacement    : "
+            f"{s['mean_longitudinal_displacement']:.6f}"
+        )
+
+
+        print(
+            f"mean final |q_perp|               : "
+            f"{s['mean_final_abs_q_perp']:.6f}"
+        )
+
+
+    return rows
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    results = run_SIM12_2(
+        seeds=50,
+        beta=1.38
+    )
+
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+
+
+============================================================================
+
+
+SIM12.2 — Transverse Restoring-Drift Probe
+
+============================================================================
+
+
+beta=1.38
+seeds=50
+
+
+One fixed local memory kick.
+Paired unperturbed control.
+
+No eta_V.
+
+No global Lyapunov assumption.
+
+
+Question:
+If a basin is displaced transverse to its learned coherence-valence manifold, does the native dynamics restore toward that manifold?
+
+
+============================================================
+TARGET BASIN 0
+
+============================================================
+
+total trials                      : 50
+
+valid transverse kicks            : 50
+
+valid fraction                    : 1.000
+
+mean transverse alignment         : 0.986449
+
+mean induced ΔV_perp              : 0.00201453
+
+internal kicks selected           : 25
+
+boundary kicks selected           : 25
+
+
+TRANSVERSE LYAPUNOV DISTANCE
+mean V_perp post                  : 0.00375903
+
+mean V_perp final                 : 0.00227477
+
+mean contraction ratio            : 1.276852
+
+median contraction ratio          : 0.425206
+
+fraction final V_perp contracted  : 0.720
+
+mean fraction V_perp removed      : -0.276852
+
+median half-recovery time         : 10.000
+
+
+EARLY RESTORING DRIFT
+mean early ΔV_perp                : -0.00009206
+
+fraction early ΔV < 0             : 0.463
+
+mean q_perp * Δq_perp             : -0.00045195
+
+fraction q_perp*Δq_perp < 0       : 0.527
+
+
+PAIRED CONTROL
+mean excess V post                : 0.00201453
+
+mean excess V final               : -0.00000000
+
+mean excess remaining ratio       : -0.000000
+
+normalized excess AUC             : 0.195631
+
+
+MOTION ALONG MANIFOLD
+mean longitudinal displacement    : 0.243108
+
+mean final |q_perp|               : 0.037781
+
+
+============================================================
+TARGET BASIN 1
+
+============================================================
+
+total trials                      : 50
+
+valid transverse kicks            : 27
+
+valid fraction                    : 0.540
+
+mean transverse alignment         : 0.999700
+
+mean induced ΔV_perp              : 0.00015681
+
+internal kicks selected           : 0
+
+boundary kicks selected           : 27
+
+
+TRANSVERSE LYAPUNOV DISTANCE
+mean V_perp post                  : 0.00037806
+
+mean V_perp final                 : 0.00050996
+
+mean contraction ratio            : 1.784070
+
+median contraction ratio          : 0.681351
+
+fraction final V_perp contracted  : 0.556
+
+mean fraction V_perp removed      : -0.784070
+
+median half-recovery time         : 15.000
+
+
+EARLY RESTORING DRIFT
+mean early ΔV_perp                : 0.00000664
+
+fraction early ΔV < 0             : 0.433
+
+mean q_perp * Δq_perp             : -0.00010188
+
+fraction q_perp*Δq_perp < 0       : 0.526
+
+
+PAIRED CONTROL
+mean excess V post                : 0.00015681
+
+mean excess V final               : 0.00000000
+
+mean excess remaining ratio       : 0.000000
+
+normalized excess AUC             : 0.070575
+
+
+MOTION ALONG MANIFOLD
+mean longitudinal displacement    : 0.211806
+
+mean final |q_perp|               : 0.018456
+
+
+============================================================
+TARGET BASIN 2
+
+============================================================
+
+total trials                      : 50
+
+valid transverse kicks            : 38
+
+valid fraction                    : 0.760
+
+mean transverse alignment         : 0.999698
+
+mean induced ΔV_perp              : 0.00010738
+
+internal kicks selected           : 0
+
+boundary kicks selected           : 38
+
+
+TRANSVERSE LYAPUNOV DISTANCE
+mean V_perp post                  : 0.00036063
+
+mean V_perp final                 : 0.00038367
+
+mean contraction ratio            : 1.990652
+
+median contraction ratio          : 0.880901
+
+fraction final V_perp contracted  : 0.605
+
+mean fraction V_perp removed      : -0.990652
+
+median half-recovery time         : 17.500
+
+
+EARLY RESTORING DRIFT
+mean early ΔV_perp                : 0.00000168
+
+fraction early ΔV < 0             : 0.414
+
+mean q_perp * Δq_perp             : -0.00012140
+
+fraction q_perp*Δq_perp < 0       : 0.513
+
+
+PAIRED CONTROL
+mean excess V post                : 0.00010738
+
+mean excess V final               : 0.00000000
+
+mean excess remaining ratio       : 0.000000
+
+normalized excess AUC             : 0.757137
+
+
+MOTION ALONG MANIFOLD
+mean longitudinal displacement    : 0.241426
+
+mean final |q_perp|               : 0.016413
+
+
+============================================================
+TARGET BASIN 3
+
+============================================================
+
+total trials                      : 50
+
+valid transverse kicks            : 49
+
+valid fraction                    : 0.980
+
+mean transverse alignment         : 0.985973
+
+mean induced ΔV_perp              : 0.00219751
+
+internal kicks selected           : 21
+
+boundary kicks selected           : 28
+
+
+TRANSVERSE LYAPUNOV DISTANCE
+mean V_perp post                  : 0.00364977
+
+mean V_perp final                 : 0.00137713
+
+mean contraction ratio            : 1.375089
+
+median contraction ratio          : 0.173215
+
+fraction final V_perp contracted  : 0.796
+
+mean fraction V_perp removed      : -0.375089
+
+median half-recovery time         : 15.000
+
+
+EARLY RESTORING DRIFT
+mean early ΔV_perp                : -0.00008888
+
+fraction early ΔV < 0             : 0.471
+
+mean q_perp * Δq_perp             : -0.00040897
+
+fraction q_perp*Δq_perp < 0       : 0.547
+
+
+PAIRED CONTROL
+mean excess V post                : 0.00219751
+
+mean excess V final               : -0.00000000
+
+mean excess remaining ratio       : -0.000000
+
+normalized excess AUC             : 0.414840
+
+
+MOTION ALONG MANIFOLD
+mean longitudinal displacement    : 0.204122
+
+mean final |q_perp|               : 0.029826
