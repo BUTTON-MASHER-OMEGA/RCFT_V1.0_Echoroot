@@ -1,0 +1,2534 @@
+############################################################
+#  SIM12.3 — Conditional Transverse Drift-Field Probe
+#
+#  PURPOSE
+#  -------
+#  SIM12:
+#      found bounded anisotropic basin-local regions.
+#
+#  SIM12.1:
+#      found stable local principal manifolds.
+#
+#  SIM12.2:
+#      found that perturbation-specific transverse excess
+#      displacement decays relative to paired controls.
+#
+#  SIM12.3 asks:
+#
+#      Is there an explicit inward stochastic drift field
+#      normal to the learned manifold?
+#
+#
+#  Local normalized transverse coordinate:
+#
+#      q_tilde = q_perp / sigma_perp
+#
+#
+#  Conditional drift:
+#
+#      a(q_tilde)
+#          = E[ Delta q_tilde | q_tilde ]
+#
+#
+#  Restoring condition:
+#
+#      q_tilde * a(q_tilde) < 0
+#
+#
+#  Near the origin we also fit:
+#
+#      a(q_tilde) ~= -k q_tilde + b
+#
+#  with restoring coefficient:
+#
+#      k > 0
+#
+#
+#  DELIBERATELY FIXED
+#  ------------------
+#      beta = 1.38
+#      current ISP kernel
+#      current memory dynamics
+#      current C_x
+#      current V_eff
+#
+#
+#  DELIBERATELY OMITTED
+#  --------------------
+#      eta_V
+#      R_global
+#      beta sweep
+#      recurrence / frequency analysis
+#      H4
+#      RE8 / E8
+#      global Lyapunov assumptions
+#
+############################################################
+
+
+import numpy as np
+
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIG
+# ============================================================
+
+@dataclass
+class Config:
+
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+
+    alpha: float = 1.0
+    T_tol: float = 1.0
+
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    seed: int = 1
+
+    # --------------------------------------------------------
+    # Baseline / manifold learning
+    # --------------------------------------------------------
+
+    burnin_steps: int = 3000
+    reference_steps: int = 4000
+
+    # --------------------------------------------------------
+    # Long native trajectory
+    # --------------------------------------------------------
+
+    native_steps: int = 6000
+
+    # --------------------------------------------------------
+    # Perturbed sampling
+    #
+    # These kicks are NOT the main observable.
+    # They only help populate larger |q_tilde|.
+    # --------------------------------------------------------
+
+    kick_repeats_per_basin: int = 4
+    kick_recovery_steps: int = 250
+    kick_fraction: float = 0.50
+
+    min_transverse_alignment: float = 0.80
+
+    # --------------------------------------------------------
+    # Diagnostics
+    # --------------------------------------------------------
+
+    diagnostic_every: int = 5
+    stats_window: int = 100
+
+    # --------------------------------------------------------
+    # Drift bins
+    #
+    # Symmetric normalized bins.
+    # --------------------------------------------------------
+
+    q_bin_edges: tuple = (
+        -3.0,
+        -2.0,
+        -1.5,
+        -1.0,
+        -0.5,
+         0.0,
+         0.5,
+         1.0,
+         1.5,
+         2.0,
+         3.0,
+    )
+
+    min_bin_count: int = 40
+
+    # --------------------------------------------------------
+    # Linear restoring fit
+    #
+    # Fit only near the manifold:
+    #
+    #     |q_tilde| <= fit_q_abs_max
+    # --------------------------------------------------------
+
+    fit_q_abs_max: float = 1.5
+
+    basins: dict = None
+
+    def __post_init__(self):
+
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+# ============================================================
+# 2. MEMORY / TRANSITION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+
+    if mode == "tanh":
+        return np.tanh(M)
+
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+
+    M_raw = mem.get(
+        (u_i, u_j),
+        0.0
+    )
+
+
+    M_sat = saturate_memory(
+        M_raw,
+        cfg.sat_mode
+    )
+
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+
+    nbrs = neighbors[u]
+
+
+    costs = np.array(
+        [
+            friction(u, v, mem, cfg)
+            for v in nbrs
+        ],
+        dtype=float
+    )
+
+
+    weights = np.exp(
+        -costs / cfg.T_tol
+    )
+
+
+    probs = (
+        weights
+        / weights.sum()
+    )
+
+
+    return nbrs, probs
+
+
+def update_memory(mem, u, v, cfg):
+
+    for k in list(mem.keys()):
+
+        mem[k] *= cfg.delta
+
+        if mem[k] < 1e-12:
+            del mem[k]
+
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. LOCAL ENTROPY + PERSISTENCE
+# ============================================================
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins,
+    window=None
+):
+
+    if window is None:
+
+        start = 0
+
+    else:
+
+        start = max(
+            0,
+            len(hidden) - window - 1
+        )
+
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+
+    for t in range(
+        start,
+        len(hidden) - 1
+    ):
+
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        b = obs[t]
+
+        counts_total[b] += 1
+
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_trans[x][
+                    (u, v)
+                ] += 1
+
+                basin_from[x][u] += 1
+
+                break
+
+
+    H = {}
+    P = {}
+
+
+    for x in basins:
+
+        H_sum = 0.0
+        n_src = 0
+
+
+        for u in basin_from[x]:
+
+            probs = []
+
+
+            for (uu, vv), c in basin_trans[x].items():
+
+                if uu == u:
+
+                    probs.append(
+                        c
+                        / basin_from[x][u]
+                    )
+
+
+            if len(probs) == 0:
+                continue
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_sum += -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+
+            n_src += 1
+
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+
+        P[x] = (
+            counts_same[x]
+            / counts_total[x]
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+
+    return H, P
+
+
+# ============================================================
+# 4. COHERENCE
+# ============================================================
+
+def compute_Cx(H, P, alpha):
+
+    return {
+        x:
+            -H[x]
+            + alpha * P[x]
+
+        for x in H
+    }
+
+
+# ============================================================
+# 5. EFFECTIVE VALENCE
+# ============================================================
+
+def compute_valence(mem, cfg):
+
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+
+            _, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_loc = -np.sum(
+                p
+                * np.log(
+                    p + 1e-12
+                )
+            )
+
+
+            Veff[x] += np.exp(
+                H_loc
+            )
+
+
+            counts[x] += 1
+
+
+    for x in cfg.basins:
+
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+
+    return Veff
+
+
+# ============================================================
+# 6. LOCAL DIAGNOSTIC STATE
+#
+#      Z_x = (C_x, log V_eff,x)
+# ============================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    mem,
+    cfg
+):
+
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        obs,
+        cfg.basins,
+        window=cfg.stats_window
+    )
+
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+
+    Z = {}
+
+
+    for x in cfg.basins:
+
+        V = max(
+            Veff[x],
+            1e-12
+        )
+
+
+        Z[x] = np.array(
+            [
+                Cx[x],
+                np.log(V)
+            ],
+            dtype=float
+        )
+
+
+    return Z
+
+
+# ============================================================
+# 7. RUNNER WITH DIAGNOSTIC LOGGING
+# ============================================================
+
+def run_steps(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    rng,
+    steps,
+    log_diagnostics=False
+):
+
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+
+    for t in range(steps):
+
+        u = hidden[-1]
+
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+
+        v = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+
+        hidden.append(v)
+
+
+        obs.append(
+            proj_structured[v]
+        )
+
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+
+        if (
+            log_diagnostics
+            and
+            t % cfg.diagnostic_every == 0
+        ):
+
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+
+            for x in cfg.basins:
+
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+
+    if log_diagnostics:
+
+        for x in Z_logs:
+
+            Z_logs[x] = np.asarray(
+                Z_logs[x],
+                dtype=float
+            )
+
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "Z": Z_logs,
+    }
+
+
+# ============================================================
+# 8. PRINCIPAL AXES
+# ============================================================
+
+def principal_axes(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    mu = np.mean(
+        Z,
+        axis=0
+    )
+
+
+    centered = (
+        Z - mu
+    )
+
+
+    cov = np.cov(
+        centered.T
+    )
+
+
+    eigvals, eigvecs = np.linalg.eigh(
+        cov
+    )
+
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+
+    eigvals = eigvals[
+        order
+    ]
+
+
+    eigvecs = eigvecs[
+        :,
+        order
+    ]
+
+
+    e_parallel = eigvecs[:, 0]
+    e_perp = eigvecs[:, 1]
+
+
+    if e_parallel[0] < 0:
+        e_parallel *= -1.0
+
+
+    det = (
+        e_parallel[0] * e_perp[1]
+        -
+        e_parallel[1] * e_perp[0]
+    )
+
+
+    if det < 0:
+        e_perp *= -1.0
+
+
+    sigma_perp = np.sqrt(
+        max(
+            eigvals[1],
+            1e-12
+        )
+    )
+
+
+    return {
+        "mu":
+            mu,
+
+        "cov":
+            cov,
+
+        "eigvals":
+            eigvals,
+
+        "e_parallel":
+            e_parallel,
+
+        "e_perp":
+            e_perp,
+
+        "sigma_perp":
+            sigma_perp,
+    }
+
+
+# ============================================================
+# 9. NORMALIZED TRANSVERSE COORDINATE
+# ============================================================
+
+def q_tilde_series(
+    Z,
+    axes
+):
+
+    centered = (
+        np.asarray(
+            Z,
+            dtype=float
+        )
+        -
+        axes["mu"]
+    )
+
+
+    q_perp = (
+        centered
+        @ axes["e_perp"]
+    )
+
+
+    return (
+        q_perp
+        /
+        max(
+            axes["sigma_perp"],
+            1e-12
+        )
+    )
+
+
+def q_tilde_single(
+    Z,
+    axes
+):
+
+    centered = (
+        np.asarray(
+            Z,
+            dtype=float
+        )
+        -
+        axes["mu"]
+    )
+
+
+    q_perp = np.dot(
+        centered,
+        axes["e_perp"]
+    )
+
+
+    return float(
+        q_perp
+        /
+        max(
+            axes["sigma_perp"],
+            1e-12
+        )
+    )
+
+
+# ============================================================
+# 10. BUILD DRIFT PAIRS
+#
+#      (q_tilde_t, Delta q_tilde_t)
+# ============================================================
+
+def drift_pairs_from_Z(
+    Z,
+    axes
+):
+
+    q = q_tilde_series(
+        Z,
+        axes
+    )
+
+
+    if len(q) < 2:
+
+        return np.empty((0, 2))
+
+
+    dq = (
+        q[1:]
+        -
+        q[:-1]
+    )
+
+
+    return np.column_stack(
+        (
+            q[:-1],
+            dq
+        )
+    )
+
+
+# ============================================================
+# 11. LOCAL MEMORY KICK SUPPORT
+#
+# Same actuator family as SIM12.2.
+# ============================================================
+
+def basin_edge_class(
+    basin,
+    edge_class,
+    cfg
+):
+
+    states = cfg.basins[
+        basin
+    ]
+
+
+    edges = []
+
+
+    for u in states:
+
+        for v in neighbors[u]:
+
+            same_projection = (
+                proj_structured[u]
+                ==
+                proj_structured[v]
+            )
+
+
+            if (
+                edge_class == "internal"
+                and
+                same_projection
+            ):
+
+                edges.append(
+                    (u, v)
+                )
+
+
+            elif (
+                edge_class == "boundary"
+                and
+                not same_projection
+            ):
+
+                edges.append(
+                    (u, v)
+                )
+
+
+    return edges
+
+
+def attenuate_local_memory(
+    mem,
+    basin,
+    edge_class,
+    cfg
+):
+
+    new_mem = defaultdict(
+        float,
+        mem
+    )
+
+
+    edges = basin_edge_class(
+        basin,
+        edge_class,
+        cfg
+    )
+
+
+    multiplier = (
+        1.0
+        -
+        cfg.kick_fraction
+    )
+
+
+    for edge in edges:
+
+        if edge in new_mem:
+
+            new_mem[edge] *= multiplier
+
+
+            if new_mem[edge] < 1e-12:
+
+                del new_mem[edge]
+
+
+    return new_mem
+
+
+# ============================================================
+# 12. CHOOSE TRANSVERSE ACTUATOR
+#
+# Choose the kick giving strongest transverse displacement.
+# We calibrate only the displacement, NEVER recovery.
+# ============================================================
+
+def choose_transverse_kick(
+    hidden,
+    obs,
+    mem,
+    target,
+    axes,
+    cfg
+):
+
+    Z_base_all = compute_Z(
+        hidden,
+        obs,
+        mem,
+        cfg
+    )
+
+
+    Z_base = Z_base_all[
+        target
+    ]
+
+
+    candidates = []
+
+
+    for edge_class in [
+        "internal",
+        "boundary"
+    ]:
+
+        mem_candidate = attenuate_local_memory(
+            mem,
+            target,
+            edge_class,
+            cfg
+        )
+
+
+        Z_candidate_all = compute_Z(
+            hidden,
+            obs,
+            mem_candidate,
+            cfg
+        )
+
+
+        Z_candidate = Z_candidate_all[
+            target
+        ]
+
+
+        delta_Z = (
+            Z_candidate
+            -
+            Z_base
+        )
+
+
+        delta_norm = np.linalg.norm(
+            delta_Z
+        )
+
+
+        if delta_norm > 1e-15:
+
+            alignment = abs(
+                np.dot(
+                    delta_Z / delta_norm,
+                    axes["e_perp"]
+                )
+            )
+
+        else:
+
+            alignment = 0.0
+
+
+        q_after = q_tilde_single(
+            Z_candidate,
+            axes
+        )
+
+
+        q_before = q_tilde_single(
+            Z_base,
+            axes
+        )
+
+
+        transverse_shift = abs(
+            q_after
+            -
+            q_before
+        )
+
+
+        candidates.append(
+            {
+                "edge_class":
+                    edge_class,
+
+                "mem":
+                    mem_candidate,
+
+                "alignment":
+                    alignment,
+
+                "transverse_shift":
+                    transverse_shift,
+            }
+        )
+
+
+    valid = [
+        c
+        for c in candidates
+
+        if c["alignment"]
+        >= cfg.min_transverse_alignment
+    ]
+
+
+    if len(valid) == 0:
+
+        valid = candidates
+
+
+    best = max(
+        valid,
+        key=lambda c:
+            c["transverse_shift"]
+    )
+
+
+    return best
+
+
+# ============================================================
+# 13. BUILD ONE SEED'S DATASET
+# ============================================================
+
+def simulate_seed(
+    cfg
+):
+
+    rng = np.random.default_rng(
+        cfg.seed
+    )
+
+
+    hidden = [0]
+
+    obs = [
+        proj_structured[0]
+    ]
+
+    mem = defaultdict(float)
+
+
+    # --------------------------------------------------------
+    # Burn-in
+    # --------------------------------------------------------
+
+    burn = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.burnin_steps,
+        log_diagnostics=False
+    )
+
+
+    # --------------------------------------------------------
+    # Learn manifold
+    # --------------------------------------------------------
+
+    reference = run_steps(
+        cfg,
+        burn["hidden"],
+        burn["obs"],
+        burn["mem"],
+        rng,
+        cfg.reference_steps,
+        log_diagnostics=True
+    )
+
+
+    axes = {}
+
+
+    for x in cfg.basins:
+
+        axes[x] = principal_axes(
+            reference["Z"][x]
+        )
+
+
+    # --------------------------------------------------------
+    # Native drift trajectory
+    # --------------------------------------------------------
+
+    native = run_steps(
+        cfg,
+        list(reference["hidden"]),
+        list(reference["obs"]),
+        defaultdict(
+            float,
+            reference["mem"]
+        ),
+        rng,
+        cfg.native_steps,
+        log_diagnostics=True
+    )
+
+
+    drift_data = {
+        x: []
+        for x in cfg.basins
+    }
+
+
+    for x in cfg.basins:
+
+        pairs = drift_pairs_from_Z(
+            native["Z"][x],
+            axes[x]
+        )
+
+
+        drift_data[x].append(
+            pairs
+        )
+
+
+    # --------------------------------------------------------
+    # Kick-enhanced sampling
+    #
+    # Each target basin receives a few short transverse
+    # interventions to populate larger deviations.
+    # --------------------------------------------------------
+
+    for target in cfg.basins:
+
+        for repeat in range(
+            cfg.kick_repeats_per_basin
+        ):
+
+            # Independent copy of same learned endpoint.
+            hidden_k = list(
+                reference["hidden"]
+            )
+
+            obs_k = list(
+                reference["obs"]
+            )
+
+            mem_k = defaultdict(
+                float,
+                reference["mem"]
+            )
+
+
+            kick = choose_transverse_kick(
+                hidden_k,
+                obs_k,
+                mem_k,
+                target,
+                axes[target],
+                cfg
+            )
+
+
+            # Dedicated RNG stream.
+            kick_rng = np.random.default_rng(
+                cfg.seed * 100000
+                +
+                target * 1000
+                +
+                repeat * 17
+                +
+                31
+            )
+
+
+            kicked = run_steps(
+                cfg,
+                hidden_k,
+                obs_k,
+                kick["mem"],
+                kick_rng,
+                cfg.kick_recovery_steps,
+                log_diagnostics=True
+            )
+
+
+            pairs = drift_pairs_from_Z(
+                kicked["Z"][target],
+                axes[target]
+            )
+
+
+            drift_data[target].append(
+                pairs
+            )
+
+
+    # --------------------------------------------------------
+    # Concatenate
+    # --------------------------------------------------------
+
+    combined = {}
+
+
+    for x in cfg.basins:
+
+        valid = [
+            arr
+            for arr in drift_data[x]
+            if len(arr) > 0
+        ]
+
+
+        if len(valid) == 0:
+
+            combined[x] = np.empty(
+                (0, 2)
+            )
+
+        else:
+
+            combined[x] = np.vstack(
+                valid
+            )
+
+
+    return {
+        "seed":
+            cfg.seed,
+
+        "axes":
+            axes,
+
+        "drift_data":
+            combined,
+    }
+
+
+# ============================================================
+# 14. BIN CONDITIONAL DRIFT
+# ============================================================
+
+def bin_conditional_drift(
+    pairs,
+    cfg
+):
+
+    q = pairs[:, 0]
+
+    dq = pairs[:, 1]
+
+
+    edges = np.asarray(
+        cfg.q_bin_edges,
+        dtype=float
+    )
+
+
+    rows = []
+
+
+    for i in range(
+        len(edges) - 1
+    ):
+
+        left = edges[i]
+        right = edges[i + 1]
+
+
+        mask = (
+            (q >= left)
+            &
+            (q < right)
+        )
+
+
+        vals = dq[
+            mask
+        ]
+
+
+        qvals = q[
+            mask
+        ]
+
+
+        n = len(vals)
+
+
+        center = (
+            left + right
+        ) / 2.0
+
+
+        if n == 0:
+
+            mean_dq = np.nan
+            sem = np.nan
+            mean_q = center
+
+        else:
+
+            mean_dq = float(
+                np.mean(vals)
+            )
+
+
+            mean_q = float(
+                np.mean(qvals)
+            )
+
+
+            if n > 1:
+
+                sem = float(
+                    np.std(
+                        vals,
+                        ddof=1
+                    )
+                    /
+                    np.sqrt(n)
+                )
+
+            else:
+
+                sem = np.nan
+
+
+        restoring_product = (
+            mean_q * mean_dq
+            if np.isfinite(mean_dq)
+            else np.nan
+        )
+
+
+        populated = (
+            n >= cfg.min_bin_count
+        )
+
+
+        restoring = (
+            populated
+            and
+            np.isfinite(
+                restoring_product
+            )
+            and
+            restoring_product < 0
+        )
+
+
+        rows.append(
+            {
+                "left":
+                    left,
+
+                "right":
+                    right,
+
+                "center":
+                    center,
+
+                "mean_q":
+                    mean_q,
+
+                "n":
+                    n,
+
+                "mean_dq":
+                    mean_dq,
+
+                "sem":
+                    sem,
+
+                "q_mean_dq":
+                    restoring_product,
+
+                "populated":
+                    populated,
+
+                "restoring":
+                    restoring,
+            }
+        )
+
+
+    return rows
+
+
+# ============================================================
+# 15. LOCAL LINEAR DRIFT FIT
+#
+# Fit:
+#
+#      Delta q = slope * q + intercept
+#
+# Then:
+#
+#      k = -slope
+#
+# A restoring field has:
+#
+#      slope < 0
+#      k > 0
+# ============================================================
+
+def fit_local_drift(
+    pairs,
+    cfg
+):
+
+    q = pairs[:, 0]
+
+    dq = pairs[:, 1]
+
+
+    mask = (
+        np.abs(q)
+        <= cfg.fit_q_abs_max
+    )
+
+
+    q_fit = q[
+        mask
+    ]
+
+
+    dq_fit = dq[
+        mask
+    ]
+
+
+    n = len(q_fit)
+
+
+    if n < 3:
+
+        return {
+            "n":
+                n,
+
+            "slope":
+                np.nan,
+
+            "intercept":
+                np.nan,
+
+            "k":
+                np.nan,
+
+            "r2":
+                np.nan,
+        }
+
+
+    X = np.column_stack(
+        (
+            q_fit,
+            np.ones_like(
+                q_fit
+            )
+        )
+    )
+
+
+    coeff, _, _, _ = np.linalg.lstsq(
+        X,
+        dq_fit,
+        rcond=None
+    )
+
+
+    slope = float(
+        coeff[0]
+    )
+
+
+    intercept = float(
+        coeff[1]
+    )
+
+
+    prediction = (
+        slope * q_fit
+        +
+        intercept
+    )
+
+
+    ss_res = np.sum(
+        (
+            dq_fit
+            -
+            prediction
+        ) ** 2
+    )
+
+
+    ss_tot = np.sum(
+        (
+            dq_fit
+            -
+            np.mean(dq_fit)
+        ) ** 2
+    )
+
+
+    if ss_tot > 1e-15:
+
+        r2 = float(
+            1.0
+            -
+            ss_res
+            / ss_tot
+        )
+
+    else:
+
+        r2 = np.nan
+
+
+    return {
+        "n":
+            n,
+
+        "slope":
+            slope,
+
+        "intercept":
+            intercept,
+
+        "k":
+            -slope,
+
+        "r2":
+            r2,
+    }
+
+
+# ============================================================
+# 16. DRIFT ODD-SYMMETRY CHECK
+#
+# For mirrored bins:
+#
+#      a(-q) ~= -a(q)
+#
+# We report mean absolute mismatch:
+#
+#      |a(-q) + a(q)|
+#
+# Smaller is better.
+# ============================================================
+
+def odd_symmetry_error(
+    binned
+):
+
+    valid = [
+        r
+        for r in binned
+        if (
+            r["populated"]
+            and
+            np.isfinite(
+                r["mean_dq"]
+            )
+        )
+    ]
+
+
+    errors = []
+
+
+    for r in valid:
+
+        if r["center"] <= 0:
+            continue
+
+
+        mirror = None
+
+
+        for m in valid:
+
+            if np.isclose(
+                m["center"],
+                -r["center"]
+            ):
+
+                mirror = m
+                break
+
+
+        if mirror is not None:
+
+            errors.append(
+                abs(
+                    r["mean_dq"]
+                    +
+                    mirror["mean_dq"]
+                )
+            )
+
+
+    if len(errors) == 0:
+
+        return np.nan
+
+
+    return float(
+        np.mean(errors)
+    )
+
+
+# ============================================================
+# 17. SUMMARIZE ONE BASIN
+# ============================================================
+
+def summarize_basin(
+    pairs,
+    cfg
+):
+
+    binned = bin_conditional_drift(
+        pairs,
+        cfg
+    )
+
+
+    fit = fit_local_drift(
+        pairs,
+        cfg
+    )
+
+
+    populated = [
+        r
+        for r in binned
+        if (
+            r["populated"]
+            and
+            abs(r["mean_q"]) > 1e-12
+        )
+    ]
+
+
+    if len(populated) > 0:
+
+        fraction_restoring = float(
+            np.mean(
+                [
+                    r["restoring"]
+                    for r in populated
+                ]
+            )
+        )
+
+    else:
+
+        fraction_restoring = np.nan
+
+
+    negative_side = [
+        r
+        for r in populated
+        if r["mean_q"] < 0
+    ]
+
+
+    positive_side = [
+        r
+        for r in populated
+        if r["mean_q"] > 0
+    ]
+
+
+    if len(negative_side) > 0:
+
+        fraction_negative_side_correct = float(
+            np.mean(
+                [
+                    r["mean_dq"] > 0
+                    for r in negative_side
+                ]
+            )
+        )
+
+    else:
+
+        fraction_negative_side_correct = np.nan
+
+
+    if len(positive_side) > 0:
+
+        fraction_positive_side_correct = float(
+            np.mean(
+                [
+                    r["mean_dq"] < 0
+                    for r in positive_side
+                ]
+            )
+        )
+
+    else:
+
+        fraction_positive_side_correct = np.nan
+
+
+    return {
+        "n_pairs":
+            len(pairs),
+
+        "binned":
+            binned,
+
+        "fraction_restoring_bins":
+            fraction_restoring,
+
+        "fraction_negative_side_correct":
+            fraction_negative_side_correct,
+
+        "fraction_positive_side_correct":
+            fraction_positive_side_correct,
+
+        "fit":
+            fit,
+
+        "odd_symmetry_error":
+            odd_symmetry_error(
+                binned
+            ),
+    }
+
+
+# ============================================================
+# 18. ENSEMBLE DRIVER
+# ============================================================
+
+def run_SIM12_3(
+    seeds=50,
+    beta=1.38
+):
+
+    print(
+        "=" * 78
+    )
+
+
+    print(
+        "\n"
+        "SIM12.3 — Conditional Transverse Drift-Field Probe"
+        "\n"
+    )
+
+
+    print(
+        "=" * 78
+    )
+
+
+    print(
+        f"\nbeta={beta}"
+    )
+
+
+    print(
+        f"seeds={seeds}"
+    )
+
+
+    print(
+        "\nPrimary observable:"
+    )
+
+
+    print(
+        "a(q_tilde) = E[Delta q_tilde | q_tilde]"
+    )
+
+
+    print(
+        "\nRestoring criterion:"
+    )
+
+
+    print(
+        "q_tilde * a(q_tilde) < 0"
+    )
+
+
+    print(
+        "\nNo eta_V."
+    )
+
+
+    print(
+        "No global Lyapunov assumption."
+    )
+
+
+    print(
+        "No frequency analysis."
+    )
+
+
+    # --------------------------------------------------------
+    # Collect all seed data
+    # --------------------------------------------------------
+
+    aggregate = {
+        x: []
+        for x in DEFAULT_BASINS
+    }
+
+
+    for seed in range(
+        1,
+        seeds + 1
+    ):
+
+        cfg = Config(
+            beta=beta,
+            seed=seed
+        )
+
+
+        out = simulate_seed(
+            cfg
+        )
+
+
+        for x in DEFAULT_BASINS:
+
+            aggregate[x].append(
+                out[
+                    "drift_data"
+                ][x]
+            )
+
+
+    # --------------------------------------------------------
+    # Analyze each basin
+    # --------------------------------------------------------
+
+    summaries = {}
+
+
+    for basin in DEFAULT_BASINS:
+
+        valid = [
+            arr
+            for arr in aggregate[basin]
+            if len(arr) > 0
+        ]
+
+
+        pairs = np.vstack(
+            valid
+        )
+
+
+        cfg = Config(
+            beta=beta,
+            seed=1
+        )
+
+
+        summary = summarize_basin(
+            pairs,
+            cfg
+        )
+
+
+        summaries[basin] = summary
+
+
+        print(
+            "\n"
+            + "=" * 64
+        )
+
+
+        print(
+            f"BASIN {basin}"
+        )
+
+
+        print(
+            "=" * 64
+        )
+
+
+        print(
+            f"total drift pairs                  : "
+            f"{summary['n_pairs']}"
+        )
+
+
+        print(
+            "\nCONDITIONAL DRIFT BINS"
+        )
+
+
+        print(
+            " q-bin          N       mean dq        SEM dq"
+            "        q*mean(dq)      restoring"
+        )
+
+
+        print(
+            "-" * 78
+        )
+
+
+        for row in summary[
+            "binned"
+        ]:
+
+            label = (
+                f"[{row['left']:>4.1f},"
+                f"{row['right']:>4.1f})"
+            )
+
+
+            if np.isfinite(
+                row["mean_dq"]
+            ):
+
+                mean_dq_text = (
+                    f"{row['mean_dq']: .7f}"
+                )
+
+            else:
+
+                mean_dq_text = "       nan"
+
+
+            if np.isfinite(
+                row["sem"]
+            ):
+
+                sem_text = (
+                    f"{row['sem']: .7f}"
+                )
+
+            else:
+
+                sem_text = "       nan"
+
+
+            if np.isfinite(
+                row["q_mean_dq"]
+            ):
+
+                product_text = (
+                    f"{row['q_mean_dq']: .7f}"
+                )
+
+            else:
+
+                product_text = "       nan"
+
+
+            if not row["populated"]:
+
+                status = "LOW-N"
+
+            elif row["restoring"]:
+
+                status = "YES"
+
+            else:
+
+                status = "NO"
+
+
+            print(
+                f"{label:<13}"
+                f"{row['n']:>7d}   "
+                f"{mean_dq_text:>12}   "
+                f"{sem_text:>12}   "
+                f"{product_text:>14}   "
+                f"{status}"
+            )
+
+
+        print(
+            "\nRESTORING SUMMARY"
+        )
+
+
+        print(
+            f"fraction populated bins restoring : "
+            f"{summary['fraction_restoring_bins']:.3f}"
+        )
+
+
+        print(
+            f"negative-q bins with mean dq > 0  : "
+            f"{summary['fraction_negative_side_correct']:.3f}"
+        )
+
+
+        print(
+            f"positive-q bins with mean dq < 0  : "
+            f"{summary['fraction_positive_side_correct']:.3f}"
+        )
+
+
+        print(
+            "\nLOCAL LINEAR FIT"
+        )
+
+
+        print(
+            f"fit samples |q| <= "
+            f"{cfg.fit_q_abs_max:.1f}         : "
+            f"{summary['fit']['n']}"
+        )
+
+
+        print(
+            f"drift slope                       : "
+            f"{summary['fit']['slope']:.8f}"
+        )
+
+
+        print(
+            f"restoring coefficient k=-slope    : "
+            f"{summary['fit']['k']:.8f}"
+        )
+
+
+        print(
+            f"intercept                         : "
+            f"{summary['fit']['intercept']:.8f}"
+        )
+
+
+        print(
+            f"R^2                               : "
+            f"{summary['fit']['r2']:.6f}"
+        )
+
+
+        print(
+            f"odd-symmetry error                : "
+            f"{summary['odd_symmetry_error']:.8f}"
+        )
+
+
+        # ----------------------------------------------------
+        # Exploratory decision flag
+        # ----------------------------------------------------
+
+        supports = (
+            np.isfinite(
+                summary[
+                    "fraction_restoring_bins"
+                ]
+            )
+            and
+            summary[
+                "fraction_restoring_bins"
+            ] >= 0.70
+            and
+            np.isfinite(
+                summary["fit"]["k"]
+            )
+            and
+            summary["fit"]["k"] > 0
+        )
+
+
+        print(
+            "\nEXPLORATORY CLASSIFICATION"
+        )
+
+
+        if supports:
+
+            print(
+                "supports_inward_transverse_drift"
+            )
+
+        else:
+
+            print(
+                "not_yet_supporting_clean_inward_drift"
+            )
+
+
+    # --------------------------------------------------------
+    # Basin-pair restoring coefficient comparison
+    # --------------------------------------------------------
+
+    print(
+        "\n"
+        + "=" * 64
+    )
+
+
+    print(
+        "BASIN-PAIR RESTORING COEFFICIENTS"
+    )
+
+
+    print(
+        "=" * 64
+    )
+
+
+    for a, b in [
+        (0, 3),
+        (1, 2)
+    ]:
+
+        ka = summaries[a][
+            "fit"
+        ]["k"]
+
+
+        kb = summaries[b][
+            "fit"
+        ]["k"]
+
+
+        diff = abs(
+            ka - kb
+        )
+
+
+        print(
+            f"\nPAIR ({a},{b})"
+        )
+
+
+        print(
+            f"k_{a}                              : "
+            f"{ka:.8f}"
+        )
+
+
+        print(
+            f"k_{b}                              : "
+            f"{kb:.8f}"
+        )
+
+
+        print(
+            f"|Delta k|                         : "
+            f"{diff:.8f}"
+        )
+
+
+    return summaries
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    results = run_SIM12_3(
+        seeds=50,
+        beta=1.38
+    )
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+
+
+==============================================================================
+
+
+SIM12.3 — Conditional Transverse Drift-Field Probe
+
+==============================================================================
+
+
+beta=1.38
+seeds=50
+
+
+Primary observable:
+a(q_tilde) = E[Delta q_tilde | q_tilde]
+
+
+Restoring criterion:
+q_tilde * a(q_tilde) < 0
+
+
+No eta_V.
+No global Lyapunov assumption.
+
+No frequency analysis.
+
+
+================================================================
+BASIN 0
+
+================================================================
+
+total drift pairs                  : 69750
+
+
+CONDITIONAL DRIFT BINS
+ q-bin          N       mean dq        SEM dq        q*mean(dq)      restoring
+
+------------------------------------------------------------------------------
+
+[-3.0,-2.0)     1300      0.6266496      0.0199691       -1.4511815   YES
+
+[-2.0,-1.5)     2585      0.4383150      0.0131394       -0.7532032   YES
+
+[-1.5,-1.0)     6254      0.2570249      0.0075879       -0.3129582   YES
+
+[-1.0,-0.5)    11763      0.1163425      0.0046790       -0.0848367   YES
+
+[-0.5, 0.0)    14712      0.0185223      0.0042171       -0.0045903   YES
+
+[ 0.0, 0.5)    14399     -0.0372057      0.0045188       -0.0088376   YES
+
+[ 0.5, 1.0)     8147     -0.1320156      0.0067800       -0.0957039   YES
+
+[ 1.0, 1.5)     5037     -0.2383292      0.0106175       -0.2928151   YES
+
+[ 1.5, 2.0)     2854     -0.3442669      0.0173073       -0.5930000   YES
+
+[ 2.0, 3.0)     2429     -0.5659936      0.0237698       -1.3235572   YES
+
+
+RESTORING SUMMARY
+fraction populated bins restoring : 1.000
+
+negative-q bins with mean dq > 0  : 1.000
+
+positive-q bins with mean dq < 0  : 1.000
+
+
+LOCAL LINEAR FIT
+fit samples |q| <= 1.5         : 60312
+
+drift slope                       : -0.18739885
+
+restoring coefficient k=-slope    : 0.18739885
+
+intercept                         : -0.00619272
+
+R^2                               : 0.052000
+
+odd-symmetry error                : 0.04155123
+
+
+EXPLORATORY CLASSIFICATION
+supports_inward_transverse_drift
+
+
+================================================================
+BASIN 1
+
+================================================================
+
+total drift pairs                  : 69750
+
+
+CONDITIONAL DRIFT BINS
+ q-bin          N       mean dq        SEM dq        q*mean(dq)      restoring
+
+------------------------------------------------------------------------------
+
+[-3.0,-2.0)     2239      0.6022426      0.0181977       -1.4422421   YES
+
+[-2.0,-1.5)     3502      0.4057137      0.0144249       -0.6934861   YES
+
+[-1.5,-1.0)     6425      0.2864507      0.0097069       -0.3546782   YES
+
+[-1.0,-0.5)     7723      0.2017082      0.0082047       -0.1497338   YES
+
+[-0.5, 0.0)     8880      0.0860488      0.0068982       -0.0210647   YES
+
+[ 0.0, 0.5)    11163     -0.0546160      0.0056314       -0.0145261   YES
+
+[ 0.5, 1.0)    19659     -0.1952996      0.0040821       -0.1485544   YES
+
+[ 1.0, 1.5)     8380     -0.2901588      0.0073172       -0.3450313   YES
+
+[ 1.5, 2.0)     1149     -0.3940530      0.0235504       -0.6578540   YES
+
+[ 2.0, 3.0)      133     -0.4448187      0.0715706       -0.9620502   YES
+
+
+RESTORING SUMMARY
+fraction populated bins restoring : 1.000
+
+negative-q bins with mean dq > 0  : 1.000
+
+positive-q bins with mean dq < 0  : 1.000
+
+
+LOCAL LINEAR FIT
+fit samples |q| <= 1.5         : 62230
+
+drift slope                       : -0.24800412
+
+restoring coefficient k=-slope    : 0.24800412
+
+intercept                         : 0.00424310
+
+R^2                               : 0.082198
+
+odd-symmetry error                : 0.04212679
+
+
+EXPLORATORY CLASSIFICATION
+supports_inward_transverse_drift
+
+
+================================================================
+BASIN 2
+
+================================================================
+
+total drift pairs                  : 69750
+
+
+CONDITIONAL DRIFT BINS
+ q-bin          N       mean dq        SEM dq        q*mean(dq)      restoring
+
+------------------------------------------------------------------------------
+
+[-3.0,-2.0)     2255      0.6259867      0.0179124       -1.4918895   YES
+
+[-2.0,-1.5)     3407      0.3995383      0.0143541       -0.6837267   YES
+
+[-1.5,-1.0)     6502      0.2834131      0.0096186       -0.3509393   YES
+
+[-1.0,-0.5)     7840      0.1870424      0.0081594       -0.1389599   YES
+
+[-0.5, 0.0)     8772      0.1010699      0.0069092       -0.0248293   YES
+
+[ 0.0, 0.5)    11186     -0.0546933      0.0056418       -0.0145697   YES
+
+[ 0.5, 1.0)    19538     -0.1939783      0.0041523       -0.1460865   YES
+
+[ 1.0, 1.5)     8514     -0.3051393      0.0073591       -0.3653935   YES
+
+[ 1.5, 2.0)     1070     -0.4008134      0.0251111       -0.6738518   YES
+
+[ 2.0, 3.0)      150     -0.3039783      0.0682966       -0.6173897   YES
+
+
+RESTORING SUMMARY
+fraction populated bins restoring : 1.000
+
+negative-q bins with mean dq > 0  : 1.000
+
+positive-q bins with mean dq < 0  : 1.000
+
+
+LOCAL LINEAR FIT
+fit samples |q| <= 1.5         : 62352
+
+drift slope                       : -0.25079097
+
+restoring coefficient k=-slope    : 0.25079097
+
+intercept                         : 0.00272739
+
+R^2                               : 0.083553
+
+odd-symmetry error                : 0.07966442
+
+
+EXPLORATORY CLASSIFICATION
+supports_inward_transverse_drift
+
+
+================================================================
+BASIN 3
+
+================================================================
+
+total drift pairs                  : 69750
+
+
+CONDITIONAL DRIFT BINS
+ q-bin          N       mean dq        SEM dq        q*mean(dq)      restoring
+
+------------------------------------------------------------------------------
+
+[-3.0,-2.0)     1447      0.6228719      0.0193534       -1.4525572   YES
+
+[-2.0,-1.5)     2804      0.4104356      0.0126632       -0.7039296   YES
+
+[-1.5,-1.0)     6432      0.2534669      0.0075449       -0.3086875   YES
+
+[-1.0,-0.5)    11240      0.1154161      0.0050048       -0.0840566   YES
+
+[-0.5, 0.0)    13835      0.0218188      0.0044518       -0.0053906   YES
+
+[ 0.0, 0.5)    14235     -0.0315788      0.0047741       -0.0077383   YES
+
+[ 0.5, 1.0)     8371     -0.1290458      0.0067717       -0.0929145   YES
+
+[ 1.0, 1.5)     5070     -0.2220011      0.0103099       -0.2742982   YES
+
+[ 1.5, 2.0)     3149     -0.3216236      0.0159836       -0.5546028   YES
+
+[ 2.0, 3.0)     2820     -0.5225910      0.0212535       -1.2294519   YES
+
+
+RESTORING SUMMARY
+fraction populated bins restoring : 1.000
+
+negative-q bins with mean dq > 0  : 1.000
+
+positive-q bins with mean dq < 0  : 1.000
+
+
+LOCAL LINEAR FIT
+fit samples |q| <= 1.5         : 59183
+
+drift slope                       : -0.18146085
+
+restoring coefficient k=-slope    : 0.18146085
+
+intercept                         : -0.00151351
+
+R^2                               : 0.047826
+
+odd-symmetry error                : 0.04878967
+
+
+EXPLORATORY CLASSIFICATION
+supports_inward_transverse_drift
+
+
+================================================================
+BASIN-PAIR RESTORING COEFFICIENTS
+
+================================================================
+
+
+PAIR (0,3)
+k_0                              : 0.18739885
+
+k_3                              : 0.18146085
+
+|Delta k|                         : 0.00593801
+
+
+PAIR (1,2)
+k_1                              : 0.24800412
+
+k_2                              : 0.25079097
+
+|Delta k|                         : 0.00278685
