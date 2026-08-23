@@ -1,0 +1,2021 @@
+############################################################
+#  SIM12.1 — Principal-Axis Coherence–Valence Probe
+#
+#  PURPOSE
+#  -------
+#  SIM12 found strongly anisotropic basin-local geometry in
+#
+#       Z_x(t) = ( C_x(t), log(V_eff,x(t)) )
+#
+#  especially:
+#
+#       basins 0,3 : anisotropy ~ 28
+#       basins 1,2 : anisotropy ~ 111
+#
+#  SIM12.1 asks:
+#
+#      Is stochastic motion preferentially confined along a
+#      local coherence–valence manifold?
+#
+#
+#  For each basin:
+#
+#      Z - mu = q_parallel e1 + q_perp e2
+#
+#  where:
+#
+#      e1 = dominant covariance direction
+#      e2 = transverse covariance direction
+#
+#
+#  We measure:
+#
+#      Var(q_parallel)
+#      Var(q_perp)
+#      variance ratio
+#      transverse excursion probability
+#      transverse return time
+#      longitudinal / transverse autocorrelation
+#      principal-axis stability across time
+#
+#
+#  DELIBERATELY NOT INCLUDED
+#  -------------------------
+#      epsilon
+#      perturbation
+#      eta_V
+#      Lyapunov weighting
+#      R_global
+#      beta sweep
+#      H4 / E8 assumptions
+#
+#
+#  QUESTION
+#  --------
+#
+#  Does the stochastic process exhibit deterministic
+#  geometric constraint transverse to a preferred local
+#  coherence–valence direction?
+############################################################
+
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIG
+# ============================================================
+
+@dataclass
+class Config:
+
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+
+    alpha: float = 1.0
+    T_tol: float = 1.0
+
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    seed: int = 1
+
+    # Long enough to estimate a stable local manifold
+    burnin_steps: int = 3000
+    observation_steps: int = 6000
+
+    diagnostic_every: int = 5
+    stats_window: int = 100
+
+    # Fraction used for comparing early/late axes
+    axis_window_fraction: float = 0.5
+
+    # Excursion threshold in units of transverse sigma
+    excursion_sigma: float = 2.0
+
+    # Maximum autocorrelation lag in diagnostics
+    max_ac_lag: int = 200
+
+    basins: dict = None
+
+    def __post_init__(self):
+
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+# ============================================================
+# 2. MEMORY / TRANSITION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+
+    if mode == "tanh":
+        return np.tanh(M)
+
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+    M_raw = mem.get(
+        (u_i, u_j),
+        0.0
+    )
+
+    M_sat = saturate_memory(
+        M_raw,
+        cfg.sat_mode
+    )
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+
+    nbrs = neighbors[u]
+
+    costs = np.array(
+        [
+            friction(u, v, mem, cfg)
+            for v in nbrs
+        ],
+        dtype=float
+    )
+
+    weights = np.exp(
+        -costs / cfg.T_tol
+    )
+
+    return nbrs, weights / weights.sum()
+
+
+def update_memory(mem, u, v, cfg):
+
+    for k in list(mem.keys()):
+
+        mem[k] *= cfg.delta
+
+        if mem[k] < 1e-12:
+            del mem[k]
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. LOCAL ENTROPY + PERSISTENCE
+# ============================================================
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins,
+    window=None
+):
+
+    if window is None:
+        start = 0
+
+    else:
+        start = max(
+            0,
+            len(hidden) - window - 1
+        )
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+
+    for t in range(
+        start,
+        len(hidden) - 1
+    ):
+
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        b = obs[t]
+
+        counts_total[b] += 1
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_trans[x][(u, v)] += 1
+                basin_from[x][u] += 1
+
+                break
+
+
+    H = {}
+    P = {}
+
+
+    for x in basins:
+
+        H_sum = 0.0
+        n_src = 0
+
+
+        for u in basin_from[x]:
+
+            probs = []
+
+            for (uu, vv), c in basin_trans[x].items():
+
+                if uu == u:
+
+                    probs.append(
+                        c / basin_from[x][u]
+                    )
+
+
+            if len(probs) == 0:
+                continue
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_sum += -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+            n_src += 1
+
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+
+        P[x] = (
+            counts_same[x] / counts_total[x]
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+
+    return H, P
+
+
+# ============================================================
+# 4. COHERENCE
+# ============================================================
+
+def compute_Cx(H, P, alpha):
+
+    return {
+        x: -H[x] + alpha * P[x]
+        for x in H
+    }
+
+
+# ============================================================
+# 5. EFFECTIVE VALENCE
+# ============================================================
+
+def compute_valence(mem, cfg):
+
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+
+            _, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+
+            p = np.asarray(
+                probs,
+                dtype=float
+            )
+
+
+            H_loc = -np.sum(
+                p * np.log(p + 1e-12)
+            )
+
+
+            Veff[x] += np.exp(H_loc)
+
+            counts[x] += 1
+
+
+    for x in cfg.basins:
+
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+
+    return Veff
+
+
+# ============================================================
+# 6. LOCAL DIAGNOSTIC STATE
+#
+#      Z_x = ( C_x, log V_eff,x )
+# ============================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    mem,
+    cfg
+):
+
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        obs,
+        cfg.basins,
+        window=cfg.stats_window
+    )
+
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+
+    Z = {}
+
+
+    for x in cfg.basins:
+
+        V = max(
+            Veff[x],
+            1e-12
+        )
+
+
+        Z[x] = np.array(
+            [
+                Cx[x],
+                np.log(V)
+            ],
+            dtype=float
+        )
+
+
+    return Z
+
+
+# ============================================================
+# 7. RUN STEPS
+# ============================================================
+
+def run_steps(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    rng,
+    steps,
+    log_diagnostics=False
+):
+
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+
+    for t in range(steps):
+
+        u = hidden[-1]
+
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+
+        v = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+
+        hidden.append(v)
+
+        obs.append(
+            proj_structured[v]
+        )
+
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+
+        if (
+            log_diagnostics
+            and
+            t % cfg.diagnostic_every == 0
+        ):
+
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+
+            for x in cfg.basins:
+
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+
+    if log_diagnostics:
+
+        for x in Z_logs:
+
+            Z_logs[x] = np.asarray(
+                Z_logs[x],
+                dtype=float
+            )
+
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "Z": Z_logs
+    }
+
+
+# ============================================================
+# 8. PRINCIPAL AXES
+# ============================================================
+
+def principal_axes(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    mu = np.mean(
+        Z,
+        axis=0
+    )
+
+
+    centered = (
+        Z - mu
+    )
+
+
+    cov = np.cov(
+        centered.T
+    )
+
+
+    eigvals, eigvecs = np.linalg.eigh(
+        cov
+    )
+
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+
+    eigvals = eigvals[order]
+
+    eigvecs = eigvecs[:, order]
+
+
+    e_parallel = eigvecs[:, 0]
+    e_perp = eigvecs[:, 1]
+
+
+    # Fix arbitrary eigenvector sign for easier comparison.
+    if e_parallel[0] < 0:
+
+        e_parallel *= -1.0
+
+
+    if e_perp[1] < 0:
+
+        e_perp *= -1.0
+
+
+    return {
+        "mu": mu,
+        "cov": cov,
+        "eigvals": eigvals,
+        "e_parallel": e_parallel,
+        "e_perp": e_perp,
+    }
+
+
+# ============================================================
+# 9. PROJECT TRAJECTORY INTO LOCAL AXES
+# ============================================================
+
+def project_trajectory(
+    Z,
+    axes
+):
+
+    centered = (
+        Z - axes["mu"]
+    )
+
+
+    q_parallel = (
+        centered
+        @ axes["e_parallel"]
+    )
+
+
+    q_perp = (
+        centered
+        @ axes["e_perp"]
+    )
+
+
+    return q_parallel, q_perp
+
+
+# ============================================================
+# 10. AUTOCORRELATION
+# ============================================================
+
+def autocorrelation(
+    series,
+    max_lag
+):
+
+    x = np.asarray(
+        series,
+        dtype=float
+    )
+
+
+    x = (
+        x - np.mean(x)
+    )
+
+
+    denom = np.dot(
+        x,
+        x
+    )
+
+
+    if denom <= 1e-15:
+
+        return np.ones(
+            min(
+                max_lag + 1,
+                len(x)
+            )
+        )
+
+
+    max_lag = min(
+        max_lag,
+        len(x) - 1
+    )
+
+
+    ac = np.empty(
+        max_lag + 1
+    )
+
+
+    ac[0] = 1.0
+
+
+    for lag in range(
+        1,
+        max_lag + 1
+    ):
+
+        ac[lag] = (
+            np.dot(
+                x[:-lag],
+                x[lag:]
+            )
+            /
+            denom
+        )
+
+
+    return ac
+
+
+# ============================================================
+# 11. INTEGRATED AUTOCORRELATION MAGNITUDE
+#
+#     Not interpreted as a physical frequency.
+#
+#     This tells us how persistent motion along each axis is.
+# ============================================================
+
+def autocorr_persistence(
+    series,
+    cfg
+):
+
+    ac = autocorrelation(
+        series,
+        cfg.max_ac_lag
+    )
+
+
+    if len(ac) <= 1:
+        return np.nan
+
+
+    return float(
+        np.mean(
+            np.abs(ac[1:])
+        )
+    )
+
+
+# ============================================================
+# 12. PRINCIPAL-AXIS ANGLE
+# ============================================================
+
+def axis_angle(
+    e1,
+    e2
+):
+
+    # Eigenvector sign is physically irrelevant,
+    # so use absolute dot product.
+
+    dot = abs(
+        np.dot(
+            e1,
+            e2
+        )
+    )
+
+
+    dot = np.clip(
+        dot,
+        -1.0,
+        1.0
+    )
+
+
+    return float(
+        np.degrees(
+            np.arccos(dot)
+        )
+    )
+
+
+# ============================================================
+# 13. AXIS STABILITY
+#
+#     Compare principal direction in first and second half.
+# ============================================================
+
+def axis_stability(
+    Z
+):
+
+    n = len(Z)
+
+    mid = n // 2
+
+
+    if mid < 5:
+
+        return np.nan
+
+
+    A = principal_axes(
+        Z[:mid]
+    )
+
+
+    B = principal_axes(
+        Z[mid:]
+    )
+
+
+    return axis_angle(
+        A["e_parallel"],
+        B["e_parallel"]
+    )
+
+
+# ============================================================
+# 14. TRANSVERSE EXCURSION ANALYSIS
+#
+#     We define an excursion as:
+#
+#          |q_perp| > k sigma_perp
+#
+#     and measure how long it takes to return inside
+#     one transverse sigma.
+# ============================================================
+
+def transverse_excursions(
+    q_perp,
+    cfg
+):
+
+    q = np.asarray(
+        q_perp,
+        dtype=float
+    )
+
+
+    sigma = np.std(q)
+
+
+    if sigma <= 1e-12:
+
+        return {
+            "excursion_fraction": 0.0,
+            "n_excursions": 0,
+            "mean_return_steps": 0.0,
+            "median_return_steps": 0.0,
+        }
+
+
+    threshold_out = (
+        cfg.excursion_sigma * sigma
+    )
+
+
+    threshold_return = sigma
+
+
+    outside = (
+        np.abs(q)
+        > threshold_out
+    )
+
+
+    excursion_fraction = float(
+        np.mean(outside)
+    )
+
+
+    return_times = []
+
+
+    i = 0
+
+
+    while i < len(q):
+
+        if not outside[i]:
+
+            i += 1
+            continue
+
+
+        start = i
+
+
+        j = i + 1
+
+
+        while j < len(q):
+
+            if abs(q[j]) <= threshold_return:
+                break
+
+            j += 1
+
+
+        if j < len(q):
+
+            return_times.append(
+                (
+                    j - start
+                )
+                *
+                cfg.diagnostic_every
+            )
+
+
+        i = max(
+            j,
+            i + 1
+        )
+
+
+    if len(return_times) == 0:
+
+        mean_return = np.nan
+        median_return = np.nan
+
+    else:
+
+        mean_return = float(
+            np.mean(return_times)
+        )
+
+        median_return = float(
+            np.median(return_times)
+        )
+
+
+    return {
+        "excursion_fraction":
+            excursion_fraction,
+
+        "n_excursions":
+            len(return_times),
+
+        "mean_return_steps":
+            mean_return,
+
+        "median_return_steps":
+            median_return,
+    }
+
+
+# ============================================================
+# 15. CHARACTERIZE ONE BASIN
+# ============================================================
+
+def characterize_basin(
+    Z,
+    cfg
+):
+
+    axes = principal_axes(
+        Z
+    )
+
+
+    q_parallel, q_perp = project_trajectory(
+        Z,
+        axes
+    )
+
+
+    var_parallel = float(
+        np.var(q_parallel)
+    )
+
+
+    var_perp = float(
+        np.var(q_perp)
+    )
+
+
+    variance_ratio = (
+        var_parallel
+        /
+        max(
+            var_perp,
+            1e-12
+        )
+    )
+
+
+    sigma_parallel = float(
+        np.std(q_parallel)
+    )
+
+
+    sigma_perp = float(
+        np.std(q_perp)
+    )
+
+
+    excursion = transverse_excursions(
+        q_perp,
+        cfg
+    )
+
+
+    persistence_parallel = (
+        autocorr_persistence(
+            q_parallel,
+            cfg
+        )
+    )
+
+
+    persistence_perp = (
+        autocorr_persistence(
+            q_perp,
+            cfg
+        )
+    )
+
+
+    angle_shift = axis_stability(
+        Z
+    )
+
+
+    # Principal-axis slope in original
+    # (C, logV) coordinates.
+
+    e = axes["e_parallel"]
+
+
+    if abs(e[0]) > 1e-12:
+
+        manifold_slope = (
+            e[1] / e[0]
+        )
+
+    else:
+
+        manifold_slope = np.inf
+
+
+    return {
+
+        "mean_C":
+            float(
+                np.mean(Z[:, 0])
+            ),
+
+        "mean_logV":
+            float(
+                np.mean(Z[:, 1])
+            ),
+
+        "e_parallel":
+            axes["e_parallel"],
+
+        "e_perp":
+            axes["e_perp"],
+
+        "lambda_parallel":
+            float(
+                axes["eigvals"][0]
+            ),
+
+        "lambda_perp":
+            float(
+                axes["eigvals"][1]
+            ),
+
+        "variance_parallel":
+            var_parallel,
+
+        "variance_perp":
+            var_perp,
+
+        "variance_ratio":
+            variance_ratio,
+
+        "sigma_parallel":
+            sigma_parallel,
+
+        "sigma_perp":
+            sigma_perp,
+
+        "manifold_slope":
+            manifold_slope,
+
+        "axis_angle_shift_deg":
+            angle_shift,
+
+        "parallel_autocorr_persistence":
+            persistence_parallel,
+
+        "perp_autocorr_persistence":
+            persistence_perp,
+
+        "excursion_fraction":
+            excursion[
+                "excursion_fraction"
+            ],
+
+        "n_transverse_excursions":
+            excursion[
+                "n_excursions"
+            ],
+
+        "mean_transverse_return_steps":
+            excursion[
+                "mean_return_steps"
+            ],
+
+        "median_transverse_return_steps":
+            excursion[
+                "median_return_steps"
+            ],
+    }
+
+
+# ============================================================
+# 16. SINGLE SEED
+# ============================================================
+
+def simulate_SIM12_1(
+    cfg
+):
+
+    rng = np.random.default_rng(
+        cfg.seed
+    )
+
+
+    hidden = [0]
+
+    obs = [
+        proj_structured[0]
+    ]
+
+    mem = defaultdict(float)
+
+
+    # --------------------------------------------------------
+    # Burn in
+    # --------------------------------------------------------
+
+    burn = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.burnin_steps,
+        log_diagnostics=False
+    )
+
+
+    # --------------------------------------------------------
+    # Observe unperturbed invariant geometry
+    # --------------------------------------------------------
+
+    obs_run = run_steps(
+        cfg,
+        burn["hidden"],
+        burn["obs"],
+        burn["mem"],
+        rng,
+        cfg.observation_steps,
+        log_diagnostics=True
+    )
+
+
+    metrics = {}
+
+
+    for x in cfg.basins:
+
+        metrics[x] = characterize_basin(
+            obs_run["Z"][x],
+            cfg
+        )
+
+
+    return {
+        "seed": cfg.seed,
+        "metrics": metrics,
+        "Z": obs_run["Z"],
+    }
+
+
+# ============================================================
+# 17. SAFE AGGREGATION
+# ============================================================
+
+def safe_mean(vals):
+
+    a = np.asarray(
+        vals,
+        dtype=float
+    )
+
+
+    a = a[
+        np.isfinite(a)
+    ]
+
+
+    if len(a) == 0:
+        return np.nan
+
+
+    return float(
+        np.mean(a)
+    )
+
+
+def safe_median(vals):
+
+    a = np.asarray(
+        vals,
+        dtype=float
+    )
+
+
+    a = a[
+        np.isfinite(a)
+    ]
+
+
+    if len(a) == 0:
+        return np.nan
+
+
+    return float(
+        np.median(a)
+    )
+
+
+# ============================================================
+# 18. ENSEMBLE SUMMARY
+# ============================================================
+
+def summarize_basin(
+    rows,
+    basin
+):
+
+    ms = [
+        r["metrics"][basin]
+        for r in rows
+    ]
+
+
+    return {
+
+        "n":
+            len(ms),
+
+        "mean_C":
+            safe_mean(
+                [
+                    m["mean_C"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_logV":
+            safe_mean(
+                [
+                    m["mean_logV"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_lambda_parallel":
+            safe_mean(
+                [
+                    m["lambda_parallel"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_lambda_perp":
+            safe_mean(
+                [
+                    m["lambda_perp"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_variance_ratio":
+            safe_mean(
+                [
+                    m["variance_ratio"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_sigma_parallel":
+            safe_mean(
+                [
+                    m["sigma_parallel"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_sigma_perp":
+            safe_mean(
+                [
+                    m["sigma_perp"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_manifold_slope":
+            safe_mean(
+                [
+                    m["manifold_slope"]
+                    for m in ms
+                    if np.isfinite(
+                        m["manifold_slope"]
+                    )
+                ]
+            ),
+
+        "mean_axis_shift_deg":
+            safe_mean(
+                [
+                    m["axis_angle_shift_deg"]
+                    for m in ms
+                ]
+            ),
+
+        "median_axis_shift_deg":
+            safe_median(
+                [
+                    m["axis_angle_shift_deg"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_parallel_persistence":
+            safe_mean(
+                [
+                    m[
+                        "parallel_autocorr_persistence"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_perp_persistence":
+            safe_mean(
+                [
+                    m[
+                        "perp_autocorr_persistence"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_excursion_fraction":
+            safe_mean(
+                [
+                    m[
+                        "excursion_fraction"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_excursion_count":
+            safe_mean(
+                [
+                    m[
+                        "n_transverse_excursions"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_transverse_return_steps":
+            safe_mean(
+                [
+                    m[
+                        "mean_transverse_return_steps"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "median_transverse_return_steps":
+            safe_median(
+                [
+                    m[
+                        "median_transverse_return_steps"
+                    ]
+                    for m in ms
+                ]
+            ),
+    }
+
+
+# ============================================================
+# 19. BASIN-PAIR AXIS SIMILARITY
+# ============================================================
+
+def pair_axis_similarity(
+    rows,
+    a,
+    b
+):
+
+    angles = []
+
+    slope_diffs = []
+
+
+    for r in rows:
+
+        ma = r["metrics"][a]
+        mb = r["metrics"][b]
+
+
+        angle = axis_angle(
+            ma["e_parallel"],
+            mb["e_parallel"]
+        )
+
+
+        angles.append(
+            angle
+        )
+
+
+        sa = ma[
+            "manifold_slope"
+        ]
+
+        sb = mb[
+            "manifold_slope"
+        ]
+
+
+        if (
+            np.isfinite(sa)
+            and
+            np.isfinite(sb)
+        ):
+
+            slope_diffs.append(
+                abs(sa - sb)
+            )
+
+
+    return {
+
+        "mean_axis_angle_deg":
+            safe_mean(angles),
+
+        "median_axis_angle_deg":
+            safe_median(angles),
+
+        "mean_slope_difference":
+            safe_mean(
+                slope_diffs
+            ),
+    }
+
+
+# ============================================================
+# 20. DRIVER
+# ============================================================
+
+def run_SIM12_1(
+    seeds=50,
+    beta=1.38
+):
+
+    print(
+        "=" * 76
+    )
+
+
+    print(
+        "\nSIM12.1 — Principal-Axis "
+        "Coherence–Valence Probe\n"
+    )
+
+
+    print(
+        "=" * 76
+    )
+
+
+    print(
+        f"\nbeta={beta}"
+    )
+
+
+    print(
+        f"seeds={seeds}"
+    )
+
+
+    print(
+        "\nNo perturbation."
+    )
+
+
+    print(
+        "No epsilon."
+    )
+
+
+    print(
+        "No Lyapunov weighting."
+    )
+
+
+    print(
+        "\nQuestion:"
+    )
+
+
+    print(
+        "Is stochastic basin motion confined along a "
+        "preferred local coherence–valence manifold?"
+    )
+
+
+    rows = []
+
+
+    for seed in range(
+        1,
+        seeds + 1
+    ):
+
+        cfg = Config(
+            beta=beta,
+            seed=seed
+        )
+
+
+        out = simulate_SIM12_1(
+            cfg
+        )
+
+
+        rows.append(
+            out
+        )
+
+
+    # --------------------------------------------------------
+    # Individual basin summaries
+    # --------------------------------------------------------
+
+    for basin in DEFAULT_BASINS:
+
+        s = summarize_basin(
+            rows,
+            basin
+        )
+
+
+        print(
+            "\n"
+            + "=" * 60
+        )
+
+
+        print(
+            f"BASIN {basin}"
+        )
+
+
+        print(
+            "=" * 60
+        )
+
+
+        print(
+            f"n                                  : "
+            f"{s['n']}"
+        )
+
+
+        print(
+            f"mean C                             : "
+            f"{s['mean_C']:.6f}"
+        )
+
+
+        print(
+            f"mean log(V_eff)                    : "
+            f"{s['mean_logV']:.6f}"
+        )
+
+
+        print(
+            "\nPRINCIPAL GEOMETRY"
+        )
+
+
+        print(
+            f"mean lambda_parallel               : "
+            f"{s['mean_lambda_parallel']:.8f}"
+        )
+
+
+        print(
+            f"mean lambda_perp                   : "
+            f"{s['mean_lambda_perp']:.8f}"
+        )
+
+
+        print(
+            f"mean variance ratio                : "
+            f"{s['mean_variance_ratio']:.6f}"
+        )
+
+
+        print(
+            f"mean sigma_parallel                : "
+            f"{s['mean_sigma_parallel']:.6f}"
+        )
+
+
+        print(
+            f"mean sigma_perp                    : "
+            f"{s['mean_sigma_perp']:.6f}"
+        )
+
+
+        print(
+            f"mean manifold slope d(logV)/dC     : "
+            f"{s['mean_manifold_slope']:.6f}"
+        )
+
+
+        print(
+            "\nAXIS STABILITY"
+        )
+
+
+        print(
+            f"mean early/late axis shift (deg)   : "
+            f"{s['mean_axis_shift_deg']:.6f}"
+        )
+
+
+        print(
+            f"median early/late axis shift (deg) : "
+            f"{s['median_axis_shift_deg']:.6f}"
+        )
+
+
+        print(
+            "\nTEMPORAL PERSISTENCE"
+        )
+
+
+        print(
+            f"parallel autocorr persistence      : "
+            f"{s['mean_parallel_persistence']:.6f}"
+        )
+
+
+        print(
+            f"perp autocorr persistence          : "
+            f"{s['mean_perp_persistence']:.6f}"
+        )
+
+
+        print(
+            "\nTRANSVERSE EXCURSIONS"
+        )
+
+
+        print(
+            f"mean excursion fraction            : "
+            f"{s['mean_excursion_fraction']:.6f}"
+        )
+
+
+        print(
+            f"mean excursion count               : "
+            f"{s['mean_excursion_count']:.3f}"
+        )
+
+
+        print(
+            f"mean transverse return steps       : "
+            f"{s['mean_transverse_return_steps']:.3f}"
+        )
+
+
+        print(
+            f"median transverse return steps     : "
+            f"{s['median_transverse_return_steps']:.3f}"
+        )
+
+
+    # --------------------------------------------------------
+    # Pair structure
+    # --------------------------------------------------------
+
+    print(
+        "\n"
+        + "=" * 60
+    )
+
+
+    print(
+        "BASIN-PAIR PRINCIPAL-AXIS SIMILARITY"
+    )
+
+
+    print(
+        "=" * 60
+    )
+
+
+    for a, b in [
+        (0, 3),
+        (1, 2)
+    ]:
+
+        p = pair_axis_similarity(
+            rows,
+            a,
+            b
+        )
+
+
+        print(
+            f"\nPAIR ({a},{b})"
+        )
+
+
+        print(
+            f"mean principal-axis angle (deg)   : "
+            f"{p['mean_axis_angle_deg']:.6f}"
+        )
+
+
+        print(
+            f"median principal-axis angle (deg) : "
+            f"{p['median_axis_angle_deg']:.6f}"
+        )
+
+
+        print(
+            f"mean manifold slope difference    : "
+            f"{p['mean_slope_difference']:.6f}"
+        )
+
+
+    return rows
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    results = run_SIM12_1(
+        seeds=50,
+        beta=1.38
+    )
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+
+
+============================================================================
+
+
+SIM12.1 — Principal-Axis Coherence–Valence Probe
+
+============================================================================
+
+
+beta=1.38
+seeds=50
+
+
+No perturbation.
+No epsilon.
+
+No Lyapunov weighting.
+
+
+Question:
+Is stochastic basin motion confined along a preferred local coherence–valence manifold?
+
+
+============================================================
+BASIN 0
+
+============================================================
+
+n                                  : 50
+
+mean C                             : 0.474782
+
+mean log(V_eff)                    : 0.408316
+
+
+PRINCIPAL GEOMETRY
+mean lambda_parallel               : 0.05059760
+
+mean lambda_perp                   : 0.00181543
+
+mean variance ratio                : 28.084678
+
+mean sigma_parallel                : 0.224012
+
+mean sigma_perp                    : 0.042547
+
+mean manifold slope d(logV)/dC     : -0.165521
+
+
+AXIS STABILITY
+mean early/late axis shift (deg)   : 1.172361
+
+median early/late axis shift (deg) : 0.801017
+
+
+TEMPORAL PERSISTENCE
+parallel autocorr persistence      : 0.106683
+
+perp autocorr persistence          : 0.055564
+
+
+TRANSVERSE EXCURSIONS
+mean excursion fraction            : 0.056550
+
+mean excursion count               : 24.700
+
+mean transverse return steps       : 21.754
+
+median transverse return steps     : 17.500
+
+
+============================================================
+BASIN 1
+
+============================================================
+
+n                                  : 50
+
+mean C                             : -0.433291
+
+mean log(V_eff)                    : 0.671380
+
+
+PRINCIPAL GEOMETRY
+mean lambda_parallel               : 0.04331035
+
+mean lambda_perp                   : 0.00039238
+
+mean variance ratio                : 111.413894
+
+mean sigma_parallel                : 0.207636
+
+mean sigma_perp                    : 0.019776
+
+mean manifold slope d(logV)/dC     : -0.022671
+
+
+AXIS STABILITY
+mean early/late axis shift (deg)   : 0.657304
+
+median early/late axis shift (deg) : 0.596855
+
+
+TEMPORAL PERSISTENCE
+parallel autocorr persistence      : 0.088746
+
+perp autocorr persistence          : 0.050926
+
+
+TRANSVERSE EXCURSIONS
+mean excursion fraction            : 0.037350
+
+mean excursion count               : 19.380
+
+mean transverse return steps       : 19.640
+
+median transverse return steps     : 15.000
+
+
+============================================================
+BASIN 2
+
+============================================================
+
+n                                  : 50
+
+mean C                             : -0.431813
+
+mean log(V_eff)                    : 0.671249
+
+
+PRINCIPAL GEOMETRY
+mean lambda_parallel               : 0.04364699
+
+mean lambda_perp                   : 0.00039506
+
+mean variance ratio                : 110.951707
+
+mean sigma_parallel                : 0.208404
+
+mean sigma_perp                    : 0.019845
+
+mean manifold slope d(logV)/dC     : -0.023654
+
+
+AXIS STABILITY
+mean early/late axis shift (deg)   : 0.652436
+
+median early/late axis shift (deg) : 0.483679
+
+
+TEMPORAL PERSISTENCE
+parallel autocorr persistence      : 0.085329
+
+perp autocorr persistence          : 0.052256
+
+
+TRANSVERSE EXCURSIONS
+mean excursion fraction            : 0.038100
+
+mean excursion count               : 20.280
+
+mean transverse return steps       : 19.416
+
+median transverse return steps     : 15.000
+
+
+============================================================
+BASIN 3
+
+============================================================
+
+n                                  : 50
+
+mean C                             : 0.477423
+
+mean log(V_eff)                    : 0.407845
+
+
+PRINCIPAL GEOMETRY
+mean lambda_parallel               : 0.05104386
+
+mean lambda_perp                   : 0.00177182
+
+mean variance ratio                : 28.937379
+
+mean sigma_parallel                : 0.225188
+
+mean sigma_perp                    : 0.042023
+
+mean manifold slope d(logV)/dC     : -0.168076
+
+
+AXIS STABILITY
+mean early/late axis shift (deg)   : 1.073786
+
+median early/late axis shift (deg) : 0.857622
+
+
+TEMPORAL PERSISTENCE
+parallel autocorr persistence      : 0.107722
+
+perp autocorr persistence          : 0.053626
+
+
+TRANSVERSE EXCURSIONS
+mean excursion fraction            : 0.056133
+
+mean excursion count               : 25.060
+
+mean transverse return steps       : 20.534
+
+median transverse return steps     : 15.000
+
+
+============================================================
+BASIN-PAIR PRINCIPAL-AXIS SIMILARITY
+
+============================================================
+
+
+PAIR (0,3)
+mean principal-axis angle (deg)   : 0.654470
+
+median principal-axis angle (deg) : 0.563439
+
+mean manifold slope difference    : 0.011742
+
+
+PAIR (1,2)
+mean principal-axis angle (deg)   : 0.503187
+
+median principal-axis angle (deg) : 0.406349
+
+mean manifold slope difference    : 0.008788
