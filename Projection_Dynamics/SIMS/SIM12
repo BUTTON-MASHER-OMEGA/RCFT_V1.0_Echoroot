@@ -1,0 +1,2658 @@
+
+############################################################
+#  SIM12 — Basin-Local Invariant-Set Geometry Probe
+#
+#  PURPOSE
+#  -------
+#  SIM11.1 suggested that late-time basin dynamics are
+#  predominantly recurrent/cyclic rather than point-like.
+#
+#  SIM11.2 showed that recurrence strength is persistent,
+#  but also exposed a frequency-estimator artifact.
+#
+#  SIM12 therefore removes perturbations entirely and asks:
+#
+#      What kind of invariant set does each basin occupy?
+#
+#  Diagnostic state:
+#
+#      Z_x(t) = ( C_x(t), log(V_eff,x(t)) )
+#
+#  We test:
+#
+#    1. late-time drift
+#    2. covariance geometry
+#    3. return-distance structure
+#    4. genuine local recurrence minima
+#    5. autocorrelation peaks
+#    6. spectral structure
+#    7. recurrence fraction
+#    8. basin-pair similarity:
+#
+#           basin 0 <-> basin 3
+#           basin 1 <-> basin 2
+#
+#
+#  DELIBERATELY NOT INCLUDED
+#  -------------------------
+#    - epsilon
+#    - perturbations
+#    - eta_V / Lyapunov weighting
+#    - R_global
+#    - beta sweep
+#    - H4
+#    - E8 / RE8
+#    - quaternion assumptions
+#    - physical interpretation of frequencies
+#
+#
+#  SIM12 is a geometry-identification experiment.
+############################################################
+
+
+import numpy as np
+from collections import defaultdict
+from dataclasses import dataclass
+
+
+# ============================================================
+# 0. GRAPH + BASINS
+# ============================================================
+
+neighbors = {
+    0: [1, 2],
+    1: [0, 3],
+    2: [0, 4],
+    3: [1, 5],
+    4: [2, 6],
+    5: [3, 7],
+    6: [4, 7],
+    7: [5, 6],
+}
+
+
+proj_structured = {
+    0: 0, 1: 0,
+    2: 1, 3: 1,
+    4: 2, 5: 2,
+    6: 3, 7: 3,
+}
+
+
+DEFAULT_BASINS = {
+    0: [0, 1],
+    1: [2, 3],
+    2: [4, 5],
+    3: [6, 7],
+}
+
+
+# ============================================================
+# 1. CONFIG
+# ============================================================
+
+@dataclass
+class Config:
+
+    # Existing RCFT toy dynamics
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+
+    seed: int = 1
+
+    # --------------------------------------------------------
+    # Simulation lengths
+    # --------------------------------------------------------
+
+    burnin_steps: int = 3000
+
+    # Long observation period:
+    observation_steps: int = 6000
+
+    # --------------------------------------------------------
+    # Diagnostic resolution
+    # --------------------------------------------------------
+
+    diagnostic_every: int = 5
+
+    # rolling history used to compute C_x
+    stats_window: int = 100
+
+    # --------------------------------------------------------
+    # Recurrence search
+    # --------------------------------------------------------
+
+    # Search candidate return periods over diagnostic lags.
+    min_return_lag: int = 5
+    max_return_lag: int = 200
+
+    # Autocorrelation search
+    max_ac_lag: int = 200
+
+    # Ignore the initial autocorrelation lobe until it
+    # crosses zero, if possible.
+    require_zero_crossing_for_ac_peak: bool = True
+
+    # --------------------------------------------------------
+    # Recurrence neighborhood
+    # --------------------------------------------------------
+
+    # Radius is defined relative to the geometric spread
+    # of the basin trajectory:
+    recurrence_radius_fraction: float = 0.15
+
+    # Avoid counting trivial adjacent-time recurrence.
+    recurrence_theiler_window: int = 5
+
+    # --------------------------------------------------------
+    # Late-time drift
+    # --------------------------------------------------------
+
+    late_fraction: float = 0.5
+
+    basins: dict = None
+
+    def __post_init__(self):
+
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+# ============================================================
+# 2. MEMORY / FRICTION / TRANSITION
+# ============================================================
+
+def saturate_memory(M, mode="tanh"):
+
+    if mode == "tanh":
+        return np.tanh(M)
+
+    return M
+
+
+def friction(u_i, u_j, mem, cfg):
+
+    delta_proj = (
+        0.0
+        if proj_structured[u_i] == proj_structured[u_j]
+        else 1.0
+    )
+
+    M_raw = mem.get(
+        (u_i, u_j),
+        0.0
+    )
+
+    M_sat = saturate_memory(
+        M_raw,
+        cfg.sat_mode
+    )
+
+    return (
+        cfg.alpha
+        + cfg.beta * delta_proj
+        + cfg.memory_sign * cfg.lam * M_sat
+    )
+
+
+def transition_probs(u, mem, cfg):
+
+    nbrs = neighbors[u]
+
+    costs = np.array(
+        [
+            friction(
+                u,
+                v,
+                mem,
+                cfg
+            )
+            for v in nbrs
+        ],
+        dtype=float
+    )
+
+    weights = np.exp(
+        -costs / cfg.T_tol
+    )
+
+    probs = (
+        weights
+        / weights.sum()
+    )
+
+    return nbrs, probs
+
+
+def update_memory(mem, u, v, cfg):
+
+    for k in list(mem.keys()):
+
+        mem[k] *= cfg.delta
+
+        if mem[k] < 1e-12:
+            del mem[k]
+
+    mem[(u, v)] += 1.0
+
+
+# ============================================================
+# 3. LOCAL ENTROPY + PERSISTENCE
+# ============================================================
+
+def compute_local_entropy_and_persistence(
+    hidden,
+    obs,
+    basins,
+    window=None
+):
+
+    if window is None:
+        start = 0
+
+    else:
+        start = max(
+            0,
+            len(hidden) - window - 1
+        )
+
+    basin_trans = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    basin_from = {
+        x: defaultdict(int)
+        for x in basins
+    }
+
+    counts_total = {
+        x: 0
+        for x in basins
+    }
+
+    counts_same = {
+        x: 0
+        for x in basins
+    }
+
+
+    for t in range(
+        start,
+        len(hidden) - 1
+    ):
+
+        u = hidden[t]
+        v = hidden[t + 1]
+
+        b = obs[t]
+
+        counts_total[b] += 1
+
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+
+        for x, states in basins.items():
+
+            if u in states:
+
+                basin_trans[x][
+                    (u, v)
+                ] += 1
+
+                basin_from[x][u] += 1
+
+                break
+
+
+    H = {}
+    P = {}
+
+
+    for x in basins:
+
+        H_sum = 0.0
+        n_src = 0
+
+        for u in basin_from[x]:
+
+            probs = []
+
+            for (uu, vv), c in basin_trans[x].items():
+
+                if uu == u:
+
+                    probs.append(
+                        c
+                        / basin_from[x][u]
+                    )
+
+            if len(probs) == 0:
+                continue
+
+            p = np.array(
+                probs,
+                dtype=float
+            )
+
+            H_sum += -np.sum(
+                p
+                * np.log(
+                    p + 1e-12
+                )
+            )
+
+            n_src += 1
+
+
+        H[x] = (
+            H_sum / n_src
+            if n_src > 0
+            else 0.0
+        )
+
+        P[x] = (
+            counts_same[x]
+            / counts_total[x]
+            if counts_total[x] > 0
+            else 0.0
+        )
+
+    return H, P
+
+
+# ============================================================
+# 4. COHERENCE
+# ============================================================
+
+def compute_Cx(H, P, alpha):
+
+    return {
+        x: -H[x] + alpha * P[x]
+        for x in H
+    }
+
+
+# ============================================================
+# 5. EFFECTIVE VALENCE
+# ============================================================
+
+def compute_valence(mem, cfg):
+
+    Veff = {
+        x: 0.0
+        for x in cfg.basins
+    }
+
+    counts = {
+        x: 0
+        for x in cfg.basins
+    }
+
+
+    for x, states in cfg.basins.items():
+
+        for u in states:
+
+            _, probs = transition_probs(
+                u,
+                mem,
+                cfg
+            )
+
+            p = np.array(
+                probs,
+                dtype=float
+            )
+
+            H_loc = -np.sum(
+                p
+                * np.log(
+                    p + 1e-12
+                )
+            )
+
+            Veff[x] += np.exp(
+                H_loc
+            )
+
+            counts[x] += 1
+
+
+    for x in cfg.basins:
+
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+
+    return Veff
+
+
+# ============================================================
+# 6. BASIN-LOCAL DIAGNOSTIC STATE
+#
+#      Z_x(t) = (C_x, log V_eff,x)
+#
+# ============================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    mem,
+    cfg
+):
+
+    H, P = compute_local_entropy_and_persistence(
+        hidden,
+        obs,
+        cfg.basins,
+        window=cfg.stats_window
+    )
+
+    Cx = compute_Cx(
+        H,
+        P,
+        cfg.alpha
+    )
+
+    Veff = compute_valence(
+        mem,
+        cfg
+    )
+
+    Z = {}
+
+    for x in cfg.basins:
+
+        V = max(
+            Veff[x],
+            1e-12
+        )
+
+        Z[x] = np.array(
+            [
+                Cx[x],
+                np.log(V)
+            ],
+            dtype=float
+        )
+
+    return Z
+
+
+# ============================================================
+# 7. RUN SIMULATION
+# ============================================================
+
+def run_steps(
+    cfg,
+    hidden,
+    obs,
+    mem,
+    rng,
+    steps,
+    log_diagnostics=False
+):
+
+    Z_logs = {
+        x: []
+        for x in cfg.basins
+    }
+
+    time_log = []
+
+
+    for t in range(steps):
+
+        u = hidden[-1]
+
+        nbrs, probs = transition_probs(
+            u,
+            mem,
+            cfg
+        )
+
+        v = rng.choice(
+            nbrs,
+            p=probs
+        )
+
+        hidden.append(v)
+
+        obs.append(
+            proj_structured[v]
+        )
+
+        update_memory(
+            mem,
+            u,
+            v,
+            cfg
+        )
+
+
+        if (
+            log_diagnostics
+            and
+            t % cfg.diagnostic_every == 0
+        ):
+
+            Z = compute_Z(
+                hidden,
+                obs,
+                mem,
+                cfg
+            )
+
+            time_log.append(t)
+
+            for x in cfg.basins:
+
+                Z_logs[x].append(
+                    Z[x]
+                )
+
+
+    if log_diagnostics:
+
+        for x in Z_logs:
+
+            Z_logs[x] = np.asarray(
+                Z_logs[x],
+                dtype=float
+            )
+
+
+    return {
+        "hidden": hidden,
+        "obs": obs,
+        "mem": mem,
+        "times": np.asarray(
+            time_log,
+            dtype=int
+        ),
+        "Z": Z_logs
+    }
+
+
+# ============================================================
+# 8. BASIC LINEAR SLOPE
+# ============================================================
+
+def linear_slope(y):
+
+    y = np.asarray(
+        y,
+        dtype=float
+    )
+
+    if len(y) < 2:
+        return np.nan
+
+    t = np.arange(
+        len(y),
+        dtype=float
+    )
+
+    t_centered = (
+        t - np.mean(t)
+    )
+
+    y_centered = (
+        y - np.mean(y)
+    )
+
+    denom = np.dot(
+        t_centered,
+        t_centered
+    )
+
+    if denom <= 1e-15:
+        return 0.0
+
+    return (
+        np.dot(
+            t_centered,
+            y_centered
+        )
+        / denom
+    )
+
+
+# ============================================================
+# 9. COVARIANCE GEOMETRY
+# ============================================================
+
+def covariance_geometry(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+    centroid = np.mean(
+        Z,
+        axis=0
+    )
+
+    if len(Z) < 3:
+
+        return {
+            "centroid": centroid,
+            "cov": np.zeros((2, 2)),
+            "eigvals": np.zeros(2),
+            "anisotropy": np.nan,
+            "ellipse_area": 0.0,
+            "variance_trace": 0.0,
+        }
+
+
+    cov = np.cov(
+        Z.T
+    )
+
+    eigvals = np.linalg.eigvalsh(
+        cov
+    )
+
+    eigvals = np.sort(
+        np.maximum(
+            eigvals,
+            0.0
+        )
+    )[::-1]
+
+
+    lambda1 = eigvals[0]
+    lambda2 = eigvals[1]
+
+
+    anisotropy = (
+        lambda1
+        / max(
+            lambda2,
+            1e-12
+        )
+    )
+
+
+    # covariance ellipse area up to constant pi
+    ellipse_area = (
+        np.pi
+        * np.sqrt(
+            lambda1
+            * lambda2
+        )
+    )
+
+
+    return {
+        "centroid": centroid,
+        "cov": cov,
+        "eigvals": eigvals,
+        "anisotropy": anisotropy,
+        "ellipse_area": ellipse_area,
+        "variance_trace": np.trace(cov),
+    }
+
+
+# ============================================================
+# 10. RETURN-DISTANCE FUNCTION
+#
+#     D(T) =
+#
+#       mean_t || Z(t+T) - Z(t) ||
+#
+#     A genuine recurrent period should produce a local
+#     minimum in D(T), not merely a strong low-lag
+#     autocorrelation.
+# ============================================================
+
+def return_distance_curve(
+    Z,
+    min_lag,
+    max_lag
+):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+    max_lag = min(
+        max_lag,
+        len(Z) - 2
+    )
+
+    lags = []
+    distances = []
+
+
+    for lag in range(
+        min_lag,
+        max_lag + 1
+    ):
+
+        diffs = (
+            Z[lag:]
+            -
+            Z[:-lag]
+        )
+
+        d = np.linalg.norm(
+            diffs,
+            axis=1
+        )
+
+        lags.append(lag)
+
+        distances.append(
+            np.mean(d)
+        )
+
+
+    return (
+        np.asarray(lags),
+        np.asarray(distances)
+    )
+
+
+# ============================================================
+# 11. FIND GENUINE LOCAL MINIMA
+#
+#     We explicitly require:
+#
+#       D(T-1) > D(T) < D(T+1)
+#
+# ============================================================
+
+def local_minima_indices(y):
+
+    y = np.asarray(
+        y,
+        dtype=float
+    )
+
+    minima = []
+
+    for i in range(
+        1,
+        len(y) - 1
+    ):
+
+        if (
+            y[i] < y[i - 1]
+            and
+            y[i] < y[i + 1]
+        ):
+
+            minima.append(i)
+
+    return minima
+
+
+def dominant_return_period(
+    Z,
+    cfg
+):
+
+    lags, D = return_distance_curve(
+        Z,
+        cfg.min_return_lag,
+        cfg.max_return_lag
+    )
+
+
+    minima = local_minima_indices(
+        D
+    )
+
+
+    if len(minima) == 0:
+
+        return {
+            "lag": np.nan,
+            "period_steps": np.nan,
+            "return_distance": np.nan,
+            "relative_return_distance": np.nan,
+            "lags": lags,
+            "curve": D,
+        }
+
+
+    # Pick deepest genuine local minimum.
+    best_i = min(
+        minima,
+        key=lambda i: D[i]
+    )
+
+
+    best_lag = int(
+        lags[best_i]
+    )
+
+    best_distance = float(
+        D[best_i]
+    )
+
+
+    baseline = np.mean(
+        D
+    )
+
+
+    relative_distance = (
+        best_distance
+        / max(
+            baseline,
+            1e-12
+        )
+    )
+
+
+    return {
+        "lag": best_lag,
+
+        "period_steps":
+            best_lag
+            * cfg.diagnostic_every,
+
+        "return_distance":
+            best_distance,
+
+        "relative_return_distance":
+            relative_distance,
+
+        "lags": lags,
+
+        "curve": D,
+    }
+
+
+# ============================================================
+# 12. AUTOCORRELATION
+# ============================================================
+
+def autocorrelation(
+    series,
+    max_lag
+):
+
+    x = np.asarray(
+        series,
+        dtype=float
+    )
+
+    if len(x) < 4:
+        return np.array([1.0])
+
+
+    x = (
+        x - np.mean(x)
+    )
+
+
+    denom = np.dot(
+        x,
+        x
+    )
+
+
+    if denom <= 1e-15:
+
+        return np.ones(
+            min(
+                max_lag + 1,
+                len(x)
+            )
+        )
+
+
+    max_lag = min(
+        max_lag,
+        len(x) - 1
+    )
+
+
+    ac = np.empty(
+        max_lag + 1,
+        dtype=float
+    )
+
+    ac[0] = 1.0
+
+
+    for lag in range(
+        1,
+        max_lag + 1
+    ):
+
+        ac[lag] = (
+            np.dot(
+                x[:-lag],
+                x[lag:]
+            )
+            /
+            denom
+        )
+
+
+    return ac
+
+
+# ============================================================
+# 13. GENUINE AUTOCORRELATION PEAK
+#
+#     Unlike SIM11.2, we do NOT simply select the
+#     largest permitted low-lag correlation.
+#
+#     If possible:
+#
+#       1. wait for the first zero crossing,
+#       2. then identify an actual local maximum.
+# ============================================================
+
+def genuine_ac_peak(
+    series,
+    cfg
+):
+
+    ac = autocorrelation(
+        series,
+        cfg.max_ac_lag
+    )
+
+
+    start = 2
+
+
+    if cfg.require_zero_crossing_for_ac_peak:
+
+        zero_crossings = np.where(
+            ac[1:] <= 0
+        )[0]
+
+        if len(zero_crossings) > 0:
+
+            start = (
+                int(
+                    zero_crossings[0]
+                )
+                + 2
+            )
+
+
+    peaks = []
+
+
+    for i in range(
+        max(start, 1),
+        len(ac) - 1
+    ):
+
+        if (
+            ac[i] > ac[i - 1]
+            and
+            ac[i] > ac[i + 1]
+        ):
+
+            peaks.append(i)
+
+
+    if len(peaks) == 0:
+
+        return {
+            "lag": np.nan,
+            "period_steps": np.nan,
+            "strength": np.nan,
+            "ac": ac,
+        }
+
+
+    # strongest genuine post-lobe peak
+    best = max(
+        peaks,
+        key=lambda i: ac[i]
+    )
+
+
+    return {
+        "lag": int(best),
+
+        "period_steps":
+            int(best)
+            * cfg.diagnostic_every,
+
+        "strength":
+            float(ac[best]),
+
+        "ac": ac,
+    }
+
+
+# ============================================================
+# 14. POWER SPECTRUM
+#
+#     Secondary diagnostic only.
+#
+#     We do not call the spectral maximum a physical
+#     frequency.
+# ============================================================
+
+def spectral_metrics(
+    series,
+    cfg
+):
+
+    x = np.asarray(
+        series,
+        dtype=float
+    )
+
+
+    if len(x) < 8:
+
+        return {
+            "dominant_frequency": np.nan,
+            "dominant_period_steps": np.nan,
+            "spectral_concentration": np.nan,
+        }
+
+
+    # linear detrend
+    t = np.arange(
+        len(x),
+        dtype=float
+    )
+
+    slope = linear_slope(x)
+
+    intercept = (
+        np.mean(x)
+        -
+        slope * np.mean(t)
+    )
+
+    x = (
+        x
+        -
+        (
+            intercept
+            + slope * t
+        )
+    )
+
+
+    fft = np.fft.rfft(
+        x
+    )
+
+    power = (
+        np.abs(fft) ** 2
+    )
+
+
+    freqs = np.fft.rfftfreq(
+        len(x),
+        d=cfg.diagnostic_every
+    )
+
+
+    # remove DC
+    if len(power) <= 1:
+
+        return {
+            "dominant_frequency": np.nan,
+            "dominant_period_steps": np.nan,
+            "spectral_concentration": np.nan,
+        }
+
+
+    power = power[1:]
+    freqs = freqs[1:]
+
+
+    total_power = np.sum(
+        power
+    )
+
+
+    if total_power <= 1e-15:
+
+        return {
+            "dominant_frequency": np.nan,
+            "dominant_period_steps": np.nan,
+            "spectral_concentration": 0.0,
+        }
+
+
+    i = int(
+        np.argmax(power)
+    )
+
+
+    f = float(
+        freqs[i]
+    )
+
+
+    concentration = float(
+        power[i]
+        / total_power
+    )
+
+
+    period = (
+        1.0 / f
+        if f > 0
+        else np.nan
+    )
+
+
+    return {
+        "dominant_frequency": f,
+        "dominant_period_steps": period,
+        "spectral_concentration": concentration,
+    }
+
+
+# ============================================================
+# 15. RECURRENCE FRACTION
+#
+#     Fraction of temporally separated pairs satisfying:
+#
+#       || Z_i - Z_j || < radius
+#
+#
+#     Radius is scaled to trajectory spread.
+# ============================================================
+
+def recurrence_fraction(
+    Z,
+    cfg
+):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    n = len(Z)
+
+
+    if n < 10:
+        return np.nan
+
+
+    geom = covariance_geometry(
+        Z
+    )
+
+
+    spread = np.sqrt(
+        max(
+            geom["variance_trace"],
+            1e-12
+        )
+    )
+
+
+    radius = (
+        cfg.recurrence_radius_fraction
+        * spread
+    )
+
+
+    hits = 0
+    total = 0
+
+
+    for i in range(n):
+
+        j0 = (
+            i
+            + cfg.recurrence_theiler_window
+            + 1
+        )
+
+        if j0 >= n:
+            continue
+
+
+        diffs = (
+            Z[j0:]
+            -
+            Z[i]
+        )
+
+
+        d = np.linalg.norm(
+            diffs,
+            axis=1
+        )
+
+
+        hits += int(
+            np.sum(
+                d < radius
+            )
+        )
+
+        total += len(d)
+
+
+    if total == 0:
+        return np.nan
+
+
+    return (
+        hits / total
+    )
+
+
+# ============================================================
+# 16. LATE-TIME STABILITY
+# ============================================================
+
+def late_time_metrics(
+    Z,
+    cfg
+):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    start = int(
+        len(Z)
+        * (
+            1.0
+            - cfg.late_fraction
+        )
+    )
+
+
+    late = Z[start:]
+
+
+    if len(late) < 4:
+
+        return {
+            "slope_C": np.nan,
+            "slope_W": np.nan,
+            "centroid_shift": np.nan,
+            "covariance_shift": np.nan,
+        }
+
+
+    mid = len(late) // 2
+
+
+    A = late[:mid]
+    B = late[mid:]
+
+
+    centroid_A = np.mean(
+        A,
+        axis=0
+    )
+
+    centroid_B = np.mean(
+        B,
+        axis=0
+    )
+
+
+    centroid_shift = np.linalg.norm(
+        centroid_B
+        -
+        centroid_A
+    )
+
+
+    cov_A = np.cov(
+        A.T
+    )
+
+    cov_B = np.cov(
+        B.T
+    )
+
+
+    covariance_shift = np.linalg.norm(
+        cov_B
+        -
+        cov_A,
+        ord="fro"
+    )
+
+
+    return {
+        "slope_C":
+            linear_slope(
+                late[:, 0]
+            ),
+
+        "slope_W":
+            linear_slope(
+                late[:, 1]
+            ),
+
+        "centroid_shift":
+            centroid_shift,
+
+        "covariance_shift":
+            covariance_shift,
+    }
+
+
+# ============================================================
+# 17. SINGLE-BASIN CHARACTERIZATION
+# ============================================================
+
+def characterize_basin(
+    Z,
+    cfg
+):
+
+    Z = np.asarray(
+        Z,
+        dtype=float
+    )
+
+
+    C = Z[:, 0]
+    W = Z[:, 1]
+
+
+    geom = covariance_geometry(
+        Z
+    )
+
+
+    ret = dominant_return_period(
+        Z,
+        cfg
+    )
+
+
+    ac_C = genuine_ac_peak(
+        C,
+        cfg
+    )
+
+
+    ac_W = genuine_ac_peak(
+        W,
+        cfg
+    )
+
+
+    spec_C = spectral_metrics(
+        C,
+        cfg
+    )
+
+
+    spec_W = spectral_metrics(
+        W,
+        cfg
+    )
+
+
+    rec_frac = recurrence_fraction(
+        Z,
+        cfg
+    )
+
+
+    late = late_time_metrics(
+        Z,
+        cfg
+    )
+
+
+    return {
+
+        # averages
+        "mean_C":
+            float(
+                np.mean(C)
+            ),
+
+        "mean_logV":
+            float(
+                np.mean(W)
+            ),
+
+        "std_C":
+            float(
+                np.std(C)
+            ),
+
+        "std_logV":
+            float(
+                np.std(W)
+            ),
+
+        # geometry
+        "centroid":
+            geom["centroid"],
+
+        "cov":
+            geom["cov"],
+
+        "eigvals":
+            geom["eigvals"],
+
+        "anisotropy":
+            geom["anisotropy"],
+
+        "ellipse_area":
+            geom["ellipse_area"],
+
+        "variance_trace":
+            geom["variance_trace"],
+
+        # return geometry
+        "return_lag":
+            ret["lag"],
+
+        "return_period_steps":
+            ret["period_steps"],
+
+        "return_distance":
+            ret["return_distance"],
+
+        "relative_return_distance":
+            ret["relative_return_distance"],
+
+        # autocorrelation
+        "ac_C_period_steps":
+            ac_C["period_steps"],
+
+        "ac_C_strength":
+            ac_C["strength"],
+
+        "ac_W_period_steps":
+            ac_W["period_steps"],
+
+        "ac_W_strength":
+            ac_W["strength"],
+
+        # spectrum
+        "spec_C_frequency":
+            spec_C["dominant_frequency"],
+
+        "spec_C_period":
+            spec_C["dominant_period_steps"],
+
+        "spec_C_concentration":
+            spec_C["spectral_concentration"],
+
+        "spec_W_frequency":
+            spec_W["dominant_frequency"],
+
+        "spec_W_period":
+            spec_W["dominant_period_steps"],
+
+        "spec_W_concentration":
+            spec_W["spectral_concentration"],
+
+        # recurrence
+        "recurrence_fraction":
+            rec_frac,
+
+        # late drift
+        "slope_C":
+            late["slope_C"],
+
+        "slope_logV":
+            late["slope_W"],
+
+        "centroid_shift":
+            late["centroid_shift"],
+
+        "covariance_shift":
+            late["covariance_shift"],
+    }
+
+
+# ============================================================
+# 18. HEURISTIC CLASSIFICATION
+#
+#     This classification is intentionally conservative.
+#
+#     It is an exploratory summary, NOT a theorem.
+# ============================================================
+
+def classify_geometry(m):
+
+    # Significant drift means we should not call it
+    # invariant yet.
+    drifting = (
+        abs(m["slope_C"]) > 5e-4
+        or
+        abs(m["slope_logV"]) > 5e-4
+    )
+
+
+    if drifting:
+        return "drifting_or_unresolved"
+
+
+    # Strong return + concentrated spectrum is compatible
+    # with an orbit-like structure.
+    strong_return = (
+        np.isfinite(
+            m["relative_return_distance"]
+        )
+        and
+        m["relative_return_distance"] < 0.55
+    )
+
+
+    concentrated = (
+        np.isfinite(
+            m["spec_C_concentration"]
+        )
+        and
+        m["spec_C_concentration"] > 0.20
+    )
+
+
+    recurrent = (
+        np.isfinite(
+            m["recurrence_fraction"]
+        )
+        and
+        m["recurrence_fraction"] > 0.05
+    )
+
+
+    if (
+        strong_return
+        and concentrated
+    ):
+
+        return "orbit_like"
+
+
+    if (
+        strong_return
+        or recurrent
+    ):
+
+        return "recurrent_or_quasiperiodic"
+
+
+    return "stochastic_invariant_cloud_candidate"
+
+
+# ============================================================
+# 19. SINGLE SEED
+# ============================================================
+
+def simulate_SIM12(cfg):
+
+    rng = np.random.default_rng(
+        cfg.seed
+    )
+
+
+    hidden = [0]
+
+    obs = [
+        proj_structured[0]
+    ]
+
+    mem = defaultdict(float)
+
+
+    # --------------------------------------------------------
+    # Burn-in
+    # --------------------------------------------------------
+
+    burn = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.burnin_steps,
+        log_diagnostics=False
+    )
+
+
+    hidden = burn["hidden"]
+    obs = burn["obs"]
+    mem = burn["mem"]
+
+
+    # --------------------------------------------------------
+    # Long unperturbed observation window
+    # --------------------------------------------------------
+
+    observation = run_steps(
+        cfg,
+        hidden,
+        obs,
+        mem,
+        rng,
+        cfg.observation_steps,
+        log_diagnostics=True
+    )
+
+
+    metrics = {}
+
+
+    for x in cfg.basins:
+
+        m = characterize_basin(
+            observation["Z"][x],
+            cfg
+        )
+
+
+        m["classification"] = (
+            classify_geometry(m)
+        )
+
+
+        metrics[x] = m
+
+
+    return {
+        "seed": cfg.seed,
+        "metrics": metrics,
+        "Z": observation["Z"],
+        "times": observation["times"],
+    }
+
+
+# ============================================================
+# 20. BASIN-PAIR COMPARISON
+#
+#     SIM11.1 repeatedly suggested:
+#
+#         (0,3)
+#         (1,2)
+#
+#     Here we test similarity of invariant-set geometry
+#     rather than merely mean coherence.
+# ============================================================
+
+def pair_similarity(
+    mA,
+    mB
+):
+
+    centroid_distance = np.linalg.norm(
+        mA["centroid"]
+        -
+        mB["centroid"]
+    )
+
+
+    covariance_distance = np.linalg.norm(
+        mA["cov"]
+        -
+        mB["cov"],
+        ord="fro"
+    )
+
+
+    pA = mA[
+        "return_period_steps"
+    ]
+
+    pB = mB[
+        "return_period_steps"
+    ]
+
+
+    if (
+        np.isfinite(pA)
+        and
+        np.isfinite(pB)
+        and
+        max(abs(pA), abs(pB)) > 0
+    ):
+
+        relative_period_difference = (
+            abs(
+                pA - pB
+            )
+            /
+            max(
+                abs(pA),
+                abs(pB)
+            )
+        )
+
+    else:
+
+        relative_period_difference = np.nan
+
+
+    return {
+        "centroid_distance":
+            centroid_distance,
+
+        "covariance_distance":
+            covariance_distance,
+
+        "relative_period_difference":
+            relative_period_difference,
+    }
+
+
+# ============================================================
+# 21. SAFE MEAN
+# ============================================================
+
+def safe_mean(values):
+
+    vals = np.asarray(
+        values,
+        dtype=float
+    )
+
+    vals = vals[
+        np.isfinite(vals)
+    ]
+
+    if len(vals) == 0:
+        return np.nan
+
+    return float(
+        np.mean(vals)
+    )
+
+
+def safe_median(values):
+
+    vals = np.asarray(
+        values,
+        dtype=float
+    )
+
+    vals = vals[
+        np.isfinite(vals)
+    ]
+
+    if len(vals) == 0:
+        return np.nan
+
+    return float(
+        np.median(vals)
+    )
+
+
+# ============================================================
+# 22. ENSEMBLE SUMMARY
+# ============================================================
+
+def summarize_basin(
+    rows,
+    basin
+):
+
+    ms = [
+        r["metrics"][basin]
+        for r in rows
+    ]
+
+
+    classifications = defaultdict(int)
+
+    for m in ms:
+
+        classifications[
+            m["classification"]
+        ] += 1
+
+
+    return {
+
+        "n":
+            len(ms),
+
+        "mean_C":
+            safe_mean(
+                [
+                    m["mean_C"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_logV":
+            safe_mean(
+                [
+                    m["mean_logV"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_std_C":
+            safe_mean(
+                [
+                    m["std_C"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_std_logV":
+            safe_mean(
+                [
+                    m["std_logV"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_anisotropy":
+            safe_mean(
+                [
+                    m["anisotropy"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_ellipse_area":
+            safe_mean(
+                [
+                    m["ellipse_area"]
+                    for m in ms
+                ]
+            ),
+
+        "mean_variance_trace":
+            safe_mean(
+                [
+                    m["variance_trace"]
+                    for m in ms
+                ]
+            ),
+
+        "median_return_period":
+            safe_median(
+                [
+                    m[
+                        "return_period_steps"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_relative_return_distance":
+            safe_mean(
+                [
+                    m[
+                        "relative_return_distance"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "median_ac_C_period":
+            safe_median(
+                [
+                    m[
+                        "ac_C_period_steps"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_ac_C_strength":
+            safe_mean(
+                [
+                    m[
+                        "ac_C_strength"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "median_spec_C_period":
+            safe_median(
+                [
+                    m[
+                        "spec_C_period"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_spec_C_concentration":
+            safe_mean(
+                [
+                    m[
+                        "spec_C_concentration"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_recurrence_fraction":
+            safe_mean(
+                [
+                    m[
+                        "recurrence_fraction"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_slope_C":
+            safe_mean(
+                [
+                    m[
+                        "slope_C"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_slope_logV":
+            safe_mean(
+                [
+                    m[
+                        "slope_logV"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_centroid_shift":
+            safe_mean(
+                [
+                    m[
+                        "centroid_shift"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "mean_covariance_shift":
+            safe_mean(
+                [
+                    m[
+                        "covariance_shift"
+                    ]
+                    for m in ms
+                ]
+            ),
+
+        "classifications":
+            dict(
+                classifications
+            ),
+    }
+
+
+# ============================================================
+# 23. PAIR SUMMARY
+# ============================================================
+
+def summarize_pair(
+    rows,
+    a,
+    b
+):
+
+    pair_rows = []
+
+
+    for r in rows:
+
+        pair_rows.append(
+            pair_similarity(
+                r["metrics"][a],
+                r["metrics"][b]
+            )
+        )
+
+
+    return {
+
+        "mean_centroid_distance":
+            safe_mean(
+                [
+                    p[
+                        "centroid_distance"
+                    ]
+                    for p in pair_rows
+                ]
+            ),
+
+        "mean_covariance_distance":
+            safe_mean(
+                [
+                    p[
+                        "covariance_distance"
+                    ]
+                    for p in pair_rows
+                ]
+            ),
+
+        "mean_relative_period_difference":
+            safe_mean(
+                [
+                    p[
+                        "relative_period_difference"
+                    ]
+                    for p in pair_rows
+                ]
+            ),
+    }
+
+
+# ============================================================
+# 24. DRIVER
+# ============================================================
+
+def run_SIM12(
+    seeds=50,
+    beta=1.38
+):
+
+    print(
+        "=" * 76
+    )
+
+    print(
+        "\n"
+        "SIM12 — Basin-Local Invariant-Set Geometry Probe"
+        "\n"
+    )
+
+    print(
+        "=" * 76
+    )
+
+
+    print(
+        f"\nbeta={beta}"
+    )
+
+    print(
+        f"seeds={seeds}"
+    )
+
+    print(
+        "\nNo perturbation."
+    )
+
+    print(
+        "No epsilon."
+    )
+
+    print(
+        "No global Lyapunov assumption."
+    )
+
+    print(
+        "No imposed geometric symmetry."
+    )
+
+    print(
+        "\nQuestion:"
+    )
+
+    print(
+        "What kind of invariant set does each basin occupy "
+        "in (C_x, log V_eff,x) space?"
+    )
+
+
+    rows = []
+
+
+    for seed in range(
+        1,
+        seeds + 1
+    ):
+
+        cfg = Config(
+            beta=beta,
+            seed=seed
+        )
+
+
+        out = simulate_SIM12(
+            cfg
+        )
+
+
+        rows.append(
+            out
+        )
+
+
+    # --------------------------------------------------------
+    # Basin summaries
+    # --------------------------------------------------------
+
+    for basin in DEFAULT_BASINS:
+
+        s = summarize_basin(
+            rows,
+            basin
+        )
+
+
+        print(
+            "\n"
+            + "=" * 60
+        )
+
+        print(
+            f"BASIN {basin}"
+        )
+
+        print(
+            "=" * 60
+        )
+
+
+        print(
+            f"n                               : {s['n']}"
+        )
+
+        print(
+            f"mean C                          : {s['mean_C']:.6f}"
+        )
+
+        print(
+            f"mean log(V_eff)                 : {s['mean_logV']:.6f}"
+        )
+
+        print(
+            f"mean std(C)                     : {s['mean_std_C']:.6f}"
+        )
+
+        print(
+            f"mean std(log V_eff)             : {s['mean_std_logV']:.6f}"
+        )
+
+
+        print(
+            "\nGEOMETRY"
+        )
+
+        print(
+            f"mean anisotropy                 : {s['mean_anisotropy']:.6f}"
+        )
+
+        print(
+            f"mean covariance ellipse area    : {s['mean_ellipse_area']:.6f}"
+        )
+
+        print(
+            f"mean variance trace             : {s['mean_variance_trace']:.6f}"
+        )
+
+
+        print(
+            "\nRETURN GEOMETRY"
+        )
+
+        print(
+            f"median return period (steps)    : {s['median_return_period']:.3f}"
+        )
+
+        print(
+            f"mean relative return distance   : {s['mean_relative_return_distance']:.6f}"
+        )
+
+
+        print(
+            "\nAUTOCORRELATION"
+        )
+
+        print(
+            f"median genuine AC period        : {s['median_ac_C_period']:.3f}"
+        )
+
+        print(
+            f"mean genuine AC strength        : {s['mean_ac_C_strength']:.6f}"
+        )
+
+
+        print(
+            "\nSPECTRUM"
+        )
+
+        print(
+            f"median spectral period          : {s['median_spec_C_period']:.3f}"
+        )
+
+        print(
+            f"mean spectral concentration     : {s['mean_spec_C_concentration']:.6f}"
+        )
+
+
+        print(
+            "\nRECURRENCE"
+        )
+
+        print(
+            f"mean recurrence fraction        : {s['mean_recurrence_fraction']:.6f}"
+        )
+
+
+        print(
+            "\nLATE-TIME STABILITY"
+        )
+
+        print(
+            f"mean slope C                    : {s['mean_slope_C']:.8f}"
+        )
+
+        print(
+            f"mean slope log(V_eff)           : {s['mean_slope_logV']:.8f}"
+        )
+
+        print(
+            f"mean centroid shift             : {s['mean_centroid_shift']:.6f}"
+        )
+
+        print(
+            f"mean covariance shift           : {s['mean_covariance_shift']:.6f}"
+        )
+
+
+        print(
+            "\nClassification counts:"
+        )
+
+
+        for label, count in sorted(
+            s["classifications"].items()
+        ):
+
+            frac = (
+                count / s["n"]
+            )
+
+            print(
+                f"  {label:<32}: "
+                f"{count:3d} "
+                f"({frac:.3f})"
+            )
+
+
+    # --------------------------------------------------------
+    # Pair structure
+    # --------------------------------------------------------
+
+    print(
+        "\n"
+        + "=" * 60
+    )
+
+    print(
+        "BASIN-PAIR GEOMETRY"
+    )
+
+    print(
+        "=" * 60
+    )
+
+
+    for a, b in [
+        (0, 3),
+        (1, 2)
+    ]:
+
+        p = summarize_pair(
+            rows,
+            a,
+            b
+        )
+
+
+        print(
+            f"\nPAIR ({a},{b})"
+        )
+
+        print(
+            f"mean centroid distance          : "
+            f"{p['mean_centroid_distance']:.6f}"
+        )
+
+        print(
+            f"mean covariance distance        : "
+            f"{p['mean_covariance_distance']:.6f}"
+        )
+
+        print(
+            f"mean relative period difference : "
+            f"{p['mean_relative_period_difference']:.6f}"
+        )
+
+
+    return rows
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+if __name__ == "__main__":
+
+    results = run_SIM12(
+        seeds=50,
+        beta=1.38
+    )
+
+
+
+
+
+RESULTS:
+
+
+
+============================================================================
+
+
+SIM12 — Basin-Local Invariant-Set Geometry Probe
+
+============================================================================
+
+
+beta=1.38
+seeds=50
+
+
+No perturbation.
+No epsilon.
+
+No global Lyapunov assumption.
+
+No imposed geometric symmetry.
+
+
+Question:
+What kind of invariant set does each basin occupy in (C_x, log V_eff,x) space?
+
+
+============================================================
+BASIN 0
+
+============================================================
+
+n                               : 50
+
+mean C                          : 0.474782
+
+mean log(V_eff)                 : 0.408316
+
+mean std(C)                     : 0.221096
+
+mean std(log V_eff)             : 0.055823
+
+
+GEOMETRY
+mean anisotropy                 : 28.084678
+
+mean covariance ellipse area    : 0.029975
+
+mean variance trace             : 0.052413
+
+
+RETURN GEOMETRY
+median return period (steps)    : 497.500
+
+mean relative return distance   : 0.924102
+
+
+AUTOCORRELATION
+median genuine AC period        : 672.500
+
+mean genuine AC strength        : 0.111698
+
+
+SPECTRUM
+median spectral period          : 750.000
+
+mean spectral concentration     : 0.105309
+
+
+RECURRENCE
+mean recurrence fraction        : 0.033997
+
+
+LATE-TIME STABILITY
+mean slope C                    : -0.00001388
+
+mean slope log(V_eff)           : -0.00000197
+
+mean centroid shift             : 0.059008
+
+mean covariance shift           : 0.018516
+
+
+Classification counts:
+  drifting_or_unresolved          :   1 (0.020)
+
+  stochastic_invariant_cloud_candidate:  49 (0.980)
+
+
+============================================================
+BASIN 1
+
+============================================================
+
+n                               : 50
+
+mean C                          : -0.433291
+
+mean log(V_eff)                 : 0.671380
+
+mean std(C)                     : 0.207576
+
+mean std(log V_eff)             : 0.020382
+
+
+GEOMETRY
+mean anisotropy                 : 111.413894
+
+mean covariance ellipse area    : 0.012913
+
+mean variance trace             : 0.043703
+
+
+RETURN GEOMETRY
+median return period (steps)    : 555.000
+
+mean relative return distance   : 0.907789
+
+
+AUTOCORRELATION
+median genuine AC period        : 600.000
+
+mean genuine AC strength        : 0.131066
+
+
+SPECTRUM
+median spectral period          : 600.000
+
+mean spectral concentration     : 0.078406
+
+
+RECURRENCE
+mean recurrence fraction        : 0.104331
+
+
+LATE-TIME STABILITY
+mean slope C                    : -0.00004330
+
+mean slope log(V_eff)           : -0.00000023
+
+mean centroid shift             : 0.058715
+
+mean covariance shift           : 0.010964
+
+
+Classification counts:
+  drifting_or_unresolved          :   1 (0.020)
+
+  recurrent_or_quasiperiodic      :  49 (0.980)
+
+
+============================================================
+BASIN 2
+
+============================================================
+
+n                               : 50
+
+mean C                          : -0.431813
+
+mean log(V_eff)                 : 0.671249
+
+mean std(C)                     : 0.208342
+
+mean std(log V_eff)             : 0.020476
+
+
+GEOMETRY
+mean anisotropy                 : 110.951707
+
+mean covariance ellipse area    : 0.013020
+
+mean variance trace             : 0.044042
+
+
+RETURN GEOMETRY
+median return period (steps)    : 560.000
+
+mean relative return distance   : 0.911427
+
+
+AUTOCORRELATION
+median genuine AC period        : 662.500
+
+mean genuine AC strength        : 0.118652
+
+
+SPECTRUM
+median spectral period          : 545.455
+
+mean spectral concentration     : 0.082545
+
+
+RECURRENCE
+mean recurrence fraction        : 0.102952
+
+
+LATE-TIME STABILITY
+mean slope C                    : -0.00002324
+
+mean slope log(V_eff)           : -0.00000039
+
+mean centroid shift             : 0.055227
+
+mean covariance shift           : 0.011683
+
+
+Classification counts:
+  drifting_or_unresolved          :   1 (0.020)
+
+  recurrent_or_quasiperiodic      :  49 (0.980)
+
+
+============================================================
+BASIN 3
+
+============================================================
+
+n                               : 50
+
+mean C                          : 0.477423
+
+mean log(V_eff)                 : 0.407845
+
+mean std(C)                     : 0.222166
+
+mean std(log V_eff)             : 0.055878
+
+
+GEOMETRY
+mean anisotropy                 : 28.937379
+
+mean covariance ellipse area    : 0.029797
+
+mean variance trace             : 0.052816
+
+
+RETURN GEOMETRY
+median return period (steps)    : 495.000
+
+mean relative return distance   : 0.927448
+
+
+AUTOCORRELATION
+median genuine AC period        : 605.000
+
+mean genuine AC strength        : 0.122076
+
+
+SPECTRUM
+median spectral period          : 803.571
+
+mean spectral concentration     : 0.098750
+
+
+RECURRENCE
+mean recurrence fraction        : 0.034015
+
+
+LATE-TIME STABILITY
+mean slope C                    : -0.00000077
+
+mean slope log(V_eff)           : 0.00000231
+
+mean centroid shift             : 0.063716
+
+mean covariance shift           : 0.015615
+
+
+Classification counts:
+  drifting_or_unresolved          :   1 (0.020)
+
+  stochastic_invariant_cloud_candidate:  49 (0.980)
+
+
+============================================================
+BASIN-PAIR GEOMETRY
+
+============================================================
+
+
+PAIR (0,3)
+mean centroid distance          : 0.032924
+
+mean covariance distance        : 0.008951
+
+mean relative period difference : 0.433954
+
+
+PAIR (1,2)
+mean centroid distance          : 0.022431
+
+mean covariance distance        : 0.005298
+
+mean relative period difference : 0.396270
