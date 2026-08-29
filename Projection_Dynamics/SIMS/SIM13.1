@@ -1,0 +1,627 @@
+
+
+from collections import defaultdict
+from dataclasses import dataclass
+
+# ============================================================
+# SIM13.1 — Local Coherence Operator Predictive-Correspondence Probe
+#
+# Question:
+#   Does a deterministic PRE-TRANSITION local coherence operator
+#   signal add out-of-sample predictive information about the next
+#   transverse displacement beyond q_tilde alone?
+#
+# This is deliberately NOT an operator-ablation / causal test.
+# ============================================================
+
+neighbors = {
+    0: [1, 2], 1: [0, 3], 2: [0, 4], 3: [1, 5],
+    4: [2, 6], 5: [3, 7], 6: [4, 7], 7: [5, 6],
+}
+proj_structured = {
+    0: 0, 1: 0, 2: 1, 3: 1,
+    4: 2, 5: 2, 6: 3, 7: 3,
+}
+DEFAULT_BASINS = {0: [0, 1], 1: [2, 3], 2: [4, 5], 3: [6, 7]}
+
+
+@dataclass
+class Config:
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+    T_tol: float = 1.0
+    memory_sign: int = -1
+    sat_mode: str = "tanh"
+    seed: int = 1
+    burnin_steps: int = 3000
+    reference_steps: int = 4000
+    native_steps: int = 6000
+    diagnostic_every: int = 5
+    stats_window: int = 100
+    q_bin_edges: tuple = (-3.0,-2.0,-1.5,-1.0,-0.5,0.0,0.5,1.0,1.5,2.0,3.0)
+    min_bin_count: int = 40
+    fit_q_abs_max: float = 1.5
+    train_fraction: float = 0.50
+    operator_sigma_floor: float = 1e-10
+    basins: dict = None
+
+    def __post_init__(self):
+        if self.basins is None:
+            self.basins = DEFAULT_BASINS
+
+
+def saturate_memory(M, mode="tanh"):
+    return np.tanh(M) if mode == "tanh" else M
+
+
+def friction(u_i, u_j, mem, cfg):
+    delta_proj = 0.0 if proj_structured[u_i] == proj_structured[u_j] else 1.0
+    M_sat = saturate_memory(mem.get((u_i, u_j), 0.0), cfg.sat_mode)
+    return cfg.alpha + cfg.beta * delta_proj + cfg.memory_sign * cfg.lam * M_sat
+
+
+def transition_probs(u, mem, cfg):
+    nbrs = neighbors[u]
+    costs = np.asarray([friction(u, v, mem, cfg) for v in nbrs], dtype=float)
+    logits = -costs / cfg.T_tol
+    logits -= np.max(logits)
+    weights = np.exp(logits)
+    return nbrs, weights / np.sum(weights)
+
+
+def update_memory(mem, u, v, cfg):
+    for edge in list(mem.keys()):
+        mem[edge] *= cfg.delta
+        if abs(mem[edge]) < 1e-12:
+            del mem[edge]
+    mem[(u, v)] += 1.0
+
+
+def compute_local_entropy_and_persistence(hidden, obs, basins, window=None):
+    start = 0 if window is None else max(0, len(hidden) - window - 1)
+    basin_trans = {x: defaultdict(int) for x in basins}
+    basin_from = {x: defaultdict(int) for x in basins}
+    counts_total = {x: 0 for x in basins}
+    counts_same = {x: 0 for x in basins}
+
+    for t in range(start, len(hidden) - 1):
+        u, v, b = hidden[t], hidden[t + 1], obs[t]
+        counts_total[b] += 1
+        if obs[t + 1] == b:
+            counts_same[b] += 1
+        for x, states in basins.items():
+            if u in states:
+                basin_trans[x][(u, v)] += 1
+                basin_from[x][u] += 1
+                break
+
+    H, P = {}, {}
+    for x in basins:
+        H_sum, n_src = 0.0, 0
+        for u in basin_from[x]:
+            probs = [count / basin_from[x][u]
+                     for (uu, vv), count in basin_trans[x].items() if uu == u]
+            if not probs:
+                continue
+            p = np.asarray(probs, dtype=float)
+            H_sum += -np.sum(p * np.log(p + 1e-12))
+            n_src += 1
+        H[x] = H_sum / n_src if n_src > 0 else 0.0
+        P[x] = counts_same[x] / counts_total[x] if counts_total[x] > 0 else 0.0
+    return H, P
+
+
+def compute_Cx(H, P, alpha):
+    return {x: -H[x] + alpha * P[x] for x in H}
+
+
+def compute_valence(mem, cfg):
+    Veff = {x: 0.0 for x in cfg.basins}
+    counts = {x: 0 for x in cfg.basins}
+    for x, states in cfg.basins.items():
+        for u in states:
+            _, probs = transition_probs(u, mem, cfg)
+            p = np.asarray(probs, dtype=float)
+            H_loc = -np.sum(p * np.log(p + 1e-12))
+            Veff[x] += np.exp(H_loc)
+            counts[x] += 1
+    for x in cfg.basins:
+        if counts[x] > 0:
+            Veff[x] /= counts[x]
+    return Veff
+
+
+def compute_Z(hidden, obs, mem, cfg):
+    H, P = compute_local_entropy_and_persistence(hidden, obs, cfg.basins, cfg.stats_window)
+    Cx = compute_Cx(H, P, cfg.alpha)
+    Veff = compute_valence(mem, cfg)
+    return {x: np.asarray([Cx[x], np.log(max(Veff[x], 1e-12))], dtype=float)
+            for x in cfg.basins}
+
+
+# ------------------------------------------------------------
+# SIM13.1 operator candidate
+#
+# For each basin x, evaluate the instantaneous transition
+# distribution from both microscopic states in that basin:
+#
+#   H_inst,x = mean_u[-sum_v p(v|u) log p(v|u)]
+#   P_inst,x = mean_u[sum_{v:Pi(v)=x} p(v|u)]
+#   L_x      = -H_inst,x + alpha P_inst,x
+#
+# This uses current memory/kernel state only; no future realized
+# transition is used.
+# ------------------------------------------------------------
+
+def compute_local_operator(mem, cfg):
+    out = {}
+    for x, states in cfg.basins.items():
+        H_vals, P_vals = [], []
+        for u in states:
+            nbrs, probs = transition_probs(u, mem, cfg)
+            p = np.asarray(probs, dtype=float)
+            H_inst = -np.sum(p * np.log(p + 1e-12))
+            P_inst = float(np.sum([prob for v, prob in zip(nbrs, p)
+                                   if proj_structured[v] == x]))
+            H_vals.append(H_inst)
+            P_vals.append(P_inst)
+        H_x = float(np.mean(H_vals))
+        P_x = float(np.mean(P_vals))
+        out[x] = {"H_inst": H_x, "P_inst": P_x, "L": -H_x + cfg.alpha * P_x}
+    return out
+
+
+def run_steps(cfg, hidden, obs, mem, rng, steps, log_diagnostics=False):
+    Z_logs = {x: [] for x in cfg.basins}
+    L_logs = {x: [] for x in cfg.basins}
+    H_logs = {x: [] for x in cfg.basins}
+    P_logs = {x: [] for x in cfg.basins}
+
+    for t in range(steps):
+        u = hidden[-1]
+        nbrs, probs = transition_probs(u, mem, cfg)
+        v = rng.choice(nbrs, p=probs)
+        hidden.append(v)
+        obs.append(proj_structured[v])
+        update_memory(mem, u, v, cfg)
+
+        if log_diagnostics and t % cfg.diagnostic_every == 0:
+            Z = compute_Z(hidden, obs, mem, cfg)
+            L = compute_local_operator(mem, cfg)
+            for x in cfg.basins:
+                Z_logs[x].append(Z[x])
+                L_logs[x].append(L[x]["L"])
+                H_logs[x].append(L[x]["H_inst"])
+                P_logs[x].append(L[x]["P_inst"])
+
+    if log_diagnostics:
+        for x in cfg.basins:
+            Z_logs[x] = np.asarray(Z_logs[x], dtype=float)
+            L_logs[x] = np.asarray(L_logs[x], dtype=float)
+            H_logs[x] = np.asarray(H_logs[x], dtype=float)
+            P_logs[x] = np.asarray(P_logs[x], dtype=float)
+
+    return {"hidden": hidden, "obs": obs, "mem": mem,
+            "Z": Z_logs, "L": L_logs, "H_inst": H_logs, "P_inst": P_logs}
+
+
+def principal_axes(Z):
+    Z = np.asarray(Z, dtype=float)
+    mu = np.mean(Z, axis=0)
+    centered = Z - mu
+    cov = np.cov(centered.T)
+    eigvals, eigvecs = np.linalg.eigh(cov)
+    order = np.argsort(eigvals)[::-1]
+    eigvals, eigvecs = eigvals[order], eigvecs[:, order]
+    e_parallel, e_perp = eigvecs[:, 0], eigvecs[:, 1]
+    if e_parallel[0] < 0:
+        e_parallel *= -1.0
+    det = e_parallel[0] * e_perp[1] - e_parallel[1] * e_perp[0]
+    if det < 0:
+        e_perp *= -1.0
+    lp = max(float(eigvals[0]), 1e-12)
+    lt = max(float(eigvals[1]), 1e-12)
+    slope = float(e_parallel[1] / e_parallel[0]) if abs(e_parallel[0]) > 1e-12 else np.nan
+    return {"mu": mu, "cov": cov, "e_parallel": e_parallel, "e_perp": e_perp,
+            "lambda_parallel": lp, "lambda_perp": lt,
+            "sigma_parallel": np.sqrt(lp), "sigma_perp": np.sqrt(lt),
+            "anisotropy": lp / lt, "manifold_slope": slope}
+
+
+def q_tilde_series(Z, axes):
+    centered = np.asarray(Z, dtype=float) - axes["mu"]
+    q_perp = centered @ axes["e_perp"]
+    return q_perp / max(axes["sigma_perp"], 1e-12)
+
+
+def operator_reference_stats(L_reference, cfg):
+    L_reference = np.asarray(L_reference, dtype=float)
+    mu = float(np.mean(L_reference))
+    sigma = max(float(np.std(L_reference, ddof=1)), cfg.operator_sigma_floor)
+    return {"mu": mu, "sigma": sigma}
+
+
+def aligned_samples(Z_native, L_native, axes, operator_stats):
+    q = q_tilde_series(Z_native, axes)
+    L = (np.asarray(L_native, dtype=float) - operator_stats["mu"]) / operator_stats["sigma"]
+    n = min(len(q), len(L))
+    q, L = q[:n], L[:n]
+    if n < 2:
+        return {"q": np.empty(0), "L": np.empty(0), "dq": np.empty(0)}
+    return {"q": q[:-1], "L": L[:-1], "dq": q[1:] - q[:-1]}
+
+
+def restoring_fraction(q, dq, cfg):
+    edges = np.asarray(cfg.q_bin_edges, dtype=float)
+    populated, restoring = 0, 0
+    for left, right in zip(edges[:-1], edges[1:]):
+        mask = (q >= left) & (q < right)
+        if np.sum(mask) < cfg.min_bin_count:
+            continue
+        mean_q = float(np.mean(q[mask]))
+        mean_dq = float(np.mean(dq[mask]))
+        populated += 1
+        restoring += int(mean_q * mean_dq < 0)
+    return restoring / populated if populated else np.nan
+
+
+def fit_linear(X, y):
+    return np.linalg.lstsq(np.asarray(X, float), np.asarray(y, float), rcond=None)[0]
+
+
+def mse(y, pred):
+    return float(np.mean((np.asarray(y) - np.asarray(pred)) ** 2))
+
+
+def r2_score(y, pred):
+    y, pred = np.asarray(y), np.asarray(pred)
+    ss_res = float(np.sum((y - pred) ** 2))
+    ss_tot = float(np.sum((y - np.mean(y)) ** 2))
+    return np.nan if ss_tot <= 1e-15 else 1.0 - ss_res / ss_tot
+
+
+def safe_corr(x, y):
+    x, y = np.asarray(x), np.asarray(y)
+    if len(x) < 3 or np.std(x) <= 1e-15 or np.std(y) <= 1e-15:
+        return np.nan
+    return float(np.corrcoef(x, y)[0, 1])
+
+
+def predictive_operator_test(samples, cfg):
+    q, L, dq = samples["q"], samples["L"], samples["dq"]
+    mask = np.isfinite(q) & np.isfinite(L) & np.isfinite(dq) & (np.abs(q) <= cfg.fit_q_abs_max)
+    q, L, dq = q[mask], L[mask], dq[mask]
+    n = len(q)
+    if n < 20:
+        return {k: np.nan for k in ["kappa_baseline","intercept_baseline","kappa_augmented","g",
+                                     "intercept_augmented","r2_test_baseline","r2_test_augmented",
+                                     "mse_test_baseline","mse_test_augmented","predictive_gain",
+                                     "residual_operator_corr_train","residual_operator_corr_test"]} | {"n": n}
+
+    split = max(10, min(int(np.floor(cfg.train_fraction * n)), n - 10))
+    qtr, Ltr, ytr = q[:split], L[:split], dq[:split]
+    qte, Lte, yte = q[split:], L[split:], dq[split:]
+
+    X0tr = np.column_stack((qtr, np.ones_like(qtr)))
+    X0te = np.column_stack((qte, np.ones_like(qte)))
+    c0 = fit_linear(X0tr, ytr)
+    p0tr, p0te = X0tr @ c0, X0te @ c0
+
+    X1tr = np.column_stack((qtr, Ltr, np.ones_like(qtr)))
+    X1te = np.column_stack((qte, Lte, np.ones_like(qte)))
+    c1 = fit_linear(X1tr, ytr)
+    p1te = X1te @ c1
+
+    mse0, mse1 = mse(yte, p0te), mse(yte, p1te)
+    gain = 1.0 - mse1 / mse0 if mse0 > 1e-15 else np.nan
+
+    return {
+        "n": n, "n_train": len(qtr), "n_test": len(qte),
+        "kappa_baseline": -float(c0[0]), "intercept_baseline": float(c0[1]),
+        "kappa_augmented": -float(c1[0]), "g": float(c1[1]),
+        "intercept_augmented": float(c1[2]),
+        "r2_test_baseline": r2_score(yte, p0te),
+        "r2_test_augmented": r2_score(yte, p1te),
+        "mse_test_baseline": mse0, "mse_test_augmented": mse1,
+        "predictive_gain": gain,
+        "residual_operator_corr_train": safe_corr(Ltr, ytr - p0tr),
+        "residual_operator_corr_test": safe_corr(Lte, yte - p0te),
+    }
+
+
+def simulate_seed(cfg):
+    rng = np.random.default_rng(cfg.seed)
+    hidden, obs, mem = [0], [proj_structured[0]], defaultdict(float)
+
+    burn = run_steps(cfg, hidden, obs, mem, rng, cfg.burnin_steps, False)
+    reference = run_steps(cfg, burn["hidden"], burn["obs"], burn["mem"], rng,
+                          cfg.reference_steps, True)
+
+    axes = {x: principal_axes(reference["Z"][x]) for x in cfg.basins}
+    opstats = {x: operator_reference_stats(reference["L"][x], cfg) for x in cfg.basins}
+
+    native = run_steps(cfg, list(reference["hidden"]), list(reference["obs"]),
+                       defaultdict(float, reference["mem"]), rng, cfg.native_steps, True)
+
+    results = {}
+    for x in cfg.basins:
+        samples = aligned_samples(native["Z"][x], native["L"][x], axes[x], opstats[x])
+        test = predictive_operator_test(samples, cfg)
+        results[x] = {
+            **test,
+            "restore_fraction": restoring_fraction(samples["q"], samples["dq"], cfg),
+            "sigma_perp": axes[x]["sigma_perp"],
+            "sigma_parallel": axes[x]["sigma_parallel"],
+            "anisotropy": axes[x]["anisotropy"],
+            "manifold_slope": axes[x]["manifold_slope"],
+            "operator_ref_mean": opstats[x]["mu"],
+            "operator_ref_sigma": opstats[x]["sigma"],
+            "mean_native_L": float(np.mean(native["L"][x])),
+            "mean_native_H_inst": float(np.mean(native["H_inst"][x])),
+            "mean_native_P_inst": float(np.mean(native["P_inst"][x])),
+        }
+    return {"seed": cfg.seed, "basins": results}
+
+
+def finite(values):
+    a = np.asarray(values, dtype=float)
+    return a[np.isfinite(a)]
+
+
+def safe_mean(values):
+    a = finite(values)
+    return np.nan if len(a) == 0 else float(np.mean(a))
+
+
+def safe_median(values):
+    a = finite(values)
+    return np.nan if len(a) == 0 else float(np.median(a))
+
+
+def safe_quantile(values, q):
+    a = finite(values)
+    return np.nan if len(a) == 0 else float(np.quantile(a, q))
+
+
+def fraction_positive(values):
+    a = finite(values)
+    return np.nan if len(a) == 0 else float(np.mean(a > 0))
+
+
+def run_experiment(n_seeds=50):
+    print("\n" + "=" * 76)
+    print("SIM13.1 — LOCAL COHERENCE OPERATOR PREDICTIVE-CORRESPONDENCE PROBE")
+    print("=" * 76)
+    print("Fixed: beta=1.38, delta=0.95, lambda=1.0, T_tol=1.0")
+    print("Primary question: does pre-transition L_x improve prediction of Delta q")
+    print("beyond q_tilde alone, on held-out native time data?\n")
+
+    runs = []
+    for seed in range(1, n_seeds + 1):
+        runs.append(simulate_seed(Config(seed=seed)))
+        print(f"completed seed {seed:3d}/{n_seeds}")
+
+    summaries = {}
+    print("\n" + "=" * 76)
+    print("BASIN SUMMARIES")
+    print("=" * 76)
+
+    for x in DEFAULT_BASINS:
+        rows = [r["basins"][x] for r in runs]
+        vals = lambda key: [row[key] for row in rows]
+        g = vals("g")
+        gain = vals("predictive_gain")
+        s = {
+            "kappa_baseline_mean": safe_mean(vals("kappa_baseline")),
+            "kappa_baseline_median": safe_median(vals("kappa_baseline")),
+            "kappa_augmented_mean": safe_mean(vals("kappa_augmented")),
+            "kappa_augmented_median": safe_median(vals("kappa_augmented")),
+            "g_mean": safe_mean(g),
+            "g_median": safe_median(g),
+            "g_iqr": safe_quantile(g, .75) - safe_quantile(g, .25),
+            "fraction_g_positive": fraction_positive(g),
+            "predictive_gain_mean": safe_mean(gain),
+            "predictive_gain_median": safe_median(gain),
+            "fraction_gain_positive": fraction_positive(gain),
+            "r2_test_baseline_mean": safe_mean(vals("r2_test_baseline")),
+            "r2_test_augmented_mean": safe_mean(vals("r2_test_augmented")),
+            "residual_operator_corr_test_mean": safe_mean(vals("residual_operator_corr_test")),
+            "restore_fraction_mean": safe_mean(vals("restore_fraction")),
+            "sigma_perp_mean": safe_mean(vals("sigma_perp")),
+            "anisotropy_mean": safe_mean(vals("anisotropy")),
+        }
+        summaries[x] = s
+        print(f"\nBasin {x}\n" + "-" * 76)
+        print(f"kappa baseline mean/med : {s['kappa_baseline_mean']:.9f} / {s['kappa_baseline_median']:.9f}")
+        print(f"kappa augmented mean/med: {s['kappa_augmented_mean']:.9f} / {s['kappa_augmented_median']:.9f}")
+        print(f"g mean/median/IQR       : {s['g_mean']:.9f} / {s['g_median']:.9f} / {s['g_iqr']:.9f}")
+        print(f"P(g > 0)                : {s['fraction_g_positive']:.6f}")
+        print(f"predictive gain mean/med: {s['predictive_gain_mean']:.9f} / {s['predictive_gain_median']:.9f}")
+        print(f"P(gain > 0)             : {s['fraction_gain_positive']:.6f}")
+        print(f"test R2 baseline/aug    : {s['r2_test_baseline_mean']:.9f} / {s['r2_test_augmented_mean']:.9f}")
+        print(f"corr(L,resid)_test mean : {s['residual_operator_corr_test_mean']:.9f}")
+        print(f"restoring-bin fraction  : {s['restore_fraction_mean']:.6f}")
+        print(f"sigma_perp mean         : {s['sigma_perp_mean']:.9f}")
+        print(f"anisotropy mean         : {s['anisotropy_mean']:.6f}")
+
+    print("\n" + "=" * 76)
+    print("PAIR DIAGNOSTICS")
+    print("=" * 76)
+    for a, b in [(0, 3), (1, 2)]:
+        print(f"\nPair ({a},{b})")
+        print(f"  |Delta median kappa|: {abs(summaries[a]['kappa_baseline_median'] - summaries[b]['kappa_baseline_median']):.9f}")
+        print(f"  |Delta median g|    : {abs(summaries[a]['g_median'] - summaries[b]['g_median']):.9f}")
+        print(f"  |Delta median gain| : {abs(summaries[a]['predictive_gain_median'] - summaries[b]['predictive_gain_median']):.9f}")
+
+    print("\nInterpretation rule:")
+    print("  Evidence for operator correspondence requires median predictive_gain > 0,")
+    print("  a high fraction of seeds with gain > 0, and a reproducible g.")
+    print("  Nonzero g alone is NOT causal evidence; ablation belongs in SIM13.2.\n")
+    return {"runs": runs, "summaries": summaries}
+
+
+if __name__ == "__main__":
+
+
+
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+
+E731: Do not assign a `lambda` expression, use a `def`
+[Ln 412, Col 9]
+E501: Line too long (130 > 120)
+[Ln 453, Col 121]
+E501: Line too long (132 > 120)
+[Ln 455, Col 121]
+
+============================================================================
+SIM13.1 — LOCAL COHERENCE OPERATOR PREDICTIVE-CORRESPONDENCE PROBE
+============================================================================
+Fixed: beta=1.38, delta=0.95, lambda=1.0, T_tol=1.0
+Primary question: does pre-transition L_x improve prediction of Delta q
+beyond q_tilde alone, on held-out native time data?
+
+completed seed   1/50
+completed seed   2/50
+completed seed   3/50
+completed seed   4/50
+completed seed   5/50
+completed seed   6/50
+completed seed   7/50
+completed seed   8/50
+completed seed   9/50
+completed seed  10/50
+completed seed  11/50
+completed seed  12/50
+completed seed  13/50
+completed seed  14/50
+completed seed  15/50
+completed seed  16/50
+completed seed  17/50
+completed seed  18/50
+completed seed  19/50
+completed seed  20/50
+completed seed  21/50
+completed seed  22/50
+completed seed  23/50
+completed seed  24/50
+completed seed  25/50
+completed seed  26/50
+completed seed  27/50
+completed seed  28/50
+completed seed  29/50
+completed seed  30/50
+completed seed  31/50
+completed seed  32/50
+completed seed  33/50
+completed seed  34/50
+completed seed  35/50
+completed seed  36/50
+completed seed  37/50
+completed seed  38/50
+completed seed  39/50
+completed seed  40/50
+completed seed  41/50
+completed seed  42/50
+completed seed  43/50
+completed seed  44/50
+completed seed  45/50
+completed seed  46/50
+completed seed  47/50
+completed seed  48/50
+completed seed  49/50
+completed seed  50/50
+
+============================================================================
+BASIN SUMMARIES
+============================================================================
+
+Basin 0
+----------------------------------------------------------------------------
+kappa baseline mean/med : 0.191816227 / 0.189150889
+kappa augmented mean/med: 0.115630787 / 0.120102810
+g mean/median/IQR       : 0.096025074 / 0.090870150 / 0.041488955
+P(g > 0)                : 0.960000
+predictive gain mean/med: 0.005651111 / 0.007244307
+P(gain > 0)             : 0.740000
+test R2 baseline/aug    : 0.048216653 / 0.053599662
+corr(L,resid)_test mean : 0.081859401
+restoring-bin fraction  : 0.947579
+sigma_perp mean         : 0.042913921
+anisotropy mean         : 27.046875
+
+Basin 1
+----------------------------------------------------------------------------
+kappa baseline mean/med : 0.252634048 / 0.246215560
+kappa augmented mean/med: 0.181195488 / 0.159867352
+g mean/median/IQR       : 0.077992293 / 0.118920235 / 0.189808444
+P(g > 0)                : 0.720000
+predictive gain mean/med: -0.001035751 / 0.000097283
+P(gain > 0)             : 0.520000
+test R2 baseline/aug    : 0.077033377 / 0.076085908
+corr(L,resid)_test mean : 0.002800501
+restoring-bin fraction  : 0.985595
+sigma_perp mean         : 0.019812929
+anisotropy mean         : 110.019937
+
+Basin 2
+----------------------------------------------------------------------------
+kappa baseline mean/med : 0.258896528 / 0.254330797
+kappa augmented mean/med: 0.220421972 / 0.212633732
+g mean/median/IQR       : 0.042552758 / 0.073414878 / 0.178368597
+P(g > 0)                : 0.640000
+predictive gain mean/med: -0.001704183 / 0.000113433
+P(gain > 0)             : 0.520000
+test R2 baseline/aug    : 0.077867503 / 0.076283301
+corr(L,resid)_test mean : 0.001645033
+restoring-bin fraction  : 0.988810
+sigma_perp mean         : 0.019830437
+anisotropy mean         : 112.088881
+
+Basin 3
+----------------------------------------------------------------------------
+kappa baseline mean/med : 0.190919918 / 0.190944584
+kappa augmented mean/med: 0.119096976 / 0.122305491
+g mean/median/IQR       : 0.092569891 / 0.081747587 / 0.088737661
+P(g > 0)                : 1.000000
+predictive gain mean/med: 0.004676149 / 0.005550600
+P(gain > 0)             : 0.760000
+test R2 baseline/aug    : 0.039453094 / 0.043891521
+corr(L,resid)_test mean : 0.070228740
+restoring-bin fraction  : 0.942262
+sigma_perp mean         : 0.041637472
+anisotropy mean         : 29.321808
+
+============================================================================
+PAIR DIAGNOSTICS
+============================================================================
+
+Pair (0,3)
+  |Delta median kappa|: 0.001793695
+  |Delta median g|    : 0.009122563
+  |Delta median gain| : 0.001693707
+
+Pair (1,2)
+  |Delta median kappa|: 0.008115237
+  |Delta median g|    : 0.045505357
+  |Delta median gain| : 0.000016150
+
+Interpretation rule:
+  Evidence for operator correspondence requires median predictive_gain > 0,
+  a high fraction of seeds with gain > 0, and a reproducible g.
+  Nonzero g alone is NOT causal evidence; ablation belongs in SIM13.2.
+
+
+
+** Process exited - Return Code: 0 **
