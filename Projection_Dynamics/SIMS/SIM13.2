@@ -1,0 +1,2661 @@
+# ============================================================
+# SIM13.2 — PAIRED TEMPORAL-DECOUPLING PROBE
+# ============================================================
+#
+# Scientific question:
+#
+# Does transverse restoring behavior depend on the temporal
+# alignment between the current non-Markovian memory state and
+# the time-varying transition kernel?
+#
+#
+# NATIVE BRANCH
+# -------------
+# Uses the current memory-dependent transition kernel:
+#
+#     K_t = K(M_t)
+#
+#
+# DECOUPLED BRANCH
+# ----------------
+# Uses kernel tables sampled from the native calibration regime,
+# but replays them independently of the branch's current memory.
+#
+# Therefore:
+#
+#   - kernel fluctuations remain present
+#   - their approximate marginal distribution is preserved
+#   - their temporal alignment with current memory/history is
+#     destroyed
+#
+#
+# This is intentionally NOT a fixed-kernel clamp.
+#
+# A fixed kernel would make log(V_eff) essentially constant and
+# collapse the 2D coherence-valence manifold, making the causal
+# comparison uninterpretable.
+#
+#
+# Fixed operating point:
+#
+#     beta   = 1.38
+#     delta  = 0.95
+#     lambda = 1.0
+#     T_tol  = 1.0
+#
+#
+# Primary observable:
+#
+#     Delta kappa
+#       = kappa_native - kappa_decoupled
+#
+# Interpretation:
+#
+#     Delta kappa > 0
+#         restoration weakened after temporal decoupling
+#
+#     Delta kappa ~ 0
+#         little evidence that temporal alignment is required
+#
+#     Delta kappa < 0
+#         decoupled dynamics show stronger apparent transverse
+#         mean reversion than native dynamics
+#
+#
+# SIM13.1-derived preregistered prediction:
+#
+# If the candidate operator correspondence reflects causal
+# leverage, the outer basin pair (0,3) should show a larger
+# positive Delta kappa than the inner pair (1,2).
+#
+#
+# IMPORTANT:
+#
+# This tests causal leverage of memory/kernel temporal coupling.
+# It does NOT establish an autonomous physical RCFT LCO.
+# ============================================================
+
+
+import copy
+import math
+from collections import deque
+from dataclasses import dataclass
+
+import numpy as np
+
+
+# ============================================================
+# 1. GRAPH / PROJECTION
+# ============================================================
+
+# Ordinary C8 cycle graph under ordering:
+#
+#     0 - 1 - 3 - 5 - 7 - 6 - 4 - 2 - 0
+
+NBR = np.array(
+    [
+        [1, 2],  # 0
+        [0, 3],  # 1
+        [0, 4],  # 2
+        [1, 5],  # 3
+        [2, 6],  # 4
+        [3, 7],  # 5
+        [4, 7],  # 6
+        [5, 6],  # 7
+    ],
+    dtype=np.int8,
+)
+
+
+# Projection map:
+#
+#     B0 = {0,1}
+#     B1 = {2,3}
+#     B2 = {4,5}
+#     B3 = {6,7}
+
+PROJ = np.array(
+    [0, 0, 1, 1, 2, 2, 3, 3],
+    dtype=np.int8,
+)
+
+
+BASINS = np.array(
+    [
+        [0, 1],
+        [2, 3],
+        [4, 5],
+        [6, 7],
+    ],
+    dtype=np.int8,
+)
+
+
+# Projection-crossing indicator for each directed candidate edge.
+DP = (
+    PROJ[NBR]
+    != PROJ[:, None]
+).astype(np.int8)
+
+
+# ============================================================
+# 2. CONFIGURATION
+# ============================================================
+
+@dataclass
+class Config:
+
+    # ISP parameters
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+    Ttol: float = 1.0
+
+    # Simulation lengths
+    burnin: int = 3000
+    calibration: int = 4000
+    reference: int = 4000
+    observation: int = 6000
+
+    # Diagnostics
+    diagnostic_every: int = 5
+    stats_window: int = 100
+
+    # Local restoring fit
+    fit_q_abs_max: float = 1.5
+    min_bin_count: int = 40
+
+    q_edges: tuple = (
+        -3.0,
+        -2.0,
+        -1.5,
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+    )
+
+
+CFG = Config()
+
+
+# ============================================================
+# 3. FAST DEGREE-2 ISP KERNEL
+# ============================================================
+
+def p0_native(u, memory, cfg=CFG):
+    """
+    Probability of choosing NBR[u, 0].
+
+    Because every vertex has degree 2, we can compute the
+    Bernoulli probability directly without constructing a full
+    softmax array at every microscopic step.
+    """
+
+    m0 = math.tanh(
+        float(memory[u, 0])
+    )
+
+    m1 = math.tanh(
+        float(memory[u, 1])
+    )
+
+    # Difference in candidate transition costs.
+    #
+    # F = alpha + beta * Delta_Pi - lambda * tanh(M)
+    #
+    # alpha cancels between the two candidates.
+
+    delta_cost = (
+        cfg.beta
+        * float(
+            DP[u, 0]
+            - DP[u, 1]
+        )
+        - cfg.lam
+        * (m0 - m1)
+    )
+
+    z = (
+        delta_cost
+        / cfg.Ttol
+    )
+
+    # Numerically stable logistic form.
+
+    if z >= 0:
+        ez = math.exp(-z)
+
+        return (
+            ez
+            / (1.0 + ez)
+        )
+
+    ez = math.exp(z)
+
+    return (
+        1.0
+        / (1.0 + ez)
+    )
+
+
+def all_native_probs(memory, cfg=CFG):
+    """
+    Return the full 8 x 2 transition-probability table implied by
+    the current memory state.
+    """
+
+    out = np.empty(
+        (8, 2),
+        dtype=float,
+    )
+
+    for u in range(8):
+
+        p0 = p0_native(
+            u,
+            memory,
+            cfg,
+        )
+
+        out[u, 0] = p0
+        out[u, 1] = 1.0 - p0
+
+    return out
+
+
+# ============================================================
+# 4. MEMORY UPDATE
+# ============================================================
+
+def update_memory(
+    memory,
+    u,
+    slot,
+    cfg=CFG,
+):
+    """
+    Exponentially decay all directed-edge memories, then reinforce
+    the transition actually taken.
+    """
+
+    memory *= cfg.delta
+
+    memory[
+        u,
+        slot,
+    ] += 1.0
+
+
+# ============================================================
+# 5. LOCAL COHERENCE–VALENCE OBSERVABLE
+#
+# Z_x = (C_x, log V_eff,x)
+# ============================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    probs_all,
+    cfg=CFG,
+):
+
+    hidden_arr = np.asarray(
+        hidden,
+        dtype=np.int8,
+    )
+
+    obs_arr = np.asarray(
+        obs,
+        dtype=np.int8,
+    )
+
+    src = (
+        hidden_arr[:-1]
+        .astype(np.int16)
+    )
+
+    dst = (
+        hidden_arr[1:]
+        .astype(np.int16)
+    )
+
+    basin_now = (
+        obs_arr[:-1]
+        .astype(np.int16)
+    )
+
+    basin_next = (
+        obs_arr[1:]
+        .astype(np.int16)
+    )
+
+
+    # Directed-edge counts in rolling window.
+
+    edge_counts = np.bincount(
+        src * 8 + dst,
+        minlength=64,
+    ).reshape(
+        8,
+        8,
+    )
+
+
+    H_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+    P_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+
+    # --------------------------------------------------------
+    # Rolling local coherence
+    # --------------------------------------------------------
+
+    for x in range(4):
+
+        basin_mask = (
+            basin_now == x
+        )
+
+        if np.any(basin_mask):
+
+            P_local[x] = float(
+                np.mean(
+                    basin_next[
+                        basin_mask
+                    ]
+                    == x
+                )
+            )
+
+
+        source_entropies = []
+
+
+        for u in BASINS[x]:
+
+            c0 = edge_counts[
+                u,
+                NBR[u, 0],
+            ]
+
+            c1 = edge_counts[
+                u,
+                NBR[u, 1],
+            ]
+
+            total = c0 + c1
+
+
+            if total == 0:
+                continue
+
+
+            q0 = c0 / total
+            q1 = c1 / total
+
+            entropy_u = 0.0
+
+
+            if q0 > 0:
+
+                entropy_u -= (
+                    q0
+                    * math.log(q0)
+                )
+
+
+            if q1 > 0:
+
+                entropy_u -= (
+                    q1
+                    * math.log(q1)
+                )
+
+
+            source_entropies.append(
+                entropy_u
+            )
+
+
+        if source_entropies:
+
+            H_local[x] = float(
+                np.mean(
+                    source_entropies
+                )
+            )
+
+
+    C_local = (
+        -H_local
+        + cfg.alpha
+        * P_local
+    )
+
+
+    # --------------------------------------------------------
+    # Instantaneous effective valence
+    # --------------------------------------------------------
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all
+            + 1e-12
+        ),
+        axis=1,
+    )
+
+    V_nodes = np.exp(
+        H_nodes
+    )
+
+    V_basin = np.mean(
+        V_nodes[BASINS],
+        axis=1,
+    )
+
+    logV = np.log(
+        np.maximum(
+            V_basin,
+            1e-12,
+        )
+    )
+
+
+    return np.column_stack(
+        (
+            C_local,
+            logV,
+        )
+    )
+
+
+# ============================================================
+# 6. SIM13.1 CANDIDATE OPERATOR READOUT
+# ============================================================
+
+def compute_L(
+    probs_all,
+    cfg=CFG,
+):
+    """
+    Implementation-native SIM13.1 operator candidate:
+
+        L_x = -H_inst,x + alpha * P_inst,x
+
+    This is a deterministic local readout of the current kernel.
+    """
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all
+            + 1e-12
+        ),
+        axis=1,
+    )
+
+
+    same_projection = (
+        PROJ[NBR]
+        == PROJ[:, None]
+    )
+
+
+    P_nodes = np.sum(
+        probs_all
+        * same_projection,
+        axis=1,
+    )
+
+
+    H_basin = np.mean(
+        H_nodes[BASINS],
+        axis=1,
+    )
+
+
+    P_basin = np.mean(
+        P_nodes[BASINS],
+        axis=1,
+    )
+
+
+    return (
+        -H_basin
+        + cfg.alpha
+        * P_basin
+    )
+
+
+# ============================================================
+# 7. NATIVE BURN-IN
+# ============================================================
+
+def run_plain_native(
+    rng,
+    state,
+    memory,
+    hidden,
+    obs,
+    steps,
+    cfg=CFG,
+):
+
+    u = int(state)
+
+
+    for _ in range(steps):
+
+        p0 = p0_native(
+            u,
+            memory,
+            cfg,
+        )
+
+
+        slot = (
+            0
+            if rng.random() < p0
+            else 1
+        )
+
+
+        v = int(
+            NBR[
+                u,
+                slot,
+            ]
+        )
+
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+
+        hidden.append(v)
+
+        obs.append(
+            int(
+                PROJ[v]
+            )
+        )
+
+
+        u = v
+
+
+    return (
+        u,
+        memory,
+        hidden,
+        obs,
+    )
+
+
+# ============================================================
+# 8. CALIBRATION
+#
+# Build an empirical bank of native kernel tables.
+#
+# These kernel snapshots will later be replayed independently of
+# the decoupled branch's current memory state.
+# ============================================================
+
+def run_calibration(
+    rng,
+    state,
+    memory,
+    hidden,
+    obs,
+    steps,
+    cfg=CFG,
+):
+
+    u = int(state)
+
+    kernel_bank = []
+
+
+    for t in range(steps):
+
+        p0 = p0_native(
+            u,
+            memory,
+            cfg,
+        )
+
+
+        slot = (
+            0
+            if rng.random() < p0
+            else 1
+        )
+
+
+        v = int(
+            NBR[
+                u,
+                slot,
+            ]
+        )
+
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+
+        hidden.append(v)
+
+        obs.append(
+            int(
+                PROJ[v]
+            )
+        )
+
+
+        u = v
+
+
+        if (
+            t
+            % cfg.diagnostic_every
+            == 0
+        ):
+
+            kernel_bank.append(
+                all_native_probs(
+                    memory,
+                    cfg,
+                )
+            )
+
+
+    return (
+        u,
+        memory,
+        hidden,
+        obs,
+        np.asarray(
+            kernel_bank,
+            dtype=float,
+        ),
+    )
+
+
+# ============================================================
+# 9. BRANCH RUNNER
+# ============================================================
+
+def run_branch(
+    rng,
+    state,
+    memory,
+    hidden,
+    obs,
+    kernel_bank,
+    replay_indices,
+    replay_offset,
+    steps,
+    mode,
+    cfg=CFG,
+):
+
+    if mode not in (
+        "native",
+        "decoupled",
+    ):
+
+        raise ValueError(
+            "mode must be "
+            "'native' or 'decoupled'"
+        )
+
+
+    n_diag = (
+        (steps - 1)
+        // cfg.diagnostic_every
+        + 1
+    )
+
+
+    Z_log = np.empty(
+        (
+            n_diag,
+            4,
+            2,
+        ),
+        dtype=float,
+    )
+
+
+    L_log = np.empty(
+        (
+            n_diag,
+            4,
+        ),
+        dtype=float,
+    )
+
+
+    TV_log = np.empty(
+        n_diag,
+        dtype=float,
+    )
+
+
+    KL_log = np.empty(
+        n_diag,
+        dtype=float,
+    )
+
+
+    u = int(state)
+
+    diagnostic_index = 0
+
+
+    for t in range(steps):
+
+        dynamic_p0 = p0_native(
+            u,
+            memory,
+            cfg,
+        )
+
+
+        # ----------------------------------------------------
+        # Kernel used for actual transition
+        # ----------------------------------------------------
+
+        if mode == "native":
+
+            used_all = None
+
+            used_p0 = dynamic_p0
+
+
+        else:
+
+            bank_index = replay_indices[
+                replay_offset
+                + t
+            ]
+
+
+            used_all = kernel_bank[
+                bank_index
+            ]
+
+
+            used_p0 = float(
+                used_all[
+                    u,
+                    0,
+                ]
+            )
+
+
+        # ----------------------------------------------------
+        # Common random number where trajectories remain aligned
+        # ----------------------------------------------------
+
+        slot = (
+            0
+            if rng.random() < used_p0
+            else 1
+        )
+
+
+        v = int(
+            NBR[
+                u,
+                slot,
+            ]
+        )
+
+
+        # Memory still evolves in BOTH branches.
+        #
+        # In the decoupled branch, however, this current memory no
+        # longer determines the kernel actually used.
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+
+        hidden.append(v)
+
+        obs.append(
+            int(
+                PROJ[v]
+            )
+        )
+
+
+        u = v
+
+
+        # ----------------------------------------------------
+        # Diagnostics
+        # ----------------------------------------------------
+
+        if (
+            t
+            % cfg.diagnostic_every
+            == 0
+        ):
+
+            dynamic_all = (
+                all_native_probs(
+                    memory,
+                    cfg,
+                )
+            )
+
+
+            if mode == "native":
+
+                used_all = dynamic_all
+
+
+            Z_log[
+                diagnostic_index
+            ] = compute_Z(
+                hidden,
+                obs,
+                used_all,
+                cfg,
+            )
+
+
+            L_log[
+                diagnostic_index
+            ] = compute_L(
+                used_all,
+                cfg,
+            )
+
+
+            # Total variation distance between:
+            #
+            #   current latent memory kernel
+            #
+            # and
+            #
+            #   kernel actually used.
+
+            TV_log[
+                diagnostic_index
+            ] = float(
+                np.mean(
+                    0.5
+                    * np.sum(
+                        np.abs(
+                            dynamic_all
+                            - used_all
+                        ),
+                        axis=1,
+                    )
+                )
+            )
+
+
+            # KL(dynamic || used)
+
+            KL_log[
+                diagnostic_index
+            ] = float(
+                np.mean(
+                    np.sum(
+                        dynamic_all
+                        * np.log(
+                            (
+                                dynamic_all
+                                + 1e-12
+                            )
+                            / (
+                                used_all
+                                + 1e-12
+                            )
+                        ),
+                        axis=1,
+                    )
+                )
+            )
+
+
+            diagnostic_index += 1
+
+
+    return (
+        u,
+        memory,
+        hidden,
+        obs,
+        Z_log[
+            :diagnostic_index
+        ],
+        L_log[
+            :diagnostic_index
+        ],
+        TV_log[
+            :diagnostic_index
+        ],
+        KL_log[
+            :diagnostic_index
+        ],
+    )
+
+
+# ============================================================
+# 10. PRINCIPAL-AXIS GEOMETRY
+# ============================================================
+
+def axes_from_reference(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float,
+    )
+
+
+    mu = np.mean(
+        Z,
+        axis=0,
+    )
+
+
+    centered = (
+        Z
+        - mu
+    )
+
+
+    cov = np.cov(
+        centered.T
+    )
+
+
+    eigvals, eigvecs = (
+        np.linalg.eigh(
+            cov
+        )
+    )
+
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+
+    eigvals = eigvals[
+        order
+    ]
+
+
+    eigvecs = eigvecs[
+        :,
+        order,
+    ]
+
+
+    e_parallel = eigvecs[
+        :,
+        0,
+    ].copy()
+
+
+    e_perp = eigvecs[
+        :,
+        1,
+    ].copy()
+
+
+    # Deterministic orientation convention.
+
+    if e_parallel[0] < 0:
+
+        e_parallel *= -1.0
+
+
+    determinant = (
+        e_parallel[0]
+        * e_perp[1]
+        - e_parallel[1]
+        * e_perp[0]
+    )
+
+
+    if determinant < 0:
+
+        e_perp *= -1.0
+
+
+    lambda_parallel = max(
+        float(
+            eigvals[0]
+        ),
+        1e-12,
+    )
+
+
+    lambda_perp = max(
+        float(
+            eigvals[1]
+        ),
+        1e-12,
+    )
+
+
+    sigma_perp = math.sqrt(
+        lambda_perp
+    )
+
+
+    anisotropy = (
+        lambda_parallel
+        / lambda_perp
+    )
+
+
+    return (
+        mu,
+        e_perp,
+        sigma_perp,
+        anisotropy,
+    )
+
+
+# ============================================================
+# 11. RESTORING-BIN FRACTION
+# ============================================================
+
+def restoring_fraction(
+    q_now,
+    dq,
+    cfg=CFG,
+):
+
+    restoring_flags = []
+
+
+    for i in range(
+        len(cfg.q_edges) - 1
+    ):
+
+        lower = cfg.q_edges[i]
+
+        upper = cfg.q_edges[
+            i + 1
+        ]
+
+
+        mask = (
+            (q_now >= lower)
+            & (q_now < upper)
+        )
+
+
+        if (
+            int(
+                np.sum(mask)
+            )
+            < cfg.min_bin_count
+        ):
+
+            continue
+
+
+        mean_q = float(
+            np.mean(
+                q_now[
+                    mask
+                ]
+            )
+        )
+
+
+        mean_dq = float(
+            np.mean(
+                dq[
+                    mask
+                ]
+            )
+        )
+
+
+        restoring_flags.append(
+            mean_q
+            * mean_dq
+            < 0
+        )
+
+
+    if not restoring_flags:
+
+        return np.nan
+
+
+    return float(
+        np.mean(
+            restoring_flags
+        )
+    )
+
+
+# ============================================================
+# 12. BRANCH ANALYSIS
+#
+# Each branch learns its OWN local manifold.
+#
+# We do not force native PCA coordinates onto the decoupled
+# dynamics because the intervention is allowed to reshape the
+# stochastic geometry.
+# ============================================================
+
+def analyze_branch(
+    Z_reference,
+    Z_observation,
+    L_observation,
+    TV_observation,
+    KL_observation,
+    cfg=CFG,
+):
+
+    out = {}
+
+
+    for x in range(4):
+
+        (
+            mu,
+            e_perp,
+            sigma_perp,
+            anisotropy,
+        ) = axes_from_reference(
+            Z_reference[
+                :,
+                x,
+                :,
+            ]
+        )
+
+
+        q_tilde = (
+            (
+                Z_observation[
+                    :,
+                    x,
+                    :,
+                ]
+                - mu
+            )
+            @ e_perp
+        ) / max(
+            sigma_perp,
+            1e-12,
+        )
+
+
+        q_now = q_tilde[:-1]
+
+        dq = (
+            q_tilde[1:]
+            - q_tilde[:-1]
+        )
+
+
+        fit_mask = (
+            np.isfinite(
+                q_now
+            )
+            & np.isfinite(
+                dq
+            )
+            & (
+                np.abs(
+                    q_now
+                )
+                <= cfg.fit_q_abs_max
+            )
+        )
+
+
+        q_fit = q_now[
+            fit_mask
+        ]
+
+
+        dq_fit = dq[
+            fit_mask
+        ]
+
+
+        design = np.column_stack(
+            (
+                q_fit,
+                np.ones(
+                    len(q_fit)
+                ),
+            )
+        )
+
+
+        coefficients, _, _, _ = (
+            np.linalg.lstsq(
+                design,
+                dq_fit,
+                rcond=None,
+            )
+        )
+
+
+        slope = float(
+            coefficients[0]
+        )
+
+
+        kappa = -slope
+
+
+        out[x] = {
+
+            "kappa": kappa,
+
+            "restore_fraction":
+                restoring_fraction(
+                    q_now,
+                    dq,
+                    cfg,
+                ),
+
+            "sigma_perp":
+                sigma_perp,
+
+            "anisotropy":
+                anisotropy,
+
+            "operator_std":
+                float(
+                    np.std(
+                        L_observation[
+                            :,
+                            x,
+                        ],
+                        ddof=1,
+                    )
+                ),
+
+            "operator_mean":
+                float(
+                    np.mean(
+                        L_observation[
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+        }
+
+
+    out["mean_TV"] = float(
+        np.mean(
+            TV_observation
+        )
+    )
+
+
+    out["mean_KL"] = float(
+        np.mean(
+            KL_observation
+        )
+    )
+
+
+    return out
+
+
+# ============================================================
+# 13. ONE PAIRED SEED
+# ============================================================
+
+def simulate_seed(
+    seed,
+    cfg=CFG,
+):
+
+    rng = np.random.default_rng(
+        seed
+    )
+
+
+    memory = np.zeros(
+        (
+            8,
+            2,
+        ),
+        dtype=float,
+    )
+
+
+    hidden = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+
+    obs = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+
+    # --------------------------------------------------------
+    # Common native burn-in
+    # --------------------------------------------------------
+
+    (
+        state,
+        memory,
+        hidden,
+        obs,
+    ) = run_plain_native(
+        rng,
+        0,
+        memory,
+        hidden,
+        obs,
+        cfg.burnin,
+        cfg,
+    )
+
+
+    # --------------------------------------------------------
+    # Native calibration + kernel-bank construction
+    # --------------------------------------------------------
+
+    (
+        state,
+        memory,
+        hidden,
+        obs,
+        kernel_bank,
+    ) = run_calibration(
+        rng,
+        state,
+        memory,
+        hidden,
+        obs,
+        cfg.calibration,
+        cfg,
+    )
+
+
+    # --------------------------------------------------------
+    # Save common branch point
+    # --------------------------------------------------------
+
+    split_rng_state = copy.deepcopy(
+        rng.bit_generator.state
+    )
+
+
+    split_memory = (
+        memory.copy()
+    )
+
+
+    split_hidden = deque(
+        hidden,
+        maxlen=hidden.maxlen,
+    )
+
+
+    split_obs = deque(
+        obs,
+        maxlen=obs.maxlen,
+    )
+
+
+    # --------------------------------------------------------
+    # Independent replay schedule
+    #
+    # This randomizes temporal alignment between kernel snapshots
+    # and current memory/history.
+    # --------------------------------------------------------
+
+    replay_rng = (
+        np.random.default_rng(
+            seed
+            + 1_000_003
+        )
+    )
+
+
+    replay_indices = (
+        replay_rng.integers(
+            0,
+            len(kernel_bank),
+            size=(
+                cfg.reference
+                + cfg.observation
+            ),
+        )
+    )
+
+
+    branches = {}
+
+
+    # --------------------------------------------------------
+    # Native vs decoupled branches
+    # --------------------------------------------------------
+
+    for mode in (
+        "native",
+        "decoupled",
+    ):
+
+        branch_rng = (
+            np.random.default_rng()
+        )
+
+
+        branch_rng.bit_generator.state = (
+            copy.deepcopy(
+                split_rng_state
+            )
+        )
+
+
+        branch_memory = (
+            split_memory.copy()
+        )
+
+
+        branch_hidden = deque(
+            split_hidden,
+            maxlen=(
+                split_hidden.maxlen
+            ),
+        )
+
+
+        branch_obs = deque(
+            split_obs,
+            maxlen=(
+                split_obs.maxlen
+            ),
+        )
+
+
+        # ----------------------------------------------------
+        # Reference segment
+        # ----------------------------------------------------
+
+        (
+            branch_state,
+            branch_memory,
+            branch_hidden,
+            branch_obs,
+            Z_reference,
+            _L_reference,
+            _TV_reference,
+            _KL_reference,
+        ) = run_branch(
+            branch_rng,
+            state,
+            branch_memory,
+            branch_hidden,
+            branch_obs,
+            kernel_bank,
+            replay_indices,
+            0,
+            cfg.reference,
+            mode,
+            cfg,
+        )
+
+
+        # ----------------------------------------------------
+        # Observation segment
+        # ----------------------------------------------------
+
+        (
+            _,
+            _,
+            _,
+            _,
+            Z_observation,
+            L_observation,
+            TV_observation,
+            KL_observation,
+        ) = run_branch(
+            branch_rng,
+            branch_state,
+            branch_memory,
+            branch_hidden,
+            branch_obs,
+            kernel_bank,
+            replay_indices,
+            cfg.reference,
+            cfg.observation,
+            mode,
+            cfg,
+        )
+
+
+        branches[
+            mode
+        ] = analyze_branch(
+            Z_reference,
+            Z_observation,
+            L_observation,
+            TV_observation,
+            KL_observation,
+            cfg,
+        )
+
+
+    # --------------------------------------------------------
+    # Paired differences
+    # --------------------------------------------------------
+
+    result = {}
+
+
+    for x in range(4):
+
+        native = branches[
+            "native"
+        ][x]
+
+
+        decoupled = branches[
+            "decoupled"
+        ][x]
+
+
+        result[x] = {
+
+            "kappa_native":
+                native[
+                    "kappa"
+                ],
+
+            "kappa_decoupled":
+                decoupled[
+                    "kappa"
+                ],
+
+            "delta_kappa":
+                native[
+                    "kappa"
+                ]
+                - decoupled[
+                    "kappa"
+                ],
+
+            "restore_native":
+                native[
+                    "restore_fraction"
+                ],
+
+            "restore_decoupled":
+                decoupled[
+                    "restore_fraction"
+                ],
+
+            "sigma_native":
+                native[
+                    "sigma_perp"
+                ],
+
+            "sigma_decoupled":
+                decoupled[
+                    "sigma_perp"
+                ],
+
+            "anisotropy_native":
+                native[
+                    "anisotropy"
+                ],
+
+            "anisotropy_decoupled":
+                decoupled[
+                    "anisotropy"
+                ],
+
+            "operator_std_native":
+                native[
+                    "operator_std"
+                ],
+
+            "operator_std_decoupled":
+                decoupled[
+                    "operator_std"
+                ],
+
+            "operator_mean_native":
+                native[
+                    "operator_mean"
+                ],
+
+            "operator_mean_decoupled":
+                decoupled[
+                    "operator_mean"
+                ],
+        }
+
+
+    result["decoupled_TV"] = (
+        branches[
+            "decoupled"
+        ][
+            "mean_TV"
+        ]
+    )
+
+
+    result["decoupled_KL"] = (
+        branches[
+            "decoupled"
+        ][
+            "mean_KL"
+        ]
+    )
+
+
+    return result
+
+
+# ============================================================
+# 14. SUMMARY HELPERS
+# ============================================================
+
+def finite_array(values):
+
+    arr = np.asarray(
+        values,
+        dtype=float,
+    )
+
+    return arr[
+        np.isfinite(arr)
+    ]
+
+
+def mean_value(values):
+
+    arr = finite_array(
+        values
+    )
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(
+        np.mean(arr)
+    )
+
+
+def median_value(values):
+
+    arr = finite_array(
+        values
+    )
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(
+        np.median(arr)
+    )
+
+
+def iqr_value(values):
+
+    arr = finite_array(
+        values
+    )
+
+    if len(arr) == 0:
+        return np.nan
+
+
+    return float(
+        np.quantile(
+            arr,
+            0.75,
+        )
+        - np.quantile(
+            arr,
+            0.25,
+        )
+    )
+
+
+def fraction_positive(values):
+
+    arr = finite_array(
+        values
+    )
+
+    if len(arr) == 0:
+        return np.nan
+
+
+    return float(
+        np.mean(
+            arr > 0
+        )
+    )
+
+
+# ============================================================
+# 15. FULL SIM13.2 RUN
+# ============================================================
+
+def run_SIM13_2(
+    n_seeds=50,
+    cfg=CFG,
+):
+
+    print()
+
+    print(
+        "=" * 78
+    )
+
+    print(
+        "SIM13.2 — PAIRED TEMPORAL-DECOUPLING PROBE"
+    )
+
+    print(
+        "=" * 78
+    )
+
+
+    print(
+        f"Fixed: beta={cfg.beta}, "
+        f"delta={cfg.delta}, "
+        f"lambda={cfg.lam}, "
+        f"T_tol={cfg.Ttol}"
+    )
+
+
+    print(
+        "Decoupled branch: native calibration-regime kernel fluctuations"
+    )
+
+    print(
+        "are replayed independently of current memory/history."
+    )
+
+
+    print(
+        "Primary: Delta kappa = "
+        "kappa_native - kappa_decoupled."
+    )
+
+    print()
+
+
+    runs = []
+
+
+    for seed in range(
+        1,
+        n_seeds + 1,
+    ):
+
+        result = simulate_seed(
+            seed,
+            cfg,
+        )
+
+
+        runs.append(
+            result
+        )
+
+
+        print(
+            f"completed seed "
+            f"{seed:3d}/{n_seeds}"
+        )
+
+
+    summaries = {}
+
+
+    print()
+
+    print(
+        "=" * 78
+    )
+
+    print(
+        "BASIN SUMMARIES"
+    )
+
+    print(
+        "=" * 78
+    )
+
+
+    # ========================================================
+    # Basin-by-basin summaries
+    # ========================================================
+
+    for x in range(4):
+
+        rows = [
+            run[x]
+            for run in runs
+        ]
+
+
+        kappa_native = [
+            row[
+                "kappa_native"
+            ]
+            for row in rows
+        ]
+
+
+        kappa_decoupled = [
+            row[
+                "kappa_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        delta_kappa = [
+            row[
+                "delta_kappa"
+            ]
+            for row in rows
+        ]
+
+
+        restore_native = [
+            row[
+                "restore_native"
+            ]
+            for row in rows
+        ]
+
+
+        restore_decoupled = [
+            row[
+                "restore_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        sigma_native = [
+            row[
+                "sigma_native"
+            ]
+            for row in rows
+        ]
+
+
+        sigma_decoupled = [
+            row[
+                "sigma_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        anis_native = [
+            row[
+                "anisotropy_native"
+            ]
+            for row in rows
+        ]
+
+
+        anis_decoupled = [
+            row[
+                "anisotropy_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        L_std_native = [
+            row[
+                "operator_std_native"
+            ]
+            for row in rows
+        ]
+
+
+        L_std_decoupled = [
+            row[
+                "operator_std_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        L_mean_native = [
+            row[
+                "operator_mean_native"
+            ]
+            for row in rows
+        ]
+
+
+        L_mean_decoupled = [
+            row[
+                "operator_mean_decoupled"
+            ]
+            for row in rows
+        ]
+
+
+        summary = {
+
+            "kappa_native_mean":
+                mean_value(
+                    kappa_native
+                ),
+
+            "kappa_native_median":
+                median_value(
+                    kappa_native
+                ),
+
+            "kappa_decoupled_mean":
+                mean_value(
+                    kappa_decoupled
+                ),
+
+            "kappa_decoupled_median":
+                median_value(
+                    kappa_decoupled
+                ),
+
+            "delta_kappa_mean":
+                mean_value(
+                    delta_kappa
+                ),
+
+            "delta_kappa_median":
+                median_value(
+                    delta_kappa
+                ),
+
+            "delta_kappa_iqr":
+                iqr_value(
+                    delta_kappa
+                ),
+
+            "P_delta_kappa_positive":
+                fraction_positive(
+                    delta_kappa
+                ),
+
+            "restore_native_mean":
+                mean_value(
+                    restore_native
+                ),
+
+            "restore_decoupled_mean":
+                mean_value(
+                    restore_decoupled
+                ),
+
+            "sigma_native_mean":
+                mean_value(
+                    sigma_native
+                ),
+
+            "sigma_decoupled_mean":
+                mean_value(
+                    sigma_decoupled
+                ),
+
+            "anisotropy_native_mean":
+                mean_value(
+                    anis_native
+                ),
+
+            "anisotropy_decoupled_mean":
+                mean_value(
+                    anis_decoupled
+                ),
+
+            "operator_std_native_mean":
+                mean_value(
+                    L_std_native
+                ),
+
+            "operator_std_decoupled_mean":
+                mean_value(
+                    L_std_decoupled
+                ),
+
+            "operator_mean_native_mean":
+                mean_value(
+                    L_mean_native
+                ),
+
+            "operator_mean_decoupled_mean":
+                mean_value(
+                    L_mean_decoupled
+                ),
+        }
+
+
+        summaries[x] = summary
+
+
+        print()
+
+        print(
+            f"Basin {x}"
+        )
+
+        print(
+            "-" * 78
+        )
+
+
+        print(
+            "kappa native mean/med      : "
+            f"{summary['kappa_native_mean']:.9f} / "
+            f"{summary['kappa_native_median']:.9f}"
+        )
+
+
+        print(
+            "kappa decoupled mean/med   : "
+            f"{summary['kappa_decoupled_mean']:.9f} / "
+            f"{summary['kappa_decoupled_median']:.9f}"
+        )
+
+
+        print(
+            "Delta kappa mean/med/IQR   : "
+            f"{summary['delta_kappa_mean']:.9f} / "
+            f"{summary['delta_kappa_median']:.9f} / "
+            f"{summary['delta_kappa_iqr']:.9f}"
+        )
+
+
+        print(
+            "P(Delta kappa > 0)         : "
+            f"{summary['P_delta_kappa_positive']:.6f}"
+        )
+
+
+        print(
+            "restore native/decoupled   : "
+            f"{summary['restore_native_mean']:.6f} / "
+            f"{summary['restore_decoupled_mean']:.6f}"
+        )
+
+
+        print(
+            "sigma native/decoupled     : "
+            f"{summary['sigma_native_mean']:.9f} / "
+            f"{summary['sigma_decoupled_mean']:.9f}"
+        )
+
+
+        print(
+            "anisotropy native/decoupled: "
+            f"{summary['anisotropy_native_mean']:.6f} / "
+            f"{summary['anisotropy_decoupled_mean']:.6f}"
+        )
+
+
+        print(
+            "operator std native/decoup : "
+            f"{summary['operator_std_native_mean']:.9f} / "
+            f"{summary['operator_std_decoupled_mean']:.9f}"
+        )
+
+
+        print(
+            "operator mean native/decoup: "
+            f"{summary['operator_mean_native_mean']:.9f} / "
+            f"{summary['operator_mean_decoupled_mean']:.9f}"
+        )
+
+
+    # ========================================================
+    # Preregistered pair-class comparison
+    # ========================================================
+
+    outer_delta = 0.5 * (
+
+        summaries[0][
+            "delta_kappa_median"
+        ]
+
+        + summaries[3][
+            "delta_kappa_median"
+        ]
+    )
+
+
+    inner_delta = 0.5 * (
+
+        summaries[1][
+            "delta_kappa_median"
+        ]
+
+        + summaries[2][
+            "delta_kappa_median"
+        ]
+    )
+
+
+    outer_minus_inner = (
+        outer_delta
+        - inner_delta
+    )
+
+
+    print()
+
+    print(
+        "=" * 78
+    )
+
+    print(
+        "PREREGISTERED PAIR-CLASS TEST"
+    )
+
+    print(
+        "=" * 78
+    )
+
+
+    print(
+        "outer mean median Delta kappa (0,3): "
+        f"{outer_delta:.9f}"
+    )
+
+
+    print(
+        "inner mean median Delta kappa (1,2): "
+        f"{inner_delta:.9f}"
+    )
+
+
+    print(
+        "outer - inner                      : "
+        f"{outer_minus_inner:.9f}"
+    )
+
+
+    # ========================================================
+    # Intervention diagnostics
+    # ========================================================
+
+    mean_TV = mean_value(
+        [
+            run[
+                "decoupled_TV"
+            ]
+            for run in runs
+        ]
+    )
+
+
+    mean_KL = mean_value(
+        [
+            run[
+                "decoupled_KL"
+            ]
+            for run in runs
+        ]
+    )
+
+
+    print()
+
+    print(
+        "=" * 78
+    )
+
+    print(
+        "INTERVENTION DIAGNOSTICS"
+    )
+
+    print(
+        "=" * 78
+    )
+
+
+    print(
+        "decoupled used-vs-latent mean TV: "
+        f"{mean_TV:.9f}"
+    )
+
+
+    print(
+        "decoupled used-vs-latent mean KL: "
+        f"{mean_KL:.9f}"
+    )
+
+
+    print()
+
+    print(
+        "Interpretation rule:"
+    )
+
+
+    print(
+        "  Positive Delta kappa means transverse restoration weakened"
+    )
+
+    print(
+        "  when kernel fluctuations retained their empirical distribution"
+    )
+
+    print(
+        "  but lost temporal alignment with current memory/history."
+    )
+
+
+    print(
+        "  Near-zero Delta kappa favors the candidate operator as primarily"
+    )
+
+    print(
+        "  a predictive readout rather than a necessary causal source."
+    )
+
+
+    print(
+        "  Negative Delta kappa means the temporally decoupled process"
+    )
+
+    print(
+        "  exhibits stronger apparent transverse mean reversion."
+    )
+
+
+    print(
+        "  Similar operator mean/std between branches is an intervention"
+    )
+
+    print(
+        "  validity check: decoupling should not collapse the observable."
+    )
+
+
+    print(
+        "  This simulation does NOT establish an autonomous physical LCO."
+    )
+
+
+    print()
+
+
+    return {
+
+        "runs":
+            runs,
+
+        "summaries":
+            summaries,
+
+        "outer_delta":
+            outer_delta,
+
+        "inner_delta":
+            inner_delta,
+
+        "outer_minus_inner":
+            outer_minus_inner,
+
+        "mean_decoupled_TV":
+            mean_TV,
+
+        "mean_decoupled_KL":
+            mean_KL,
+    }
+
+
+# ============================================================
+# 16. RUN FULL 50-SEED SIMULATION
+# ============================================================
+
+RESULTS_SIM13_2 = run_SIM13_2(
+    n_seeds=50,
+)
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+RESULTS
+
+Run started
+Initializing environment
+Installing packages
+Running code
+1796 |
+
+==============================================================================
+
+SIM13.2 — PAIRED TEMPORAL-DECOUPLING PROBE
+
+==============================================================================
+
+Fixed: beta=1.38, delta=0.95, lambda=1.0, T_tol=1.0
+
+Decoupled branch: native calibration-regime kernel fluctuations
+
+are replayed independently of current memory/history.
+
+Primary: Delta kappa = kappa_native - kappa_decoupled.
+
+1833 |
+
+completed seed   1/50
+
+completed seed   2/50
+
+completed seed   3/50
+
+completed seed   4/50
+
+completed seed   5/50
+
+completed seed   6/50
+
+completed seed   7/50
+
+completed seed   8/50
+
+completed seed   9/50
+
+completed seed  10/50
+
+completed seed  11/50
+
+completed seed  12/50
+
+completed seed  13/50
+
+completed seed  14/50
+
+completed seed  15/50
+
+completed seed  16/50
+
+completed seed  17/50
+
+completed seed  18/50
+
+completed seed  19/50
+
+completed seed  20/50
+
+completed seed  21/50
+
+completed seed  22/50
+
+completed seed  23/50
+
+completed seed  24/50
+
+completed seed  25/50
+
+completed seed  26/50
+
+completed seed  27/50
+
+completed seed  28/50
+
+completed seed  29/50
+
+completed seed  30/50
+
+completed seed  31/50
+
+completed seed  32/50
+
+completed seed  33/50
+
+completed seed  34/50
+
+completed seed  35/50
+
+completed seed  36/50
+
+completed seed  37/50
+
+completed seed  38/50
+
+completed seed  39/50
+
+completed seed  40/50
+
+completed seed  41/50
+
+completed seed  42/50
+
+completed seed  43/50
+
+completed seed  44/50
+
+completed seed  45/50
+
+completed seed  46/50
+
+completed seed  47/50
+
+completed seed  48/50
+
+completed seed  49/50
+
+completed seed  50/50
+
+1864 |
+
+==============================================================================
+
+BASIN SUMMARIES
+
+==============================================================================
+
+2092 |
+
+Basin 0
+
+------------------------------------------------------------------------------
+
+kappa native mean/med      : 0.189641804 / 0.189852323
+
+kappa decoupled mean/med   : 1.005227527 / 1.008043763
+
+Delta kappa mean/med/IQR   : -0.815585723 / -0.817599379 / 0.059656921
+
+P(Delta kappa > 0)         : 0.000000
+
+restore native/decoupled   : 0.934508 / 1.000000
+
+sigma native/decoupled     : 0.042000908 / 0.055773185
+
+anisotropy native/decoupled: 28.810680 / 10.145156
+
+operator std native/decoup : 0.088688413 / 0.089020471
+
+operator mean native/decoup: 0.449847637 / 0.445680702
+
+2092 |
+
+Basin 1
+
+------------------------------------------------------------------------------
+
+kappa native mean/med      : 0.252505960 / 0.255713658
+
+kappa decoupled mean/med   : 0.996168956 / 1.007146047
+
+Delta kappa mean/med/IQR   : -0.743662995 / -0.749745507 / 0.045480375
+
+P(Delta kappa > 0)         : 0.000000
+
+restore native/decoupled   : 0.979643 / 0.997500
+
+sigma native/decoupled     : 0.019709934 / 0.020399900
+
+anisotropy native/decoupled: 110.087619 / 68.609863
+
+operator std native/decoup : 0.020588000 / 0.020583977
+
+operator mean native/decoup: -0.671347520 / -0.671023376
+
+2092 |
+
+Basin 2
+
+------------------------------------------------------------------------------
+
+kappa native mean/med      : 0.252479303 / 0.248550419
+
+kappa decoupled mean/med   : 1.008982708 / 1.007741800
+
+Delta kappa mean/med/IQR   : -0.756503406 / -0.755770835 / 0.043895869
+
+P(Delta kappa > 0)         : 0.000000
+
+restore native/decoupled   : 0.988810 / 1.000000
+
+sigma native/decoupled     : 0.019682410 / 0.020358046
+
+anisotropy native/decoupled: 109.662117 / 67.336317
+
+operator std native/decoup : 0.020487687 / 0.020596743
+
+operator mean native/decoup: -0.671437523 / -0.671029617
+
+2092 |
+
+Basin 3
+
+------------------------------------------------------------------------------
+
+kappa native mean/med      : 0.182060670 / 0.182560650
+
+kappa decoupled mean/med   : 0.982293236 / 0.978385802
+
+Delta kappa mean/med/IQR   : -0.800232566 / -0.803506044 / 0.063065318
+
+P(Delta kappa > 0)         : 0.000000
+
+restore native/decoupled   : 0.950159 / 1.000000
+
+sigma native/decoupled     : 0.042658087 / 0.055376954
+
+anisotropy native/decoupled: 27.332711 / 10.653061
+
+operator std native/decoup : 0.088729711 / 0.087599233
+
+operator mean native/decoup: 0.448607076 / 0.448452946
+
+2200 |
+
+==============================================================================
+
+PREREGISTERED PAIR-CLASS TEST
+
+==============================================================================
+
+outer mean median Delta kappa (0,3): -0.810552712
+
+inner mean median Delta kappa (1,2): -0.752758171
+
+outer - inner                      : -0.057794541
+
+2257 |
+
+==============================================================================
+
+INTERVENTION DIAGNOSTICS
+
+==============================================================================
+
+decoupled used-vs-latent mean TV: 0.080017291
+
+decoupled used-vs-latent mean KL: 0.028118460
+
+2284 |
+
+Interpretation rule:
+
+  Positive Delta kappa means transverse restoration weakened
+
+  when kernel fluctuations retained their empirical distribution
+
+  but lost temporal alignment with current memory/history.
+
+  Near-zero Delta kappa favors the candidate operator as primarily
+
+  a predictive readout rather than a necessary causal source.
+
+  Negative Delta kappa means the temporally decoupled process
+
+  exhibits stronger apparent transverse mean reversion.
+
+  Similar operator mean/std between branches is an intervention
+
+  validity check: decoupling should not collapse the observable.
+
+  This simulation does NOT establish an autonomous physical LCO.
+
+2336 |
