@@ -1,0 +1,3799 @@
+
+# ======================================================================
+# SIM13.4 — TEMPORAL DISPLACEMENT / PHASE-RESPONSE MAP
+# ======================================================================
+#
+# SCIENTIFIC QUESTION
+# -------------------
+#
+# How does the local stochastic manifold respond to controlled temporal
+# displacement between:
+#
+#     endogenous non-Markovian memory M_t
+#
+# and
+#
+#     an otherwise correctly ordered native transition-kernel history K_t ?
+#
+#
+# ONLY INTERVENTION VARIABLE
+# --------------------------
+#
+#     s = temporal displacement in microscopic ISP transitions
+#
+#
+# Native reference trajectory:
+#
+#     K^N_0, K^N_1, K^N_2, ...
+#
+# Replay branch:
+#
+#     K_t^(s) = K^N_(t+s)
+#
+#
+# IMPORTANT LANGUAGE
+# ------------------
+#
+# s     = controlled temporal displacement
+# TV/KL = observed relational mismatch
+#
+# Increasing s does NOT imply monotonically increasing mismatch.
+#
+#
+# HARD CONTROL
+# ------------
+#
+# A contemporaneous zero-displacement replay is generated from the
+# exact same branch state and the exact same random-number stream:
+#
+#     K_t^(0) = K_t^N
+#
+# Therefore:
+#
+#     native ≈ replay(s=0)
+#
+# should hold essentially exactly.
+#
+# If it does not, replay itself is confounded and mechanistic
+# interpretation stops.
+#
+#
+# FIXED ARCHITECTURE
+# ------------------
+#
+# beta   = 1.38
+# delta  = 0.95
+# lambda = 1.0
+# T_tol  = 1.0
+#
+# C8 graph
+# RCFT projection labeling
+# same memory law
+# same Z=(C, log V_eff) manifold construction
+# same candidate LCO
+# 50 seeds
+#
+#
+# OFFSET GRID
+# -----------
+#
+# Dense near zero because:
+#
+#     memory half-life = ln(1/2)/ln(0.95) ≈ 13.5 microsteps
+#
+# This is NOT assumed to be the phase-response timescale.
+# It is merely an intrinsic toy-model timescale worth resolving.
+#
+#
+# PRIMARY RESPONSE PACKAGE
+# ------------------------
+#
+#     kappa_x(s)
+#     sigma_perp,x(s)
+#     anisotropy_x(s)
+#
+# Validation:
+#
+#     rho1(q_perp)
+#     rho1(K)
+#     rho1(L)
+#     mean(L)
+#     std(L)
+#
+# Mismatch:
+#
+#     TV_x(s)
+#     KL_x(s)
+#
+#
+# RESPONSE RELATIVE TO SYNCHRONIZATION
+# ------------------------------------
+#
+#     Delta kappa_x(s) =
+#         kappa_x(0) - kappa_x(s)
+#
+#     Delta sigma_x(s) =
+#         sigma_x(s) - sigma_x(0)
+#
+#     Delta A_x(s) =
+#         A_x(s) - A_x(0)
+#
+#
+# BASIN CLASSES
+# -------------
+#
+#     C_A = {0,3}
+#     C_B = {1,2}
+#
+# Primary class contrast:
+#
+#     D_kappa(s)
+#       = Delta kappa_A(s) - Delta kappa_B(s)
+#
+#
+# SECONDARY MISMATCH-COLLAPSE QUESTION
+# ------------------------------------
+#
+# Compare:
+#
+#     s -> G_x
+#
+# against
+#
+#     TV/KL -> G_x
+#
+# where
+#
+#     G_x = (kappa_x, sigma_perp,x, A_x)
+#
+#
+# If comparable mismatch produces comparable geometry:
+#
+#     raw displacement may act mainly through relational mismatch.
+#
+# If comparable mismatch produces different geometry:
+#
+#     instantaneous mismatch is insufficient;
+#     ordered history may retain additional information.
+#
+#
+# INTERPRETIVE SAFEGUARD
+# ----------------------
+#
+# Any apparent oscillation is candidate recurrence only.
+# It is NOT evidence of a native frequency or resonance.
+#
+# ======================================================================
+
+
+import math
+from collections import deque
+from dataclasses import dataclass
+
+import numpy as np
+
+
+# ======================================================================
+# 1. GRAPH AND PROJECTION
+# ======================================================================
+
+NBR = np.array(
+    [
+        [1, 2],  # 0
+        [0, 3],  # 1
+        [0, 4],  # 2
+        [1, 5],  # 3
+        [2, 6],  # 4
+        [3, 7],  # 5
+        [4, 7],  # 6
+        [5, 6],  # 7
+    ],
+    dtype=np.int8,
+)
+
+PROJ = np.array(
+    [0, 0, 1, 1, 2, 2, 3, 3],
+    dtype=np.int8,
+)
+
+BASINS = np.array(
+    [
+        [0, 1],
+        [2, 3],
+        [4, 5],
+        [6, 7],
+    ],
+    dtype=np.int8,
+)
+
+DP = (
+    PROJ[NBR]
+    != PROJ[:, None]
+).astype(np.float64)
+
+SAME_PROJ = (
+    PROJ[NBR]
+    == PROJ[:, None]
+)
+
+
+# ======================================================================
+# 2. CONFIGURATION
+# ======================================================================
+
+@dataclass
+class Config:
+
+    # Dynamics
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+    Ttol: float = 1.0
+
+    # Timeline
+    burnin: int = 3000
+    reference: int = 4000
+    observation: int = 6000
+
+    # Diagnostics
+    diagnostic_every: int = 5
+    stats_window: int = 100
+
+    # Restoring-field fit
+    fit_q_abs_max: float = 1.5
+    min_bin_count: int = 40
+
+    q_edges: tuple = (
+        -3.0,
+        -2.0,
+        -1.5,
+        -1.0,
+        -0.5,
+        0.0,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        3.0,
+    )
+
+    # Temporal displacement grid
+    offsets: tuple = (
+        0,
+        1,
+        2,
+        4,
+        8,
+        12,
+        16,
+        25,
+        50,
+        100,
+        250,
+        500,
+        1000,
+        2000,
+        4000,
+    )
+
+    # Validity gates
+    replay_zero_tol: float = 1e-12
+
+    # This is an empirical safeguard, not a theoretical constant.
+    # Replay chronology is preserved by construction; this checks that
+    # measured short-lag kernel persistence has not wandered grossly
+    # across the sampled native windows.
+    kernel_rho1_tolerance: float = 0.03
+
+
+CFG = Config()
+
+
+# ======================================================================
+# 3. BASIC HELPERS
+# ======================================================================
+
+def stable_logistic_minus(z):
+    """
+    Returns 1/(1+exp(z)) stably.
+    """
+
+    z = np.asarray(z, dtype=float)
+
+    out = np.empty_like(z)
+
+    pos = z >= 0
+
+    ez = np.exp(-z[pos])
+    out[pos] = ez / (1.0 + ez)
+
+    neg = ~pos
+
+    ez = np.exp(z[neg])
+    out[neg] = 1.0 / (1.0 + ez)
+
+    return out
+
+
+def finite_array(values):
+
+    arr = np.asarray(values, dtype=float)
+
+    return arr[np.isfinite(arr)]
+
+
+def mean_value(values):
+
+    arr = finite_array(values)
+
+    return (
+        float(np.mean(arr))
+        if len(arr)
+        else np.nan
+    )
+
+
+def median_value(values):
+
+    arr = finite_array(values)
+
+    return (
+        float(np.median(arr))
+        if len(arr)
+        else np.nan
+    )
+
+
+def iqr_value(values):
+
+    arr = finite_array(values)
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(
+        np.quantile(arr, 0.75)
+        - np.quantile(arr, 0.25)
+    )
+
+
+def fraction_positive(values):
+
+    arr = finite_array(values)
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(np.mean(arr > 0))
+
+
+def safe_corr(x, y):
+
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    mask = (
+        np.isfinite(x)
+        & np.isfinite(y)
+    )
+
+    x = x[mask]
+    y = y[mask]
+
+    if len(x) < 3:
+        return np.nan
+
+    sx = np.std(x)
+    sy = np.std(y)
+
+    if sx < 1e-14 or sy < 1e-14:
+        return np.nan
+
+    return float(
+        np.corrcoef(x, y)[0, 1]
+    )
+
+
+def lag1_corr(x):
+
+    x = np.asarray(x, dtype=float)
+
+    if len(x) < 3:
+        return np.nan
+
+    return safe_corr(
+        x[:-1],
+        x[1:],
+    )
+
+
+def kernel_lag1_corr(kernel_log):
+    """
+    Pooled lag-1 correlation across all kernel components.
+
+    This preserves continuity with SIM13.3's diagnostic. It is a
+    validation statistic, not a claimed physical observable.
+    """
+
+    K = np.asarray(kernel_log, dtype=float)
+
+    if len(K) < 3:
+        return np.nan
+
+    return safe_corr(
+        K[:-1].reshape(-1),
+        K[1:].reshape(-1),
+    )
+
+
+# ======================================================================
+# 4. ISP KERNEL
+# ======================================================================
+
+def all_native_probs(memory, cfg=CFG):
+    """
+    Vectorized current native kernel table.
+
+    Shape:
+        (8 states, 2 outgoing neighbors)
+    """
+
+    m = np.tanh(memory)
+
+    projection_difference = (
+        DP[:, 0]
+        - DP[:, 1]
+    )
+
+    memory_difference = (
+        m[:, 0]
+        - m[:, 1]
+    )
+
+    delta_cost = (
+        cfg.beta
+        * projection_difference
+        - cfg.lam
+        * memory_difference
+    )
+
+    z = (
+        delta_cost
+        / cfg.Ttol
+    )
+
+    p0 = stable_logistic_minus(z)
+
+    probs = np.empty(
+        (8, 2),
+        dtype=float,
+    )
+
+    probs[:, 0] = p0
+    probs[:, 1] = 1.0 - p0
+
+    return probs
+
+
+# ======================================================================
+# 5. MEMORY
+# ======================================================================
+
+def update_memory(
+    memory,
+    u,
+    slot,
+    cfg=CFG,
+):
+
+    memory *= cfg.delta
+
+    memory[
+        u,
+        slot,
+    ] += 1.0
+
+
+# ======================================================================
+# 6. SIM13.1 CANDIDATE LCO SIGNAL
+# ======================================================================
+
+def compute_L(
+    probs_all,
+    cfg=CFG,
+):
+    """
+    L_x = -H_inst,x + alpha P_inst,x
+    """
+
+    probs_all = np.asarray(
+        probs_all,
+        dtype=float,
+    )
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all
+            + 1e-15
+        ),
+        axis=1,
+    )
+
+    P_nodes = np.sum(
+        probs_all
+        * SAME_PROJ,
+        axis=1,
+    )
+
+    H_basin = np.mean(
+        H_nodes[BASINS],
+        axis=1,
+    )
+
+    P_basin = np.mean(
+        P_nodes[BASINS],
+        axis=1,
+    )
+
+    return (
+        -H_basin
+        + cfg.alpha
+        * P_basin
+    )
+
+
+# ======================================================================
+# 7. COHERENCE–VALENCE OBSERVABLE Z
+# ======================================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    probs_all,
+    cfg=CFG,
+):
+    """
+    Z_x = (C_x, log V_eff,x)
+
+    C_x uses rolling empirical transition statistics.
+
+    log V_eff uses the currently supplied transition kernel.
+    """
+
+    hidden_arr = np.asarray(
+        hidden,
+        dtype=np.int16,
+    )
+
+    obs_arr = np.asarray(
+        obs,
+        dtype=np.int16,
+    )
+
+    src = hidden_arr[:-1]
+    dst = hidden_arr[1:]
+
+    basin_now = obs_arr[:-1]
+    basin_next = obs_arr[1:]
+
+    edge_counts = np.bincount(
+        src * 8 + dst,
+        minlength=64,
+    ).reshape(8, 8)
+
+    H_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+    P_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+    for x in range(4):
+
+        mask = (
+            basin_now == x
+        )
+
+        if np.any(mask):
+
+            P_local[x] = float(
+                np.mean(
+                    basin_next[mask]
+                    == x
+                )
+            )
+
+        entropies = []
+
+        for u in BASINS[x]:
+
+            c0 = edge_counts[
+                u,
+                NBR[u, 0],
+            ]
+
+            c1 = edge_counts[
+                u,
+                NBR[u, 1],
+            ]
+
+            total = c0 + c1
+
+            if total <= 0:
+                continue
+
+            p0 = c0 / total
+            p1 = c1 / total
+
+            H = 0.0
+
+            if p0 > 0:
+                H -= p0 * math.log(p0)
+
+            if p1 > 0:
+                H -= p1 * math.log(p1)
+
+            entropies.append(H)
+
+        if entropies:
+
+            H_local[x] = float(
+                np.mean(entropies)
+            )
+
+    C_local = (
+        -H_local
+        + cfg.alpha
+        * P_local
+    )
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all
+            + 1e-15
+        ),
+        axis=1,
+    )
+
+    V_nodes = np.exp(H_nodes)
+
+    V_basin = np.mean(
+        V_nodes[BASINS],
+        axis=1,
+    )
+
+    logV = np.log(
+        np.maximum(
+            V_basin,
+            1e-15,
+        )
+    )
+
+    return np.column_stack(
+        (
+            C_local,
+            logV,
+        )
+    )
+
+
+# ======================================================================
+# 8. BURN-IN
+# ======================================================================
+
+def run_burnin(
+    rng,
+    state,
+    memory,
+    hidden,
+    obs,
+    steps,
+    cfg=CFG,
+):
+
+    u = int(state)
+
+    for _ in range(steps):
+
+        probs = all_native_probs(
+            memory,
+            cfg,
+        )
+
+        r = rng.random()
+
+        slot = (
+            0
+            if r < probs[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+    return (
+        u,
+        memory,
+        hidden,
+        obs,
+    )
+
+
+# ======================================================================
+# 9. DIAGNOSTIC LOG ALLOCATOR
+# ======================================================================
+
+def allocate_logs(
+    total_branch_steps,
+    cfg=CFG,
+):
+
+    n_diag = (
+        (total_branch_steps - 1)
+        // cfg.diagnostic_every
+        + 1
+    )
+
+    return {
+        "Z": np.empty(
+            (n_diag, 4, 2),
+            dtype=float,
+        ),
+        "L": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+        "K": np.empty(
+            (n_diag, 8, 2),
+            dtype=float,
+        ),
+        "TV": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+        "KL": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+    }
+
+
+# ======================================================================
+# 10. BASIN-LOCAL KERNEL MISMATCH
+# ======================================================================
+
+def kernel_mismatch_by_basin(
+    latent,
+    used,
+):
+    """
+    Basin-local TV and KL, averaged over the two hidden states
+    belonging to each projection basin.
+    """
+
+    latent = np.asarray(
+        latent,
+        dtype=float,
+    )
+
+    used = np.asarray(
+        used,
+        dtype=float,
+    )
+
+    node_TV = (
+        0.5
+        * np.sum(
+            np.abs(
+                latent
+                - used
+            ),
+            axis=1,
+        )
+    )
+
+    node_KL = np.sum(
+        latent
+        * np.log(
+            (
+                latent
+                + 1e-15
+            )
+            / (
+                used
+                + 1e-15
+            )
+        ),
+        axis=1,
+    )
+
+    basin_TV = np.mean(
+        node_TV[BASINS],
+        axis=1,
+    )
+
+    basin_KL = np.mean(
+        node_KL[BASINS],
+        axis=1,
+    )
+
+    return (
+        basin_TV,
+        basin_KL,
+    )
+
+
+# ======================================================================
+# 11. GENERATE CONTEMPORANEOUS NATIVE DRIVER
+# ======================================================================
+
+def generate_native_driver(
+    state0,
+    memory0,
+    hidden0,
+    obs0,
+    uniforms,
+    branch_steps,
+    cfg=CFG,
+):
+    """
+    Generates ONE native trajectory from the common branch point.
+
+    Stores the native microscopic kernel sequence:
+
+        K^N_0, K^N_1, ...
+
+    for enough time to support every requested temporal displacement.
+
+    The first `branch_steps` are also logged as the endogenous
+    native comparison branch.
+    """
+
+    driver_steps = len(uniforms)
+
+    u = int(state0)
+
+    memory = memory0.copy()
+
+    hidden = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    K_sequence = np.empty(
+        (
+            driver_steps,
+            8,
+            2,
+        ),
+        dtype=float,
+    )
+
+    native_logs = allocate_logs(
+        branch_steps,
+        cfg,
+    )
+
+    native_path = np.empty(
+        branch_steps + 1,
+        dtype=np.int8,
+    )
+
+    native_path[0] = u
+
+    d = 0
+
+    for t in range(driver_steps):
+
+        probs = all_native_probs(
+            memory,
+            cfg,
+        )
+
+        K_sequence[t] = probs
+
+        r = uniforms[t]
+
+        slot = (
+            0
+            if r < probs[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+        if t < branch_steps:
+
+            native_path[
+                t + 1
+            ] = u
+
+            if (
+                t
+                % cfg.diagnostic_every
+                == 0
+            ):
+
+                native_logs["Z"][d] = (
+                    compute_Z(
+                        hidden,
+                        obs,
+                        probs,
+                        cfg,
+                    )
+                )
+
+                native_logs["L"][d] = (
+                    compute_L(
+                        probs,
+                        cfg,
+                    )
+                )
+
+                native_logs["K"][d] = (
+                    probs
+                )
+
+                # Native latent == native used.
+                native_logs["TV"][d] = 0.0
+                native_logs["KL"][d] = 0.0
+
+                d += 1
+
+    for key in native_logs:
+
+        native_logs[key] = (
+            native_logs[key][:d]
+        )
+
+    return (
+        K_sequence,
+        native_logs,
+        native_path,
+    )
+
+
+# ======================================================================
+# 12. REPLAY ONE TEMPORAL OFFSET
+# ======================================================================
+
+def run_replay_offset(
+    state0,
+    memory0,
+    hidden0,
+    obs0,
+    uniforms,
+    K_native,
+    offset,
+    branch_steps,
+    cfg=CFG,
+):
+    """
+    Exogenous replay branch:
+
+        K_t^(s) = K^N_(t+s)
+
+    Memory still evolves according to the realized replay branch.
+    """
+
+    u = int(state0)
+
+    memory = memory0.copy()
+
+    hidden = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    logs = allocate_logs(
+        branch_steps,
+        cfg,
+    )
+
+    path = np.empty(
+        branch_steps + 1,
+        dtype=np.int8,
+    )
+
+    path[0] = u
+
+    d = 0
+
+    for t in range(branch_steps):
+
+        # Kernel the CURRENT replay memory would have generated.
+        latent = all_native_probs(
+            memory,
+            cfg,
+        )
+
+        # Temporally displaced ordered kernel history.
+        used = K_native[
+            t + offset
+        ]
+
+        r = uniforms[t]
+
+        slot = (
+            0
+            if r < used[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+        path[
+            t + 1
+        ] = u
+
+        if (
+            t
+            % cfg.diagnostic_every
+            == 0
+        ):
+
+            logs["Z"][d] = compute_Z(
+                hidden,
+                obs,
+                used,
+                cfg,
+            )
+
+            logs["L"][d] = compute_L(
+                used,
+                cfg,
+            )
+
+            logs["K"][d] = used
+
+            (
+                basin_TV,
+                basin_KL,
+            ) = kernel_mismatch_by_basin(
+                latent,
+                used,
+            )
+
+            logs["TV"][d] = (
+                basin_TV
+            )
+
+            logs["KL"][d] = (
+                basin_KL
+            )
+
+            d += 1
+
+    for key in logs:
+
+        logs[key] = (
+            logs[key][:d]
+        )
+
+    return (
+        logs,
+        path,
+    )
+
+
+# ======================================================================
+# 13. MANIFOLD AXES
+# ======================================================================
+
+def axes_from_reference(Z):
+
+    Z = np.asarray(
+        Z,
+        dtype=float,
+    )
+
+    mu = np.mean(
+        Z,
+        axis=0,
+    )
+
+    centered = (
+        Z - mu
+    )
+
+    cov = np.cov(
+        centered.T
+    )
+
+    eigvals, eigvecs = np.linalg.eigh(
+        cov
+    )
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+    eigvals = eigvals[
+        order
+    ]
+
+    eigvecs = eigvecs[
+        :,
+        order,
+    ]
+
+    e_parallel = eigvecs[
+        :,
+        0,
+    ].copy()
+
+    e_perp = eigvecs[
+        :,
+        1,
+    ].copy()
+
+    # Stable orientation convention.
+    if e_parallel[0] < 0:
+
+        e_parallel *= -1.0
+
+    determinant = (
+        e_parallel[0]
+        * e_perp[1]
+        - e_parallel[1]
+        * e_perp[0]
+    )
+
+    if determinant < 0:
+
+        e_perp *= -1.0
+
+    lambda_parallel = max(
+        float(eigvals[0]),
+        1e-15,
+    )
+
+    lambda_perp = max(
+        float(eigvals[1]),
+        1e-15,
+    )
+
+    sigma_perp = math.sqrt(
+        lambda_perp
+    )
+
+    anisotropy = (
+        lambda_parallel
+        / lambda_perp
+    )
+
+    return (
+        mu,
+        e_perp,
+        sigma_perp,
+        anisotropy,
+    )
+
+
+# ======================================================================
+# 14. RESTORING FRACTION
+# ======================================================================
+
+def restoring_fraction(
+    q_now,
+    dq,
+    cfg=CFG,
+):
+
+    flags = []
+
+    for i in range(
+        len(cfg.q_edges) - 1
+    ):
+
+        lo = cfg.q_edges[i]
+        hi = cfg.q_edges[i + 1]
+
+        mask = (
+            (q_now >= lo)
+            & (q_now < hi)
+        )
+
+        if (
+            int(np.sum(mask))
+            < cfg.min_bin_count
+        ):
+            continue
+
+        mean_q = float(
+            np.mean(
+                q_now[mask]
+            )
+        )
+
+        mean_dq = float(
+            np.mean(
+                dq[mask]
+            )
+        )
+
+        flags.append(
+            mean_q
+            * mean_dq
+            < 0
+        )
+
+    if not flags:
+        return np.nan
+
+    return float(
+        np.mean(flags)
+    )
+
+
+# ======================================================================
+# 15. SPLIT REFERENCE / OBSERVATION
+# ======================================================================
+
+def split_logs(
+    logs,
+    cfg=CFG,
+):
+
+    n_reference_diag = (
+        (cfg.reference - 1)
+        // cfg.diagnostic_every
+        + 1
+    )
+
+    reference = {}
+    observation = {}
+
+    for key, arr in logs.items():
+
+        reference[key] = (
+            arr[
+                :n_reference_diag
+            ]
+        )
+
+        observation[key] = (
+            arr[
+                n_reference_diag:
+            ]
+        )
+
+    return (
+        reference,
+        observation,
+    )
+
+
+# ======================================================================
+# 16. ANALYZE ONE BRANCH
+# ======================================================================
+
+def analyze_logs(
+    logs,
+    cfg=CFG,
+):
+
+    (
+        reference,
+        observation,
+    ) = split_logs(
+        logs,
+        cfg,
+    )
+
+    out = {}
+
+    for x in range(4):
+
+        (
+            mu,
+            e_perp,
+            sigma_perp,
+            anisotropy,
+        ) = axes_from_reference(
+            reference["Z"][
+                :,
+                x,
+                :,
+            ]
+        )
+
+        q = (
+            (
+                observation["Z"][
+                    :,
+                    x,
+                    :,
+                ]
+                - mu
+            )
+            @ e_perp
+        ) / max(
+            sigma_perp,
+            1e-15,
+        )
+
+        q_now = q[:-1]
+        q_next = q[1:]
+
+        dq = (
+            q_next
+            - q_now
+        )
+
+        fit_mask = (
+            np.isfinite(q_now)
+            & np.isfinite(dq)
+            & (
+                np.abs(q_now)
+                <= cfg.fit_q_abs_max
+            )
+        )
+
+        q_fit = q_now[
+            fit_mask
+        ]
+
+        dq_fit = dq[
+            fit_mask
+        ]
+
+        q_next_fit = q_next[
+            fit_mask
+        ]
+
+        if len(q_fit) < 10:
+
+            kappa = np.nan
+            phi_fit = np.nan
+            identity_error = np.nan
+
+        else:
+
+            X = np.column_stack(
+                (
+                    q_fit,
+                    np.ones(
+                        len(q_fit)
+                    ),
+                )
+            )
+
+            coef, _, _, _ = (
+                np.linalg.lstsq(
+                    X,
+                    dq_fit,
+                    rcond=None,
+                )
+            )
+
+            kappa = -float(
+                coef[0]
+            )
+
+            coef_ar, _, _, _ = (
+                np.linalg.lstsq(
+                    X,
+                    q_next_fit,
+                    rcond=None,
+                )
+            )
+
+            phi_fit = float(
+                coef_ar[0]
+            )
+
+            identity_error = abs(
+                kappa
+                - (
+                    1.0
+                    - phi_fit
+                )
+            )
+
+        out[x] = {
+
+            "kappa":
+                kappa,
+
+            "phi_fit":
+                phi_fit,
+
+            "kappa_identity_error":
+                identity_error,
+
+            "rho1_q":
+                lag1_corr(q),
+
+            "restore_fraction":
+                restoring_fraction(
+                    q_now,
+                    dq,
+                    cfg,
+                ),
+
+            "sigma_perp":
+                sigma_perp,
+
+            "anisotropy":
+                anisotropy,
+
+            "operator_mean":
+                float(
+                    np.mean(
+                        observation["L"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+
+            "operator_std":
+                float(
+                    np.std(
+                        observation["L"][
+                            :,
+                            x,
+                        ],
+                        ddof=1,
+                    )
+                ),
+
+            "operator_rho1":
+                lag1_corr(
+                    observation["L"][
+                        :,
+                        x,
+                    ]
+                ),
+
+            "TV":
+                float(
+                    np.mean(
+                        observation["TV"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+
+            "KL":
+                float(
+                    np.mean(
+                        observation["KL"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+        }
+
+    out["kernel_rho1"] = (
+        kernel_lag1_corr(
+            observation["K"]
+        )
+    )
+
+    out["global_TV"] = float(
+        np.mean(
+            observation["TV"]
+        )
+    )
+
+    out["global_KL"] = float(
+        np.mean(
+            observation["KL"]
+        )
+    )
+
+    return out
+
+
+# ======================================================================
+# 17. HARD s=0 REPLAY VALIDATION
+# ======================================================================
+
+def validate_zero_replay(
+    native_logs,
+    native_path,
+    replay_logs,
+    replay_path,
+    cfg=CFG,
+):
+
+    path_equal = np.array_equal(
+        native_path,
+        replay_path,
+    )
+
+    differences = {}
+
+    for key in (
+        "Z",
+        "L",
+        "K",
+        "TV",
+        "KL",
+    ):
+
+        differences[key] = float(
+            np.max(
+                np.abs(
+                    native_logs[key]
+                    - replay_logs[key]
+                )
+            )
+        )
+
+    max_difference = max(
+        differences.values()
+    )
+
+    passed = (
+        path_equal
+        and max_difference
+        <= cfg.replay_zero_tol
+    )
+
+    return {
+        "passed":
+            passed,
+
+        "path_equal":
+            path_equal,
+
+        "max_difference":
+            max_difference,
+
+        "differences":
+            differences,
+    }
+
+
+# ======================================================================
+# 18. ONE FULL PAIRED SEED
+# ======================================================================
+
+def simulate_seed(
+    seed,
+    cfg=CFG,
+):
+
+    rng = np.random.default_rng(
+        seed
+    )
+
+    memory = np.zeros(
+        (8, 2),
+        dtype=float,
+    )
+
+    hidden = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+    obs = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+    # ------------------------------------------------------
+    # Burn-in
+    # ------------------------------------------------------
+
+    (
+        state0,
+        memory0,
+        hidden0,
+        obs0,
+    ) = run_burnin(
+        rng,
+        0,
+        memory,
+        hidden,
+        obs,
+        cfg.burnin,
+        cfg,
+    )
+
+    # ------------------------------------------------------
+    # Freeze common branch point
+    # ------------------------------------------------------
+
+    memory_start = (
+        memory0.copy()
+    )
+
+    hidden_start = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs_start = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    branch_steps = (
+        cfg.reference
+        + cfg.observation
+    )
+
+    max_offset = max(
+        cfg.offsets
+    )
+
+    driver_steps = (
+        branch_steps
+        + max_offset
+    )
+
+    # One CRN stream shared by native and every replay branch.
+    uniforms = rng.random(
+        driver_steps
+    )
+
+    # ------------------------------------------------------
+    # Generate contemporaneous native kernel history
+    # ------------------------------------------------------
+
+    (
+        K_native,
+        native_logs,
+        native_path,
+    ) = generate_native_driver(
+        state0,
+        memory_start,
+        hidden_start,
+        obs_start,
+        uniforms,
+        branch_steps,
+        cfg,
+    )
+
+    native_metrics = analyze_logs(
+        native_logs,
+        cfg,
+    )
+
+    # ------------------------------------------------------
+    # Explicit s=0 replay
+    # ------------------------------------------------------
+
+    (
+        replay0_logs,
+        replay0_path,
+    ) = run_replay_offset(
+        state0,
+        memory_start,
+        hidden_start,
+        obs_start,
+        uniforms,
+        K_native,
+        0,
+        branch_steps,
+        cfg,
+    )
+
+    zero_validation = (
+        validate_zero_replay(
+            native_logs,
+            native_path,
+            replay0_logs,
+            replay0_path,
+            cfg,
+        )
+    )
+
+    if not zero_validation[
+        "passed"
+    ]:
+
+        raise RuntimeError(
+            "\nSIM13.4 HARD CONTROL FAILURE\n"
+            f"Seed: {seed}\n"
+            "Native != contemporaneous replay(s=0).\n"
+            f"Path equal: "
+            f"{zero_validation['path_equal']}\n"
+            f"Max difference: "
+            f"{zero_validation['max_difference']:.3e}\n"
+            "Mechanistic interpretation must stop."
+        )
+
+    # ------------------------------------------------------
+    # All temporal displacements
+    # ------------------------------------------------------
+
+    offset_results = {}
+
+    for s in cfg.offsets:
+
+        if s == 0:
+
+            logs = replay0_logs
+
+        else:
+
+            (
+                logs,
+                _
+            ) = run_replay_offset(
+                state0,
+                memory_start,
+                hidden_start,
+                obs_start,
+                uniforms,
+                K_native,
+                s,
+                branch_steps,
+                cfg,
+            )
+
+        offset_results[s] = (
+            analyze_logs(
+                logs,
+                cfg,
+            )
+        )
+
+    return {
+        "seed":
+            seed,
+
+        "native":
+            native_metrics,
+
+        "offsets":
+            offset_results,
+
+        "zero_validation":
+            zero_validation,
+    }
+
+
+# ======================================================================
+# 19. BUILD OFFSET-LEVEL SUMMARIES
+# ======================================================================
+
+def summarize_results(
+    runs,
+    cfg=CFG,
+):
+
+    summaries = {
+        x: {}
+        for x in range(4)
+    }
+
+    for x in range(4):
+
+        for s in cfg.offsets:
+
+            rows = [
+                run["offsets"][s][x]
+                for run in runs
+            ]
+
+            baseline_rows = [
+                run["offsets"][0][x]
+                for run in runs
+            ]
+
+            kappas = np.asarray(
+                [
+                    r["kappa"]
+                    for r in rows
+                ],
+                dtype=float,
+            )
+
+            kappa0 = np.asarray(
+                [
+                    r["kappa"]
+                    for r in baseline_rows
+                ],
+                dtype=float,
+            )
+
+            sigmas = np.asarray(
+                [
+                    r["sigma_perp"]
+                    for r in rows
+                ],
+                dtype=float,
+            )
+
+            sigma0 = np.asarray(
+                [
+                    r["sigma_perp"]
+                    for r in baseline_rows
+                ],
+                dtype=float,
+            )
+
+            anis = np.asarray(
+                [
+                    r["anisotropy"]
+                    for r in rows
+                ],
+                dtype=float,
+            )
+
+            anis0 = np.asarray(
+                [
+                    r["anisotropy"]
+                    for r in baseline_rows
+                ],
+                dtype=float,
+            )
+
+            delta_kappa = (
+                kappa0 - kappas
+            )
+
+            delta_sigma = (
+                sigmas - sigma0
+            )
+
+            delta_anis = (
+                anis - anis0
+            )
+
+            summaries[x][s] = {
+
+                "kappa_mean":
+                    mean_value(kappas),
+
+                "kappa_med":
+                    median_value(kappas),
+
+                "delta_kappa_mean":
+                    mean_value(
+                        delta_kappa
+                    ),
+
+                "delta_kappa_med":
+                    median_value(
+                        delta_kappa
+                    ),
+
+                "delta_kappa_IQR":
+                    iqr_value(
+                        delta_kappa
+                    ),
+
+                "P_delta_kappa_positive":
+                    fraction_positive(
+                        delta_kappa
+                    ),
+
+                "sigma_mean":
+                    mean_value(sigmas),
+
+                "sigma_med":
+                    median_value(sigmas),
+
+                "delta_sigma_med":
+                    median_value(
+                        delta_sigma
+                    ),
+
+                "anis_mean":
+                    mean_value(anis),
+
+                "anis_med":
+                    median_value(anis),
+
+                "delta_anis_med":
+                    median_value(
+                        delta_anis
+                    ),
+
+                "rho1_q_mean":
+                    mean_value(
+                        [
+                            r["rho1_q"]
+                            for r in rows
+                        ]
+                    ),
+
+                "restore_mean":
+                    mean_value(
+                        [
+                            r[
+                                "restore_fraction"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+
+                "L_mean":
+                    mean_value(
+                        [
+                            r[
+                                "operator_mean"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+
+                "L_std":
+                    mean_value(
+                        [
+                            r[
+                                "operator_std"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+
+                "L_rho1":
+                    mean_value(
+                        [
+                            r[
+                                "operator_rho1"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+
+                "TV_med":
+                    median_value(
+                        [
+                            r["TV"]
+                            for r in rows
+                        ]
+                    ),
+
+                "KL_med":
+                    median_value(
+                        [
+                            r["KL"]
+                            for r in rows
+                        ]
+                    ),
+
+                "identity_error_mean":
+                    mean_value(
+                        [
+                            r[
+                                "kappa_identity_error"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+            }
+
+    return summaries
+
+
+# ======================================================================
+# 20. PAIR-CLASS RESPONSE
+# ======================================================================
+
+def summarize_pair_classes(
+    runs,
+    cfg=CFG,
+):
+
+    out = {}
+
+    for s in cfg.offsets:
+
+        outer_delta = []
+        inner_delta = []
+        class_difference = []
+
+        for run in runs:
+
+            baseline = (
+                run["offsets"][0]
+            )
+
+            current = (
+                run["offsets"][s]
+            )
+
+            dk = {}
+
+            for x in range(4):
+
+                dk[x] = (
+                    baseline[x]["kappa"]
+                    - current[x]["kappa"]
+                )
+
+            outer = 0.5 * (
+                dk[0]
+                + dk[3]
+            )
+
+            inner = 0.5 * (
+                dk[1]
+                + dk[2]
+            )
+
+            outer_delta.append(
+                outer
+            )
+
+            inner_delta.append(
+                inner
+            )
+
+            class_difference.append(
+                outer - inner
+            )
+
+        out[s] = {
+
+            "outer_med":
+                median_value(
+                    outer_delta
+                ),
+
+            "inner_med":
+                median_value(
+                    inner_delta
+                ),
+
+            "D_kappa_med":
+                median_value(
+                    class_difference
+                ),
+
+            "P_outer_positive":
+                fraction_positive(
+                    outer_delta
+                ),
+
+            "P_inner_positive":
+                fraction_positive(
+                    inner_delta
+                ),
+
+            "P_D_positive":
+                fraction_positive(
+                    class_difference
+                ),
+        }
+
+    return out
+
+
+# ======================================================================
+# 21. KERNEL CHRONOLOGY SUMMARY
+# ======================================================================
+
+def chronology_summary(
+    runs,
+    cfg=CFG,
+):
+
+    out = {}
+
+    for s in cfg.offsets:
+
+        values = [
+            run[
+                "offsets"
+            ][s][
+                "kernel_rho1"
+            ]
+            for run in runs
+        ]
+
+        out[s] = {
+            "mean":
+                mean_value(values),
+
+            "median":
+                median_value(values),
+        }
+
+    rho0 = out[0][
+        "mean"
+    ]
+
+    maximum_difference = 0.0
+
+    for s in cfg.offsets:
+
+        difference = abs(
+            out[s]["mean"]
+            - rho0
+        )
+
+        maximum_difference = max(
+            maximum_difference,
+            difference,
+        )
+
+    passed = (
+        maximum_difference
+        <= cfg.kernel_rho1_tolerance
+    )
+
+    return {
+        "offsets":
+            out,
+
+        "rho0":
+            rho0,
+
+        "max_difference":
+            maximum_difference,
+
+        "passed":
+            passed,
+    }
+
+
+# ======================================================================
+# 22. EXPLORATORY MISMATCH-COLLAPSE PAIRS
+# ======================================================================
+
+def mismatch_collapse_pairs(
+    summaries,
+    basin,
+    cfg=CFG,
+    top_n=6,
+):
+    """
+    Exploratory only.
+
+    Finds offset pairs that have similar median TV mismatch despite
+    substantially different temporal displacement.
+
+    Then reports how different their manifold responses are.
+
+    No fitted compatibility parameter is introduced.
+    """
+
+    offsets = [
+        s
+        for s in cfg.offsets
+        if s > 0
+    ]
+
+    rows = []
+
+    # Robust scales only for reporting a dimensionless geometry distance.
+    delta_k = np.array(
+        [
+            summaries[basin][s][
+                "delta_kappa_med"
+            ]
+            for s in offsets
+        ],
+        dtype=float,
+    )
+
+    delta_sigma = np.array(
+        [
+            summaries[basin][s][
+                "delta_sigma_med"
+            ]
+            for s in offsets
+        ],
+        dtype=float,
+    )
+
+    delta_A = np.array(
+        [
+            summaries[basin][s][
+                "delta_anis_med"
+            ]
+            for s in offsets
+        ],
+        dtype=float,
+    )
+
+    def robust_scale(x):
+
+        scale = (
+            np.quantile(x, 0.75)
+            - np.quantile(x, 0.25)
+        )
+
+        if abs(scale) < 1e-12:
+
+            scale = np.std(x)
+
+        if abs(scale) < 1e-12:
+
+            scale = 1.0
+
+        return float(scale)
+
+    scale_k = robust_scale(
+        delta_k
+    )
+
+    scale_sigma = robust_scale(
+        delta_sigma
+    )
+
+    scale_A = robust_scale(
+        delta_A
+    )
+
+    for i in range(
+        len(offsets)
+    ):
+
+        for j in range(
+            i + 1,
+            len(offsets)
+        ):
+
+            s1 = offsets[i]
+            s2 = offsets[j]
+
+            # Require meaningfully separated temporal offsets.
+            if abs(s2 - s1) < 8:
+                continue
+
+            r1 = summaries[
+                basin
+            ][s1]
+
+            r2 = summaries[
+                basin
+            ][s2]
+
+            tv_gap = abs(
+                r1["TV_med"]
+                - r2["TV_med"]
+            )
+
+            kl_gap = abs(
+                r1["KL_med"]
+                - r2["KL_med"]
+            )
+
+            geometry_distance = math.sqrt(
+                (
+                    (
+                        r1[
+                            "delta_kappa_med"
+                        ]
+                        - r2[
+                            "delta_kappa_med"
+                        ]
+                    )
+                    / scale_k
+                ) ** 2
+                +
+                (
+                    (
+                        r1[
+                            "delta_sigma_med"
+                        ]
+                        - r2[
+                            "delta_sigma_med"
+                        ]
+                    )
+                    / scale_sigma
+                ) ** 2
+                +
+                (
+                    (
+                        r1[
+                            "delta_anis_med"
+                        ]
+                        - r2[
+                            "delta_anis_med"
+                        ]
+                    )
+                    / scale_A
+                ) ** 2
+            )
+
+            rows.append(
+                {
+                    "s1":
+                        s1,
+
+                    "s2":
+                        s2,
+
+                    "TV_gap":
+                        tv_gap,
+
+                    "KL_gap":
+                        kl_gap,
+
+                    "geometry_distance":
+                        geometry_distance,
+                }
+            )
+
+    rows.sort(
+        key=lambda r: (
+            r["TV_gap"],
+            r["KL_gap"],
+        )
+    )
+
+    return rows[
+        :top_n
+    ]
+
+
+# ======================================================================
+# 23. PRINT FULL OFFSET MAP
+# ======================================================================
+
+def print_offset_map(
+    summaries,
+    basin,
+    cfg=CFG,
+):
+
+    print()
+
+    print(
+        "=" * 118
+    )
+
+    print(
+        f"BASIN {basin} — TEMPORAL DISPLACEMENT RESPONSE"
+    )
+
+    print(
+        "=" * 118
+    )
+
+    header = (
+        " s      "
+        "kappa_med   "
+        "Dkappa_med  "
+        "P(Dk>0)   "
+        "sigma_med   "
+        "Dsigma_med  "
+        "anis_med    "
+        "Danis_med    "
+        "rho1(q)   "
+        "TV_med     "
+        "KL_med"
+    )
+
+    print(header)
+
+    print(
+        "-" * len(header)
+    )
+
+    for s in cfg.offsets:
+
+        r = summaries[
+            basin
+        ][s]
+
+        print(
+            f"{s:4d}   "
+            f"{r['kappa_med']:10.6f}  "
+            f"{r['delta_kappa_med']:10.6f}  "
+            f"{r['P_delta_kappa_positive']:8.3f}  "
+            f"{r['sigma_med']:10.6f}  "
+            f"{r['delta_sigma_med']:10.6f}  "
+            f"{r['anis_med']:10.3f}  "
+            f"{r['delta_anis_med']:11.3f}  "
+            f"{r['rho1_q_mean']:8.4f}  "
+            f"{r['TV_med']:9.6f}  "
+            f"{r['KL_med']:9.6f}"
+        )
+
+
+# ======================================================================
+# 24. PRINT OPERATOR VALIDITY MAP
+# ======================================================================
+
+def print_operator_map(
+    summaries,
+    basin,
+    cfg=CFG,
+):
+
+    print()
+
+    print(
+        f"Basin {basin} operator diagnostics"
+    )
+
+    print(
+        "-" * 82
+    )
+
+    print(
+        " s       mean(L)       std(L)      rho1(L)    restore    kappa-id-error"
+    )
+
+    for s in cfg.offsets:
+
+        r = summaries[
+            basin
+        ][s]
+
+        print(
+            f"{s:4d}   "
+            f"{r['L_mean']:12.7f}  "
+            f"{r['L_std']:11.7f}  "
+            f"{r['L_rho1']:10.6f}  "
+            f"{r['restore_mean']:9.5f}  "
+            f"{r['identity_error_mean']:.3e}"
+        )
+
+
+# ======================================================================
+# 25. PRINT PAIR-CLASS MAP
+# ======================================================================
+
+def print_pair_map(
+    pair_summary,
+    cfg=CFG,
+):
+
+    print()
+
+    print(
+        "=" * 93
+    )
+
+    print(
+        "PAIR-CLASS TEMPORAL-DISPLACEMENT RESPONSE"
+    )
+
+    print(
+        "=" * 93
+    )
+
+    print(
+        " s      Dkappa_outer   Dkappa_inner   D_outer-inner   "
+        "P(out>0)  P(in>0)  P(D>0)"
+    )
+
+    print(
+        "-" * 93
+    )
+
+    for s in cfg.offsets:
+
+        r = pair_summary[s]
+
+        print(
+            f"{s:4d}   "
+            f"{r['outer_med']:13.7f}  "
+            f"{r['inner_med']:13.7f}  "
+            f"{r['D_kappa_med']:14.7f}  "
+            f"{r['P_outer_positive']:8.3f}  "
+            f"{r['P_inner_positive']:7.3f}  "
+            f"{r['P_D_positive']:6.3f}"
+        )
+
+
+# ======================================================================
+# 26. MAIN SIMULATION
+# ======================================================================
+
+def run_SIM13_4(
+    n_seeds=50,
+    cfg=CFG,
+):
+
+    memory_half_life = (
+        math.log(0.5)
+        / math.log(
+            cfg.delta
+        )
+    )
+
+    branch_steps = (
+        cfg.reference
+        + cfg.observation
+    )
+
+    driver_steps = (
+        branch_steps
+        + max(cfg.offsets)
+    )
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "SIM13.4 — TEMPORAL DISPLACEMENT / PHASE-RESPONSE MAP"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        f"beta={cfg.beta}, "
+        f"delta={cfg.delta}, "
+        f"lambda={cfg.lam}, "
+        f"T_tol={cfg.Ttol}"
+    )
+
+    print(
+        f"Memory half-life from delta: "
+        f"{memory_half_life:.4f} microscopic steps"
+    )
+
+    print(
+        f"Reference steps : "
+        f"{cfg.reference}"
+    )
+
+    print(
+        f"Observation steps: "
+        f"{cfg.observation}"
+    )
+
+    print(
+        f"Native driver length: "
+        f"{driver_steps}"
+    )
+
+    print(
+        f"Seeds: {n_seeds}"
+    )
+
+    print(
+        "Offsets:"
+    )
+
+    print(
+        cfg.offsets
+    )
+
+    print()
+
+    print(
+        "s = controlled temporal displacement"
+    )
+
+    print(
+        "TV/KL = observed relational mismatch"
+    )
+
+    print()
+
+    print(
+        "HARD CONTROL:"
+    )
+
+    print(
+        "native must equal contemporaneous replay(s=0)"
+    )
+
+    print()
+
+
+    runs = []
+
+    zero_max_differences = []
+
+
+    for seed in range(
+        1,
+        n_seeds + 1,
+    ):
+
+        result = simulate_seed(
+            seed,
+            cfg,
+        )
+
+        runs.append(
+            result
+        )
+
+        zero_max_differences.append(
+            result[
+                "zero_validation"
+            ][
+                "max_difference"
+            ]
+        )
+
+        print(
+            f"completed seed "
+            f"{seed:3d}/{n_seeds}"
+        )
+
+
+    # ======================================================
+    # HARD ZERO-REPLAY GATE
+    # ======================================================
+
+    zero_gate_passed = all(
+        run[
+            "zero_validation"
+        ][
+            "passed"
+        ]
+        for run in runs
+    )
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "ZERO-DISPLACEMENT REPLAY VALIDATION"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "All native paths reproduced exactly : "
+        f"{zero_gate_passed}"
+    )
+
+    print(
+        "Maximum diagnostic difference        : "
+        f"{max(zero_max_differences):.3e}"
+    )
+
+
+    # ======================================================
+    # SUMMARIES
+    # ======================================================
+
+    summaries = summarize_results(
+        runs,
+        cfg,
+    )
+
+    pair_summary = (
+        summarize_pair_classes(
+            runs,
+            cfg,
+        )
+    )
+
+    chronology = (
+        chronology_summary(
+            runs,
+            cfg,
+        )
+    )
+
+
+    # ======================================================
+    # TEMPORAL CHRONOLOGY GATE
+    # ======================================================
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "KERNEL CHRONOLOGY VALIDATION"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        " s      mean rho1(K)      "
+        "difference from s=0"
+    )
+
+    print(
+        "-" * 50
+    )
+
+    for s in cfg.offsets:
+
+        rho = chronology[
+            "offsets"
+        ][s][
+            "mean"
+        ]
+
+        diff = abs(
+            rho
+            - chronology["rho0"]
+        )
+
+        print(
+            f"{s:4d}   "
+            f"{rho:14.9f}   "
+            f"{diff:14.9f}"
+        )
+
+    print()
+
+    print(
+        "Maximum rho1(K) displacement-window difference: "
+        f"{chronology['max_difference']:.9f}"
+    )
+
+    print(
+        "Allowed tolerance: "
+        f"{cfg.kernel_rho1_tolerance:.6f}"
+    )
+
+    print(
+        "Chronology diagnostic PASS: "
+        f"{chronology['passed']}"
+    )
+
+
+    # ======================================================
+    # FULL BASIN RESPONSE MAPS
+    # ======================================================
+
+    for x in range(4):
+
+        print_offset_map(
+            summaries,
+            x,
+            cfg,
+        )
+
+
+    # ======================================================
+    # OPERATOR TEMPORAL VALIDITY
+    # ======================================================
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "LCO / RESTORING VALIDATION MAP"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    for x in range(4):
+
+        print_operator_map(
+            summaries,
+            x,
+            cfg,
+        )
+
+
+    # ======================================================
+    # PAIR CLASS
+    # ======================================================
+
+    print_pair_map(
+        pair_summary,
+        cfg,
+    )
+
+
+    # ======================================================
+    # EXPLORATORY MISMATCH-COLLAPSE TABLES
+    # ======================================================
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "SECONDARY ANALYSIS — MISMATCH-COLLAPSE CANDIDATES"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "These are exploratory matched-TV offset pairs."
+    )
+
+    print(
+        "Small TV gap + large geometry distance is evidence AGAINST"
+    )
+
+    print(
+        "a simple instantaneous-mismatch collapse."
+    )
+
+    print(
+        "No frequency/resonance interpretation is permitted."
+    )
+
+
+    collapse_results = {}
+
+
+    for x in range(4):
+
+        pairs = mismatch_collapse_pairs(
+            summaries,
+            x,
+            cfg,
+        )
+
+        collapse_results[x] = (
+            pairs
+        )
+
+        print()
+
+        print(
+            f"Basin {x}"
+        )
+
+        print(
+            " s1     s2        TV gap        KL gap      geometry distance"
+        )
+
+        print(
+            "-" * 66
+        )
+
+        for row in pairs:
+
+            print(
+                f"{row['s1']:4d}   "
+                f"{row['s2']:4d}   "
+                f"{row['TV_gap']:12.8f}   "
+                f"{row['KL_gap']:12.8f}   "
+                f"{row['geometry_distance']:16.6f}"
+            )
+
+
+    # ======================================================
+    # FINAL VALIDITY STATUS
+    # ======================================================
+
+    valid_for_interpretation = (
+        zero_gate_passed
+        and chronology[
+            "passed"
+        ]
+    )
+
+
+    print()
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "SIM13.4 VALIDITY STATUS"
+    )
+
+    print(
+        "=" * 88
+    )
+
+    print(
+        "native ≈ true contemporaneous replay(0): "
+        f"{zero_gate_passed}"
+    )
+
+    print(
+        "kernel chronology preserved across s   : "
+        f"{chronology['passed']}"
+    )
+
+    print()
+
+    print(
+        "VALID FOR MECHANISTIC INTERPRETATION: "
+        f"{valid_for_interpretation}"
+    )
+
+    print()
+
+
+    if not valid_for_interpretation:
+
+        print(
+            "STOP INTERPRETATION."
+        )
+
+        print(
+            "The response map may be inspected diagnostically,"
+        )
+
+        print(
+            "but SIM13.4's mechanistic hypothesis is not testable"
+        )
+
+        print(
+            "under the failed control condition."
+        )
+
+    else:
+
+        print(
+            "CONTROL GATES PASSED."
+        )
+
+        print()
+
+        print(
+            "Interpret in this order:"
+        )
+
+        print(
+            "  1. near-zero displacement response"
+        )
+
+        print(
+            "  2. outer-vs-inner pair response"
+        )
+
+        print(
+            "  3. sigma_perp / anisotropy geometry response"
+        )
+
+        print(
+            "  4. TV/KL mismatch response"
+        )
+
+        print(
+            "  5. mismatch-collapse candidates"
+        )
+
+        print()
+
+        print(
+            "Do NOT assume monotonicity."
+        )
+
+        print(
+            "Do NOT call any oscillatory-looking feature a frequency"
+        )
+
+        print(
+            "or resonance without a separately designed replication."
+        )
+
+
+    return {
+
+        "runs":
+            runs,
+
+        "summaries":
+            summaries,
+
+        "pair_summary":
+            pair_summary,
+
+        "chronology":
+            chronology,
+
+        "collapse_results":
+            collapse_results,
+
+        "memory_half_life":
+            memory_half_life,
+
+        "zero_gate_passed":
+            zero_gate_passed,
+
+        "valid_for_interpretation":
+            valid_for_interpretation,
+    }
+
+
+# ======================================================================
+# 27. RUN SIM13.4
+# ======================================================================
+
+RESULTS_SIM13_4 = run_SIM13_4(
+    n_seeds=50,
+)
+
+
+
+
+
+
+RESULTS:
+
+
+
+
+
+
+2573 |
+
+========================================================================================
+
+SIM13.4 — TEMPORAL DISPLACEMENT / PHASE-RESPONSE MAP
+
+========================================================================================
+
+beta=1.38, delta=0.95, lambda=1.0, T_tol=1.0
+
+Memory half-life from delta: 13.5134 microscopic steps
+
+Reference steps : 4000
+
+Observation steps: 6000
+
+Native driver length: 14000
+
+Seeds: 50
+
+Offsets:
+
+(0, 1, 2, 4, 8, 12, 16, 25, 50, 100, 250, 500, 1000, 2000, 4000)
+
+2626 |
+
+s = controlled temporal displacement
+
+TV/KL = observed relational mismatch
+
+2636 |
+
+HARD CONTROL:
+
+native must equal contemporaneous replay(s=0)
+
+2646 |
+
+completed seed   1/50
+
+completed seed   2/50
+
+completed seed   3/50
+
+completed seed   4/50
+
+completed seed   5/50
+
+completed seed   6/50
+
+completed seed   7/50
+
+completed seed   8/50
+
+completed seed   9/50
+
+completed seed  10/50
+
+completed seed  11/50
+
+completed seed  12/50
+
+completed seed  13/50
+
+completed seed  14/50
+
+completed seed  15/50
+
+completed seed  16/50
+
+completed seed  17/50
+
+completed seed  18/50
+
+completed seed  19/50
+
+completed seed  20/50
+
+completed seed  21/50
+
+completed seed  22/50
+
+completed seed  23/50
+
+completed seed  24/50
+
+completed seed  25/50
+
+completed seed  26/50
+
+completed seed  27/50
+
+completed seed  28/50
+
+completed seed  29/50
+
+completed seed  30/50
+
+completed seed  31/50
+
+completed seed  32/50
+
+completed seed  33/50
+
+completed seed  34/50
+
+completed seed  35/50
+
+completed seed  36/50
+
+completed seed  37/50
+
+completed seed  38/50
+
+completed seed  39/50
+
+completed seed  40/50
+
+completed seed  41/50
+
+completed seed  42/50
+
+completed seed  43/50
+
+completed seed  44/50
+
+completed seed  45/50
+
+completed seed  46/50
+
+completed seed  47/50
+
+completed seed  48/50
+
+completed seed  49/50
+
+completed seed  50/50
+
+2695 |
+
+========================================================================================
+
+ZERO-DISPLACEMENT REPLAY VALIDATION
+
+========================================================================================
+
+All native paths reproduced exactly : True
+
+Maximum diagnostic difference        : 0.000e+00
+
+2748 |
+
+========================================================================================
+
+KERNEL CHRONOLOGY VALIDATION
+
+========================================================================================
+
+ s      mean rho1(K)      difference from s=0
+
+--------------------------------------------------
+
+   0      0.986849343      0.000000000
+
+   1      0.986864425      0.000015082
+
+   2      0.986890911      0.000041568
+
+   4      0.986872444      0.000023101
+
+   8      0.986875589      0.000026247
+
+  12      0.986894734      0.000045392
+
+  16      0.986863458      0.000014116
+
+  25      0.986839634      0.000009708
+
+  50      0.986830248      0.000019095
+
+ 100      0.986834958      0.000014384
+
+ 250      0.986841523      0.000007820
+
+ 500      0.986821065      0.000028277
+
+1000      0.986853425      0.000004083
+
+2000      0.986832330      0.000017012
+
+4000      0.986853551      0.000004208
+
+2790 |
+
+Maximum rho1(K) displacement-window difference: 0.000045392
+
+Allowed tolerance: 0.030000
+
+Chronology diagnostic PASS: True
+
+2405 |
+
+======================================================================================================================
+
+BASIN 0 — TEMPORAL DISPLACEMENT RESPONSE
+
+======================================================================================================================
+
+ s      kappa_med   Dkappa_med  P(Dk>0)   sigma_med   Dsigma_med  anis_med    Danis_med    rho1(q)   TV_med     KL_med
+
+----------------------------------------------------------------------------------------------------------------------
+
+   0     0.189673    0.000000     0.000    0.043406    0.000000      26.418        0.000    0.7559   0.000000   0.000000
+
+   1     0.191917    0.002425     0.560    0.042965   -0.000187      26.821        0.222    0.7757   0.003181   0.000511
+
+   2     0.207782   -0.023057     0.260    0.044019    0.000705      25.987       -0.958    0.7613   0.006080   0.000989
+
+   4     0.220286   -0.035725     0.160    0.045849    0.003080      22.018       -3.918    0.7424   0.012261   0.002212
+
+   8     0.209836   -0.019437     0.180    0.048992    0.005991      18.660       -7.463    0.7472   0.020493   0.004140
+
+  12     0.195731   -0.006831     0.400    0.050644    0.007710      16.815       -8.878    0.7695   0.025471   0.005561
+
+  16     0.179423    0.010069     0.640    0.052067    0.008839      15.989      -10.038    0.7873   0.029054   0.006821
+
+  25     0.156595    0.033233     0.820    0.053589    0.009679      14.178      -11.340    0.8094   0.034143   0.008783
+
+  50     0.140507    0.052130     0.940    0.054694    0.011553      13.862      -13.074    0.8251   0.040157   0.011276
+
+ 100     0.138954    0.049402     0.960    0.055918    0.012264      12.367      -13.518    0.8290   0.042748   0.012252
+
+ 250     0.130056    0.055794     0.920    0.054761    0.012419      10.974      -15.155    0.8288   0.042380   0.012167
+
+ 500     0.141465    0.052105     0.980    0.054780    0.012070      11.405      -15.255    0.8302   0.042555   0.011993
+
+1000     0.130365    0.065604     0.980    0.055890    0.011821      11.364      -14.924    0.8286   0.042216   0.012028
+
+2000     0.141431    0.049457     0.940    0.055942    0.012577      10.676      -15.201    0.8284   0.041597   0.011842
+
+4000     0.133881    0.061588     0.960    0.054353    0.011333      11.864      -14.831    0.8327   0.042471   0.011947
+
+2405 |
+
+======================================================================================================================
+
+BASIN 1 — TEMPORAL DISPLACEMENT RESPONSE
+
+======================================================================================================================
+
+ s      kappa_med   Dkappa_med  P(Dk>0)   sigma_med   Dsigma_med  anis_med    Danis_med    rho1(q)   TV_med     KL_med
+
+----------------------------------------------------------------------------------------------------------------------
+
+   0     0.244021    0.000000     0.000    0.019975    0.000000     111.583        0.000    0.7474   0.000000   0.000000
+
+   1     0.246564    0.002819     0.540    0.019703   -0.000008     112.614        0.092    0.7525   0.006430   0.001358
+
+   2     0.244433   -0.002393     0.460    0.019702    0.000005     111.078       -0.054    0.7531   0.012719   0.002745
+
+   4     0.251328   -0.008000     0.400    0.020216    0.000259     104.736       -4.744    0.7463   0.027209   0.006442
+
+   8     0.250631   -0.004592     0.440    0.020204    0.000306      96.787       -9.097    0.7501   0.045458   0.011654
+
+  12     0.245898    0.000168     0.500    0.020306    0.000372      95.260      -11.395    0.7546   0.057615   0.015562
+
+  16     0.246306    0.001425     0.540    0.020348    0.000427      94.987      -12.046    0.7541   0.066548   0.018795
+
+  25     0.242185    0.000717     0.520    0.020464    0.000507      92.430      -14.555    0.7539   0.080770   0.024531
+
+  50     0.245384    0.001658     0.540    0.020500    0.000532      88.678      -17.887    0.7541   0.095430   0.031822
+
+ 100     0.244854    0.001066     0.520    0.020429    0.000589      83.468      -25.998    0.7546   0.100549   0.034043
+
+ 250     0.245289   -0.000205     0.500    0.020446    0.000446      72.163      -34.812    0.7554   0.102225   0.034994
+
+ 500     0.244469   -0.002239     0.460    0.020592    0.000565      75.917      -32.069    0.7544   0.101170   0.034081
+
+1000     0.248261   -0.002865     0.460    0.020447    0.000391      77.004      -27.079    0.7550   0.100569   0.034398
+
+2000     0.247099   -0.002499     0.480    0.020213    0.000171      78.389      -29.500    0.7554   0.100679   0.034426
+
+4000     0.247507   -0.001746     0.480    0.020197    0.000347      76.147      -28.702    0.7539   0.100869   0.034865
+
+2405 |
+
+======================================================================================================================
+
+BASIN 2 — TEMPORAL DISPLACEMENT RESPONSE
+
+======================================================================================================================
+
+ s      kappa_med   Dkappa_med  P(Dk>0)   sigma_med   Dsigma_med  anis_med    Danis_med    rho1(q)   TV_med     KL_med
+
+----------------------------------------------------------------------------------------------------------------------
+
+   0     0.250576    0.000000     0.000    0.019708    0.000000     111.260        0.000    0.7459   0.000000   0.000000
+
+   1     0.253795    0.000025     0.500    0.019603   -0.000013     111.463        0.142    0.7483   0.006476   0.001349
+
+   2     0.260118   -0.002210     0.480    0.019565   -0.000000     112.131        0.005    0.7457   0.012570   0.002729
+
+   4     0.264929   -0.010180     0.380    0.019931    0.000103     107.580       -3.071    0.7442   0.026820   0.006278
+
+   8     0.259502   -0.005133     0.320    0.020007    0.000333     105.119       -8.573    0.7457   0.045133   0.011504
+
+  12     0.250447   -0.001271     0.500    0.020056    0.000394      99.099      -11.324    0.7482   0.058249   0.016074
+
+  16     0.253747   -0.003417     0.480    0.020095    0.000388      98.547      -13.575    0.7508   0.067733   0.019351
+
+  25     0.247232    0.003215     0.620    0.020276    0.000438      96.282      -16.210    0.7529   0.082170   0.025232
+
+  50     0.248397    0.003838     0.600    0.020302    0.000469      87.410      -21.462    0.7541   0.095330   0.032120
+
+ 100     0.245088    0.002967     0.560    0.020024    0.000432      81.892      -28.719    0.7550   0.101642   0.034837
+
+ 250     0.250566    0.000911     0.560    0.020218    0.000468      78.966      -33.195    0.7550   0.102069   0.035132
+
+ 500     0.249014   -0.002602     0.480    0.020367    0.000377      73.036      -38.066    0.7551   0.100672   0.034884
+
+1000     0.248001    0.006130     0.580    0.020479    0.000441      79.951      -31.798    0.7554   0.100913   0.034457
+
+2000     0.253554   -0.004344     0.340    0.020310    0.000609      79.152      -34.891    0.7561   0.100228   0.034501
+
+4000     0.250700   -0.001613     0.480    0.020060    0.000414      81.422      -27.672    0.7550   0.101544   0.034588
+
+2405 |
+
+======================================================================================================================
+
+BASIN 3 — TEMPORAL DISPLACEMENT RESPONSE
+
+======================================================================================================================
+
+ s      kappa_med   Dkappa_med  P(Dk>0)   sigma_med   Dsigma_med  anis_med    Danis_med    rho1(q)   TV_med     KL_med
+
+----------------------------------------------------------------------------------------------------------------------
+
+   0     0.183677    0.000000     0.000    0.042296    0.000000      28.462        0.000    0.7611   0.000000   0.000000
+
+   1     0.184255    0.005698     0.640    0.041965   -0.000112      28.874        0.187    0.7839   0.003079   0.000493
+
+   2     0.198194   -0.011103     0.320    0.042873    0.000848      27.246       -1.222    0.7662   0.006054   0.000999
+
+   4     0.219144   -0.031605     0.120    0.045076    0.003017      24.328       -4.190    0.7420   0.012366   0.002281
+
+   8     0.211309   -0.016728     0.260    0.048021    0.005885      20.522       -8.213    0.7484   0.020164   0.004083
+
+  12     0.182702    0.004496     0.600    0.050001    0.007826      18.836       -9.363    0.7766   0.025273   0.005587
+
+  16     0.173124    0.020455     0.740    0.050576    0.009035      18.008      -11.008    0.7907   0.029131   0.006828
+
+  25     0.151371    0.029163     0.900    0.053046    0.010515      16.305      -13.438    0.8093   0.034743   0.008851
+
+  50     0.137724    0.056364     0.940    0.053856    0.012685      14.237      -15.079    0.8259   0.040525   0.011380
+
+ 100     0.130684    0.056487     0.960    0.054683    0.012983      12.434      -16.845    0.8309   0.042550   0.012075
+
+ 250     0.133163    0.054913     0.940    0.054950    0.013036      12.265      -16.906    0.8314   0.042776   0.012123
+
+ 500     0.136297    0.053177     0.960    0.054886    0.012361      11.302      -17.366    0.8305   0.042773   0.012258
+
+1000     0.134446    0.058135     0.980    0.054997    0.013288      12.725      -16.288    0.8305   0.042700   0.012167
+
+2000     0.132133    0.060026     0.960    0.054291    0.013607      11.571      -16.764    0.8320   0.042659   0.012121
+
+4000     0.134485    0.053937     0.940    0.055100    0.013034      12.632      -16.622    0.8313   0.042679   0.012009
+
+2825 |
+
+========================================================================================
+
+LCO / RESTORING VALIDATION MAP
+
+========================================================================================
+
+2470 |
+
+Basin 0 operator diagnostics
+
+----------------------------------------------------------------------------------
+
+ s       mean(L)       std(L)      rho1(L)    restore    kappa-id-error
+
+   0      0.4502816    0.0874005    0.834709    0.93615  1.021e-15
+
+   1      0.4502024    0.0873433    0.832563    0.94758  9.895e-16
+
+   2      0.4501923    0.0874262    0.832362    0.95552  8.393e-16
+
+   4      0.4501919    0.0875355    0.834176    0.96421  8.687e-16
+
+   8      0.4501533    0.0874560    0.834579    0.95345  1.130e-15
+
+  12      0.4501694    0.0874300    0.832389    0.93361  1.145e-15
+
+  16      0.4501750    0.0873557    0.832661    0.94048  9.445e-16
+
+  25      0.4502482    0.0874316    0.834648    0.95341  9.903e-16
+
+  50      0.4502427    0.0874384    0.834440    0.93607  1.039e-15
+
+ 100      0.4501303    0.0873183    0.834283    0.95276  7.253e-16
+
+ 250      0.4499306    0.0873748    0.834475    0.91860  8.296e-16
+
+ 500      0.4495859    0.0874414    0.834456    0.93866  1.126e-15
+
+1000      0.4494243    0.0876014    0.834226    0.95455  1.085e-15
+
+2000      0.4498288    0.0878362    0.834488    0.94381  9.301e-16
+
+4000      0.4498369    0.0885404    0.838824    0.94679  1.047e-15
+
+2470 |
+
+Basin 1 operator diagnostics
+
+----------------------------------------------------------------------------------
+
+ s       mean(L)       std(L)      rho1(L)    restore    kappa-id-error
+
+   0     -0.6712780    0.0206144    0.753669    0.97452  1.013e-15
+
+   1     -0.6712930    0.0206211    0.755634    0.98560  1.013e-15
+
+   2     -0.6713092    0.0206420    0.758174    0.98206  9.281e-16
+
+   4     -0.6712779    0.0206168    0.754291    0.97679  8.143e-16
+
+   8     -0.6713250    0.0206260    0.755995    0.97310  1.025e-15
+
+  12     -0.6713200    0.0206306    0.758127    0.97345  1.040e-15
+
+  16     -0.6713049    0.0206094    0.755480    0.97679  8.438e-16
+
+  25     -0.6712868    0.0206058    0.753415    0.96738  9.992e-16
+
+  50     -0.6712954    0.0206040    0.753668    0.96786  9.226e-16
+
+ 100     -0.6712551    0.0206070    0.753811    0.97940  1.142e-15
+
+ 250     -0.6713308    0.0205881    0.754093    0.98190  1.019e-15
+
+ 500     -0.6713387    0.0205760    0.753033    0.97857  9.448e-16
+
+1000     -0.6713847    0.0205998    0.754496    0.97345  8.898e-16
+
+2000     -0.6712935    0.0206507    0.754362    0.97167  8.926e-16
+
+4000     -0.6713434    0.0205801    0.752928    0.97476  9.232e-16
+
+2470 |
+
+Basin 2 operator diagnostics
+
+----------------------------------------------------------------------------------
+
+ s       mean(L)       std(L)      rho1(L)    restore    kappa-id-error
+
+   0     -0.6712835    0.0205286    0.754079    0.98274  9.948e-16
+
+   1     -0.6712703    0.0205264    0.753615    0.98881  1.147e-15
+
+   2     -0.6712733    0.0204987    0.752803    0.97310  1.044e-15
+
+   4     -0.6712988    0.0204716    0.752744    0.98123  1.075e-15
+
+   8     -0.6712679    0.0204794    0.753723    0.96571  8.732e-16
+
+  12     -0.6712579    0.0205025    0.752795    0.96560  1.008e-15
+
+  16     -0.6712519    0.0205333    0.753446    0.98095  9.293e-16
+
+  25     -0.6712498    0.0205434    0.753930    0.97381  1.084e-15
+
+  50     -0.6712220    0.0205472    0.753795    0.97929  9.454e-16
+
+ 100     -0.6712321    0.0205401    0.754139    0.98833  8.743e-16
+
+ 250     -0.6711212    0.0205601    0.754373    0.97548  8.948e-16
+
+ 500     -0.6711795    0.0205396    0.754467    0.97512  7.305e-16
+
+1000     -0.6713213    0.0205211    0.754571    0.97405  9.326e-16
+
+2000     -0.6714354    0.0205207    0.755547    0.96512  9.753e-16
+
+4000     -0.6714480    0.0205039    0.754489    0.98583  1.011e-15
+
+2470 |
+
+Basin 3 operator diagnostics
+
+----------------------------------------------------------------------------------
+
+ s       mean(L)       std(L)      rho1(L)    restore    kappa-id-error
+
+   0      0.4477659    0.0890301    0.838376    0.92135  9.140e-16
+
+   1      0.4478218    0.0890616    0.839266    0.94226  8.102e-16
+
+   2      0.4479132    0.0889981    0.839334    0.97125  1.038e-15
+
+   4      0.4478981    0.0890606    0.838973    0.96333  8.260e-16
+
+   8      0.4480291    0.0889551    0.839074    0.95552  8.965e-16
+
+  12      0.4479142    0.0889940    0.839218    0.95885  9.232e-16
+
+  16      0.4478368    0.0890501    0.839026    0.94659  1.098e-15
+
+  25      0.4477899    0.0890170    0.837988    0.95230  1.026e-15
+
+  50      0.4477797    0.0889725    0.837886    0.94185  8.560e-16
+
+ 100      0.4477641    0.0889185    0.837835    0.95681  8.821e-16
+
+ 250      0.4478868    0.0888320    0.837841    0.97520  8.135e-16
+
+ 500      0.4481948    0.0886951    0.837495    0.93910  9.753e-16
+
+1000      0.4482479    0.0887175    0.837005    0.95290  1.100e-15
+
+2000      0.4480628    0.0889879    0.839374    0.94845  9.504e-16
+
+4000      0.4485130    0.0887493    0.837061    0.96234  8.951e-16
+
+2509 |
+
+=============================================================================================
+
+PAIR-CLASS TEMPORAL-DISPLACEMENT RESPONSE
+
+=============================================================================================
+
+ s      Dkappa_outer   Dkappa_inner   D_outer-inner   P(out>0)  P(in>0)  P(D>0)
+
+---------------------------------------------------------------------------------------------
+
+   0       0.0000000      0.0000000       0.0000000     0.000    0.000   0.000
+
+   1       0.0031014      0.0014926       0.0015655     0.580    0.520   0.540
+
+   2      -0.0146936     -0.0003954      -0.0141325     0.140    0.500   0.280
+
+   4      -0.0350786     -0.0073093      -0.0283294     0.080    0.300   0.160
+
+   8      -0.0231756     -0.0068003      -0.0196172     0.160    0.300   0.280
+
+  12       0.0020406     -0.0006994       0.0025756     0.520    0.480   0.560
+
+  16       0.0161065     -0.0004921       0.0181688     0.780    0.480   0.700
+
+  25       0.0367619      0.0011006       0.0336541     0.960    0.580   0.900
+
+  50       0.0515742      0.0032482       0.0453810     1.000    0.580   0.960
+
+ 100       0.0521797      0.0023962       0.0477267     1.000    0.580   0.980
+
+ 250       0.0538950      0.0010531       0.0520247     0.980    0.560   0.980
+
+ 500       0.0510918      0.0002581       0.0487109     1.000    0.500   1.000
+
+1000       0.0550825     -0.0008279       0.0519822     1.000    0.480   0.980
+
+2000       0.0550871     -0.0037924       0.0547977     0.940    0.380   0.980
+
+4000       0.0590803     -0.0033917       0.0549906     0.960    0.460   0.980
+
+2862 |
+
+========================================================================================
+
+SECONDARY ANALYSIS — MISMATCH-COLLAPSE CANDIDATES
+
+========================================================================================
+
+These are exploratory matched-TV offset pairs.
+
+Small TV gap + large geometry distance is evidence AGAINST
+
+a simple instantaneous-mismatch collapse.
+
+No frequency/resonance interpretation is permitted.
+
+2908 |
+
+Basin 0
+
+ s1     s2        TV gap        KL gap      geometry distance
+
+------------------------------------------------------------------
+
+ 500   4000     0.00008432     0.00004623           0.221399
+
+ 250   4000     0.00009130     0.00022045           0.224375
+
+ 250   1000     0.00016314     0.00013932           0.206214
+
+ 250    500     0.00017563     0.00017422           0.091325
+
+ 100    500     0.00019253     0.00025929           0.252175
+
+1000   4000     0.00025444     0.00008113           0.113253
+
+2908 |
+
+Basin 1
+
+ s1     s2        TV gap        KL gap      geometry distance
+
+------------------------------------------------------------------
+
+ 100   1000     0.00002039     0.00035596           1.450544
+
+1000   2000     0.00010965     0.00002792           1.006264
+
+ 100   2000     0.00013004     0.00038387           2.160981
+
+2000   4000     0.00019060     0.00043879           0.826194
+
+1000   4000     0.00030025     0.00046671           0.388883
+
+ 500   4000     0.00030076     0.00078452           1.008990
+
+2908 |
+
+Basin 2
+
+ s1     s2        TV gap        KL gap      geometry distance
+
+------------------------------------------------------------------
+
+ 100   4000     0.00009766     0.00024928           0.831653
+
+ 500   1000     0.00024102     0.00042693           1.702267
+
+ 100    250     0.00042750     0.00029518           0.553998
+
+ 500   2000     0.00044448     0.00038363           2.436577
+
+ 250   4000     0.00052515     0.00054446           0.755012
+
+1000   4000     0.00063091     0.00013019           1.407356
+
+2908 |
+
+Basin 3
+
+ s1     s2        TV gap        KL gap      geometry distance
+
+------------------------------------------------------------------
+
+ 250    500     0.00000313     0.00013538           0.120683
+
+2000   4000     0.00002002     0.00011188           0.147892
+
+1000   4000     0.00002119     0.00015829           0.099168
+
+1000   2000     0.00004121     0.00004641           0.083797
+
+ 500   1000     0.00007274     0.00009091           0.214381
+
+ 250   1000     0.00007587     0.00004447           0.105060
+
+2945 |
+
+========================================================================================
+
+SIM13.4 VALIDITY STATUS
+
+========================================================================================
+
+native ≈ true contemporaneous replay(0): True
+
+kernel chronology preserved across s   : True
+
+2969 |
+
+VALID FOR MECHANISTIC INTERPRETATION: True
+
+2976 |
+
+CONTROL GATES PASSED.
+
+3003 |
+
+Interpret in this order:
+
+  1. near-zero displacement response
+
+  2. outer-vs-inner pair response
+
+  3. sigma_perp / anisotropy geometry response
+
+  4. TV/KL mismatch response
+
+  5. mismatch-collapse candidates
+
+3029 |
+
+Do NOT assume monotonicity.
+
+Do NOT call any oscillatory-looking feature a frequency
+
+or resonance without a separately designed replication.
