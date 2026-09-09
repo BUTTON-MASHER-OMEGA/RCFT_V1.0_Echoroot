@@ -1,0 +1,5123 @@
+# ======================================================================
+# SIM13.6 — MEMORY-TIMESCALE SCALING TEST / SIM13 CLOSURE
+# ======================================================================
+#
+# CENTRAL QUESTION
+# ----------------
+# Does the population-level outer-pair crossover s_c move quantitatively
+# when the memory persistence parameter delta is changed?
+#
+# SIM13.6 closes the SIM13 line. It does NOT add geometry, topology,
+# operators, mismatch penalties, or new ISP dynamics. The only dynamical
+# control varied is delta.
+#
+# FROZEN FROM SIM13.5
+# -------------------
+# beta=1.38, lambda=1, T_tol=1, C8, projection, memory law, candidate LCO,
+# Z=(C,log V_eff), exact branch replay, common random numbers, manifold
+# analysis, kappa estimator, and the preregistered median-curve crossover
+# estimator.
+#
+# PRIMARY FROZEN BARE-DECAY HYPOTHESIS
+# ------------------------------------
+# tau_delta(delta) = -1/log(delta)
+# s_c(delta)       = r_delta * tau_delta(delta)
+#
+# Anchor from archived SIM13.5:
+# s_c(.95) = 11.930572
+# r_delta  = s_c(.95)/tau_delta(.95) ~= 0.611958
+#
+# Competing realized-memory hypothesis:
+# s_c(delta) = r_M * tau_M_emp(delta)
+# where tau_M_emp is independently measured from the native memory process,
+# and r_M is calibrated ONLY at delta=.95.
+#
+# Live null:
+# neither timescale organizes the crossover.
+#
+# IMPORTANT:
+# - Predictions are printed BEFORE simulation begins.
+# - No held-out delta is used to refit either scaling coefficient.
+# - Horizontal crossover scaling is primary; vertical curve collapse is not.
+# - The SIM13.5 0.60 post-majority gate is retained only as the secondary
+#   stochastic-transition scale s_60; it does not define s_c in SIM13.6.
+# - No resonance/frequency interpretation is permitted.
+# ======================================================================
+
+import math
+from collections import deque
+from dataclasses import dataclass, replace
+import numpy as np
+
+
+# ======================================================================
+# 1. GRAPH / PROJECTION — FROZEN
+# ======================================================================
+
+NBR = np.array(
+    [
+        [1, 2],
+        [0, 3],
+        [0, 4],
+        [1, 5],
+        [2, 6],
+        [3, 7],
+        [4, 7],
+        [5, 6],
+    ],
+    dtype=np.int8,
+)
+
+PROJ = np.array([0, 0, 1, 1, 2, 2, 3, 3], dtype=np.int8)
+
+BASINS = np.array(
+    [
+        [0, 1],
+        [2, 3],
+        [4, 5],
+        [6, 7],
+    ],
+    dtype=np.int8,
+)
+
+DP = (PROJ[NBR] != PROJ[:, None]).astype(np.float64)
+SAME_PROJ = (PROJ[NBR] == PROJ[:, None])
+
+
+# ======================================================================
+# 2. CONFIGURATION / PREREGISTRATION
+# ======================================================================
+
+SIM135_SC_ANCHOR = 11.930572
+SIM135_DELTA_ANCHOR = 0.95
+SIM135_CI95 = (11.157967, 13.157025)
+
+
+@dataclass
+class Config:
+    # Frozen dynamics except delta, which is the SIM13.6 intervention.
+    lam: float = 1.0
+    delta: float = 0.95
+    beta: float = 1.38
+    alpha: float = 1.0
+    Ttol: float = 1.0
+
+    # Frozen timeline.
+    burnin: int = 3000
+    reference: int = 4000
+    observation: int = 6000
+
+    # Frozen diagnostics.
+    diagnostic_every: int = 5
+    stats_window: int = 100
+
+    # Frozen restoring-field fit.
+    fit_q_abs_max: float = 1.5
+    min_bin_count: int = 40
+
+    q_edges: tuple = (
+        -3.0, -2.0, -1.5, -1.0, -0.5,
+         0.0,  0.5,  1.0,  1.5,  2.0, 3.0,
+    )
+
+    # SIM13.6 frozen delta panel.
+    deltas: tuple = (
+        0.90,
+        0.93,
+        0.95,
+        0.97,
+        0.98,
+    )
+
+    # Common displacement grid for all delta values.
+    offsets: tuple = (
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        12, 14, 16, 18, 20, 22, 24, 26, 28,
+        30, 32, 35, 40, 45,
+    )
+
+    # Hard controls.
+    replay_zero_tol: float = 1e-12
+    kernel_rho1_tolerance: float = 0.03
+    kappa_identity_tolerance: float = 1e-10
+
+    # Crossover / bootstrap validity.
+    bootstrap_finite_threshold: float = 0.80
+
+    # Secondary stochastic-majority scale.
+    majority_threshold: float = 0.60
+
+    # Scaling promotion criteria.
+    relative_error_threshold: float = 0.20
+    min_ci_captures: int = 3
+
+    # Empirical memory-timescale estimator.
+    memory_acf_max_lag: int = 250
+    memory_acf_target: float = math.exp(-1.0)
+
+
+CFG = Config()
+
+
+def tau_delta(delta):
+    return -1.0 / math.log(float(delta))
+
+
+def half_life_delta(delta):
+    return math.log(0.5) / math.log(float(delta))
+
+
+TAU_DELTA_ANCHOR = tau_delta(SIM135_DELTA_ANCHOR)
+R_DELTA_FROZEN = SIM135_SC_ANCHOR / TAU_DELTA_ANCHOR
+
+
+# ======================================================================
+# 3. BASIC HELPERS
+# ======================================================================
+
+def stable_logistic_minus(z):
+    """Return 1/(1+exp(z)) stably."""
+    z = np.asarray(z, dtype=float)
+    out = np.empty_like(z)
+
+    pos = z >= 0
+    ez = np.exp(-z[pos])
+    out[pos] = ez / (1.0 + ez)
+
+    neg = ~pos
+    ez = np.exp(z[neg])
+    out[neg] = 1.0 / (1.0 + ez)
+
+    return out
+
+
+def finite_array(values):
+    arr = np.asarray(values, dtype=float)
+    return arr[np.isfinite(arr)]
+
+
+def mean_value(values):
+    arr = finite_array(values)
+    return float(np.mean(arr)) if len(arr) else np.nan
+
+
+def median_value(values):
+    arr = finite_array(values)
+    return float(np.median(arr)) if len(arr) else np.nan
+
+
+def iqr_value(values):
+    arr = finite_array(values)
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(
+        np.quantile(arr, 0.75)
+        - np.quantile(arr, 0.25)
+    )
+
+
+def fraction_positive(values):
+    arr = finite_array(values)
+
+    if len(arr) == 0:
+        return np.nan
+
+    return float(np.mean(arr > 0))
+
+
+def safe_corr(x, y):
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    mask = np.isfinite(x) & np.isfinite(y)
+
+    x = x[mask]
+    y = y[mask]
+
+    if len(x) < 3:
+        return np.nan
+
+    sx = np.std(x)
+    sy = np.std(y)
+
+    if sx < 1e-14 or sy < 1e-14:
+        return np.nan
+
+    return float(
+        np.corrcoef(x, y)[0, 1]
+    )
+
+
+def lag1_corr(x):
+    x = np.asarray(x, dtype=float)
+
+    if len(x) < 3:
+        return np.nan
+
+    return safe_corr(
+        x[:-1],
+        x[1:],
+    )
+
+
+def kernel_lag1_corr(kernel_log):
+    K = np.asarray(
+        kernel_log,
+        dtype=float,
+    )
+
+    if len(K) < 3:
+        return np.nan
+
+    return safe_corr(
+        K[:-1].reshape(-1),
+        K[1:].reshape(-1),
+    )
+
+
+# ======================================================================
+# 4. ISP KERNEL — FROZEN
+# ======================================================================
+
+def all_native_probs(memory, cfg=CFG):
+    m = np.tanh(memory)
+
+    projection_difference = (
+        DP[:, 0]
+        - DP[:, 1]
+    )
+
+    memory_difference = (
+        m[:, 0]
+        - m[:, 1]
+    )
+
+    delta_cost = (
+        cfg.beta * projection_difference
+        - cfg.lam * memory_difference
+    )
+
+    z = (
+        delta_cost
+        / cfg.Ttol
+    )
+
+    p0 = stable_logistic_minus(z)
+
+    probs = np.empty(
+        (8, 2),
+        dtype=float,
+    )
+
+    probs[:, 0] = p0
+    probs[:, 1] = 1.0 - p0
+
+    return probs
+
+
+# ======================================================================
+# 5. MEMORY — FROZEN DYNAMICS
+# ======================================================================
+
+def update_memory(
+    memory,
+    u,
+    slot,
+    cfg=CFG,
+):
+    memory *= cfg.delta
+    memory[u, slot] += 1.0
+
+
+# ======================================================================
+# 6. CANDIDATE LCO — FROZEN
+# ======================================================================
+
+def compute_L(
+    probs_all,
+    cfg=CFG,
+):
+    probs_all = np.asarray(
+        probs_all,
+        dtype=float,
+    )
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all + 1e-15
+        ),
+        axis=1,
+    )
+
+    P_nodes = np.sum(
+        probs_all
+        * SAME_PROJ,
+        axis=1,
+    )
+
+    H_basin = np.mean(
+        H_nodes[BASINS],
+        axis=1,
+    )
+
+    P_basin = np.mean(
+        P_nodes[BASINS],
+        axis=1,
+    )
+
+    return (
+        -H_basin
+        + cfg.alpha * P_basin
+    )
+
+
+# ======================================================================
+# 7. Z=(C,log V_eff) — FROZEN
+# ======================================================================
+
+def compute_Z(
+    hidden,
+    obs,
+    probs_all,
+    cfg=CFG,
+):
+    hidden_arr = np.asarray(
+        hidden,
+        dtype=np.int16,
+    )
+
+    obs_arr = np.asarray(
+        obs,
+        dtype=np.int16,
+    )
+
+    src = hidden_arr[:-1]
+    dst = hidden_arr[1:]
+
+    basin_now = obs_arr[:-1]
+    basin_next = obs_arr[1:]
+
+    edge_counts = np.bincount(
+        src * 8 + dst,
+        minlength=64,
+    ).reshape(8, 8)
+
+    H_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+    P_local = np.zeros(
+        4,
+        dtype=float,
+    )
+
+    for x in range(4):
+        mask = (
+            basin_now == x
+        )
+
+        if np.any(mask):
+            P_local[x] = float(
+                np.mean(
+                    basin_next[mask]
+                    == x
+                )
+            )
+
+        entropies = []
+
+        for u in BASINS[x]:
+            c0 = edge_counts[
+                u,
+                NBR[u, 0],
+            ]
+
+            c1 = edge_counts[
+                u,
+                NBR[u, 1],
+            ]
+
+            total = c0 + c1
+
+            if total <= 0:
+                continue
+
+            p0 = c0 / total
+            p1 = c1 / total
+
+            H = 0.0
+
+            if p0 > 0:
+                H -= (
+                    p0
+                    * math.log(p0)
+                )
+
+            if p1 > 0:
+                H -= (
+                    p1
+                    * math.log(p1)
+                )
+
+            entropies.append(H)
+
+        if entropies:
+            H_local[x] = float(
+                np.mean(entropies)
+            )
+
+    C_local = (
+        -H_local
+        + cfg.alpha * P_local
+    )
+
+    H_nodes = -np.sum(
+        probs_all
+        * np.log(
+            probs_all + 1e-15
+        ),
+        axis=1,
+    )
+
+    V_nodes = np.exp(H_nodes)
+
+    V_basin = np.mean(
+        V_nodes[BASINS],
+        axis=1,
+    )
+
+    logV = np.log(
+        np.maximum(
+            V_basin,
+            1e-15,
+        )
+    )
+
+    return np.column_stack(
+        (
+            C_local,
+            logV,
+        )
+    )
+
+
+# ======================================================================
+# 8. BURN-IN
+# ======================================================================
+
+def run_burnin(
+    rng,
+    state,
+    memory,
+    hidden,
+    obs,
+    steps,
+    cfg=CFG,
+):
+    u = int(state)
+
+    for _ in range(steps):
+        probs = all_native_probs(
+            memory,
+            cfg,
+        )
+
+        r = rng.random()
+
+        slot = (
+            0
+            if r < probs[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+    return (
+        u,
+        memory,
+        hidden,
+        obs,
+    )
+
+
+# ======================================================================
+# 9. DIAGNOSTIC LOGS
+# ======================================================================
+
+def allocate_logs(
+    total_branch_steps,
+    cfg=CFG,
+):
+    n_diag = (
+        (
+            total_branch_steps - 1
+        )
+        // cfg.diagnostic_every
+    ) + 1
+
+    return {
+        "Z": np.empty(
+            (n_diag, 4, 2),
+            dtype=float,
+        ),
+        "L": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+        "K": np.empty(
+            (n_diag, 8, 2),
+            dtype=float,
+        ),
+        "TV": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+        "KL": np.empty(
+            (n_diag, 4),
+            dtype=float,
+        ),
+    }
+
+
+def kernel_mismatch_by_basin(
+    latent,
+    used,
+):
+    latent = np.asarray(
+        latent,
+        dtype=float,
+    )
+
+    used = np.asarray(
+        used,
+        dtype=float,
+    )
+
+    node_TV = (
+        0.5
+        * np.sum(
+            np.abs(
+                latent - used
+            ),
+            axis=1,
+        )
+    )
+
+    node_KL = np.sum(
+        latent
+        * np.log(
+            (
+                latent + 1e-15
+            )
+            / (
+                used + 1e-15
+            )
+        ),
+        axis=1,
+    )
+
+    return (
+        np.mean(
+            node_TV[BASINS],
+            axis=1,
+        ),
+        np.mean(
+            node_KL[BASINS],
+            axis=1,
+        ),
+    )
+
+
+# ======================================================================
+# 10. NATIVE DRIVER + INDEPENDENT NATIVE MEMORY TRACE
+# ======================================================================
+
+def generate_native_driver(
+    state0,
+    memory0,
+    hidden0,
+    obs0,
+    uniforms,
+    branch_steps,
+    cfg=CFG,
+):
+    driver_steps = len(uniforms)
+
+    u = int(state0)
+
+    memory = memory0.copy()
+
+    hidden = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    K_sequence = np.empty(
+        (
+            driver_steps,
+            8,
+            2,
+        ),
+        dtype=float,
+    )
+
+    native_logs = allocate_logs(
+        branch_steps,
+        cfg,
+    )
+
+    native_path = np.empty(
+        branch_steps + 1,
+        dtype=np.int8,
+    )
+
+    native_path[0] = u
+
+    # Pre-transition saturated memory state M_t.
+    # This is aligned exactly with K_t.
+    #
+    # The empirical-memory estimator will use
+    # ONLY the observation portion.
+    memory_trace = np.empty(
+        (
+            branch_steps,
+            16,
+        ),
+        dtype=np.float32,
+    )
+
+    d = 0
+
+    for t in range(driver_steps):
+        probs = all_native_probs(
+            memory,
+            cfg,
+        )
+
+        K_sequence[t] = probs
+
+        if t < branch_steps:
+            memory_trace[t] = (
+                np.tanh(memory)
+                .reshape(-1)
+            )
+
+        r = uniforms[t]
+
+        slot = (
+            0
+            if r < probs[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+        if t < branch_steps:
+            native_path[t + 1] = u
+
+            if (
+                t
+                % cfg.diagnostic_every
+                == 0
+            ):
+                native_logs["Z"][d] = (
+                    compute_Z(
+                        hidden,
+                        obs,
+                        probs,
+                        cfg,
+                    )
+                )
+
+                native_logs["L"][d] = (
+                    compute_L(
+                        probs,
+                        cfg,
+                    )
+                )
+
+                native_logs["K"][d] = (
+                    probs
+                )
+
+                native_logs["TV"][d] = 0.0
+                native_logs["KL"][d] = 0.0
+
+                d += 1
+
+    for key in native_logs:
+        native_logs[key] = (
+            native_logs[key][:d]
+        )
+
+    return (
+        K_sequence,
+        native_logs,
+        native_path,
+        memory_trace,
+    )
+
+
+# ======================================================================
+# 11. TEMPORALLY DISPLACED REPLAY — FROZEN SEMANTICS
+# ======================================================================
+
+def run_replay_offset(
+    state0,
+    memory0,
+    hidden0,
+    obs0,
+    uniforms,
+    K_native,
+    offset,
+    branch_steps,
+    cfg=CFG,
+):
+    u = int(state0)
+
+    memory = memory0.copy()
+
+    hidden = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    logs = allocate_logs(
+        branch_steps,
+        cfg,
+    )
+
+    path = np.empty(
+        branch_steps + 1,
+        dtype=np.int8,
+    )
+
+    path[0] = u
+
+    d = 0
+
+    for t in range(branch_steps):
+        used = (
+            K_native[
+                t + offset
+            ]
+        )
+
+        diagnostic_now = (
+            t
+            % cfg.diagnostic_every
+            == 0
+        )
+
+        # The latent kernel is required only
+        # for TV/KL diagnostics.
+        #
+        # Lazy evaluation here does NOT alter
+        # trajectory dynamics.
+        latent = (
+            all_native_probs(
+                memory,
+                cfg,
+            )
+            if diagnostic_now
+            else None
+        )
+
+        r = uniforms[t]
+
+        slot = (
+            0
+            if r < used[u, 0]
+            else 1
+        )
+
+        v = int(
+            NBR[u, slot]
+        )
+
+        update_memory(
+            memory,
+            u,
+            slot,
+            cfg,
+        )
+
+        hidden.append(v)
+
+        obs.append(
+            int(PROJ[v])
+        )
+
+        u = v
+
+        path[t + 1] = u
+
+        if diagnostic_now:
+            logs["Z"][d] = (
+                compute_Z(
+                    hidden,
+                    obs,
+                    used,
+                    cfg,
+                )
+            )
+
+            logs["L"][d] = (
+                compute_L(
+                    used,
+                    cfg,
+                )
+            )
+
+            logs["K"][d] = used
+
+            basin_TV, basin_KL = (
+                kernel_mismatch_by_basin(
+                    latent,
+                    used,
+                )
+            )
+
+            logs["TV"][d] = basin_TV
+            logs["KL"][d] = basin_KL
+
+            d += 1
+
+    for key in logs:
+        logs[key] = (
+            logs[key][:d]
+        )
+
+    return (
+        logs,
+        path,
+    )
+
+
+# ======================================================================
+# 12. MANIFOLD / RESTORATION ANALYSIS — FROZEN
+# ======================================================================
+
+def axes_from_reference(Z):
+    Z = np.asarray(
+        Z,
+        dtype=float,
+    )
+
+    mu = np.mean(
+        Z,
+        axis=0,
+    )
+
+    centered = Z - mu
+
+    cov = np.cov(
+        centered.T
+    )
+
+    eigvals, eigvecs = (
+        np.linalg.eigh(cov)
+    )
+
+    order = np.argsort(
+        eigvals
+    )[::-1]
+
+    eigvals = eigvals[order]
+    eigvecs = eigvecs[:, order]
+
+    e_parallel = (
+        eigvecs[:, 0]
+        .copy()
+    )
+
+    e_perp = (
+        eigvecs[:, 1]
+        .copy()
+    )
+
+    if e_parallel[0] < 0:
+        e_parallel *= -1.0
+
+    determinant = (
+        e_parallel[0]
+        * e_perp[1]
+        - e_parallel[1]
+        * e_perp[0]
+    )
+
+    if determinant < 0:
+        e_perp *= -1.0
+
+    lambda_parallel = max(
+        float(eigvals[0]),
+        1e-15,
+    )
+
+    lambda_perp = max(
+        float(eigvals[1]),
+        1e-15,
+    )
+
+    sigma_perp = math.sqrt(
+        lambda_perp
+    )
+
+    anisotropy = (
+        lambda_parallel
+        / lambda_perp
+    )
+
+    return (
+        mu,
+        e_perp,
+        sigma_perp,
+        anisotropy,
+    )
+
+
+def restoring_fraction(
+    q_now,
+    dq,
+    cfg=CFG,
+):
+    flags = []
+
+    for i in range(
+        len(cfg.q_edges) - 1
+    ):
+        lo = cfg.q_edges[i]
+        hi = cfg.q_edges[i + 1]
+
+        mask = (
+            (q_now >= lo)
+            & (q_now < hi)
+        )
+
+        if (
+            int(np.sum(mask))
+            < cfg.min_bin_count
+        ):
+            continue
+
+        mean_q = float(
+            np.mean(
+                q_now[mask]
+            )
+        )
+
+        mean_dq = float(
+            np.mean(
+                dq[mask]
+            )
+        )
+
+        flags.append(
+            mean_q
+            * mean_dq
+            < 0
+        )
+
+    if not flags:
+        return np.nan
+
+    return float(
+        np.mean(flags)
+    )
+
+
+def split_logs(
+    logs,
+    cfg=CFG,
+):
+    n_reference_diag = (
+        (
+            cfg.reference - 1
+        )
+        // cfg.diagnostic_every
+        + 1
+    )
+
+    reference = {}
+    observation = {}
+
+    for key, arr in logs.items():
+        reference[key] = (
+            arr[:n_reference_diag]
+        )
+
+        observation[key] = (
+            arr[n_reference_diag:]
+        )
+
+    return (
+        reference,
+        observation,
+    )
+
+
+def analyze_logs(
+    logs,
+    cfg=CFG,
+):
+    reference, observation = (
+        split_logs(
+            logs,
+            cfg,
+        )
+    )
+
+    out = {}
+
+    for x in range(4):
+        (
+            mu,
+            e_perp,
+            sigma_perp,
+            anisotropy,
+        ) = axes_from_reference(
+            reference["Z"][
+                :,
+                x,
+                :,
+            ]
+        )
+
+        q = (
+            (
+                observation["Z"][
+                    :,
+                    x,
+                    :,
+                ]
+                - mu
+            )
+            @ e_perp
+        ) / max(
+            sigma_perp,
+            1e-15,
+        )
+
+        q_now = q[:-1]
+        q_next = q[1:]
+        dq = q_next - q_now
+
+        fit_mask = (
+            np.isfinite(q_now)
+            & np.isfinite(dq)
+            & (
+                np.abs(q_now)
+                <= cfg.fit_q_abs_max
+            )
+        )
+
+        q_fit = q_now[
+            fit_mask
+        ]
+
+        dq_fit = dq[
+            fit_mask
+        ]
+
+        q_next_fit = q_next[
+            fit_mask
+        ]
+
+        if len(q_fit) < 10:
+            kappa = np.nan
+            phi_fit = np.nan
+            identity_error = np.nan
+
+        else:
+            X = np.column_stack(
+                (
+                    q_fit,
+                    np.ones(
+                        len(q_fit)
+                    ),
+                )
+            )
+
+            (
+                coef,
+                _,
+                _,
+                _,
+            ) = np.linalg.lstsq(
+                X,
+                dq_fit,
+                rcond=None,
+            )
+
+            kappa = -float(
+                coef[0]
+            )
+
+            (
+                coef_ar,
+                _,
+                _,
+                _,
+            ) = np.linalg.lstsq(
+                X,
+                q_next_fit,
+                rcond=None,
+            )
+
+            phi_fit = float(
+                coef_ar[0]
+            )
+
+            identity_error = abs(
+                kappa
+                - (
+                    1.0
+                    - phi_fit
+                )
+            )
+
+        out[x] = {
+            "kappa": kappa,
+            "phi_fit": phi_fit,
+            "kappa_identity_error":
+                identity_error,
+            "rho1_q":
+                lag1_corr(q),
+            "restore_fraction":
+                restoring_fraction(
+                    q_now,
+                    dq,
+                    cfg,
+                ),
+            "sigma_perp":
+                sigma_perp,
+            "anisotropy":
+                anisotropy,
+            "operator_mean":
+                float(
+                    np.mean(
+                        observation["L"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+            "operator_std":
+                float(
+                    np.std(
+                        observation["L"][
+                            :,
+                            x,
+                        ],
+                        ddof=1,
+                    )
+                ),
+            "operator_rho1":
+                lag1_corr(
+                    observation["L"][
+                        :,
+                        x,
+                    ]
+                ),
+            "TV":
+                float(
+                    np.mean(
+                        observation["TV"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+            "KL":
+                float(
+                    np.mean(
+                        observation["KL"][
+                            :,
+                            x,
+                        ]
+                    )
+                ),
+        }
+
+    out["kernel_rho1"] = (
+        kernel_lag1_corr(
+            observation["K"]
+        )
+    )
+
+    return out
+
+
+# ======================================================================
+# 13. HARD s=0 VALIDATION
+# ======================================================================
+
+def validate_zero_replay(
+    native_logs,
+    native_path,
+    replay_logs,
+    replay_path,
+    cfg=CFG,
+):
+    path_equal = np.array_equal(
+        native_path,
+        replay_path,
+    )
+
+    differences = {}
+
+    for key in (
+        "Z",
+        "L",
+        "K",
+        "TV",
+        "KL",
+    ):
+        differences[key] = float(
+            np.max(
+                np.abs(
+                    native_logs[key]
+                    - replay_logs[key]
+                )
+            )
+        )
+
+    max_difference = max(
+        differences.values()
+    )
+
+    passed = (
+        path_equal
+        and (
+            max_difference
+            <= cfg.replay_zero_tol
+        )
+    )
+
+    return {
+        "passed":
+            passed,
+        "path_equal":
+            path_equal,
+        "max_difference":
+            max_difference,
+        "differences":
+            differences,
+    }
+
+
+# ======================================================================
+# 14. EMPIRICAL MEMORY CORRELATION TIMESCALE — PREREGISTERED
+# ======================================================================
+
+def memory_acf(
+    memory_trace,
+    cfg=CFG,
+):
+    """
+    Full-vector native memory autocorrelation.
+
+    Uses only the observation portion of the
+    native trajectory.
+
+    Each saturated memory component is centered
+    by its own temporal mean before lagged vector
+    inner products are pooled.
+
+    This prevents persistent component offsets
+    from masquerading as temporal correlation.
+    """
+
+    X = np.asarray(
+        memory_trace[
+            cfg.reference:
+            cfg.reference
+            + cfg.observation
+        ],
+        dtype=float,
+    )
+
+    if len(X) < 4:
+        return (
+            np.array(
+                [1.0],
+                dtype=float,
+            ),
+            np.array(
+                [0],
+                dtype=int,
+            ),
+        )
+
+    X = (
+        X
+        - np.mean(
+            X,
+            axis=0,
+            keepdims=True,
+        )
+    )
+
+    max_lag = min(
+        cfg.memory_acf_max_lag,
+        len(X) - 2,
+    )
+
+    lags = np.arange(
+        max_lag + 1,
+        dtype=int,
+    )
+
+    rho = np.full(
+        max_lag + 1,
+        np.nan,
+        dtype=float,
+    )
+
+    rho[0] = 1.0
+
+    for lag in range(
+        1,
+        max_lag + 1,
+    ):
+        A = X[:-lag]
+        B = X[lag:]
+
+        denom = math.sqrt(
+            float(
+                np.sum(A * A)
+                * np.sum(B * B)
+            )
+        )
+
+        if denom > 1e-15:
+            rho[lag] = float(
+                np.sum(A * B)
+                / denom
+            )
+
+    return (
+        rho,
+        lags,
+    )
+
+
+def empirical_memory_timescale(
+    memory_trace,
+    cfg=CFG,
+):
+    """
+    First e^-1 crossing of the preregistered
+    native memory ACF.
+
+    Linear interpolation only.
+
+    No exponential fit.
+    No extrapolation.
+    """
+
+    rho, lags = memory_acf(
+        memory_trace,
+        cfg,
+    )
+
+    target = (
+        cfg.memory_acf_target
+    )
+
+    for j in range(
+        1,
+        len(rho),
+    ):
+        if not (
+            np.isfinite(
+                rho[j - 1]
+            )
+            and np.isfinite(
+                rho[j]
+            )
+        ):
+            continue
+
+        if rho[j] <= target:
+            x0 = float(
+                lags[j - 1]
+            )
+
+            x1 = float(
+                lags[j]
+            )
+
+            y0 = float(
+                rho[j - 1]
+            )
+
+            y1 = float(
+                rho[j]
+            )
+
+            if abs(
+                y1 - y0
+            ) < 1e-15:
+                tau = x1
+
+            else:
+                tau = (
+                    x0
+                    + (
+                        target - y0
+                    )
+                    * (
+                        x1 - x0
+                    )
+                    / (
+                        y1 - y0
+                    )
+                )
+
+            return {
+                "exists":
+                    True,
+                "tau":
+                    float(tau),
+                "bracket":
+                    (
+                        int(
+                            lags[j - 1]
+                        ),
+                        int(
+                            lags[j]
+                        ),
+                    ),
+                "rho":
+                    rho,
+                "lags":
+                    lags,
+            }
+
+    return {
+        "exists":
+            False,
+        "tau":
+            np.nan,
+        "bracket":
+            None,
+        "rho":
+            rho,
+        "lags":
+            lags,
+    }
+
+
+# ======================================================================
+# 15. ONE FULL PAIRED SEED AT ONE DELTA
+# ======================================================================
+
+def simulate_seed(
+    seed,
+    cfg=CFG,
+):
+    rng = np.random.default_rng(
+        seed
+    )
+
+    memory = np.zeros(
+        (8, 2),
+        dtype=float,
+    )
+
+    hidden = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+    obs = deque(
+        [0],
+        maxlen=(
+            cfg.stats_window
+            + 1
+        ),
+    )
+
+    (
+        state0,
+        memory0,
+        hidden0,
+        obs0,
+    ) = run_burnin(
+        rng,
+        0,
+        memory,
+        hidden,
+        obs,
+        cfg.burnin,
+        cfg,
+    )
+
+    memory_start = (
+        memory0.copy()
+    )
+
+    hidden_start = deque(
+        hidden0,
+        maxlen=hidden0.maxlen,
+    )
+
+    obs_start = deque(
+        obs0,
+        maxlen=obs0.maxlen,
+    )
+
+    branch_steps = (
+        cfg.reference
+        + cfg.observation
+    )
+
+    max_offset = max(
+        cfg.offsets
+    )
+
+    driver_steps = (
+        branch_steps
+        + max_offset
+    )
+
+    # Reusing identical seed numbers across
+    # delta values deliberately supplies
+    # common random numbers to the delta panel.
+    uniforms = rng.random(
+        driver_steps
+    )
+
+    (
+        K_native,
+        native_logs,
+        native_path,
+        memory_trace,
+    ) = generate_native_driver(
+        state0,
+        memory_start,
+        hidden_start,
+        obs_start,
+        uniforms,
+        branch_steps,
+        cfg,
+    )
+
+    (
+        replay0_logs,
+        replay0_path,
+    ) = run_replay_offset(
+        state0,
+        memory_start,
+        hidden_start,
+        obs_start,
+        uniforms,
+        K_native,
+        0,
+        branch_steps,
+        cfg,
+    )
+
+    zero_validation = (
+        validate_zero_replay(
+            native_logs,
+            native_path,
+            replay0_logs,
+            replay0_path,
+            cfg,
+        )
+    )
+
+    if not zero_validation[
+        "passed"
+    ]:
+        raise RuntimeError(
+            "\nSIM13.6 HARD CONTROL FAILURE\n"
+            f"delta={cfg.delta}, "
+            f"seed={seed}\n"
+            "Native != contemporaneous "
+            "replay(s=0).\n"
+            f"Path equal: "
+            f"{zero_validation['path_equal']}\n"
+            f"Max difference: "
+            f"{zero_validation['max_difference']:.3e}\n"
+            "Interpretation must stop."
+        )
+
+    mem_scale = (
+        empirical_memory_timescale(
+            memory_trace,
+            cfg,
+        )
+    )
+
+    offset_results = {}
+
+    for s in cfg.offsets:
+        if s == 0:
+            logs = replay0_logs
+
+        else:
+            logs, _ = (
+                run_replay_offset(
+                    state0,
+                    memory_start,
+                    hidden_start,
+                    obs_start,
+                    uniforms,
+                    K_native,
+                    s,
+                    branch_steps,
+                    cfg,
+                )
+            )
+
+        offset_results[s] = (
+            analyze_logs(
+                logs,
+                cfg,
+            )
+        )
+
+    return {
+        "seed":
+            seed,
+        "delta":
+            cfg.delta,
+        "offsets":
+            offset_results,
+        "zero_validation":
+            zero_validation,
+        "memory_timescale":
+            mem_scale,
+    }
+
+
+# ======================================================================
+# 16. PAIRED RESPONSE MATRICES
+# ======================================================================
+
+def response_matrices(
+    runs,
+    cfg=CFG,
+):
+    offsets = list(
+        cfg.offsets
+    )
+
+    n = len(runs)
+    m = len(offsets)
+
+    outer = np.full(
+        (n, m),
+        np.nan,
+    )
+
+    inner = np.full(
+        (n, m),
+        np.nan,
+    )
+
+    contrast = np.full(
+        (n, m),
+        np.nan,
+    )
+
+    basin = {
+        x: np.full(
+            (n, m),
+            np.nan,
+        )
+        for x in range(4)
+    }
+
+    for i, run in enumerate(
+        runs
+    ):
+        baseline = (
+            run["offsets"][0]
+        )
+
+        for j, s in enumerate(
+            offsets
+        ):
+            current = (
+                run["offsets"][s]
+            )
+
+            dk = {}
+
+            for x in range(4):
+                dk[x] = (
+                    baseline[x]["kappa"]
+                    - current[x]["kappa"]
+                )
+
+                basin[x][i, j] = (
+                    dk[x]
+                )
+
+            outer[i, j] = (
+                0.5
+                * (
+                    dk[0]
+                    + dk[3]
+                )
+            )
+
+            inner[i, j] = (
+                0.5
+                * (
+                    dk[1]
+                    + dk[2]
+                )
+            )
+
+            contrast[i, j] = (
+                outer[i, j]
+                - inner[i, j]
+            )
+
+    return {
+        "offsets":
+            np.asarray(
+                offsets,
+                dtype=int,
+            ),
+        "outer":
+            outer,
+        "inner":
+            inner,
+        "contrast":
+            contrast,
+        "basin":
+            basin,
+    }
+
+
+# ======================================================================
+# 17. PREREGISTERED POPULATION CROSSOVER ESTIMATOR — UNCHANGED
+# ======================================================================
+
+def estimate_crossover(
+    offsets,
+    median_outer,
+):
+    offsets = np.asarray(
+        offsets,
+        dtype=float,
+    )
+
+    y = np.asarray(
+        median_outer,
+        dtype=float,
+    )
+
+    valid = (
+        np.isfinite(offsets)
+        & np.isfinite(y)
+    )
+
+    offsets = offsets[valid]
+    y = y[valid]
+
+    # Baseline excluded from sign-lobe logic.
+    keep = offsets > 0
+
+    offsets = offsets[keep]
+    y = y[keep]
+
+    if len(offsets) < 3:
+        return {
+            "exists":
+                False,
+            "s_c":
+                np.nan,
+            "s_minus":
+                np.nan,
+            "s_plus":
+                np.nan,
+            "positive_pair":
+                None,
+            "reason":
+                "insufficient finite offsets",
+        }
+
+    negative_idx = np.where(
+        y < 0
+    )[0]
+
+    if len(
+        negative_idx
+    ) == 0:
+        return {
+            "exists":
+                False,
+            "s_c":
+                np.nan,
+            "s_minus":
+                np.nan,
+            "s_plus":
+                np.nan,
+            "positive_pair":
+                None,
+            "reason":
+                "no negative lobe observed",
+        }
+
+    first_negative = int(
+        negative_idx[0]
+    )
+
+    candidate = None
+
+    for j in range(
+        first_negative + 1,
+        len(y) - 1,
+    ):
+        if (
+            y[j] > 0
+            and y[j + 1] > 0
+        ):
+            candidate = j
+            break
+
+    if candidate is None:
+        return {
+            "exists":
+                False,
+            "s_c":
+                np.nan,
+            "s_minus":
+                np.nan,
+            "s_plus":
+                np.nan,
+            "positive_pair":
+                None,
+            "reason":
+                "no two-point positive "
+                "post-negative regime",
+        }
+
+    prior_nonpositive = np.where(
+        (
+            np.arange(
+                len(y)
+            )
+            < candidate
+        )
+        & (
+            y <= 0
+        )
+    )[0]
+
+    if len(
+        prior_nonpositive
+    ) == 0:
+        return {
+            "exists":
+                False,
+            "s_c":
+                np.nan,
+            "s_minus":
+                np.nan,
+            "s_plus":
+                np.nan,
+            "positive_pair":
+                None,
+            "reason":
+                "no nonpositive bracket "
+                "before positive regime",
+        }
+
+    i_minus = int(
+        prior_nonpositive[-1]
+    )
+
+    i_plus = int(
+        candidate
+    )
+
+    s_minus = float(
+        offsets[i_minus]
+    )
+
+    s_plus = float(
+        offsets[i_plus]
+    )
+
+    y_minus = float(
+        y[i_minus]
+    )
+
+    y_plus = float(
+        y[i_plus]
+    )
+
+    if not (
+        y_minus <= 0
+        and y_plus > 0
+    ):
+        return {
+            "exists":
+                False,
+            "s_c":
+                np.nan,
+            "s_minus":
+                s_minus,
+            "s_plus":
+                s_plus,
+            "positive_pair":
+                None,
+            "reason":
+                "invalid sign bracket",
+        }
+
+    denom = (
+        y_plus
+        - y_minus
+    )
+
+    if abs(
+        denom
+    ) < 1e-15:
+        s_c = s_plus
+
+    else:
+        s_c = (
+            s_minus
+            + (
+                -y_minus
+                / denom
+            )
+            * (
+                s_plus
+                - s_minus
+            )
+        )
+
+    return {
+        "exists":
+            True,
+        "s_c":
+            float(s_c),
+        "s_minus":
+            s_minus,
+        "s_plus":
+            s_plus,
+        "positive_pair":
+            (
+                int(
+                    offsets[i_plus]
+                ),
+                int(
+                    offsets[
+                        i_plus + 1
+                    ]
+                ),
+            ),
+        "reason":
+            "finite preregistered crossover",
+    }
+
+
+# ======================================================================
+# 18. BOOTSTRAP CROSSOVER UNCERTAINTY
+# ======================================================================
+
+def bootstrap_crossover(
+    response,
+    n_boot=5000,
+    seed=1360,
+):
+    offsets = (
+        response["offsets"]
+    )
+
+    outer = (
+        response["outer"]
+    )
+
+    n_seeds = (
+        outer.shape[0]
+    )
+
+    rng = (
+        np.random.default_rng(
+            seed
+        )
+    )
+
+    estimates = np.full(
+        n_boot,
+        np.nan,
+        dtype=float,
+    )
+
+    for b in range(n_boot):
+        idx = rng.integers(
+            0,
+            n_seeds,
+            size=n_seeds,
+        )
+
+        med = np.nanmedian(
+            outer[idx],
+            axis=0,
+        )
+
+        est = estimate_crossover(
+            offsets,
+            med,
+        )
+
+        if est["exists"]:
+            estimates[b] = (
+                est["s_c"]
+            )
+
+    finite = estimates[
+        np.isfinite(
+            estimates
+        )
+    ]
+
+    finite_fraction = (
+        len(finite)
+        / n_boot
+    )
+
+    if len(finite):
+        (
+            ci_low,
+            ci_med,
+            ci_high,
+        ) = np.quantile(
+            finite,
+            [
+                0.025,
+                0.5,
+                0.975,
+            ],
+        )
+
+    else:
+        ci_low = np.nan
+        ci_med = np.nan
+        ci_high = np.nan
+
+    return {
+        "n_boot":
+            int(n_boot),
+        "finite_fraction":
+            float(
+                finite_fraction
+            ),
+        "median":
+            float(ci_med),
+        "ci95":
+            (
+                float(ci_low),
+                float(ci_high),
+            ),
+        "finite_estimates":
+            finite,
+    }
+
+
+# ======================================================================
+# 19. SECONDARY DISTRIBUTED-TRANSITION SCALE s_60
+# ======================================================================
+
+def estimate_s60(
+    response,
+    threshold=0.60,
+):
+    offsets = (
+        response["offsets"]
+    )
+
+    outer = (
+        response["outer"]
+    )
+
+    med = np.nanmedian(
+        outer,
+        axis=0,
+    )
+
+    probs = np.asarray(
+        [
+            fraction_positive(
+                outer[:, j]
+            )
+            for j in range(
+                outer.shape[1]
+            )
+        ],
+        dtype=float,
+    )
+
+    positive_offsets = (
+        offsets > 0
+    )
+
+    neg_idx = np.where(
+        positive_offsets
+        & (
+            med < 0
+        )
+    )[0]
+
+    if len(
+        neg_idx
+    ) == 0:
+        return {
+            "exists":
+                False,
+            "s60":
+                np.nan,
+            "pair":
+                None,
+            "reason":
+                "no negative lobe",
+        }
+
+    first_negative = int(
+        neg_idx[0]
+    )
+
+    for j in range(
+        first_negative + 1,
+        len(offsets) - 1,
+    ):
+        if (
+            offsets[j] > 0
+            and probs[j] >= threshold
+            and probs[j + 1] >= threshold
+        ):
+            return {
+                "exists":
+                    True,
+                "s60":
+                    float(
+                        offsets[j]
+                    ),
+                "pair":
+                    (
+                        int(
+                            offsets[j]
+                        ),
+                        int(
+                            offsets[
+                                j + 1
+                            ]
+                        ),
+                    ),
+                "reason":
+                    "two-point majority-positive regime",
+            }
+
+    return {
+        "exists":
+            False,
+        "s60":
+            np.nan,
+        "pair":
+            None,
+        "reason":
+            "no two-point majority-positive regime",
+    }
+
+
+# ======================================================================
+# 20. CONTROL / DIAGNOSTIC SUMMARIES
+# ======================================================================
+
+def chronology_summary(
+    runs,
+    cfg=CFG,
+):
+    out = {}
+
+    for s in cfg.offsets:
+        values = [
+            run["offsets"][s][
+                "kernel_rho1"
+            ]
+            for run in runs
+        ]
+
+        out[s] = {
+            "mean":
+                mean_value(values),
+            "median":
+                median_value(values),
+        }
+
+    rho0 = (
+        out[0]["mean"]
+    )
+
+    maximum_difference = max(
+        abs(
+            out[s]["mean"]
+            - rho0
+        )
+        for s in cfg.offsets
+    )
+
+    return {
+        "offsets":
+            out,
+        "rho0":
+            rho0,
+        "max_difference":
+            maximum_difference,
+        "passed":
+            (
+                maximum_difference
+                <= cfg.kernel_rho1_tolerance
+            ),
+    }
+
+
+def diagnostic_summary(
+    runs,
+    cfg=CFG,
+):
+    result = {
+        x: {}
+        for x in range(4)
+    }
+
+    for x in range(4):
+        baseline = np.asarray(
+            [
+                run["offsets"][0][x][
+                    "kappa"
+                ]
+                for run in runs
+            ],
+            dtype=float,
+        )
+
+        for s in cfg.offsets:
+            rows = [
+                run["offsets"][s][x]
+                for run in runs
+            ]
+
+            kappas = np.asarray(
+                [
+                    r["kappa"]
+                    for r in rows
+                ],
+                dtype=float,
+            )
+
+            dk = (
+                baseline
+                - kappas
+            )
+
+            result[x][s] = {
+                "kappa_med":
+                    median_value(
+                        kappas
+                    ),
+                "dk_med":
+                    median_value(
+                        dk
+                    ),
+                "P_dk_pos":
+                    fraction_positive(
+                        dk
+                    ),
+                "sigma_med":
+                    median_value(
+                        [
+                            r["sigma_perp"]
+                            for r in rows
+                        ]
+                    ),
+                "anis_med":
+                    median_value(
+                        [
+                            r["anisotropy"]
+                            for r in rows
+                        ]
+                    ),
+                "rho1q_mean":
+                    mean_value(
+                        [
+                            r["rho1_q"]
+                            for r in rows
+                        ]
+                    ),
+                "TV_med":
+                    median_value(
+                        [
+                            r["TV"]
+                            for r in rows
+                        ]
+                    ),
+                "KL_med":
+                    median_value(
+                        [
+                            r["KL"]
+                            for r in rows
+                        ]
+                    ),
+                "L_mean":
+                    mean_value(
+                        [
+                            r["operator_mean"]
+                            for r in rows
+                        ]
+                    ),
+                "L_std":
+                    mean_value(
+                        [
+                            r["operator_std"]
+                            for r in rows
+                        ]
+                    ),
+                "L_rho1":
+                    mean_value(
+                        [
+                            r["operator_rho1"]
+                            for r in rows
+                        ]
+                    ),
+                "restore_mean":
+                    mean_value(
+                        [
+                            r["restore_fraction"]
+                            for r in rows
+                        ]
+                    ),
+                "identity_error_mean":
+                    mean_value(
+                        [
+                            r[
+                                "kappa_identity_error"
+                            ]
+                            for r in rows
+                        ]
+                    ),
+            }
+
+    return result
+
+
+def empirical_memory_summary(
+    runs,
+):
+    taus = np.asarray(
+        [
+            run[
+                "memory_timescale"
+            ]["tau"]
+            for run in runs
+        ],
+        dtype=float,
+    )
+
+    finite = taus[
+        np.isfinite(taus)
+    ]
+
+    return {
+        "taus":
+            taus,
+        "finite_fraction":
+            (
+                float(
+                    len(finite)
+                    / len(taus)
+                )
+                if len(taus)
+                else np.nan
+            ),
+        "median":
+            median_value(
+                finite
+            ),
+        "iqr":
+            iqr_value(
+                finite
+            ),
+    }
+
+
+def max_kappa_identity_error(
+    runs,
+    cfg=CFG,
+):
+    vals = []
+
+    for run in runs:
+        for s in cfg.offsets:
+            for x in range(4):
+                vals.append(
+                    run["offsets"][s][x][
+                        "kappa_identity_error"
+                    ]
+                )
+
+    arr = finite_array(
+        vals
+    )
+
+    return (
+        float(
+            np.max(arr)
+        )
+        if len(arr)
+        else np.nan
+    )
+
+
+# ======================================================================
+# 21. RUN ONE DELTA CONDITION
+# ======================================================================
+
+def run_delta_condition(
+    delta,
+    n_seeds=100,
+    n_boot=5000,
+    base_cfg=CFG,
+    progress=True,
+):
+    cfg = replace(
+        base_cfg,
+        delta=float(delta),
+    )
+
+    runs = []
+    zero_max = []
+
+    print()
+    print(
+        "=" * 100
+    )
+    print(
+        f"DELTA CONDITION: "
+        f"delta={delta:.2f}"
+    )
+    print(
+        "=" * 100
+    )
+
+    for seed in range(
+        1,
+        n_seeds + 1,
+    ):
+        result = simulate_seed(
+            seed,
+            cfg,
+        )
+
+        runs.append(
+            result
+        )
+
+        zero_max.append(
+            result[
+                "zero_validation"
+            ][
+                "max_difference"
+            ]
+        )
+
+        if (
+            progress
+            and (
+                seed == 1
+                or seed % 10 == 0
+                or seed == n_seeds
+            )
+        ):
+            print(
+                f"delta={delta:.2f} | "
+                f"completed seed "
+                f"{seed:3d}/{n_seeds}"
+            )
+
+    zero_pass = all(
+        run[
+            "zero_validation"
+        ][
+            "passed"
+        ]
+        for run in runs
+    )
+
+    chronology = (
+        chronology_summary(
+            runs,
+            cfg,
+        )
+    )
+
+    identity_max = (
+        max_kappa_identity_error(
+            runs,
+            cfg,
+        )
+    )
+
+    identity_pass = (
+        np.isfinite(
+            identity_max
+        )
+        and (
+            identity_max
+            <= cfg.kappa_identity_tolerance
+        )
+    )
+
+    response = (
+        response_matrices(
+            runs,
+            cfg,
+        )
+    )
+
+    diag = (
+        diagnostic_summary(
+            runs,
+            cfg,
+        )
+    )
+
+    median_outer = (
+        np.nanmedian(
+            response["outer"],
+            axis=0,
+        )
+    )
+
+    crossover = (
+        estimate_crossover(
+            response["offsets"],
+            median_outer,
+        )
+    )
+
+    boot = (
+        bootstrap_crossover(
+            response,
+            n_boot=n_boot,
+            seed=(
+                136000
+                + int(
+                    round(
+                        1000
+                        * delta
+                    )
+                )
+            ),
+        )
+    )
+
+    bootstrap_pass = (
+        boot[
+            "finite_fraction"
+        ]
+        >= cfg.bootstrap_finite_threshold
+    )
+
+    s60 = estimate_s60(
+        response,
+        threshold=(
+            cfg.majority_threshold
+        ),
+    )
+
+    mem = (
+        empirical_memory_summary(
+            runs
+        )
+    )
+
+    print()
+    print(
+        "CONTROL SUMMARY"
+    )
+
+    print(
+        "Exact s=0 replay all seeds       : "
+        f"{zero_pass}"
+    )
+
+    print(
+        "Maximum s=0 diagnostic difference: "
+        f"{max(zero_max):.3e}"
+    )
+
+    print(
+        "Kernel chronology PASS           : "
+        f"{chronology['passed']}"
+    )
+
+    print(
+        "Max rho1(K) window difference    : "
+        f"{chronology['max_difference']:.9f}"
+    )
+
+    print(
+        "kappa=1-phi identity PASS        : "
+        f"{identity_pass}"
+    )
+
+    print(
+        "Maximum identity error           : "
+        f"{identity_max:.3e}"
+    )
+
+    print(
+        "Empirical-memory finite fraction : "
+        f"{mem['finite_fraction']:.3f}"
+    )
+
+    print(
+        "Empirical tau_M median / IQR     : "
+        f"{mem['median']:.6f} / "
+        f"{mem['iqr']:.6f}"
+    )
+
+    print()
+    print(
+        "PRIMARY CROSSOVER"
+    )
+
+    print(
+        "Finite s_c                       : "
+        f"{crossover['exists']}"
+    )
+
+    print(
+        "Estimator status                 : "
+        f"{crossover['reason']}"
+    )
+
+    if crossover["exists"]:
+        print(
+            "Observed s_c                     : "
+            f"{crossover['s_c']:.6f}"
+        )
+
+        print(
+            "Interpolation bracket            : "
+            f"{crossover['s_minus']:.0f} -> "
+            f"{crossover['s_plus']:.0f}"
+        )
+
+        print(
+            "Positive confirmation pair       : "
+            f"{crossover['positive_pair']}"
+        )
+
+    print(
+        "Bootstrap finite fraction        : "
+        f"{boot['finite_fraction']:.3f}"
+    )
+
+    if np.isfinite(
+        boot["median"]
+    ):
+        print(
+            "Bootstrap median s_c             : "
+            f"{boot['median']:.6f}"
+        )
+
+        print(
+            "Bootstrap 95% CI                 : "
+            f"[{boot['ci95'][0]:.6f}, "
+            f"{boot['ci95'][1]:.6f}]"
+        )
+
+    print(
+        "Bootstrap validity PASS          : "
+        f"{bootstrap_pass}"
+    )
+
+    print()
+    print(
+        "SECONDARY DISTRIBUTED TRANSITION"
+    )
+
+    print(
+        "s_60 exists                      : "
+        f"{s60['exists']}"
+    )
+
+    if s60["exists"]:
+        print(
+            "s_60                              : "
+            f"{s60['s60']:.0f}"
+        )
+
+        print(
+            "majority confirmation pair       : "
+            f"{s60['pair']}"
+        )
+
+    return {
+        "delta":
+            float(delta),
+        "cfg":
+            cfg,
+        "runs":
+            runs,
+        "response":
+            response,
+        "diagnostics":
+            diag,
+        "chronology":
+            chronology,
+        "identity_max":
+            identity_max,
+        "identity_pass":
+            identity_pass,
+        "zero_pass":
+            zero_pass,
+        "zero_max":
+            max(zero_max),
+        "crossover":
+            crossover,
+        "bootstrap":
+            boot,
+        "bootstrap_pass":
+            bootstrap_pass,
+        "s60":
+            s60,
+        "memory":
+            mem,
+    }
+
+
+# ======================================================================
+# 22. FROZEN-PREDICTION / MODEL-COMPARISON LOGIC
+# ======================================================================
+
+def bare_prediction(
+    delta,
+):
+    return (
+        R_DELTA_FROZEN
+        * tau_delta(delta)
+    )
+
+
+def inside_ci(
+    value,
+    ci,
+):
+    return (
+        np.isfinite(value)
+        and np.isfinite(
+            ci[0]
+        )
+        and np.isfinite(
+            ci[1]
+        )
+        and (
+            ci[0]
+            <= value
+            <= ci[1]
+        )
+    )
+
+
+def monotonic_increasing(
+    values,
+):
+    arr = np.asarray(
+        values,
+        dtype=float,
+    )
+
+    if not np.all(
+        np.isfinite(arr)
+    ):
+        return False
+
+    return bool(
+        np.all(
+            np.diff(arr) > 0
+        )
+    )
+
+
+def evaluate_scaling(
+    results_by_delta,
+    cfg=CFG,
+):
+    deltas = list(
+        cfg.deltas
+    )
+
+    anchor = (
+        SIM135_DELTA_ANCHOR
+    )
+
+    heldout = [
+        d
+        for d in deltas
+        if abs(
+            d - anchor
+        ) > 1e-12
+    ]
+
+    anchor_result = (
+        results_by_delta[
+            anchor
+        ]
+    )
+
+    anchor_tauM = (
+        anchor_result[
+            "memory"
+        ][
+            "median"
+        ]
+    )
+
+    if (
+        np.isfinite(
+            anchor_tauM
+        )
+        and anchor_tauM > 0
+    ):
+        r_M = (
+            SIM135_SC_ANCHOR
+            / anchor_tauM
+        )
+
+    else:
+        r_M = np.nan
+
+    rows = []
+
+    for d in deltas:
+        res = (
+            results_by_delta[d]
+        )
+
+        sc_obs = (
+            res[
+                "crossover"
+            ][
+                "s_c"
+            ]
+            if res[
+                "crossover"
+            ][
+                "exists"
+            ]
+            else np.nan
+        )
+
+        ci = (
+            res[
+                "bootstrap"
+            ][
+                "ci95"
+            ]
+        )
+
+        pred_delta = (
+            bare_prediction(d)
+        )
+
+        pred_M = (
+            r_M
+            * res[
+                "memory"
+            ][
+                "median"
+            ]
+            if np.isfinite(r_M)
+            else np.nan
+        )
+
+        if (
+            np.isfinite(
+                sc_obs
+            )
+            and sc_obs != 0
+        ):
+            rel_delta = (
+                abs(
+                    sc_obs
+                    - pred_delta
+                )
+                / abs(sc_obs)
+            )
+
+            rel_M = (
+                abs(
+                    sc_obs
+                    - pred_M
+                )
+                / abs(sc_obs)
+                if np.isfinite(
+                    pred_M
+                )
+                else np.nan
+            )
+
+        else:
+            rel_delta = np.nan
+            rel_M = np.nan
+
+        rows.append(
+            {
+                "delta":
+                    d,
+                "tau_delta":
+                    tau_delta(d),
+                "half_life":
+                    half_life_delta(d),
+                "tau_M":
+                    res[
+                        "memory"
+                    ][
+                        "median"
+                    ],
+                "sc_obs":
+                    sc_obs,
+                "ci95":
+                    ci,
+                "pred_delta":
+                    pred_delta,
+                "pred_M":
+                    pred_M,
+                "err_delta":
+                    (
+                        sc_obs
+                        - pred_delta
+                        if np.isfinite(
+                            sc_obs
+                        )
+                        else np.nan
+                    ),
+                "err_M":
+                    (
+                        sc_obs
+                        - pred_M
+                        if (
+                            np.isfinite(
+                                sc_obs
+                            )
+                            and np.isfinite(
+                                pred_M
+                            )
+                        )
+                        else np.nan
+                    ),
+                "rel_delta":
+                    rel_delta,
+                "rel_M":
+                    rel_M,
+                "capture_delta":
+                    inside_ci(
+                        pred_delta,
+                        ci,
+                    ),
+                "capture_M":
+                    inside_ci(
+                        pred_M,
+                        ci,
+                    ),
+                "s60":
+                    (
+                        res["s60"][
+                            "s60"
+                        ]
+                        if res[
+                            "s60"
+                        ][
+                            "exists"
+                        ]
+                        else np.nan
+                    ),
+            }
+        )
+
+    held_rows = [
+        r
+        for r in rows
+        if r["delta"] in heldout
+    ]
+
+    all_crossovers_exist = all(
+        results_by_delta[d][
+            "crossover"
+        ][
+            "exists"
+        ]
+        for d in deltas
+    )
+
+    all_controls_pass = all(
+        (
+            results_by_delta[d][
+                "zero_pass"
+            ]
+            and results_by_delta[d][
+                "chronology"
+            ][
+                "passed"
+            ]
+            and results_by_delta[d][
+                "identity_pass"
+            ]
+            and results_by_delta[d][
+                "bootstrap_pass"
+            ]
+        )
+        for d in deltas
+    )
+
+    observed_sc = [
+        next(
+            r["sc_obs"]
+            for r in rows
+            if r["delta"] == d
+        )
+        for d in deltas
+    ]
+
+    observed_monotonic = (
+        monotonic_increasing(
+            observed_sc
+        )
+    )
+
+    delta_rel_pass = all(
+        (
+            np.isfinite(
+                r["rel_delta"]
+            )
+            and (
+                r["rel_delta"]
+                <= cfg.relative_error_threshold
+            )
+        )
+        for r in held_rows
+    )
+
+    M_rel_pass = all(
+        (
+            np.isfinite(
+                r["rel_M"]
+            )
+            and (
+                r["rel_M"]
+                <= cfg.relative_error_threshold
+            )
+        )
+        for r in held_rows
+    )
+
+    delta_captures = sum(
+        bool(
+            r["capture_delta"]
+        )
+        for r in held_rows
+    )
+
+    M_captures = sum(
+        bool(
+            r["capture_M"]
+        )
+        for r in held_rows
+    )
+
+    delta_ci_pass = (
+        delta_captures
+        >= cfg.min_ci_captures
+    )
+
+    M_ci_pass = (
+        M_captures
+        >= cfg.min_ci_captures
+    )
+
+    H_delta_pass = (
+        all_controls_pass
+        and all_crossovers_exist
+        and observed_monotonic
+        and delta_rel_pass
+        and delta_ci_pass
+    )
+
+    H_M_pass = (
+        all_controls_pass
+        and all_crossovers_exist
+        and observed_monotonic
+        and np.isfinite(r_M)
+        and M_rel_pass
+        and M_ci_pass
+    )
+
+    mae_delta = mean_value(
+        [
+            abs(
+                r["err_delta"]
+            )
+            for r in held_rows
+        ]
+    )
+
+    mae_M = mean_value(
+        [
+            abs(
+                r["err_M"]
+            )
+            for r in held_rows
+        ]
+    )
+
+    return {
+        "rows":
+            rows,
+        "heldout":
+            heldout,
+        "r_M":
+            r_M,
+        "all_crossovers_exist":
+            all_crossovers_exist,
+        "all_controls_pass":
+            all_controls_pass,
+        "observed_monotonic":
+            observed_monotonic,
+        "delta_rel_pass":
+            delta_rel_pass,
+        "M_rel_pass":
+            M_rel_pass,
+        "delta_captures":
+            delta_captures,
+        "M_captures":
+            M_captures,
+        "delta_ci_pass":
+            delta_ci_pass,
+        "M_ci_pass":
+            M_ci_pass,
+        "H_delta_pass":
+            H_delta_pass,
+        "H_M_pass":
+            H_M_pass,
+        "mae_delta":
+            mae_delta,
+        "mae_M":
+            mae_M,
+    }
+
+
+# ======================================================================
+# 23. OUTPUT TABLES
+# ======================================================================
+
+def print_frozen_predictions(
+    cfg=CFG,
+):
+    print()
+    print(
+        "=" * 112
+    )
+    print(
+        "FROZEN PRE-SIMULATION "
+        "BARE-DECAY PREDICTIONS"
+    )
+    print(
+        "=" * 112
+    )
+
+    print(
+        "SIM13.5 anchor s_c(.95) = "
+        f"{SIM135_SC_ANCHOR:.6f}"
+    )
+
+    print(
+        "tau_delta(.95)          = "
+        f"{TAU_DELTA_ANCHOR:.6f}"
+    )
+
+    print(
+        "FROZEN r_delta          = "
+        f"{R_DELTA_FROZEN:.6f}"
+    )
+
+    print()
+
+    print(
+        " delta      tau_delta      "
+        "half_life      predicted_s_c"
+    )
+
+    print(
+        "-" * 66
+    )
+
+    for d in cfg.deltas:
+        print(
+            f" {d:5.2f}     "
+            f"{tau_delta(d):10.6f}     "
+            f"{half_life_delta(d):10.6f}      "
+            f"{bare_prediction(d):12.6f}"
+        )
+
+    print()
+
+    print(
+        "These values are frozen before "
+        "any SIM13.6 trajectory is generated."
+    )
+
+
+def print_delta_response_table(
+    result,
+):
+    response = (
+        result["response"]
+    )
+
+    offsets = (
+        response["offsets"]
+    )
+
+    outer = (
+        response["outer"]
+    )
+
+    inner = (
+        response["inner"]
+    )
+
+    contrast = (
+        response["contrast"]
+    )
+
+    d = result["delta"]
+
+    print()
+    print(
+        "=" * 108
+    )
+
+    print(
+        f"PAIRED RESPONSE CURVE — "
+        f"delta={d:.2f}"
+    )
+
+    print(
+        "=" * 108
+    )
+
+    print(
+        " s     outer_med    outer_IQR   "
+        "P(out>0)   inner_med    P(in>0)     "
+        "D_med       P(D>0)"
+    )
+
+    print(
+        "-" * 108
+    )
+
+    for j, s in enumerate(
+        offsets
+    ):
+        print(
+            f"{int(s):3d}   "
+            f"{median_value(outer[:, j]):11.7f}  "
+            f"{iqr_value(outer[:, j]):10.7f}  "
+            f"{fraction_positive(outer[:, j]):8.3f}   "
+            f"{median_value(inner[:, j]):11.7f}  "
+            f"{fraction_positive(inner[:, j]):8.3f}   "
+            f"{median_value(contrast[:, j]):11.7f}  "
+            f"{fraction_positive(contrast[:, j]):7.3f}"
+        )
+
+
+def print_basin_table(
+    result,
+):
+    diag = (
+        result[
+            "diagnostics"
+        ]
+    )
+
+    cfg = (
+        result["cfg"]
+    )
+
+    print()
+
+    print(
+        "BASIN-LEVEL MEDIAN Delta-kappa — "
+        f"delta={result['delta']:.2f}"
+    )
+
+    print(
+        " s       Dk0_med      Dk3_med      "
+        "Dk1_med      Dk2_med"
+    )
+
+    print(
+        "-" * 72
+    )
+
+    for s in cfg.offsets:
+        print(
+            f"{s:3d}   "
+            f"{diag[0][s]['dk_med']:12.7f}  "
+            f"{diag[3][s]['dk_med']:12.7f}  "
+            f"{diag[1][s]['dk_med']:12.7f}  "
+            f"{diag[2][s]['dk_med']:12.7f}"
+        )
+
+
+def print_scaling_table(
+    evaluation,
+):
+    print()
+    print(
+        "=" * 160
+    )
+
+    print(
+        "SIM13.6 CROSSOVER SCALING TABLE"
+    )
+
+    print(
+        "=" * 160
+    )
+
+    print(
+        "delta  tau_delta   tau_M_emp   "
+        "s_c_obs      boot95% CI             "
+        "pred_delta  relerr_d   pred_M     "
+        "relerr_M   s60"
+    )
+
+    print(
+        "-" * 160
+    )
+
+    for r in evaluation[
+        "rows"
+    ]:
+        ci = r["ci95"]
+
+        print(
+            f"{r['delta']:4.2f}  "
+            f"{r['tau_delta']:9.4f}  "
+            f"{r['tau_M']:9.4f}  "
+            f"{r['sc_obs']:9.4f}   "
+            f"[{ci[0]:8.4f},{ci[1]:8.4f}]   "
+            f"{r['pred_delta']:9.4f}   "
+            f"{r['rel_delta']:8.3f}   "
+            f"{r['pred_M']:9.4f}   "
+            f"{r['rel_M']:8.3f}   "
+            f"{r['s60']:5.1f}"
+        )
+
+
+def print_hypothesis_decision(
+    evaluation,
+    cfg=CFG,
+):
+    print()
+    print(
+        "=" * 112
+    )
+
+    print(
+        "PREREGISTERED HYPOTHESIS COMPETITION"
+    )
+
+    print(
+        "=" * 112
+    )
+
+    print(
+        "All hard controls + bootstrap validity : "
+        f"{evaluation['all_controls_pass']}"
+    )
+
+    print(
+        "Finite crossover at every delta        : "
+        f"{evaluation['all_crossovers_exist']}"
+    )
+
+    print(
+        "Observed s_c monotonic with delta       : "
+        f"{evaluation['observed_monotonic']}"
+    )
+
+    print()
+    print(
+        "H_delta — bare decay"
+    )
+
+    print(
+        "  frozen r_delta                       : "
+        f"{R_DELTA_FROZEN:.6f}"
+    )
+
+    print(
+        "  all held-out rel. errors <= "
+        f"{cfg.relative_error_threshold:.2f}: "
+        f"{evaluation['delta_rel_pass']}"
+    )
+
+    print(
+        "  held-out predictions inside CI       : "
+        f"{evaluation['delta_captures']}/4"
+    )
+
+    print(
+        "  CI gate >= "
+        f"{cfg.min_ci_captures}/4"
+        "                  : "
+        f"{evaluation['delta_ci_pass']}"
+    )
+
+    print(
+        "  held-out MAE                         : "
+        f"{evaluation['mae_delta']:.6f}"
+    )
+
+    print(
+        "  H_delta PROMOTED                     : "
+        f"{evaluation['H_delta_pass']}"
+    )
+
+    print()
+    print(
+        "H_M — realized native memory"
+    )
+
+    print(
+        "  anchor-calibrated r_M                : "
+        f"{evaluation['r_M']:.6f}"
+    )
+
+    print(
+        "  all held-out rel. errors <= "
+        f"{cfg.relative_error_threshold:.2f}: "
+        f"{evaluation['M_rel_pass']}"
+    )
+
+    print(
+        "  held-out predictions inside CI       : "
+        f"{evaluation['M_captures']}/4"
+    )
+
+    print(
+        "  CI gate >= "
+        f"{cfg.min_ci_captures}/4"
+        "                  : "
+        f"{evaluation['M_ci_pass']}"
+    )
+
+    print(
+        "  held-out MAE                         : "
+        f"{evaluation['mae_M']:.6f}"
+    )
+
+    print(
+        "  H_M PROMOTED                         : "
+        f"{evaluation['H_M_pass']}"
+    )
+
+
+# ======================================================================
+# 24. MAIN — CLOSE SIM13
+# ======================================================================
+
+def run_SIM13_6(
+    n_seeds=100,
+    n_boot=5000,
+    cfg=CFG,
+    progress=True,
+):
+    print()
+    print(
+        "=" * 112
+    )
+
+    print(
+        "SIM13.6 — MEMORY-TIMESCALE "
+        "SCALING TEST / SIM13 CLOSURE"
+    )
+
+    print(
+        "=" * 112
+    )
+
+    print(
+        f"beta={cfg.beta}, "
+        f"lambda={cfg.lam}, "
+        f"T_tol={cfg.Ttol}"
+    )
+
+    print(
+        f"burnin={cfg.burnin}, "
+        f"reference={cfg.reference}, "
+        f"observation={cfg.observation}"
+    )
+
+    print(
+        f"diagnostic_every="
+        f"{cfg.diagnostic_every}, "
+        f"stats_window="
+        f"{cfg.stats_window}"
+    )
+
+    print(
+        f"seeds per delta={n_seeds}, "
+        f"bootstrap resamples per delta={n_boot}"
+    )
+
+    print(
+        f"deltas={cfg.deltas}"
+    )
+
+    print(
+        f"common offsets={cfg.offsets}"
+    )
+
+    print()
+
+    print(
+        "Primary question: does the population "
+        "sign-crossing scale move as predicted by memory?"
+    )
+
+    print(
+        "SIM13.6 is the final SIM13 experiment. "
+        "New mechanisms belong to SIM14."
+    )
+
+    # IMPORTANT:
+    # Predictions are emitted before
+    # any trajectory generation.
+    print_frozen_predictions(
+        cfg
+    )
+
+    results_by_delta = {}
+
+    for d in cfg.deltas:
+        results_by_delta[d] = (
+            run_delta_condition(
+                d,
+                n_seeds=n_seeds,
+                n_boot=n_boot,
+                base_cfg=cfg,
+                progress=progress,
+            )
+        )
+
+        print_delta_response_table(
+            results_by_delta[d]
+        )
+
+        print_basin_table(
+            results_by_delta[d]
+        )
+
+    # --------------------------------------------------------------
+    # SIM13.5 implementation-lineage gate.
+    # --------------------------------------------------------------
+
+    anchor_result = (
+        results_by_delta[
+            SIM135_DELTA_ANCHOR
+        ]
+    )
+
+    anchor_sc = (
+        anchor_result[
+            "crossover"
+        ][
+            "s_c"
+        ]
+        if anchor_result[
+            "crossover"
+        ][
+            "exists"
+        ]
+        else np.nan
+    )
+
+    anchor_reproduced = (
+        inside_ci(
+            anchor_sc,
+            SIM135_CI95,
+        )
+    )
+
+    print()
+    print(
+        "=" * 112
+    )
+
+    print(
+        "SIM13.5 LINEAGE GATE"
+    )
+
+    print(
+        "=" * 112
+    )
+
+    print(
+        "Archived SIM13.5 s_c                : "
+        f"{SIM135_SC_ANCHOR:.6f}"
+    )
+
+    print(
+        "Archived SIM13.5 95% CI             : "
+        f"[{SIM135_CI95[0]:.6f}, "
+        f"{SIM135_CI95[1]:.6f}]"
+    )
+
+    print(
+        "SIM13.6 delta=.95 observed s_c       : "
+        f"{anchor_sc:.6f}"
+    )
+
+    print(
+        "delta=.95 reproduction PASS          : "
+        f"{anchor_reproduced}"
+    )
+
+    if not anchor_reproduced:
+        print()
+        print(
+            "LINEAGE WARNING:"
+        )
+
+        print(
+            "The delta=.95 anchor did not reproduce "
+            "the archived SIM13.5 interval."
+        )
+
+        print(
+            "Scaling interpretation is blocked until "
+            "implementation lineage is checked."
+        )
+
+    evaluation = (
+        evaluate_scaling(
+            results_by_delta,
+            cfg,
+        )
+    )
+
+    # The historical-anchor reproduction
+    # is an additional hard promotion gate.
+    if not anchor_reproduced:
+        evaluation[
+            "H_delta_pass"
+        ] = False
+
+        evaluation[
+            "H_M_pass"
+        ] = False
+
+    print_scaling_table(
+        evaluation
+    )
+
+    print_hypothesis_decision(
+        evaluation,
+        cfg,
+    )
+
+    H_delta = (
+        evaluation[
+            "H_delta_pass"
+        ]
+    )
+
+    H_M = (
+        evaluation[
+            "H_M_pass"
+        ]
+    )
+
+    all_cross = (
+        evaluation[
+            "all_crossovers_exist"
+        ]
+    )
+
+    print()
+    print(
+        "=" * 112
+    )
+
+    print(
+        "SIM13.6 TRUTH-PACKET STATUS / "
+        "SIM13 CLOSURE"
+    )
+
+    print(
+        "=" * 112
+    )
+
+    if not anchor_reproduced:
+        status = (
+            "LINEAGE FAILURE"
+        )
+
+        truth = (
+            "The SIM13.5 anchor did not reproduce "
+            "under SIM13.6, so no memory-timescale "
+            "scaling claim is promoted."
+        )
+
+    elif not all_cross:
+        status = (
+            "CROSSOVER DOMAIN FAILURE"
+        )
+
+        truth = (
+            "The biphasic crossover does not persist "
+            "across the full delta panel; the phenomenon "
+            "has a restricted parameter domain or loses "
+            "definition."
+        )
+
+    elif (
+        H_delta
+        and not H_M
+    ):
+        status = (
+            "BARE-DECAY SCALING SUPPORTED"
+        )
+
+        truth = (
+            "The outer crossover scales quantitatively "
+            "with the bare memory-decay timescale across "
+            "held-out delta values."
+        )
+
+    elif (
+        H_M
+        and not H_delta
+    ):
+        status = (
+            "REALIZED-MEMORY SCALING SUPPORTED"
+        )
+
+        truth = (
+            "The outer crossover is organized more "
+            "consistently by the realized native memory "
+            "correlation timescale than by the bare decay "
+            "coefficient."
+        )
+
+    elif (
+        H_delta
+        and H_M
+    ):
+        status = (
+            "SCALING SUPPORTED / "
+            "MECHANISM UNDERDETERMINED"
+        )
+
+        truth = (
+            "Both bare and empirical memory timescales "
+            "organize the crossover within current "
+            "resolution; SIM13.6 does not distinguish them."
+        )
+
+    else:
+        status = (
+            "TIMESCALE SCALING NOT SUPPORTED"
+        )
+
+        truth = (
+            "The SIM13.5 crossover does not obey either "
+            "preregistered memory-timescale scaling law "
+            "across the delta panel."
+        )
+
+    print(
+        status
+    )
+
+    print(
+        truth
+    )
+
+    print()
+
+    print(
+        "No post-hoc refit, resonance interpretation, "
+        "or new SIM13 mechanism is permitted."
+    )
+
+    print(
+        "Any next structural question begins in SIM14."
+    )
+
+    return {
+        "results_by_delta":
+            results_by_delta,
+        "evaluation":
+            evaluation,
+        "anchor_reproduced":
+            anchor_reproduced,
+        "status":
+            status,
+        "truth_packet":
+            truth,
+        "r_delta_frozen":
+            R_DELTA_FROZEN,
+        "sim135_anchor":
+            SIM135_SC_ANCHOR,
+    }
+
+
+# ======================================================================
+# 25. RUN
+# ======================================================================
+
+if __name__ == "__main__":
+    RESULTS_SIM13_6 = run_SIM13_6(
+        n_seeds=100,
+        n_boot=5000,
+    )
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+RESULTS:
+
+3602 |
+
+================================================================================================================
+
+SIM13.6 — MEMORY-TIMESCALE SCALING TEST / SIM13 CLOSURE
+
+================================================================================================================
+
+beta=1.38, lambda=1.0, T_tol=1.0
+
+burnin=3000, reference=4000, observation=6000
+
+diagnostic_every=5, stats_window=100
+
+seeds per delta=100, bootstrap resamples per delta=5000
+
+deltas=(0.9, 0.93, 0.95, 0.97, 0.98)
+
+common offsets=(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 35, 40, 45)
+
+3648 |
+
+Primary question: does the population sign-crossing scale move as predicted by memory?
+
+SIM13.6 is the final SIM13 experiment. New mechanisms belong to SIM14.
+
+3280 |
+
+================================================================================================================
+
+FROZEN PRE-SIMULATION BARE-DECAY PREDICTIONS
+
+================================================================================================================
+
+SIM13.5 anchor s_c(.95) = 11.930572
+
+tau_delta(.95)          = 19.495726
+
+FROZEN r_delta          = 0.611958
+
+3307 |
+
+ delta      tau_delta      half_life      predicted_s_c
+
+------------------------------------------------------------------
+
+  0.90       9.491222       6.578813          5.808232
+
+  0.93      13.779667       9.551338          8.432582
+
+  0.95      19.495726      13.513407         11.930572
+
+  0.97      32.830795      22.756573         20.091079
+
+  0.98      49.498316      34.309618         30.290908
+
+3326 |
+
+These values are frozen before any SIM13.6 trajectory is generated.
+
+2552 |
+
+====================================================================================================
+
+DELTA CONDITION: delta=0.90
+
+====================================================================================================
+
+delta=0.90 | completed seed   1/100
+
+delta=0.90 | completed seed  10/100
+
+delta=0.90 | completed seed  20/100
+
+delta=0.90 | completed seed  30/100
+
+delta=0.90 | completed seed  40/100
+
+delta=0.90 | completed seed  50/100
+
+delta=0.90 | completed seed  60/100
+
+delta=0.90 | completed seed  70/100
+
+delta=0.90 | completed seed  80/100
+
+delta=0.90 | completed seed  90/100
+
+delta=0.90 | completed seed 100/100
+
+2696 |
+
+CONTROL SUMMARY
+
+Exact s=0 replay all seeds       : True
+
+Maximum s=0 diagnostic difference: 0.000e+00
+
+Kernel chronology PASS           : True
+
+Max rho1(K) window difference    : 0.000077407
+
+kappa=1-phi identity PASS        : True
+
+Maximum identity error           : 4.607e-15
+
+Empirical-memory finite fraction : 1.000
+
+Empirical tau_M median / IQR     : 20.178293 / 1.463941
+
+2742 |
+
+PRIMARY CROSSOVER
+
+Finite s_c                       : True
+
+Estimator status                 : finite preregistered crossover
+
+Observed s_c                     : 8.875713
+
+Interpolation bracket            : 8 -> 9
+
+Positive confirmation pair       : (9, 10)
+
+Bootstrap finite fraction        : 1.000
+
+Bootstrap median s_c             : 8.854235
+
+Bootstrap 95% CI                 : [7.947936, 9.800497]
+
+Bootstrap validity PASS          : True
+
+2798 |
+
+SECONDARY DISTRIBUTED TRANSITION
+
+s_60 exists                      : True
+
+s_60                              : 10
+
+majority confirmation pair       : (10, 12)
+
+3359 |
+
+============================================================================================================
+
+PAIRED RESPONSE CURVE — delta=0.90
+
+============================================================================================================
+
+ s     outer_med    outer_IQR   P(out>0)   inner_med    P(in>0)     D_med       P(D>0)
+
+------------------------------------------------------------------------------------------------------------
+
+  0     0.0000000   0.0000000     0.000     0.0000000     0.000     0.0000000    0.000
+
+  1    -0.0016135   0.0119162     0.450    -0.0025455     0.470     0.0018933    0.530
+
+  2    -0.0086056   0.0173154     0.260    -0.0021595     0.460    -0.0078453    0.390
+
+  3    -0.0111486   0.0195127     0.250     0.0004856     0.510    -0.0120837    0.360
+
+  4    -0.0152413   0.0172833     0.120     0.0008197     0.520    -0.0108679    0.300
+
+  5    -0.0134037   0.0168872     0.090    -0.0011701     0.390    -0.0120775    0.170
+
+  6    -0.0155762   0.0206173     0.100    -0.0021160     0.440    -0.0139707    0.240
+
+  7    -0.0081726   0.0234718     0.320    -0.0019227     0.460    -0.0057430    0.440
+
+  8    -0.0061834   0.0226750     0.420     0.0007246     0.530    -0.0054790    0.440
+
+  9     0.0008776   0.0199037     0.540     0.0007457     0.520     0.0081926    0.610
+
+ 10     0.0042599   0.0178270     0.610     0.0004566     0.550     0.0022188    0.600
+
+ 12     0.0098447   0.0244913     0.700    -0.0016071     0.480     0.0112032    0.640
+
+ 14     0.0169196   0.0214801     0.820     0.0008100     0.520     0.0175159    0.730
+
+ 16     0.0154352   0.0184051     0.880    -0.0011253     0.460     0.0205247    0.780
+
+ 18     0.0191665   0.0277760     0.850    -0.0001099     0.490     0.0201652    0.730
+
+ 20     0.0218695   0.0181637     0.930    -0.0010919     0.450     0.0218077    0.880
+
+ 22     0.0234803   0.0265006     0.900    -0.0027105     0.450     0.0260568    0.790
+
+ 24     0.0253165   0.0220825     0.900    -0.0023342     0.480     0.0277017    0.790
+
+ 26     0.0267634   0.0205464     0.930    -0.0032656     0.470     0.0279800    0.850
+
+ 28     0.0284990   0.0259127     0.930    -0.0000795     0.490     0.0276618    0.790
+
+ 30     0.0281668   0.0192233     0.950    -0.0009715     0.450     0.0277154    0.940
+
+ 32     0.0287515   0.0211918     0.940    -0.0016148     0.480     0.0307263    0.850
+
+ 35     0.0288483   0.0171517     0.990    -0.0005889     0.480     0.0315118    0.970
+
+ 40     0.0313580   0.0150968     0.980    -0.0018296     0.420     0.0332575    0.970
+
+ 45     0.0322297   0.0170597     0.980    -0.0020690     0.410     0.0326404    0.970
+
+3411 |
+
+BASIN-LEVEL MEDIAN Delta-kappa — delta=0.90
+
+ s       Dk0_med      Dk3_med      Dk1_med      Dk2_med
+
+------------------------------------------------------------------------
+
+  0      0.0000000     0.0000000     0.0000000     0.0000000
+
+  1     -0.0017890     0.0021348    -0.0073608     0.0071250
+
+  2     -0.0103644    -0.0055475    -0.0042155     0.0106154
+
+  3     -0.0080281    -0.0104666     0.0001901     0.0037924
+
+  4     -0.0133102    -0.0166101     0.0004583    -0.0035974
+
+  5     -0.0134982    -0.0150348    -0.0013655    -0.0015188
+
+  6     -0.0176431    -0.0154913    -0.0061489     0.0078586
+
+  7     -0.0092115    -0.0083878    -0.0037957     0.0060553
+
+  8     -0.0031658    -0.0048511     0.0020014     0.0036257
+
+  9      0.0007024     0.0034127     0.0002796    -0.0035019
+
+ 10      0.0041384     0.0031778    -0.0002694     0.0006458
+
+ 12      0.0122960     0.0093417    -0.0078213     0.0058729
+
+ 14      0.0143138     0.0175480     0.0010347    -0.0042182
+
+ 16      0.0143937     0.0186732    -0.0066154     0.0052533
+
+ 18      0.0157873     0.0214432     0.0001499     0.0114924
+
+ 20      0.0211057     0.0192691    -0.0016203     0.0013775
+
+ 22      0.0207839     0.0257384    -0.0068101     0.0054043
+
+ 24      0.0238900     0.0266838     0.0007712    -0.0087642
+
+ 26      0.0233306     0.0286422    -0.0042855     0.0024570
+
+ 28      0.0262027     0.0303453    -0.0001589     0.0042115
+
+ 30      0.0270192     0.0265714    -0.0011156    -0.0005882
+
+ 32      0.0263259     0.0308386    -0.0059562     0.0087903
+
+ 35      0.0282654     0.0304484    -0.0011797    -0.0015850
+
+ 40      0.0339947     0.0317763    -0.0023133    -0.0015907
+
+ 45      0.0318008     0.0336363    -0.0014115    -0.0019362
+
+2552 |
+
+====================================================================================================
+
+DELTA CONDITION: delta=0.93
+
+====================================================================================================
+
+delta=0.93 | completed seed   1/100
+
+delta=0.93 | completed seed  10/100
+
+delta=0.93 | completed seed  20/100
+
+delta=0.93 | completed seed  30/100
+
+delta=0.93 | completed seed  40/100
+
+delta=0.93 | completed seed  50/100
+
+delta=0.93 | completed seed  60/100
+
+delta=0.93 | completed seed  70/100
+
+delta=0.93 | completed seed  80/100
+
+delta=0.93 | completed seed  90/100
+
+delta=0.93 | completed seed 100/100
+
+2696 |
+
+CONTROL SUMMARY
+
+Exact s=0 replay all seeds       : True
+
+Maximum s=0 diagnostic difference: 0.000e+00
+
+Kernel chronology PASS           : True
+
+Max rho1(K) window difference    : 0.000097777
+
+kappa=1-phi identity PASS        : True
+
+Maximum identity error           : 4.774e-15
+
+Empirical-memory finite fraction : 1.000
+
+Empirical tau_M median / IQR     : 25.971058 / 2.112644
+
+2742 |
+
+PRIMARY CROSSOVER
+
+Finite s_c                       : True
+
+Estimator status                 : finite preregistered crossover
+
+Observed s_c                     : 10.515186
+
+Interpolation bracket            : 10 -> 12
+
+Positive confirmation pair       : (12, 14)
+
+Bootstrap finite fraction        : 1.000
+
+Bootstrap median s_c             : 10.483385
+
+Bootstrap 95% CI                 : [8.642434, 11.015885]
+
+Bootstrap validity PASS          : True
+
+2798 |
+
+SECONDARY DISTRIBUTED TRANSITION
+
+s_60 exists                      : True
+
+s_60                              : 12
+
+majority confirmation pair       : (12, 14)
+
+3359 |
+
+============================================================================================================
+
+PAIRED RESPONSE CURVE — delta=0.93
+
+============================================================================================================
+
+ s     outer_med    outer_IQR   P(out>0)   inner_med    P(in>0)     D_med       P(D>0)
+
+------------------------------------------------------------------------------------------------------------
+
+  0     0.0000000   0.0000000     0.000     0.0000000     0.000     0.0000000    0.000
+
+  1     0.0047803   0.0158850     0.590     0.0008177     0.520     0.0048674    0.620
+
+  2    -0.0100092   0.0226960     0.250     0.0059433     0.600    -0.0172406    0.290
+
+  3    -0.0147934   0.0234257     0.160    -0.0004098     0.500    -0.0183898    0.230
+
+  4    -0.0231306   0.0277824     0.060    -0.0024954     0.440    -0.0218641    0.150
+
+  5    -0.0239289   0.0232655     0.040    -0.0042735     0.320    -0.0211149    0.100
+
+  6    -0.0292210   0.0310528     0.020    -0.0030029     0.420    -0.0317564    0.180
+
+  7    -0.0158745   0.0296784     0.230     0.0029429     0.570    -0.0187990    0.270
+
+  8    -0.0078621   0.0305672     0.320    -0.0023560     0.440    -0.0128690    0.330
+
+  9    -0.0032003   0.0254983     0.470    -0.0026230     0.400    -0.0004436    0.480
+
+ 10    -0.0034075   0.0263668     0.450    -0.0034732     0.290     0.0042951    0.600
+
+ 12     0.0098207   0.0307672     0.680     0.0015964     0.530     0.0088946    0.620
+
+ 14     0.0180744   0.0301039     0.800    -0.0037885     0.430     0.0218248    0.760
+
+ 16     0.0210203   0.0319712     0.810    -0.0025341     0.420     0.0221908    0.810
+
+ 18     0.0263244   0.0330395     0.840    -0.0013757     0.470     0.0246126    0.810
+
+ 20     0.0287398   0.0307243     0.950    -0.0033272     0.320     0.0304594    0.940
+
+ 22     0.0362396   0.0294078     0.920     0.0019658     0.520     0.0338337    0.890
+
+ 24     0.0371570   0.0322078     0.950    -0.0038748     0.410     0.0367729    0.910
+
+ 26     0.0373968   0.0296589     0.950    -0.0049631     0.370     0.0409115    0.930
+
+ 28     0.0366307   0.0348286     0.960    -0.0006830     0.490     0.0402967    0.930
+
+ 30     0.0417150   0.0333974     0.980    -0.0058151     0.260     0.0475695    0.970
+
+ 32     0.0460837   0.0293215     0.980    -0.0008693     0.500     0.0451595    0.950
+
+ 35     0.0460360   0.0309782     0.990    -0.0047666     0.360     0.0493625    0.970
+
+ 40     0.0493581   0.0280646     0.990    -0.0028236     0.370     0.0528642    0.980
+
+ 45     0.0482329   0.0326627     1.000    -0.0039755     0.340     0.0530378    0.980
+
+3411 |
+
+BASIN-LEVEL MEDIAN Delta-kappa — delta=0.93
+
+ s       Dk0_med      Dk3_med      Dk1_med      Dk2_med
+
+------------------------------------------------------------------------
+
+  0      0.0000000     0.0000000     0.0000000     0.0000000
+
+  1      0.0004299     0.0058014    -0.0012885    -0.0017334
+
+  2     -0.0094735    -0.0113744     0.0076546     0.0001957
+
+  3     -0.0176629    -0.0161461     0.0021724    -0.0002953
+
+  4     -0.0244245    -0.0275917     0.0010766    -0.0009034
+
+  5     -0.0229696    -0.0266872    -0.0031261    -0.0025506
+
+  6     -0.0316940    -0.0336581    -0.0042084    -0.0048190
+
+  7     -0.0140300    -0.0155147     0.0009024     0.0064321
+
+  8     -0.0067140    -0.0096465     0.0005450    -0.0005318
+
+  9     -0.0024232    -0.0065904    -0.0019623    -0.0016439
+
+ 10     -0.0022556    -0.0004881    -0.0041134    -0.0028485
+
+ 12      0.0099759     0.0090267    -0.0010098     0.0006008
+
+ 14      0.0185300     0.0125117    -0.0002102    -0.0012600
+
+ 16      0.0169624     0.0249687    -0.0015449    -0.0040600
+
+ 18      0.0258885     0.0257017     0.0000109    -0.0005804
+
+ 20      0.0281198     0.0333905    -0.0017554    -0.0030341
+
+ 22      0.0357658     0.0412070     0.0027380     0.0017073
+
+ 24      0.0393397     0.0325336    -0.0000854    -0.0045763
+
+ 26      0.0373758     0.0370985    -0.0031798    -0.0058726
+
+ 28      0.0412564     0.0411685    -0.0007129    -0.0002689
+
+ 30      0.0399473     0.0398804    -0.0036980    -0.0037294
+
+ 32      0.0425809     0.0470732     0.0047378    -0.0021776
+
+ 35      0.0490307     0.0486978    -0.0007250    -0.0032523
+
+ 40      0.0453967     0.0544167    -0.0015584    -0.0047405
+
+ 45      0.0471994     0.0495391    -0.0025423    -0.0042575
+
+2552 |
+
+====================================================================================================
+
+DELTA CONDITION: delta=0.95
+
+====================================================================================================
+
+delta=0.95 | completed seed   1/100
+
+delta=0.95 | completed seed  10/100
+
+delta=0.95 | completed seed  20/100
+
+delta=0.95 | completed seed  30/100
+
+delta=0.95 | completed seed  40/100
+
+delta=0.95 | completed seed  50/100
+
+delta=0.95 | completed seed  60/100
+
+delta=0.95 | completed seed  70/100
+
+delta=0.95 | completed seed  80/100
+
+delta=0.95 | completed seed  90/100
+
+delta=0.95 | completed seed 100/100
+
+2696 |
+
+CONTROL SUMMARY
+
+Exact s=0 replay all seeds       : True
+
+Maximum s=0 diagnostic difference: 0.000e+00
+
+Kernel chronology PASS           : True
+
+Max rho1(K) window difference    : 0.000058116
+
+kappa=1-phi identity PASS        : True
+
+Maximum identity error           : 5.218e-15
+
+Empirical-memory finite fraction : 1.000
+
+Empirical tau_M median / IQR     : 34.426240 / 3.494182
+
+2742 |
+
+PRIMARY CROSSOVER
+
+Finite s_c                       : True
+
+Estimator status                 : finite preregistered crossover
+
+Observed s_c                     : 11.930572
+
+Interpolation bracket            : 10 -> 12
+
+Positive confirmation pair       : (12, 14)
+
+Bootstrap finite fraction        : 1.000
+
+Bootstrap median s_c             : 11.932607
+
+Bootstrap 95% CI                 : [11.181431, 13.314473]
+
+Bootstrap validity PASS          : True
+
+2798 |
+
+SECONDARY DISTRIBUTED TRANSITION
+
+s_60 exists                      : True
+
+s_60                              : 14
+
+majority confirmation pair       : (14, 16)
+
+3359 |
+
+============================================================================================================
+
+PAIRED RESPONSE CURVE — delta=0.95
+
+============================================================================================================
+
+ s     outer_med    outer_IQR   P(out>0)   inner_med    P(in>0)     D_med       P(D>0)
+
+------------------------------------------------------------------------------------------------------------
+
+  0     0.0000000   0.0000000     0.000     0.0000000     0.000     0.0000000    0.000
+
+  1     0.0041813   0.0216580     0.610     0.0009771     0.530     0.0029996    0.580
+
+  2    -0.0141798   0.0206222     0.160    -0.0022721     0.440    -0.0111800    0.250
+
+  3    -0.0256291   0.0171267     0.050    -0.0049119     0.360    -0.0207842    0.130
+
+  4    -0.0364580   0.0202670     0.040    -0.0068542     0.310    -0.0326232    0.080
+
+  5    -0.0371603   0.0212032     0.000    -0.0045633     0.330    -0.0316324    0.040
+
+  6    -0.0469120   0.0258285     0.000    -0.0068250     0.300    -0.0402695    0.030
+
+  7    -0.0259970   0.0280454     0.050    -0.0038914     0.350    -0.0216944    0.140
+
+  8    -0.0203996   0.0251321     0.120    -0.0062940     0.330    -0.0196172    0.280
+
+  9    -0.0167893   0.0261054     0.180    -0.0046697     0.400    -0.0125248    0.240
+
+ 10    -0.0126451   0.0277720     0.310    -0.0018238     0.440    -0.0118472    0.330
+
+ 12     0.0004548   0.0280584     0.510    -0.0007879     0.440     0.0041563    0.550
+
+ 14     0.0063544   0.0291966     0.610    -0.0006983     0.490     0.0093463    0.660
+
+ 16     0.0142473   0.0231279     0.770    -0.0004921     0.490     0.0135502    0.690
+
+ 18     0.0173145   0.0258062     0.850    -0.0002601     0.480     0.0176783    0.780
+
+ 20     0.0219982   0.0305693     0.890     0.0014811     0.560     0.0227144    0.830
+
+ 22     0.0280214   0.0280506     0.850    -0.0011255     0.470     0.0280383    0.820
+
+ 24     0.0274543   0.0271989     0.930    -0.0004592     0.470     0.0247583    0.930
+
+ 26     0.0321895   0.0291616     0.950     0.0005677     0.520     0.0309789    0.920
+
+ 28     0.0385537   0.0308902     0.940    -0.0009808     0.490     0.0358952    0.880
+
+ 30     0.0360396   0.0292517     0.970     0.0023512     0.560     0.0346530    0.930
+
+ 32     0.0407947   0.0256071     0.960    -0.0007746     0.480     0.0390337    0.930
+
+ 35     0.0400384   0.0271524     0.940     0.0012303     0.560     0.0388937    0.940
+
+ 40     0.0419387   0.0270057     0.980     0.0017283     0.570     0.0411522    0.960
+
+ 45     0.0481293   0.0260185     0.970     0.0020826     0.570     0.0460059    0.960
+
+3411 |
+
+BASIN-LEVEL MEDIAN Delta-kappa — delta=0.95
+
+ s       Dk0_med      Dk3_med      Dk1_med      Dk2_med
+
+------------------------------------------------------------------------
+
+  0      0.0000000     0.0000000     0.0000000     0.0000000
+
+  1      0.0062546     0.0040781     0.0018515    -0.0002737
+
+  2     -0.0182096    -0.0111333    -0.0026505    -0.0052352
+
+  3     -0.0287598    -0.0233880    -0.0063247    -0.0067220
+
+  4     -0.0372320    -0.0360237    -0.0060405    -0.0106675
+
+  5     -0.0353107    -0.0371426    -0.0035209    -0.0058067
+
+  6     -0.0449315    -0.0478318    -0.0051039    -0.0050842
+
+  7     -0.0320065    -0.0295165    -0.0062053    -0.0080198
+
+  8     -0.0234262    -0.0226545    -0.0043222    -0.0066620
+
+  9     -0.0229569    -0.0180374    -0.0032754    -0.0055844
+
+ 10     -0.0159950    -0.0080828    -0.0009168    -0.0020670
+
+ 12     -0.0050195     0.0002519    -0.0018282    -0.0034638
+
+ 14      0.0087864     0.0051165    -0.0028130    -0.0023086
+
+ 16      0.0099822     0.0125811     0.0002165     0.0007678
+
+ 18      0.0181029     0.0147295    -0.0013759     0.0004944
+
+ 20      0.0220468     0.0253598    -0.0009111     0.0010307
+
+ 22      0.0249001     0.0247593     0.0029189     0.0010015
+
+ 24      0.0232082     0.0245657    -0.0017463     0.0010508
+
+ 26      0.0298312     0.0308210    -0.0003452     0.0019981
+
+ 28      0.0371733     0.0266379    -0.0001888     0.0000771
+
+ 30      0.0392043     0.0350161     0.0012003     0.0034132
+
+ 32      0.0416414     0.0330984    -0.0000238     0.0013353
+
+ 35      0.0405369     0.0410398    -0.0018985     0.0022136
+
+ 40      0.0460770     0.0403181    -0.0000059     0.0044848
+
+ 45      0.0444054     0.0402308    -0.0008648     0.0031738
+
+2552 |
+
+====================================================================================================
+
+DELTA CONDITION: delta=0.97
+
+====================================================================================================
+
+delta=0.97 | completed seed   1/100
+
+delta=0.97 | completed seed  10/100
+
+delta=0.97 | completed seed  20/100
+
+delta=0.97 | completed seed  30/100
+
+delta=0.97 | completed seed  40/100
+
+delta=0.97 | completed seed  50/100
+
+delta=0.97 | completed seed  60/100
+
+delta=0.97 | completed seed  70/100
+
+delta=0.97 | completed seed  80/100
+
+delta=0.97 | completed seed  90/100
+
+delta=0.97 | completed seed 100/100
+
+2696 |
+
+CONTROL SUMMARY
+
+Exact s=0 replay all seeds       : True
+
+Maximum s=0 diagnostic difference: 0.000e+00
+
+Kernel chronology PASS           : True
+
+Max rho1(K) window difference    : 0.000026131
+
+kappa=1-phi identity PASS        : True
+
+Maximum identity error           : 5.246e-15
+
+Empirical-memory finite fraction : 1.000
+
+Empirical tau_M median / IQR     : 55.872151 / 6.731053
+
+2742 |
+
+PRIMARY CROSSOVER
+
+Finite s_c                       : True
+
+Estimator status                 : finite preregistered crossover
+
+Observed s_c                     : 25.418751
+
+Interpolation bracket            : 24 -> 26
+
+Positive confirmation pair       : (26, 28)
+
+Bootstrap finite fraction        : 0.990
+
+Bootstrap median s_c             : 25.345585
+
+Bootstrap 95% CI                 : [22.959703, 35.093912]
+
+Bootstrap validity PASS          : True
+
+2798 |
+
+SECONDARY DISTRIBUTED TRANSITION
+
+s_60 exists                      : False
+
+3359 |
+
+============================================================================================================
+
+PAIRED RESPONSE CURVE — delta=0.97
+
+============================================================================================================
+
+ s     outer_med    outer_IQR   P(out>0)   inner_med    P(in>0)     D_med       P(D>0)
+
+------------------------------------------------------------------------------------------------------------
+
+  0     0.0000000   0.0000000     0.000     0.0000000     0.000     0.0000000    0.000
+
+  1     0.0008606   0.0116324     0.530    -0.0003807     0.490     0.0011806    0.540
+
+  2    -0.0082599   0.0147622     0.290    -0.0098837     0.260     0.0040910    0.550
+
+  3    -0.0145539   0.0158457     0.090    -0.0173327     0.170     0.0013769    0.520
+
+  4    -0.0200246   0.0151614     0.050    -0.0228163     0.080     0.0018367    0.540
+
+  5    -0.0261660   0.0170545     0.020    -0.0256831     0.040    -0.0031918    0.430
+
+  6    -0.0322005   0.0165427     0.030    -0.0292856     0.020     0.0018073    0.520
+
+  7    -0.0256190   0.0177551     0.040    -0.0227542     0.110    -0.0002675    0.490
+
+  8    -0.0208644   0.0200125     0.050    -0.0200373     0.130     0.0012369    0.530
+
+  9    -0.0215760   0.0151544     0.060    -0.0154752     0.190    -0.0061386    0.380
+
+ 10    -0.0164731   0.0173263     0.090    -0.0154480     0.170    -0.0024816    0.450
+
+ 12    -0.0161082   0.0177980     0.160    -0.0060357     0.340    -0.0066409    0.370
+
+ 14    -0.0124739   0.0150575     0.190    -0.0028985     0.450    -0.0075095    0.370
+
+ 16    -0.0099147   0.0215149     0.290    -0.0000732     0.500    -0.0096683    0.370
+
+ 18    -0.0066559   0.0167704     0.320     0.0035818     0.580    -0.0096541    0.360
+
+ 20    -0.0049890   0.0147719     0.330     0.0051477     0.600    -0.0085724    0.320
+
+ 22    -0.0028612   0.0157405     0.390     0.0100450     0.640    -0.0126722    0.340
+
+ 24    -0.0024392   0.0146548     0.430     0.0090166     0.770    -0.0150407    0.290
+
+ 26     0.0009993   0.0143778     0.540     0.0130529     0.750    -0.0134251    0.300
+
+ 28     0.0017941   0.0180498     0.560     0.0144566     0.790    -0.0139110    0.280
+
+ 30     0.0002526   0.0192200     0.510     0.0158926     0.820    -0.0119599    0.260
+
+ 32     0.0026864   0.0171961     0.610     0.0205095     0.800    -0.0151440    0.200
+
+ 35     0.0012124   0.0182739     0.580     0.0200429     0.870    -0.0153595    0.240
+
+ 40     0.0020669   0.0193721     0.590     0.0215525     0.870    -0.0151309    0.260
+
+ 45     0.0043614   0.0177527     0.620     0.0235838     0.910    -0.0152019    0.210
+
+3411 |
+
+BASIN-LEVEL MEDIAN Delta-kappa — delta=0.97
+
+ s       Dk0_med      Dk3_med      Dk1_med      Dk2_med
+
+------------------------------------------------------------------------
+
+  0      0.0000000     0.0000000     0.0000000     0.0000000
+
+  1      0.0021409     0.0013992    -0.0031368     0.0027608
+
+  2     -0.0043853    -0.0079806    -0.0112858    -0.0078416
+
+  3     -0.0137254    -0.0141650    -0.0164113    -0.0166345
+
+  4     -0.0220028    -0.0226930    -0.0268785    -0.0204995
+
+  5     -0.0265435    -0.0267938    -0.0285960    -0.0244924
+
+  6     -0.0282645    -0.0340917    -0.0330867    -0.0293903
+
+  7     -0.0258336    -0.0269728    -0.0227680    -0.0222634
+
+  8     -0.0213296    -0.0208741    -0.0187087    -0.0190312
+
+  9     -0.0207022    -0.0194589    -0.0126337    -0.0130591
+
+ 10     -0.0176485    -0.0168330    -0.0175661    -0.0133182
+
+ 12     -0.0143757    -0.0159175    -0.0071043    -0.0040104
+
+ 14     -0.0096638    -0.0142611    -0.0036076     0.0002103
+
+ 16     -0.0060200    -0.0115462     0.0011630     0.0024315
+
+ 18     -0.0073092    -0.0050655     0.0057828     0.0068307
+
+ 20     -0.0049145    -0.0050539     0.0029485     0.0092536
+
+ 22      0.0005375    -0.0052055     0.0091581     0.0128192
+
+ 24     -0.0011011    -0.0016123     0.0126549     0.0139121
+
+ 26      0.0016440    -0.0018745     0.0133387     0.0126388
+
+ 28      0.0013862    -0.0017710     0.0163253     0.0191071
+
+ 30      0.0019812    -0.0010386     0.0138771     0.0174170
+
+ 32      0.0044762    -0.0009855     0.0197536     0.0197904
+
+ 35      0.0004915     0.0011401     0.0212850     0.0203077
+
+ 40      0.0024995     0.0020800     0.0232855     0.0234201
+
+ 45      0.0043702     0.0046035     0.0236260     0.0217400
+
+2552 |
+
+====================================================================================================
+
+DELTA CONDITION: delta=0.98
+
+====================================================================================================
+
+delta=0.98 | completed seed   1/100
+
+delta=0.98 | completed seed  10/100
+
+delta=0.98 | completed seed  20/100
+
+delta=0.98 | completed seed  30/100
+
+delta=0.98 | completed seed  40/100
+
+delta=0.98 | completed seed  50/100
+
+delta=0.98 | completed seed  60/100
+
+delta=0.98 | completed seed  70/100
+
+delta=0.98 | completed seed  80/100
+
+delta=0.98 | completed seed  90/100
+
+delta=0.98 | completed seed 100/100
+
+2696 |
+
+CONTROL SUMMARY
+
+Exact s=0 replay all seeds       : True
+
+Maximum s=0 diagnostic difference: 0.000e+00
+
+Kernel chronology PASS           : True
+
+Max rho1(K) window difference    : 0.000007965
+
+kappa=1-phi identity PASS        : True
+
+Maximum identity error           : 4.552e-15
+
+Empirical-memory finite fraction : 1.000
+
+Empirical tau_M median / IQR     : 81.584298 / 12.591346
+
+2742 |
+
+PRIMARY CROSSOVER
+
+Finite s_c                       : False
+
+Estimator status                 : no two-point positive post-negative regime
+
+Bootstrap finite fraction        : 0.187
+
+Bootstrap median s_c             : 34.984328
+
+Bootstrap 95% CI                 : [31.805702, 39.777987]
+
+Bootstrap validity PASS          : False
+
+2798 |
+
+SECONDARY DISTRIBUTED TRANSITION
+
+s_60 exists                      : False
+
+3359 |
+
+============================================================================================================
+
+PAIRED RESPONSE CURVE — delta=0.98
+
+============================================================================================================
+
+ s     outer_med    outer_IQR   P(out>0)   inner_med    P(in>0)     D_med       P(D>0)
+
+------------------------------------------------------------------------------------------------------------
+
+  0     0.0000000   0.0000000     0.000     0.0000000     0.000     0.0000000    0.000
+
+  1     0.0015555   0.0067164     0.570     0.0009301     0.520     0.0010402    0.550
+
+  2    -0.0050768   0.0088823     0.120    -0.0096761     0.270     0.0039733    0.590
+
+  3    -0.0104561   0.0095065     0.050    -0.0175010     0.190     0.0055149    0.610
+
+  4    -0.0160381   0.0113532     0.000    -0.0298454     0.060     0.0139700    0.750
+
+  5    -0.0178197   0.0113268     0.020    -0.0376111     0.060     0.0171140    0.780
+
+  6    -0.0200571   0.0151946     0.020    -0.0485867     0.030     0.0265844    0.870
+
+  7    -0.0174823   0.0126833     0.030    -0.0398821     0.060     0.0220999    0.800
+
+  8    -0.0151985   0.0113273     0.030    -0.0343591     0.100     0.0183109    0.790
+
+  9    -0.0141971   0.0111458     0.070    -0.0277624     0.130     0.0157397    0.690
+
+ 10    -0.0125384   0.0130639     0.100    -0.0237041     0.170     0.0121771    0.710
+
+ 12    -0.0112143   0.0120374     0.080    -0.0160318     0.230     0.0040873    0.570
+
+ 14    -0.0114973   0.0127907     0.140    -0.0126044     0.320     0.0031625    0.530
+
+ 16    -0.0084690   0.0150436     0.220    -0.0042913     0.450    -0.0067007    0.430
+
+ 18    -0.0077991   0.0122461     0.190     0.0015835     0.510    -0.0092319    0.360
+
+ 20    -0.0063364   0.0128331     0.260     0.0038034     0.560    -0.0121681    0.330
+
+ 22    -0.0047088   0.0128538     0.280     0.0101778     0.650    -0.0197567    0.270
+
+ 24    -0.0050186   0.0119687     0.300     0.0147106     0.720    -0.0235304    0.240
+
+ 26    -0.0038058   0.0097756     0.340     0.0194976     0.780    -0.0241943    0.170
+
+ 28    -0.0024618   0.0123851     0.390     0.0218914     0.780    -0.0253875    0.170
+
+ 30    -0.0029305   0.0123481     0.390     0.0250054     0.840    -0.0298098    0.130
+
+ 32    -0.0025059   0.0102690     0.380     0.0295803     0.870    -0.0332596    0.110
+
+ 35    -0.0017623   0.0120038     0.440     0.0337713     0.890    -0.0346409    0.120
+
+ 40    -0.0005088   0.0100828     0.490     0.0416284     0.920    -0.0400382    0.100
+
+ 45    -0.0011166   0.0148322     0.470     0.0424695     0.960    -0.0458808    0.070
+
+3411 |
+
+BASIN-LEVEL MEDIAN Delta-kappa — delta=0.98
+
+ s       Dk0_med      Dk3_med      Dk1_med      Dk2_med
+
+------------------------------------------------------------------------
+
+  0      0.0000000     0.0000000     0.0000000     0.0000000
+
+  1      0.0015997     0.0017878    -0.0011053    -0.0008962
+
+  2     -0.0076609    -0.0042118    -0.0123610    -0.0091747
+
+  3     -0.0123518    -0.0088682    -0.0214389    -0.0128235
+
+  4     -0.0159489    -0.0136281    -0.0323271    -0.0296006
+
+  5     -0.0178161    -0.0161437    -0.0334351    -0.0319421
+
+  6     -0.0208021    -0.0189494    -0.0453868    -0.0466339
+
+  7     -0.0184731    -0.0157851    -0.0420727    -0.0360380
+
+  8     -0.0151711    -0.0145227    -0.0427293    -0.0293912
+
+  9     -0.0161596    -0.0140369    -0.0331800    -0.0278864
+
+ 10     -0.0125204    -0.0125088    -0.0325812    -0.0238898
+
+ 12     -0.0114176    -0.0123069    -0.0175847    -0.0178222
+
+ 14     -0.0106358    -0.0097003    -0.0146359    -0.0135591
+
+ 16     -0.0106365    -0.0084873    -0.0059361    -0.0018750
+
+ 18     -0.0068613    -0.0074582    -0.0012985     0.0022191
+
+ 20     -0.0056207    -0.0059547     0.0037000     0.0038444
+
+ 22     -0.0053051    -0.0043718     0.0049663     0.0091814
+
+ 24     -0.0064825    -0.0008592     0.0161958     0.0150255
+
+ 26     -0.0060495    -0.0023848     0.0204343     0.0186472
+
+ 28     -0.0029045    -0.0025167     0.0196071     0.0255998
+
+ 30     -0.0026763    -0.0012029     0.0235141     0.0247399
+
+ 32     -0.0041146    -0.0013113     0.0232479     0.0326104
+
+ 35     -0.0016930     0.0000865     0.0356359     0.0361562
+
+ 40     -0.0013907    -0.0011977     0.0366281     0.0416059
+
+ 45     -0.0015740    -0.0001417     0.0384200     0.0439331
+
+3719 |
+
+================================================================================================================
+
+SIM13.5 LINEAGE GATE
+
+================================================================================================================
+
+Archived SIM13.5 s_c                : 11.930572
+
+Archived SIM13.5 95% CI             : [11.157967, 13.157025]
+
+SIM13.6 delta=.95 observed s_c       : 11.930572
+
+delta=.95 reproduction PASS          : True
+
+3440 |
+
+================================================================================================================================================================
+
+SIM13.6 CROSSOVER SCALING TABLE
+
+================================================================================================================================================================
+
+delta  tau_delta   tau_M_emp   s_c_obs      boot95% CI             pred_delta  relerr_d   pred_M     relerr_M   s60
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+0.90     9.4912    20.1783     8.8757   [  7.9479,  9.8005]      5.8082      0.346      6.9929      0.212    10.0
+
+0.93    13.7797    25.9711    10.5152   [  8.6424, 11.0159]      8.4326      0.198      9.0004      0.144    12.0
+
+0.95    19.4957    34.4262    11.9306   [ 11.1814, 13.3145]     11.9306      0.000     11.9306      0.000    14.0
+
+0.97    32.8308    55.8722    25.4188   [ 22.9597, 35.0939]     20.0911      0.210     19.3628      0.238     nan
+
+0.98    49.4983    81.5843        nan   [ 31.8057, 39.7780]     30.2909        nan     28.2734        nan     nan
+
+3487 |
+
+================================================================================================================
+
+PREREGISTERED HYPOTHESIS COMPETITION
+
+================================================================================================================
+
+All hard controls + bootstrap validity : False
+
+Finite crossover at every delta        : False
+
+Observed s_c monotonic with delta       : False
+
+3515 |
+
+H_delta — bare decay
+
+  frozen r_delta                       : 0.611958
+
+  all held-out rel. errors <= 0.20: False
+
+  held-out predictions inside CI       : 0/4
+
+  CI gate >= 3/4                  : False
+
+  held-out MAE                         : 3.492586
+
+  H_delta PROMOTED                     : False
+
+3553 |
+
+H_M — realized native memory
+
+  anchor-calibrated r_M                : 0.346555
+
+  all held-out rel. errors <= 0.20: False
+
+  held-out predictions inside CI       : 1/4
+
+  CI gate >= 3/4                  : False
+
+  held-out MAE                         : 3.151210
+
+  H_M PROMOTED                         : False
+
+3814 |
+
+================================================================================================================
+
+SIM13.6 TRUTH-PACKET STATUS / SIM13 CLOSURE
+
+================================================================================================================
+
+CROSSOVER DOMAIN FAILURE
+
+The biphasic crossover does not persist across the full delta panel; the phenomenon has a restricted parameter domain or loses definition.
+
+3914 |
+
+No post-hoc refit, resonance interpretation, or new SIM13 mechanism is permitted.
+
+Any next structural question begins in SIM14.
