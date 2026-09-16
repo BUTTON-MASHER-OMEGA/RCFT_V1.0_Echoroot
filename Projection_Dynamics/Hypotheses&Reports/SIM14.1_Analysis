@@ -1,0 +1,310 @@
+### SIM14.1 RESULTS
+
+Oh, **SIM14.1 landed.** And this is considerably cleaner than I would have been willing to assume beforehand.
+
+The headline is exactly what the truth packet says:
+
+$$
+\boxed{\text{SIM14.1 = PASS / regular }\mathbb F_2^3\text{ carrier with derived }PG(2,2)\text{ incidence}.}
+$$
+
+All implementation sanity checks passed as well. 
+
+### What we actually derived
+
+Start with only the three objects already frozen by SIM14.0:
+
+$$
+p=(01)(23)(45)(67),
+$$
+
+$$
+h=(07)(16)(25)(34),
+$$
+
+$$
+s_\Omega=(02)(13)(46)(57).
+$$
+
+They are all involutions, they commute pairwise, and their generated group has eight elements. Every nonidentity element has order two. Therefore:
+
+$$
+\boxed{\langle p,h,s_\Omega\rangle\cong(\mathbb Z_2)^3.}
+$$
+
+That isn't pattern-matching after the fact; those properties were explicitly computed. 
+
+Even better, the action on the eight microscopic states is **regular**: every vertex has an orbit of size 8 and a trivial stabilizer. 
+
+That means the eight vertices can legitimately be treated as a torsor for
+
+$$
+\mathbb F_2^3.
+$$
+
+Choosing vertex \(0\) as the conventional origin gives:
+
+$$
+\begin{array}{c|c}
+0&000\\
+1&100\\
+2&001\\
+3&101\\
+4&111\\
+5&011\\
+6&110\\
+7&010
+\end{array}
+$$
+
+with
+
+$$
+p:x\mapsto x+100,\qquad
+h:x\mapsto x+010,\qquad
+s_\Omega:x\mapsto x+001.
+$$
+
+And the code independently verified those translation laws. 
+
+That's a substantial upgrade over saying "`C8` happens to have eight vertices." The frozen operations themselves furnish a binary affine coordinate structure on those eight states.
+
+---
+
+## Then comes the particularly interesting result
+
+Once we have
+
+$$
+G\cong\mathbb F_2^3,
+$$
+
+there are exactly seven nonzero elements:
+
+$$
+001,\ 010,\ 011,\ 100,\ 101,\ 110,\ 111.
+$$
+
+SIM14.1 found exactly **seven order-four \(V_4\) subgroups**. Each contains three of those seven nonzero elements. 
+
+And when we forget the identity and interpret
+
+* nonzero group elements as **points**, and
+* the three nonidentity elements of each \(V_4\) subgroup as **lines**,
+
+we obtain:
+
+$$
+7\text{ points},\qquad7\text{ lines},
+$$
+
+with exactly three points per line, three lines through every point, every pair of points lying on exactly one line, and every pair of lines meeting in exactly one point.
+
+All of those tests passed. 
+
+Therefore:
+
+$$
+\boxed{PG(2,2)}
+$$
+
+is not something we manually inserted into this simulation.
+
+It follows from the finite algebra we derived.
+
+And, of course,
+
+$$
+PG(2,2)
+$$
+
+is the incidence geometry ordinarily called the **Fano plane**.
+
+That distinction matters enormously:
+
+$$
+\boxed{
+\text{Sp-type conjugation + frozen C8 operations}
+\rightarrow(\mathbb Z_2)^3
+\rightarrow PG(2,2)
+}
+$$
+
+is supported here.
+
+Whereas
+
+$$
+PG(2,2)\stackrel{?}{\rightarrow}\mathbb O
+$$
+
+is **not** established.
+
+That's exactly the interpretive ceiling we wanted. The output itself explicitly preserves it. 
+
+### And our four-state-sector intuition just got a much better mathematical formulation
+
+Every one of those seven \(V_4\) subgroups partitions the eight-state carrier into **two four-state orbits**.
+
+Not some of them.
+
+All seven.
+
+And all seven resulting \(4+4\) partitions are distinct. 
+
+So we now have a derived structure:
+
+$$
+\boxed{
+7\ \text{projective lines}
+\quad\leftrightarrow\quad
+7\ V_4\text{ subgroups}
+\quad\leftrightarrow\quad
+7\ \text{distinct }4+4\text{ carrier decompositions}.
+}
+$$
+
+That is very close to the mathematical question we were trying to formulate before SIM14.
+
+But notice how much cleaner the result is than our original intuition.
+
+We don't need to say yet:
+
+> "There must be seven quaternionic \(4D\) sectors."
+
+What we can now say rigorously is:
+
+> **The derived binary transformation algebra contains seven distinguished order-four subgroups, each inducing a distinct pair of four-state carrier orbits.**
+
+Whether those become quaternionic/associative sectors after adding an algebraic law is a **future test**.
+
+That's much stronger methodology because the seven-sector skeleton arrived *before* octonionic multiplication was supplied.
+
+---
+
+## C8 itself is doing something more selective
+
+Another result I don't want us to overlook is the C8 edge structure in these new binary coordinates.
+
+Its eight edges use only three displacement vectors:
+
+$$
+001\quad(4\text{ edges}),
+$$
+
+$$
+100\quad(2\text{ edges}),
+$$
+
+$$
+110\quad(2\text{ edges}).
+$$
+
+
+
+That's interesting because the complete binary carrier gives us seven nonzero directions, but frozen \(C_8\) adjacency realizes only three of them as edge-displacement types:
+
+$$
+\boxed{\mathbb F_2^3\setminus\{0\}\text{ supplies 7 directions, while }C_8\text{ samples 3.}}
+$$
+
+So the binary/projective structure is richer than ordinary C8 adjacency.
+
+This already gives us a more precise version of the compression idea we were discussing:
+
+$$
+\text{full carrier transformation structure}
+\neq
+\text{ordinary graph adjacency}.
+$$
+
+C8 may be a **sparse relational realization** of a richer finite carrier rather than needing to explicitly contain every relation as a graph edge.
+
+That is worth carrying forward.
+
+---
+
+## The symmetry breaking is equally important
+
+At the level of the bare graph,
+
+$$
+|\operatorname{Aut}(C_8)|=16,
+$$
+
+and \(M_1\) and \(M_2\) are equivalent.
+
+But once we preserve the frozen projection operation \(p\),
+
+$$
+|\operatorname{Stab}(p)|=4,
+$$
+
+and the \(M_1\leftrightarrow M_2\) equivalence disappears. It stays broken when \(h\), the projection partition, and finally labeled basins are retained. 
+
+So SIM14.0's "compatible but non-unique" result just acquired an important qualification:
+
+$$
+\boxed{
+M_1\sim M_2\quad\text{as bare C8 structures},
+}
+$$
+
+but
+
+$$
+\boxed{
+M_1\not\sim M_2\quad\text{once the frozen RCFT laboratory structure is respected}.
+}
+$$
+
+That is precisely why we were right not to treat all C8 relabelings as physically/interventionally interchangeable.
+
+Even more strikingly, after \(p\) is frozen, the seven nonzero binary directions become **seven separate symmetry orbits** under the surviving stabilizer. The same happens to the seven \(V_4\) subgroups.  
+
+So the projection architecture doesn't merely sit on top of the binary geometry. It sharply reduces its equivalences.
+
+That feels extremely relevant for where ISP/LCO eventually enters.
+
+---
+
+## Where I would freeze SIM14.1
+
+I'd archive the result in roughly this form:
+
+$$
+\boxed{
+\begin{aligned}
+\langle p,h,s_\Omega\rangle
+&\cong(\mathbb Z_2)^3\cong\mathbb F_2^3,\\
+X_8&\text{ is a regular }\mathbb F_2^3\text{-torsor},\\
+\mathbb F_2^3\setminus\{0\}
+&=\text{7 nonzero transformation directions},\\
+\{\text{order-4 subgroups}\}
+&=\text{7 distinct }V_4\text{ sectors},\\
+\text{incidence}&\cong PG(2,2),\\
+V_4\curvearrowright X_8
+&\Rightarrow7\text{ distinct }4+4\text{ orbit decompositions}.
+\end{aligned}
+}
+$$
+
+Then underneath it I'd put the hard ceiling:
+
+$$
+\boxed{
+PG(2,2)\neq\text{an octonion derivation}.
+}
+$$
+
+What we've derived is the **incidence skeleton** associated with the Fano plane. We have *not* derived orientation, multiplication signs, a Moufang law, quaternionic closure, or global octonionic nonassociativity.
+
+And I actually prefer this result to getting octonions immediately.
+
+Because now, if we ever introduce an algebraic rule, it has something independent that it must fit. We no longer need to build the Fano plane because we wanted octonions.
+
+**The carrier handed us \(PG(2,2)\) first.**
+
+That is exactly the sort of top-down/bottom-up convergence test Benjamin was asking us to create.
+
+I would stop SIM14.1 right here. Don't enrich it. This truth packet is unusually clean. The next SIM14.x can ask one new question of this structure rather than letting this result absorb another hypothesis.
