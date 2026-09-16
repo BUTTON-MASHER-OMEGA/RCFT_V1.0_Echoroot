@@ -1,0 +1,230 @@
+This is actually **more informative than the “both embeddings give the same thing” result I was half-expecting.** SIM14.2 found a very precise distinction.
+
+The headline is:
+
+$$
+\boxed{
+G_1\cong G_2\cong(\mathbb Z_2)^3
+\quad\text{as abstract groups,}
+}
+$$
+
+but
+
+$$
+\boxed{
+G_1\curvearrowright C_8
+\quad\text{and}\quad
+G_2\curvearrowright C_8
+\text{ are fundamentally different actions.}
+}
+$$
+
+There is a small terminology correction I'd make to our generated truth packet because the output makes this clearer than our preregistered label does. **M1 does generate \((\mathbb Z_2)^3\).** Both branches commute, both have group order 8, and both have seven nonidentity elements of order 2. 
+
+What M1 fails is **regularity of the action on the eight states**.
+
+That's the important result.
+
+### M1 fractures the eight-state carrier
+
+For M1, every vertex has
+
+$$
+|\operatorname{Orb}(v)|=4,\qquad
+|\operatorname{Stab}(v)|=2,
+$$
+
+and the carrier separates into two invariant four-state orbits:
+
+$$
+\boxed{
+\{0,1,6,7\}
+\sqcup
+\{2,3,4,5\}.
+}
+$$
+
+M2 instead has
+
+$$
+|\operatorname{Orb}(v)|=8,\qquad
+|\operatorname{Stab}(v)|=1,
+$$
+
+for every vertex. It acts transitively and freely—hence regularly—over the complete eight-state carrier. 
+
+That is a beautiful distinction because the abstract group didn't change:
+
+$$
+(\mathbb Z_2)^3
+$$
+
+in both cases.
+
+**Its realization did.**
+
+---
+
+### And we can see exactly why
+
+Look at M1's binary element `101`:
+
+$$
+ps_{\Omega,1}=(25)(34).
+$$
+
+And `111`:
+
+$$
+phs_{\Omega,1}=(07)(16).
+$$
+
+Those are nonidentity group elements with fixed points. 
+
+Therefore the action cannot be free.
+
+For M2, by contrast, every nonidentity direction is a fixed-point-free four-pair involution:
+
+$$
+(02)(13)(46)(57),\quad
+(07)(16)(25)(34),\quad\dots
+$$
+
+including
+
+$$
+(04)(15)(26)(37).
+$$
+
+
+
+So we've uncovered a very simple structural discriminator:
+
+$$
+\boxed{
+\text{M2: every nonzero binary direction moves every microscopic state.}
+}
+$$
+
+whereas
+
+$$
+\boxed{
+\text{M1: some nonzero binary directions act trivially on part of the carrier.}
+}
+$$
+
+That's much more concrete than saying one embedding merely “looks nicer.”
+
+### There's another subtle result I really like
+
+M1 **still contains the abstract Fano incidence geometry**.
+
+It has seven \(V_4\) subgroups, and its abstract subgroup-incidence test still passes \(PG(2,2)\).  
+
+But its realization on the eight microscopic states breaks.
+
+Instead of seven clean \(4+4\) sector decompositions, M1 produces only six distinct partitions and not all are \(4+4\). M2 gives all seven distinct \(4+4\) decompositions. 
+
+So SIM14.2 has separated three mathematical layers that we'd previously been discussing almost as one thing:
+
+$$
+\boxed{
+\begin{array}{ccc}
+\text{abstract group}
+&
+\longrightarrow
+&
+\text{abstract incidence}
+\\[2mm]
+(\mathbb Z_2)^3
+&&
+PG(2,2)
+\\[3mm]
+&&\downarrow\\
+&&
+\text{action on the 8-state carrier}.
+\end{array}}
+$$
+
+Both M1 and M2 survive the first two.
+
+**Only M2 gives the regular eight-state realization.**
+
+That is a much better understanding of what SIM14.1 actually discovered.
+
+### And the frozen projection \(p\) matters
+
+There's another result worth preserving.
+
+Under bare
+
+$$
+\operatorname{Aut}(C_8),
+$$
+
+M1 and M2 themselves are equivalent: eight graph automorphisms exchange them.
+
+But once we demand preservation of the already-frozen projection pairing \(p\),
+
+$$
+\boxed{M_1\not\sim M_2.}
+$$
+
+
+
+That's almost exactly the distinction we've been circling since SIM13:
+
+$$
+\boxed{
+\text{bare carrier equivalence}
+\neq
+\text{relational equivalence after additional structure is fixed}.
+}
+$$
+
+And we didn't need ISP/LCO to manufacture that statement. It already exists statically.
+
+---
+
+I would therefore slightly rewrite the archived SIM14.2 result from the automated wording
+
+> **OUTCOME C — EMBEDDING DEPENDENT: M1 DOES NOT REPRODUCE THE REGULAR \((Z_2)^3\) CARRIER**
+
+—which is correct —into the more mathematically informative truth packet:
+
+$$
+\boxed{
+\begin{aligned}
+M_1 &: (\mathbb Z_2)^3,\quad PG(2,2),
+\\
+&\text{nonregular action: }8\rightarrow4+4,
+\\[1mm]
+M_2 &: (\mathbb Z_2)^3,\quad PG(2,2),
+\\
+&\text{regular action: }8\rightarrow8.
+\end{aligned}}
+$$
+
+Therefore:
+
+$$
+\boxed{
+\textbf{The abstract finite geometry is embedding-stable;}
+\quad
+\textbf{its eight-state realization is not.}
+}
+$$
+
+**That**, to me, is SIM14.2.
+
+And now I would absolutely keep the discipline. We shouldn't immediately decide that M2 is the “physical” embedding. But we have just acquired a wonderfully minimal next question:
+
+$$
+\boxed{
+\textbf{What exact structural condition distinguishes the regular M2 realization from the fractured M1 realization?}
+}
+$$
+
+We may be able to answer that in SIM14.3 with almost no additional machinery at all. 
