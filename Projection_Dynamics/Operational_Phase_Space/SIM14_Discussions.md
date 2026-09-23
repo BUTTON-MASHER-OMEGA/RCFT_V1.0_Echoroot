@@ -1436,3 +1436,688 @@ This is exactly the kind of stopping point we wanted: the simulation has stopped
 
 
 
+
+
+
+
+########################
+
+
+
+
+
+
+
+
+
+
+Oh, this is a **very clean map**. SIM14.4 did exactly what we wanted: it exposed the internal organization of the M2 playground without inserting \(J\), \(g\), \(U(4)\), ISP, or LCO. All bookkeeping checks passed, including regularity of \(G\), full-rank antisymmetric \(\Omega\), and the M2 support identification. 
+
+The most important thing I see is that several numerical-looking observations can already be promoted from “SIM result” to **ordinary finite-affine consequences**. That tells us where the genuinely new information actually resides.
+
+## 1. We have now identified the playground very cleanly
+
+SIM14.4 derives
+
+$$
+7\text{ V}_4\text{ direction subgroups},
+\qquad
+14\text{ affine planes},
+\qquad
+7\text{ parallel classes}.
+$$
+
+
+
+This is exactly the finite affine geometry
+
+$$
+\boxed{AG(3,2)}
+$$
+
+carried by the regular \(C_2^3\)-torsor.
+
+That identification is stronger than merely saying “we have \(\mathbb F_2^3\).” The carrier itself has the incidence geometry
+
+$$
+\boxed{
+X_8
+\quad+\quad
+14\text{ affine }4\text{-point planes}.
+}
+$$
+
+And the origin robustness test confirms this is not an artifact of calling carrier state \(0\) the vector \(000\): **every one of the eight possible origins reconstructs exactly the same 14-plane family.** 
+
+So I would now regard
+
+$$
+\boxed{\mathcal A_8=(X_8,\mathcal P_{14})}
+$$
+
+as an intrinsic finite affine object in the M2 branch.
+
+The earlier seven \(V_4\)'s are the seven **direction classes**; the fourteen planes are their two affine cosets each.
+
+That resolves our earlier 0-question beautifully.
+
+---
+
+## 2. The plane-incidence structure is almost maximally uniform
+
+This output is striking:
+
+$$
+\{0:7,\;2:84\}.
+$$
+
+
+
+Among the
+
+$$
+\binom{14}{2}=91
+$$
+
+pairs of distinct affine planes:
+
+* exactly 7 pairs are disjoint;
+* every other pair—84 of them—intersects in exactly 2 carrier points.
+
+And those seven disjoint pairs are precisely the seven parallel pairs.
+
+So every plane sees:
+
+$$
+\boxed{
+1\text{ parallel/disjoint partner}
++
+12\text{ planes intersecting it in 2 points}.
+}
+$$
+
+There are no weird exceptional planes hiding in the affine geometry.
+
+That matters enormously for interpretation.
+
+**The affine geometry itself does not privilege one of the 14 planes.**
+
+Its incidence structure is highly homogeneous.
+
+The spectrum
+
+$$
+24,\quad -4^{(6)},\quad 0^{(7)}
+$$
+
+is consistent with exactly that extremely regular structure. 
+
+So if future dynamics distinguish sectors, they aren't going to be able to blame an intrinsically malformed affine plane.
+
+---
+
+# 3. And here is the first result I would *not* mythologize: the 6/8 symplectic split
+
+We found:
+
+$$
+6\text{ planes contain two complete M2 conjugate pairs},
+$$
+
+while
+
+$$
+8\text{ planes contain zero complete pairs and have all four M2 pairs crossing}.
+$$
+
+
+
+Equivalently, among the seven parallel classes,
+
+$$
+\boxed{3\text{ are internally preserved by }s}
+$$
+
+and
+
+$$
+\boxed{4\text{ are exchanged by }s.}
+$$
+
+
+
+At first glance that **3+4** is extremely tempting given everything we've been discussing.
+
+But SIM14.4 contains its own control.
+
+Look at \(p,h,s\):
+
+$$
+p:\quad(3,4),
+$$
+
+$$
+h:\quad(3,4),
+$$
+
+$$
+s:\quad(3,4).
+$$
+
+Each fixes 6 planes and exchanges the members of 4 parallel classes. 
+
+And in fact **all seven nonzero directions have exactly the same affine-plane action statistics**:
+
+$$
+6\text{ fixed planes},
+$$
+
+$$
+4\text{ exchanged plane pairs},
+$$
+
+with identical plane cycle structure. 
+
+That tells us something beautiful and deflationary:
+
+$$
+\boxed{
+3+4\text{ is not special to symplectic M2.}
+}
+$$
+
+It's a consequence of being a nonzero translation direction in \(AG(3,2)\).
+
+We can already see why analytically.
+
+Take a nonzero direction \(d\in\mathbb F_2^3\).
+
+There are exactly three 2-dimensional linear subspaces containing \(d\). Each has two affine cosets:
+
+$$
+3\times2=6
+$$
+
+planes preserved by translation by \(d\).
+
+The remaining four direction planes do not contain \(d\), and translation by \(d\) exchanges their two cosets.
+
+Therefore:
+
+$$
+\boxed{
+d\neq0
+\Longrightarrow
+6\text{ fixed affine planes}
++
+4\text{ exchanged parallel pairs}.
+}
+$$
+
+So this part of SIM14.4 is probably ready for another small theorem/lemma rather than another simulation.
+
+And I love that the map told us this before we could attach an RCFT interpretation to the 3+4.
+
+---
+
+# 4. The affine geometry treats all seven directions equally. \(C_8\) does not.
+
+This may be the most important conceptual result of SIM14.4.
+
+With respect to the affine planes alone, every nonzero direction behaves identically.
+
+But once \(C_8\) is restored, the seven directions split.
+
+The C8 overlaps are:
+
+$$
+\begin{array}{c|c}
+d & |M_d\cap E(C_8)|\\
+\hline
+001=s &4\\
+100=p &2\\
+110=ph &2\\
+010=h &0\\
+011 &0\\
+101 &0\\
+111 &0
+\end{array}
+$$
+
+and together with \(K\)-membership this produces four exact fingerprints. 
+
+That gives us a remarkably clean separation:
+
+$$
+\boxed{
+AG(3,2)
+\text{ supplies seven equivalent relational directions;}
+}
+$$
+
+while
+
+$$
+\boxed{
+C_8+\text{frozen carrier structure}
+\text{ breaks that equivalence into relational classes.}
+}
+$$
+
+And M2 is unique under this particular diagnostic:
+
+$$
+\boxed{s=001\text{ is the only direction with all four displacement pairs lying on }C_8.}
+$$
+
+That is not a statement that physics selects M2.
+
+But it is an exact structural statement about this frozen playground.
+
+This is also precisely the kind of division we wanted before ISP×LCO:
+
+$$
+\text{affine admissibility}
+\neq
+\text{carrier-specific relational distinction}.
+$$
+
+---
+
+## 5. \(C_8\) also sees four kinds of affine planes
+
+The 14 affine planes aren't distinguished intrinsically by affine incidence, but their intersection with the frozen \(C_8\) produces:
+
+$$
+\boxed{
+4P_4
++
+4(2K_2)
++
+4(K_2+2K_1)
++
+2(4K_1).
+}
+$$
+
+
+
+That's another useful result.
+
+The affine geometry says:
+
+$$
+\text{all planes are equivalent}.
+$$
+
+The cyclic carrier says:
+
+$$
+\text{no—they occupy four different relationships to my adjacency structure}.
+$$
+
+That suggests a general principle for the phase space we're uncovering:
+
+$$
+\boxed{
+\text{Structure is appearing in the \emph{relationship between layers},
+not necessarily inside either layer individually.}
+}
+$$
+
+That's exactly what happened with M1/M2.
+
+Bare \(C_8\) didn't select M2.
+
+Bare \(C_2^3\) didn't select M2.
+
+But their compatibility relative to the frozen \(K\) structure did something nontrivial.
+
+We're seeing the same methodological pattern again.
+
+---
+
+# 6. The automorphism result is fantastic
+
+This number:
+
+$$
+\boxed{|\operatorname{Aut}(\mathcal P_{14})|=1344}
+$$
+
+is not random. 
+
+For the affine geometry \(AG(3,2)\),
+
+$$
+AGL(3,2)
+=
+\mathbb F_2^3\rtimes GL(3,2).
+$$
+
+And
+
+$$
+|GL(3,2)|
+=
+(8-1)(8-2)(8-4)
+=
+7\cdot6\cdot4
+=
+168.
+$$
+
+Therefore
+
+$$
+|AGL(3,2)|
+=
+8\cdot168
+=
+\boxed{1344}.
+$$
+
+So SIM14.4 has computationally recovered the **full affine automorphism group** of the eight-point geometry.
+
+That's a very nice independent sanity check that our “14 planes” aren't just some accidental collection produced by the code.
+
+They really are behaving as
+
+$$
+\boxed{AG(3,2).}
+$$
+
+And now watch the symmetry collapse as we add earned structure:
+
+$$
+40320
+\longrightarrow
+1344
+\longrightarrow
+16
+\longrightarrow
+4.
+$$
+
+Specifically:
+
+$$
+S_8:40320,
+$$
+
+$$
+\operatorname{Aut}(AG(3,2)):1344,
+$$
+
+$$
+\operatorname{Aut}(C_8):16,
+$$
+
+$$
+\operatorname{Stab}_{C_8}(p,h):4.
+$$
+
+Adding \(s\) doesn't reduce that last group further:
+
+$$
+\operatorname{Stab}_{C_8}(p,h,s)=4.
+$$
+
+
+
+That's an excellent map of where symmetry freedom is actually being lost.
+
+---
+
+# 7. And \(\Omega\) gives us something genuinely worth following
+
+Now we reach the part I think deserves the most attention for SIM14.5.
+
+Among all 1344 affine automorphisms:
+
+$$
+24
+$$
+
+preserve the signed form,
+
+$$
+P^T\Omega P=+\Omega,
+$$
+
+and
+
+$$
+24
+$$
+
+reverse it,
+
+$$
+P^T\Omega P=-\Omega.
+$$
+
+The remaining
+
+$$
+1296
+$$
+
+do neither. 
+
+So:
+
+$$
+\boxed{
+1344
+=
+24+24+1296.
+}
+$$
+
+This tells us that the signed symplectic structure is **far more restrictive than the affine incidence geometry**.
+
+Only
+
+$$
+48/1344=\frac1{28}
+$$
+
+of the affine automorphisms preserve the symplectic structure even up to global orientation reversal.
+
+That's significant structurally—not physically, but mathematically.
+
+And now look at what happens after the \(C_8,p,h,s\) structures have been frozen.
+
+The surviving finite stabilizer has order four, and **every one of its elements respects \(\Omega\) up to sign**:
+
+$$
+\boxed{
+2:+\Omega,\qquad
+2:-\Omega,\qquad
+0:\text{neither}.
+}
+$$
+
+
+
+That's considerably more interesting to me than simply searching for \(J\).
+
+We did not ask for this.
+
+We asked the finite structures to compete, and the four transformations surviving all of them happen to lie entirely inside the preserve/reverse-\(\Omega\) class.
+
+That deserves characterization.
+
+Not interpretation yet.
+
+---
+
+# 8. So I would change the proposed next step slightly
+
+Before SIM14.4 I thought:
+
+$$
+\text{affine planes}
+\rightarrow
+\text{orthogonality?}
+\rightarrow
+J?
+\rightarrow
+U(4)?
+$$
+
+After seeing these results, I would **not go to \(J\) yet**.
+
+The map has handed us something more immediate.
+
+We should first characterize the 48-element object
+
+$$
+\boxed{
+N_\Omega^{\rm aff}
+=
+\{
+\sigma\in AGL(3,2):
+P_\sigma^T\Omega P_\sigma=\pm\Omega
+\}.
+}
+$$
+
+Questions:
+
+What is its abstract group structure?
+
+What are its orbits on:
+
+$$
+X_8,\qquad
+\mathcal D_7,\qquad
+\mathcal P_{14},
+$$
+
+and the seven parallel classes?
+
+How do its \(+\Omega\) and \(-\Omega\) pieces compose?
+
+Does
+
+$$
+N_\Omega^+
+=
+\{\sigma:P_\sigma^T\Omega P_\sigma=\Omega\}
+$$
+
+form the expected index-two subgroup of the 48-element \(\pm\Omega\) normalizer?
+
+Almost certainly yes algebraically, but let's explicitly characterize it.
+
+And—particularly important—what is the intersection
+
+$$
+N_\Omega^{\rm aff}
+\cap
+\operatorname{Aut}(C_8)?
+$$
+
+We already know its size from the map:
+
+$$
+4.
+$$
+
+But now we should identify **which four transformations they actually are and why**.
+
+That's exactly the kind of question that can expose a structural relation without us saying “find \(U(4)\).”
+
+---
+
+## 9. This also tells us something about the orthogonality question
+
+We haven't found metric orthogonality.
+
+And that's good.
+
+SIM14.4 found no \(g\), because we didn't insert one.
+
+What we *did* find is a much more precise question:
+
+$$
+\boxed{
+\text{Which affine transformations are compatible with the signed symplectic pairing already present?}
+}
+$$
+
+Only after understanding that finite compatibility class should we ask whether it naturally lifts to some additional continuous bilinear structure.
+
+In other words, rather than:
+
+$$
+\Omega\rightarrow J\rightarrow g,
+$$
+
+we now have an empirical finite waypoint:
+
+$$
+\boxed{
+\Omega
+\rightarrow
+N_\Omega^{\rm aff}
+\rightarrow
+?
+}
+$$
+
+Maybe the next structure points toward compatible \(J/g\).
+
+Maybe it doesn't.
+
+That's much safer.
+
+---
+
+# 10. The SIM14.4 truth ledger
+
+I would freeze the result like this.
+
+**Mathematically established / standard consequence:** The regular \(C_2^3\) carrier determines an affine \(AG(3,2)\) geometry with 8 points, 14 affine planes, and 7 parallel classes. Each plane has one disjoint parallel mate and intersects every other plane in two points. Every nonzero translation fixes the six affine planes whose direction subspaces contain it and exchanges four parallel pairs.
+
+**Computationally verified for our frozen implementation:** the M2 carrier reconstructs exactly this geometry for all eight choices of origin; \(C_8\) divides its 14 planes into four induced-subgraph classes; the seven translation directions fall into four \(C_8/K\) fingerprints; the affine-plane automorphism group has order 1344; and only 24 affine automorphisms preserve our signed \(\Omega\), with another 24 reversing it. The full frozen \(C_8,p,h,s\) stabilizer has order four and consists entirely of two \(\Omega\)-preservers and two \(\Omega\)-reversers. 
+
+**Not established:** a metric \(g\), compatible \(J\), \(U(4)\), quaternionic physical sector, octonionic upstream structure, ISP/LCO dynamics, or physical interpretation.
+
+And I think SIM14.4 gives us a new methodological sentence worth keeping:
+
+$$
+\boxed{
+\textbf{The affine geometry supplies equivalence; the superimposed structures supply distinction.}
+}
+$$
+
+That is what this map seems to be saying over and over.
+
+So my candidate for **SIM14.5** would now be very narrow:
+
+$$
+\boxed{\textbf{Affine–Symplectic Compatibility Classification}}
+$$
+
+No new object.
+
+No \(J\).
+
+No metric.
+
+No target group.
+
+Take the unexpected
+
+$$
+24+24
+$$
+
+that SIM14.4 just handed us and determine exactly what it is.
+
+If *that* classification naturally exposes another structure, then we follow it.
+
+This is exactly the kind of result we wanted from cartography: **the map itself has now told us where to walk next.**
