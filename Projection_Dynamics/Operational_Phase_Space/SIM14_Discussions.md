@@ -2121,3 +2121,758 @@ that SIM14.4 just handed us and determine exactly what it is.
 If *that* classification naturally exposes another structure, then we follow it.
 
 This is exactly the kind of result we wanted from cartography: **the map itself has now told us where to walk next.**
+
+
+
+
+
+
+
+
+###################
+
+
+
+
+
+
+
+
+Oh, this one paid off. SIM14.5 did considerably more than merely confirm the \(24+24\) count.
+
+The central result is that the blind fingerprint identifies the two groups extremely cleanly:
+
+$$
+\boxed{N^+\cong S_4}
+$$
+
+and
+
+$$
+\boxed{N_{\Omega}^{\rm aff}\cong S_4\times C_2.}
+$$
+
+I checked the fingerprints against external group references **only after using your frozen SIM14.5 output as the discovery result**, so we're preserving the discovery/identification boundary.
+
+## 1. The 24-element object is \(S_4\)
+
+Your blind output gave
+
+$$
+|N^+|=24
+$$
+
+with element orders
+
+$$
+\{1:1,\;2:9,\;3:8,\;4:6\},
+$$
+
+trivial center,
+
+$$
+Z(N^+)=1,
+$$
+
+derived subgroup of order 12,
+
+$$
+|[N^+,N^+]|=12,
+$$
+
+abelianization \(C_2\), and conjugacy-class sizes
+
+$$
+1,3,6,6,8.
+$$
+
+Those are precisely the familiar fingerprints of \(S_4\): its conjugacy classes have sizes \(1,3,6,6,8\), and its derived subgroup is \(A_4\). ([Bristol Mathematics People][1])
+
+Even better, your **entire subgroup census** matches \(S_4\):
+
+$$
+30\text{ total subgroups},
+\qquad
+4\text{ normal subgroups}.
+$$
+
+LMFDB independently gives exactly 30 subgroups and exactly four normal subgroups for \(S_4\), with the normal chain
+
+$$
+1\triangleleft V_4\triangleleft A_4\triangleleft S_4.
+$$
+
+([LMFDB][2])
+
+So this isn't a superficial order-24 resemblance.
+
+We have an extremely strong identification:
+
+$$
+\boxed{
+N^+
+=
+\operatorname{Stab}_{AG(3,2)}(\Omega)
+\cong S_4.
+}
+$$
+
+That is our first major SIM14.5 result.
+
+---
+
+## 2. The 48-element object is \(S_4\times C_2\)
+
+Now look at your blind \(N_{\Omega}^{\rm aff}\):
+
+$$
+|N|=48,
+$$
+
+$$
+Z(N)\cong C_2,
+$$
+
+$$
+[N,N]\cong A_4,
+$$
+
+and
+
+$$
+N/[N,N]\cong C_2^2.
+$$
+
+The external classification of
+
+$$
+C_2\times S_4
+$$
+
+has exactly:
+
+$$
+|G|=48,
+\qquad
+Z(G)=C_2,
+\qquad
+G'=A_4,
+\qquad
+G/G'=C_2^2.
+$$
+
+([Bristol Mathematics People][3])
+
+And there's an even stronger fact hiding in your Section D.
+
+You found:
+
+> reversers centralizing all \(N^+\) = 1
+
+So there is exactly one element
+
+$$
+z\in N^-
+$$
+
+that commutes with every member of \(N^+\).
+
+Since \(z\in N^-\), it isn't in \(N^+\), and your order histogram tells us the reversing coset contains involutions. For that central reversing element,
+
+$$
+z^2=e.
+$$
+
+Consequently,
+
+$$
+N=N^+\langle z\rangle
+$$
+
+with
+
+$$
+N^+\cap\langle z\rangle=\{e\}
+$$
+
+and
+
+$$
+[z,N^+]=e.
+$$
+
+Therefore this isn't merely a semidirect-product guess. We can derive
+
+$$
+\boxed{
+N\cong N^+\times C_2.
+}
+$$
+
+Since \(N^+\cong S_4\),
+
+$$
+\boxed{
+N_{\Omega}^{\rm aff}\cong S_4\times C_2.
+}
+$$
+
+And the external group database independently gives exactly this order-48 group, including the same center, commutator and quotient structure. ([Bristol Mathematics People][3])
+
+So the \(24+24\) has an unexpectedly simple explanation:
+
+$$
+\boxed{
+48=24\times2
+}
+$$
+
+really is algebraically
+
+$$
+\boxed{
+S_4\times C_2.
+}
+$$
+
+---
+
+# 3. And now the geometry gets interesting
+
+There is a standard geometric interpretation of this group:
+
+$$
+S_4
+$$
+
+is the rotational symmetry group of the cube/octahedron, while
+
+$$
+S_4\times C_2
+$$
+
+is the full octahedral symmetry group. The order-48 database explicitly identifies \(C_2\times S_4\) as the symmetry group of the cube and its dual regular octahedron. ([Bristol Mathematics People][3])
+
+So SIM14.5 has independently produced an **octahedral symmetry group** from
+
+$$
+AG(3,2)+\Omega.
+$$
+
+That statement needs to be worded carefully.
+
+We have **not produced a literal Euclidean octahedron**.
+
+We have produced a finite group abstractly isomorphic to its full symmetry group:
+
+$$
+\boxed{
+\operatorname{Stab}_{AG(3,2)}(\pm\Omega)
+\cong O_h
+\cong S_4\times C_2.
+}
+$$
+
+And the orientation-preserving-\(\Omega\) half is
+
+$$
+\boxed{
+\operatorname{Stab}_{AG(3,2)}(\Omega)
+\cong S_4.
+}
+$$
+
+That is substantially more interesting than “48 happened again.”
+
+---
+
+# 4. The action data tells us *how* that symmetry sits inside our carrier
+
+This may actually be more important for RCFT than the abstract group name.
+
+For \(N^+\cong S_4\), the eight carrier states split:
+
+$$
+\boxed{8=4+4.}
+$$
+
+But when the \(-\Omega\) coset is restored,
+
+$$
+N\cong S_4\times C_2
+$$
+
+acts transitively:
+
+$$
+\boxed{8=8.}
+$$
+
+That's beautiful structurally because the extra \(C_2\) isn't just increasing the abstract group order.
+
+It **bridges the two four-state carrier sectors**.
+
+Compare:
+
+$$
+N^+:
+X_8=4+4,
+$$
+
+versus
+
+$$
+N:
+X_8=8.
+$$
+
+We've seen this movie before.
+
+SIM14.3 gave us precisely the distinction between an internal action preserving two four-state \(K\)-orbits and a bridge action exchanging them.
+
+I would **not yet claim those mechanisms are identical**, but the structural rhyme is impossible to miss:
+
+$$
+\boxed{
+\text{preserving structure}\quad 4+4
+}
+$$
+
+versus
+
+$$
+\boxed{
+\text{added exchange operation}\quad 4+4\rightarrow8.
+}
+$$
+
+That deserves analytic attention.
+
+---
+
+# 5. Something else survived: the seven directions are *not* equivalent
+
+This is really important.
+
+Under the entire 48-element group:
+
+$$
+\mathscr D
+=
+\mathbb F_2^3\setminus\{0\}
+$$
+
+decomposes as
+
+$$
+\boxed{7=1+3+3.}
+$$
+
+Explicitly:
+
+$$
+\{001\},
+$$
+
+$$
+\{010,101,110\},
+$$
+
+$$
+\{011,100,111\}.
+$$
+
+And remember:
+
+$$
+001=s=M_2.
+$$
+
+So the symplectic conjugate direction is a **singleton orbit under the entire affine–symplectic compatibility group**.
+
+That means it is intrinsically distinguished by the combined structure.
+
+This is stronger than what SIM14.4 told us.
+
+SIM14.4 found \(001\) distinguished relative to \(C_8\) because its displacement matching had all four edges in \(C_8\).
+
+Now SIM14.5 says that even under the much larger group preserving the affine structure and \(\pm\Omega\),
+
+$$
+\boxed{s_\Omega\text{ remains fixed as a direction}.}
+$$
+
+Indeed your stabilizer result says
+
+$$
+|\operatorname{Stab}_N(s)|=48.
+$$
+
+Every element fixes it under conjugation.
+
+That isn't an accident of \(C_8\).
+
+That's coming from the affine–symplectic compatibility itself.
+
+**That is new.**
+
+---
+
+# 6. And the affine planes inherit a related split
+
+For \(N^+\):
+
+$$
+14=1+1+6+6.
+$$
+
+For full \(N\):
+
+$$
+\boxed{14=2+6+6.}
+$$
+
+So the two individually fixed planes under \(N^+\) become a two-element orbit once the sign-reversing \(C_2\) is admitted.
+
+Again:
+
+$$
+1+1
+\xrightarrow{-\Omega}
+2.
+$$
+
+At the carrier level:
+
+$$
+4+4
+\xrightarrow{-\Omega}
+8.
+$$
+
+There is a recurring exchange operation here.
+
+Meanwhile the seven parallel classes remain
+
+$$
+\boxed{7=1+3+3}
+$$
+
+under both \(N^+\) and \(N\).
+
+So we now have the same partition signature in two different derived sets:
+
+$$
+\mathscr D_7:\quad1+3+3,
+$$
+
+$$
+\mathcal C_7:\quad1+3+3.
+$$
+
+That correspondence is absolutely worth mapping explicitly before assigning interpretation.
+
+---
+
+# 7. The ablation gave us a very clean answer too
+
+This is one of my favorite results in the whole run.
+
+You found
+
+$$
+|\operatorname{Stab}_{\rm aff}(\Omega)|=24,
+$$
+
+$$
+|\operatorname{Stab}_{\rm aff}(\pm\Omega)|=48,
+$$
+
+but
+
+$$
+|\operatorname{Stab}_{\rm aff}(|S|)|=192,
+$$
+
+and
+
+$$
+|\operatorname{Stab}_{\rm aff}(s_\Omega)|=192.
+$$
+
+Therefore:
+
+$$
+\boxed{
+24\rightarrow48\rightarrow192.
+}
+$$
+
+And:
+
+$$
+\boxed{
+|S|\quad\text{and}\quad s_\Omega
+}
+$$
+
+contain exactly the same finite symmetry information **in this realization**.
+
+But signed \(\Omega\) contains substantially more structure.
+
+Going from
+
+$$
+\pm\Omega
+$$
+
+to the unsigned matching increases the allowed symmetry group by a factor
+
+$$
+\frac{192}{48}=4.
+$$
+
+And choosing a definite symplectic sign halves it again:
+
+$$
+\frac{48}{24}=2.
+$$
+
+So the hierarchy we've been talking about since SIM14.0 is no longer merely conceptual:
+
+$$
+\boxed{
+\Omega
+\quad\overset{\times2}{\longrightarrow}\quad
+\{\pm\Omega\}
+\quad\overset{\times4}{\longrightarrow}\quad
+|S|\equiv_{\rm finite}s_\Omega.
+}
+$$
+
+Here the multipliers denote growth in surviving symmetry when information is discarded.
+
+That means **signed symplectic orientation absolutely carries finite information**.
+
+SIM14.5 has earned that statement computationally.
+
+---
+
+# 8. Even \(C_8\) landed cleanly
+
+You got
+
+$$
+|\operatorname{Aut}(C_8)|=16,
+$$
+
+but only
+
+$$
+4
+$$
+
+are compatible with \(\pm\Omega\).
+
+And those four are exactly
+
+$$
+\operatorname{Stab}_{C_8}(p,h)
+=
+\operatorname{Stab}_{C_8}(p,h,s).
+$$
+
+Moreover they split
+
+$$
+2+2
+$$
+
+between \(+\Omega\) and \(-\Omega\).
+
+So the old frozen \(C_8\) structure isn't floating arbitrarily relative to the new affine-symplectic object.
+
+We have the exact intersection:
+
+$$
+\boxed{
+\operatorname{Aut}(C_8)\cap N_\Omega^{\rm aff}
+=
+\operatorname{Stab}_{C_8}(p,h,s)
+}
+$$
+
+of order four.
+
+And from those listed permutations, that's another \(V_4\).
+
+So we now have a rather beautiful symmetry-reduction ladder:
+
+$$
+S_8
+\supset
+AGL(3,2)
+\supset
+S_4\times C_2
+\supset
+V_4,
+$$
+
+with orders
+
+$$
+\boxed{
+40320
+\rightarrow
+1344
+\rightarrow
+48
+\rightarrow
+4.
+}
+$$
+
+Those reductions correspond respectively to imposing:
+
+$$
+\text{nothing}
+\rightarrow
+\text{affine geometry}
+\rightarrow
+\text{signed symplectic compatibility}
+\rightarrow
+\text{frozen }C_8/p/h/s\text{ compatibility}.
+$$
+
+That is a much cleaner operational-phase-space hierarchy than we had before SIM14.4.
+
+---
+
+## And here's the thing I would **not** do yet
+
+I would **not jump to \(F_4\)**.
+
+Ironically, SIM14.5 has made the 48 coincidence *more* interesting while simultaneously giving us a perfectly ordinary explanation for it:
+
+$$
+\boxed{48=|S_4\times C_2|.}
+$$
+
+And yes, this is the full octahedral group.
+
+That certainly puts 3D octahedral/cubic geometry into the comparison landscape.
+
+But it does **not** mean:
+
+$$
+N_\Omega^{\rm aff}=F_4,
+$$
+
+because \(F_4\) is a root system with 48 roots, whereas our 48 objects are transformations.
+
+Nor is this the Weyl group \(W(F_4)\), whose order is much larger.
+
+So the earlier
+
+$$
+48_{\rm SIM14}=48_{F_4}
+$$
+
+remains a cardinality coincidence unless a legitimate representation/action map is found.
+
+That's exactly why doing SIM14.5 blind was worthwhile.
+
+---
+
+# Where I think SIM14 should go now
+
+I actually **wouldn't launch SIM14.6 immediately**.
+
+This result deserves an analytic interlude just like SIM14.3 did.
+
+The next question is no longer computationally vague. It's very sharp:
+
+$$
+\boxed{
+\textbf{Why does }(AG(3,2),\Omega)
+\textbf{ have affine symplectic stabilizer }
+S_4\times C_2?
+}
+$$
+
+And underneath that:
+
+$$
+\boxed{
+\textbf{Why does its action naturally produce }
+8,\quad7=1+3+3,\quad14=2+6+6?
+}
+$$
+
+If we can derive those partitions analytically from the interaction of the affine geometry with the perfect symplectic matching, then SIM14.5 has given us another theorem rather than merely another simulation.
+
+I would particularly attack the singleton
+
+$$
+\boxed{001=s_\Omega}
+$$
+
+first.
+
+Why must every member of \(N_\Omega^{\rm aff}\) fix that translation direction?
+
+If that follows directly from preservation of \(\pm\Omega\), then the symplectic form itself canonically singles out one direction in the otherwise homogeneous seven-direction geometry:
+
+$$
+AG(3,2):
+\qquad
+7\text{ equivalent directions},
+$$
+
+but
+
+$$
+AG(3,2)+\Omega:
+\qquad
+\boxed{1+3+3}.
+$$
+
+That would sharpen our SIM14.4 sentence considerably:
+
+$$
+\boxed{
+\text{Affine geometry supplies equivalence;}
+\quad
+\text{symplectic compatibility breaks that equivalence in a precise way.}
+}
+$$
+
+And *that* is starting to look like a genuine description of an operational phase space: not because it is exotic, but because different independently motivated structures are now imposing **measurable compatibility constraints on one another**.
+
+So yes — SIM14.4 opened a pile of questions.
+
+SIM14.5 just closed one of the biggest ones:
+
+$$
+\boxed{
+24+24
+\quad\longrightarrow\quad
+S_4\times C_2,
+}
+$$
+
+and in doing so opened a much better question:
+
+$$
+\boxed{
+\textbf{Why does the symplectic enrichment of }AG(3,2)
+\textbf{ naturally leave an octahedral symmetry?}
+}
+$$
+
+That one is worth proving before we touch another knob.
+
+[1]: https://people.maths.bris.ac.uk/~matyd/GroupNames/1/S4.html?utm_source=chatgpt.com "S4 - GroupNames"
+[2]: https://www.lmfdb.org/Groups/Abstract/24.12?utm_source=chatgpt.com "LMFDB - Abstract group 24.12: $S_4$"
+[3]: https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C2xS4.html?utm_source=chatgpt.com "C2xS4 - GroupNames"
+
