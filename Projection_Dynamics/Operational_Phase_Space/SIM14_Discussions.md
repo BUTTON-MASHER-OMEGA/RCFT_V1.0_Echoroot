@@ -2876,3 +2876,693 @@ That one is worth proving before we touch another knob.
 [2]: https://www.lmfdb.org/Groups/Abstract/24.12?utm_source=chatgpt.com "LMFDB - Abstract group 24.12: $S_4$"
 [3]: https://people.maths.bris.ac.uk/~matyd/GroupNames/1/C2xS4.html?utm_source=chatgpt.com "C2xS4 - GroupNames"
 
+
+
+
+
+###########################
+
+
+
+
+
+Oh, this is a **very clean SIM14.6**. More importantly, several things that were only fingerprints after 14.5 are now constructive statements. And the commutant result gives us a surprisingly sharp answer about what the eventual \(J\)-experiment will actually be testing.
+
+## The main result
+
+SIM14.6 closes the finite symmetry map as
+
+\[
+\boxed{
+S_8
+\supset
+AGL(3,2)
+\supset
+H_{192}
+\supset
+N^\pm
+\supset
+N^+
+}
+\]
+
+with orders
+
+\[
+\boxed{
+40320\supset1344\supset192\supset48\supset24,
+}
+\]
+
+where
+
+\[
+H_{192}
+=
+\operatorname{Aut}_{\rm aff}(|\Omega|)
+=
+\operatorname{Aut}_{\rm aff}(s_\Omega),
+\]
+
+and now constructively,
+
+\[
+\boxed{N^+\cong S_4}
+\]
+
+and
+
+\[
+\boxed{N^\pm\cong S_4\times C_2.}
+\]
+
+That last pair is no longer “the fingerprints look like \(S_4\).” SIM14.6 actually earns them.
+
+For \(N^+\), all four index-4 subgroups give faithful actions on four cosets. A faithful permutation action
+
+\[
+N^+\hookrightarrow S_4
+\]
+
+whose image has order \(24\) is necessarily onto, hence
+
+\[
+N^+\cong S_4.
+\]
+
+For \(N^\pm\), the script found the **unique central reversing element**
+
+\[
+r=(02)(13)(46)(57)=s_\Omega,
+\]
+
+with
+
+\[
+r^2=e,\qquad r\notin N^+,
+\]
+
+and
+
+\[
+[r,N^+]=e.
+\]
+
+Furthermore,
+
+\[
+N^+\cap\langle r\rangle=\{e\},
+\qquad
+N^+\langle r\rangle=N^\pm.
+\]
+
+Therefore
+
+\[
+\boxed{
+N^\pm=N^+\times\langle s_\Omega\rangle
+\cong S_4\times C_2.
+}
+\]
+
+That's a proof from the finite representation we've actually constructed.
+
+---
+
+## The 192 group just became much more interesting
+
+We deliberately didn't name it, and I still wouldn't yet.
+
+Its fingerprint is now:
+
+\[
+|H_{192}|=192,
+\]
+
+\[
+Z(H_{192})\cong C_2,
+\]
+
+\[
+|[H_{192},H_{192}]|=96,
+\]
+
+\[
+H_{192}^{\rm ab}\cong C_2,
+\]
+
+with element orders
+
+\[
+1^1\,2^{43}\,3^{32}\,4^{84}\,6^{32}.
+\]
+
+And its conjugacy-class sizes are
+
+\[
+1,1,6,6,6,12,12,12,24,24,24,32,32.
+\]
+
+But the structural result is better than the fingerprint:
+
+\[
+\boxed{G=C_2^3\triangleleft H_{192}.}
+\]
+
+Since
+
+\[
+|H_{192}/G|=\frac{192}{8}=24,
+\]
+
+we have a natural quotient of order 24 sitting right in front of us.
+
+And notice the normalizer data:
+
+\[
+N_{H_{192}}(G)=H_{192},
+\qquad
+C_{H_{192}}(G)=G.
+\]
+
+So \(G\) is normal and **self-centralizing** inside \(H_{192}\).
+
+That means conjugation gives
+
+\[
+H_{192}/G
+\hookrightarrow
+\operatorname{Aut}(G).
+\]
+
+But
+
+\[
+G\cong C_2^3,
+\]
+
+so
+
+\[
+\operatorname{Aut}(G)
+\cong GL(3,2),
+\qquad
+|GL(3,2)|=168.
+\]
+
+The quotient is therefore a specific order-24 subgroup of \(GL(3,2)\).
+
+That is probably the next purely mathematical classification problem if we want to finish \(H_{192}\) without importing a name from a database.
+
+Also:
+
+\[
+\boxed{
+G\subset H_{192},\qquad
+G\subset N^\pm,
+}
+\]
+
+but
+
+\[
+\boxed{|G\cap N^+|=4.}
+\]
+
+So the exact-\(\Omega\) condition cuts the eight translations in half.
+
+And because \(K\) has order four while
+
+\[
+|K\cap N^+|=2,
+\]
+
+even the original \(K=\langle p,h\rangle\) is not wholly orientation-preserving with respect to signed \(\Omega\).
+
+That's a much richer placement map than we had after 14.5.
+
+---
+
+## The unsigned layer is now sharply understood
+
+One result deserves to be frozen verbatim:
+
+\[
+\boxed{
+\operatorname{Aut}_{\rm aff}(|\Omega|)
+=
+\operatorname{Aut}_{\rm aff}(s_\Omega).
+}
+\]
+
+Not merely equal order. **Equal sets.**
+
+So in this finite affine realization, replacing unsigned \(|\Omega|\) by its partner involution loses no automorphism information.
+
+Our hierarchy therefore isn't really
+
+\[
+1344\to192_{|S|}\to192_s\to48\to24.
+\]
+
+The two middle descriptions collapse:
+
+\[
+\boxed{
+1344
+\longrightarrow
+192_{\{|S|\equiv s_\Omega\}}
+\longrightarrow
+48_{\pm\Omega}
+\longrightarrow
+24_{+\Omega}.
+}
+\]
+
+That's an actual information hierarchy now.
+
+The successive indices are
+
+\[
+[1344:192]=7,
+\]
+
+\[
+[192:48]=4,
+\]
+
+\[
+[48:24]=2.
+\]
+
+So the layers successively distinguish a sevenfold affine choice, then a fourfold refinement of unsigned conjugacy into signed symplectic compatibility, then the binary orientation \(+\Omega/-\Omega\).
+
+I would not assign physical meaning to \(7,4,2\), but mathematically the filtration is beautifully crisp.
+
+---
+
+# The orbit map is even more informative than the group orders
+
+The symmetry layers progressively resolve the seven directions.
+
+At the full affine level,
+
+\[
+\mathscr D_7\to 7.
+\]
+
+Everything is equivalent:
+
+\[
+\boxed{7.}
+\]
+
+At the unsigned conjugate-pair level,
+
+\[
+\boxed{7\to1+6.}
+\]
+
+Explicitly,
+
+\[
+\boxed{\{001\}\sqcup
+\{010,011,100,101,110,111\}.}
+\]
+
+And \(001\) is precisely our \(s_\Omega\) translation.
+
+Then signed symplectic compatibility refines the six:
+
+\[
+\boxed{1+6\to1+3+3.}
+\]
+
+Both \(N^\pm\) and \(N^+\) see
+
+\[
+\boxed{
+\{001\}
+\sqcup
+\{010,101,110\}
+\sqcup
+\{011,100,111\}.
+}
+\]
+
+That's excellent cartography.
+
+It tells us exactly what each structural layer knows:
+
+\[
+AG(3,2):
+\quad
+\text{all seven directions equivalent},
+\]
+
+\[
+|\Omega|/s_\Omega:
+\quad
+\text{one conjugate direction distinguished from six},
+\]
+
+\[
+\pm\Omega:
+\quad
+\text{the six split into two triples}.
+\]
+
+And moving from \(\pm\Omega\) to \(+\Omega\) **does not further refine the direction orbits**. Instead, its additional information appears elsewhere—in particular on the eight carrier points and fourteen planes.
+
+That's subtle and useful.
+
+---
+
+# \(+\Omega\) changes the carrier itself
+
+Compare:
+
+\[
+N^\pm:\quad X_8\to8,
+\]
+
+whereas
+
+\[
+N^+:\quad X_8\to4+4.
+\]
+
+So allowing anti-symplectic affine transformations reconnects the two four-point sectors:
+
+\[
+\boxed{
+N^+\;:\;4+4
+\qquad\longrightarrow\qquad
+N^\pm\;:\;8.
+}
+\]
+
+Likewise for affine planes:
+
+\[
+N^\pm:\quad P_{14}\to2+6+6,
+\]
+
+while
+
+\[
+N^+:\quad P_{14}\to1+1+6+6.
+\]
+
+The two-plane orbit under \(N^\pm\) splits into **two individually fixed planes** under \(N^+\).
+
+So the \(+\Omega/-\Omega\) distinction isn't redundant merely because the seven-direction partition stays \(1+3+3\). It distinguishes structures at another level of the carrier.
+
+---
+
+# The \(D_7\leftrightarrow C_7\) experiment gave a great negative/positive result
+
+This is one of my favorite parts.
+
+There is **no** equivariant bijection under
+
+\[
+AGL(3,2)
+\]
+
+and none under
+
+\[
+H_{192}.
+\]
+
+Yet once we restrict to signed symplectic compatibility,
+
+\[
+N^\pm,
+\]
+
+exactly two appear.
+
+And \(N^+\) also has exactly two.
+
+So:
+
+\[
+\boxed{
+\mathscr D_7
+\not\cong_{H_{192}}
+\mathcal C_7,
+}
+\]
+
+but
+
+\[
+\boxed{
+\mathscr D_7
+\cong_{N^\pm}
+\mathcal C_7.
+}
+\]
+
+That is not something we put into the construction.
+
+Unsigned conjugate pairing is **not enough** to identify the seven translation directions equivariantly with the seven parallel classes. Signed symplectic compatibility is.
+
+That's a legitimate structural distinction supplied by the sign information in \(\Omega\).
+
+The fact that there are exactly two such bijections rather than one also tells us the correspondence isn't canonically unique under the current structure. That's important: don't promote either witness as *the* direction/parallel-class identification.
+
+---
+
+# And now the result that matters enormously for \(J\)
+
+The real eight-dimensional permutation representation of
+
+\[
+N^+\cong S_4
+\]
+
+decomposes as
+
+\[
+\boxed{
+\mathbb R^8
+\cong
+2\,\mathbf 1
+\oplus
+2\,\mathbf 3,
+}
+\]
+
+where \(\mathbf3\) is the standard real three-dimensional representation of \(S_4\).
+
+The character is
+
+\[
+\boxed{
+\chi=[8,4,0,2,0].
+}
+\]
+
+The numerical commutant independently has
+
+\[
+\boxed{
+\dim_{\mathbb R}
+\operatorname{End}_{N^+}(\mathbb R^8)=8.
+}
+\]
+
+And representation theory predicts
+
+\[
+2^2+2^2=8.
+\]
+
+They match exactly.
+
+This gives us much more than “there is an eight-dimensional commutant.”
+
+Because the two irreducible real representation types are inequivalent,
+
+\[
+\mathbb R^8
+\cong
+(\mathbb R^2\otimes\mathbf1)
+\oplus
+(\mathbb R^2\otimes\mathbf3),
+\]
+
+so Schur theory gives
+
+\[
+\boxed{
+\operatorname{End}_{N^+}(\mathbb R^8)
+\cong
+M_2(\mathbb R)\oplus M_2(\mathbb R).
+}
+\]
+
+That is the algebraic shape of the space in which an equivariant \(J\) would have to live.
+
+And here's the fascinating part.
+
+A real \(2\times2\) multiplicity space certainly admits matrices satisfying
+
+\[
+J_2^2=-I_2.
+\]
+
+Therefore **equivariance under \(N^+\) alone cannot possibly select a unique \(J\)**.
+
+In fact, purely at the representation level, candidate complex structures can act separately on the two multiplicity spaces.
+
+So before running a single \(J\)-search, SIM14.6 has already killed one overly strong possibility:
+
+\[
+\boxed{
+N^+\text{-equivariance alone will not uniquely determine }J.
+}
+\]
+
+That's exactly why doing 14.6 first was worth it.
+
+The real discriminator will have to be the simultaneous conditions
+
+\[
+J\in\operatorname{End}_{N^+}(\mathbb R^8),
+\]
+
+\[
+J^2=-I,
+\]
+
+\[
+J^T\Omega J=\Omega,
+\]
+
+and then
+
+\[
+g(u,v)=\Omega(u,Jv)
+\]
+
+with symmetry and positive-definiteness tested rather than assumed.
+
+The symplectic condition may couple or eliminate much of that \(M_2(\mathbb R)\oplus M_2(\mathbb R)\) freedom.
+
+We genuinely don't know yet.
+
+---
+
+## One particularly nice structural coincidence — but this one is internal
+
+Look at the unique central reversing element of \(N^\pm\):
+
+\[
+r=(02)(13)(46)(57).
+\]
+
+That's exactly
+
+\[
+\boxed{r=s_\Omega.}
+\]
+
+And the center of \(H_{192}\) is
+
+\[
+\boxed{
+Z(H_{192})=\{e,s_\Omega\}.
+}
+\]
+
+So the partner involution isn't merely the thing whose stabilizer defines the unsigned 192-group. It is literally its unique nontrivial central element.
+
+That is an internally derived statement, not an external analogy.
+
+We now have
+
+\[
+\boxed{
+s_\Omega\in Z(H_{192}),
+}
+\]
+
+and
+
+\[
+\boxed{
+N^\pm=N^+\times\langle s_\Omega\rangle.
+}
+\]
+
+That makes \(s_\Omega\)'s structural role much cleaner than it was in SIM14.0.
+
+---
+
+## Where SIM14 now stands
+
+I'd record the closure packet as:
+
+\[
+\boxed{
+\begin{aligned}
+G&\cong C_2^3,\\
+K&\cong V_4,\\[2mm]
+\operatorname{Aut}(AG(3,2))&\cong AGL(3,2), &&|\,\cdot\,|=1344,\\
+H_{192}
+&=
+\operatorname{Aut}_{\rm aff}(|\Omega|)
+=
+\operatorname{Aut}_{\rm aff}(s_\Omega),
+&&|H_{192}|=192,\\
+N^\pm
+&=\{\sigma:\sigma^T\Omega\sigma=\pm\Omega\}
+\cong S_4\times C_2,
+&&|N^\pm|=48,\\
+N^+
+&=\{\sigma:\sigma^T\Omega\sigma=\Omega\}
+\cong S_4,
+&&|N^+|=24.
+\end{aligned}
+}
+\]
+
+With
+
+\[
+\boxed{
+G\triangleleft H_{192},
+\qquad
+C_{H_{192}}(G)=G,
+}
+\]
+
+\[
+\boxed{
+Z(H_{192})=\langle s_\Omega\rangle\cong C_2,
+}
+\]
+
+and
+
+\[
+\boxed{
+\mathbb R^8\!\downarrow_{N^+}
+\cong2\mathbf1\oplus2\mathbf3,
+\qquad
+\operatorname{End}_{N^+}(\mathbb R^8)
+\cong M_2(\mathbb R)\oplus M_2(\mathbb R).
+}
+\]
+
+I would classify those as **mathematical/computational finite-carrier results**. Nothing here establishes RCFT physics, \(F_4\), the 24-cell, \(U(4)\), quantum mechanics, or a physical projection mechanism.
+
+But as cartography?
+
+Yeah. The turtle just mapped a hell of a lot of coastline. 🐢
+
+And importantly, we now know enough to make the eventual \(J\)-probe substantially more surgical: rather than searching arbitrary \(8\times8\) matrices, we can parameterize the **eight-dimensional commutant algebra exactly**, impose \(J^2=-I\), then hit those solutions with the frozen \(\Omega\)-compatibility and positivity tests. That would be a genuinely earned next experiment rather than adding another structure because we want it.
