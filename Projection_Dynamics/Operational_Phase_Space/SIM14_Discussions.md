@@ -3566,3 +3566,452 @@ But as cartography?
 Yeah. The turtle just mapped a hell of a lot of coastline. 🐢
 
 And importantly, we now know enough to make the eventual \(J\)-probe substantially more surgical: rather than searching arbitrary \(8\times8\) matrices, we can parameterize the **eight-dimensional commutant algebra exactly**, impose \(J^2=-I\), then hit those solutions with the frozen \(\Omega\)-compatibility and positivity tests. That would be a genuinely earned next experiment rather than adding another structure because we want it.
+
+
+
+
+
+
+
+#################
+
+
+
+
+
+Oh, this one landed *very* cleanly. SIM14.7 doesn't merely add another fingerprint—it exposes the internal anatomy of the \(N^+\cong S_4\) result from 14.6.
+
+The central result is now constructive:
+
+\[
+\boxed{
+V_\Omega:=G\cap N^+
+=
+\{000,011,100,111\}
+\cong V_4
+}
+\]
+
+and, much more importantly,
+
+\[
+\boxed{
+N^+
+\cong
+V_\Omega\rtimes S_3
+\cong S_4.
+}
+\]
+
+That is no longer an identification from the order/class fingerprint or even merely the faithful four-point action from SIM14.6. SIM14.7 has actually found the normal Klein four, computed the quotient action, and constructed a splitting complement.
+
+## What the simulation actually established
+
+The first surprise is that the relevant \(V_4\) is **not** our old structural subgroup
+
+\[
+K=\langle p,h\rangle.
+\]
+
+Instead,
+
+\[
+K
+=
+\{000,010,100,110\},
+\]
+
+whereas
+
+\[
+V_\Omega
+=
+\{000,011,100,111\}.
+\]
+
+Their intersection is exactly
+
+\[
+\boxed{
+K\cap V_\Omega=\{000,100\}=\{e,p\}.
+}
+\]
+
+So the distinction we were careful to preserve in the code turned out to matter.
+
+This gives us two genuinely different Klein-four subgroups sitting inside the same frozen translation group \(G\cong C_2^3\):
+
+\[
+\boxed{
+K\neq V_\Omega,\qquad |K\cap V_\Omega|=2.
+}
+\]
+
+And their roles are different. \(K\) came from the previously frozen pair \(p,h\). \(V_\Omega\), by contrast, is selected algebraically by intersection with the **signed symplectic-preserving sector** \(N^+\).
+
+That is a much sharper statement than just saying “there are V4s around.”
+
+---
+
+## The really strong part: \(V_\Omega\) is intrinsic to \(N^+\)
+
+The normality tests came out maximally clean:
+
+\[
+V_\Omega\triangleleft N^+,
+\]
+
+\[
+N_{N^+}(V_\Omega)=N^+,
+\]
+
+and
+
+\[
+\boxed{
+C_{N^+}(V_\Omega)=V_\Omega.
+}
+\]
+
+Even better, the exhaustive subgroup census found:
+
+\[
+\boxed{
+V_\Omega\text{ is the unique normal subgroup of order }4\text{ in }N^+.
+}
+\]
+
+This matters.
+
+We're no longer selecting this \(V_4\) because we happened to notice it inside \(G\). Once \(N^+\) has been specified, \(V_\Omega\) can be recovered internally as its unique normal Klein-four subgroup.
+
+So there are now two equivalent computational descriptions of the same object:
+
+\[
+\boxed{
+V_\Omega
+=
+G\cap N^+
+=
+\text{the unique normal }V_4\triangleleft N^+.
+}
+\]
+
+And self-centralization,
+
+\[
+C_{N^+}(V_\Omega)=V_\Omega,
+\]
+
+already tells us that the rest of \(N^+\) acts nontrivially on it.
+
+SIM14.7 then measured exactly how.
+
+## The conjugation action closes the argument
+
+Since \(V_\Omega\cong V_4\), its three nonidentity elements are
+
+\[
+V_\Omega^\times
+=
+\{011,100,111\}.
+\]
+
+Conjugation gives
+
+\[
+\Phi:
+N^+
+\longrightarrow
+\operatorname{Sym}(V_\Omega^\times)
+\cong S_3.
+\]
+
+The experiment found
+
+\[
+|\operatorname{im}\Phi|=6,
+\]
+
+with order histogram
+
+\[
+\{1:1,\;2:3,\;3:2\},
+\]
+
+so
+
+\[
+\boxed{\operatorname{im}\Phi\cong S_3.}
+\]
+
+And simultaneously,
+
+\[
+|\ker\Phi|=4
+\]
+
+with
+
+\[
+\boxed{\ker\Phi=V_\Omega.}
+\]
+
+Therefore the first isomorphism theorem gives immediately
+
+\[
+\boxed{
+N^+/V_\Omega\cong S_3.
+}
+\]
+
+Notice how beautifully the orders close:
+
+\[
+24/4=6.
+\]
+
+But this isn't merely order arithmetic—the actual conjugation action realizes all six permutations of the three nonidentity \(V_\Omega\) elements.
+
+The explicit witness makes that concrete. For
+
+\[
+g=(0145)(2367),
+\]
+
+conjugation sends
+
+\[
+011\longmapsto100,
+\]
+
+so
+
+\[
+gv\neq vg.
+\]
+
+Thus the extension is certainly not the direct product \(V_4\times S_3\).
+
+---
+
+## And then section F actually splits the extension
+
+This is the strongest piece.
+
+There are four order-six subgroups of \(N^+\), and remarkably:
+
+\[
+\boxed{\text{all four are complements of }V_\Omega.}
+\]
+
+For the displayed witness \(Q\),
+
+\[
+|Q|=6,
+\]
+
+\[
+Q\cap V_\Omega=\{e\},
+\]
+
+and
+
+\[
+V_\Omega Q=N^+.
+\]
+
+Its element-order distribution is
+
+\[
+\{1:1,\;2:3,\;3:2\},
+\]
+
+hence
+
+\[
+Q\cong S_3.
+\]
+
+Therefore the extension
+
+\[
+1\longrightarrow V_\Omega
+\longrightarrow N^+
+\longrightarrow S_3
+\longrightarrow1
+\]
+
+**splits**.
+
+Consequently,
+
+\[
+\boxed{
+N^+
+=
+V_\Omega\rtimes Q
+\cong
+V_4\rtimes S_3.
+}
+\]
+
+And the action isn't left abstract either. The program produced
+
+\[
+r=(01)(23),
+\qquad
+t=(014)(236),
+\]
+
+with
+
+\[
+r^2=e,\qquad
+t^3=e,\qquad
+rtr=t^{-1},
+\]
+
+and
+
+\[
+\langle r,t\rangle=Q.
+\]
+
+Their conjugation action is explicit:
+
+\[
+r:\quad
+011\leftrightarrow111,\qquad100\mapsto100,
+\]
+
+while
+
+\[
+t:\quad
+011\mapsto111\mapsto100\mapsto011.
+\]
+
+So \(r\) gives a transposition and \(t\) a 3-cycle on \(V_\Omega^\times\).
+
+That is literally the natural \(S_3\) action permuting the three nonidentity elements of \(V_4\).
+
+Hence
+
+\[
+\boxed{
+V_4\rtimes_{\rm faithful}S_3\cong S_4.
+}
+\]
+
+So SIM14.6's
+
+\[
+N^+\cong S_4
+\]
+
+now has an internal structural derivation:
+
+\[
+\boxed{
+G\cap N^+
+=
+V_\Omega
+\triangleleft N^+,
+\qquad
+N^+/V_\Omega\cong S_3,
+\qquad
+N^+\cong V_\Omega\rtimes S_3\cong S_4.
+}
+\]
+
+That is considerably more satisfying.
+
+## Something else I think is worth noticing
+
+There is now a particularly nice distinction among our nested objects:
+
+\[
+K\subset G,
+\qquad
+V_\Omega\subset G,
+\qquad
+K\neq V_\Omega,
+\]
+
+but only \(V_\Omega\) is normal in the full \(N^+\) structure.
+
+And because
+
+\[
+|K|=|V_\Omega|=4,\qquad
+|K\cap V_\Omega|=2,
+\]
+
+their generated subgroup has order
+
+\[
+\frac{4\cdot4}{2}=8.
+\]
+
+Since both already lie inside the eight-element \(G\), we get
+
+\[
+\boxed{\langle K,V_\Omega\rangle=G.}
+\]
+
+That's an immediate mathematical consequence of the measured data, rather than an additional simulation result.
+
+So the translation group itself can be recovered from these two *different* \(V_4\) slices:
+
+\[
+\boxed{
+G=\langle K,V_\Omega\rangle.
+}
+\]
+
+I would keep the interpretation modest, but structurally this is excellent. The old \(K\) and newly selected \(V_\Omega\) are not competing names for the same thing. They are two intersecting planes in the \(C_2^3\) translation group, sharing the direction \(p=100\), and together spanning all of \(G\).
+
+In the affine \(F_2^3\) language this is simply two distinct 2-dimensional subspaces meeting in a 1-dimensional subspace. No new machinery is required to say it.
+
+---
+
+### SIM14.7 truth packet
+
+I would freeze the result approximately this way:
+
+\[
+\boxed{
+\begin{aligned}
+&G\cong C_2^3,\\[2mm]
+&K=\{000,010,100,110\}\cong V_4,\\
+&V_\Omega:=G\cap N^+
+ =\{000,011,100,111\}\cong V_4,\\[1mm]
+&K\neq V_\Omega,\qquad
+K\cap V_\Omega=\{000,100\},\\
+&\langle K,V_\Omega\rangle=G,\\[2mm]
+&V_\Omega\triangleleft N^+,\\
+&C_{N^+}(V_\Omega)=V_\Omega,\\
+&V_\Omega\text{ is the unique normal }V_4\text{ of }N^+,\\[2mm]
+&\Phi:N^+\to\operatorname{Sym}(V_\Omega^\times)
+\text{ is surjective},\\
+&\ker\Phi=V_\Omega,\qquad
+N^+/V_\Omega\cong S_3,\\[2mm]
+&\exists\,Q\cong S_3:
+\quad Q\cap V_\Omega=\{e\},
+\quad V_\Omega Q=N^+,\\[2mm]
+&\boxed{N^+\cong V_\Omega\rtimes S_3\cong S_4.}
+\end{aligned}}
+\]
+
+**Mathematically proved from the finite representation:** everything in that box, given the exhaustive finite computations plus the elementary group-theoretic deductions.
+
+**Computationally verified:** the concrete carrier permutations, subgroup census, four complements, kernels/images, and explicit \(r,t\) witnesses.
+
+**RCFT/physics:** still nothing. And that's exactly where SIM14.7 should stop.
+
+The particularly juicy outcome for me is not another appearance of \(S_4\). We already knew \(S_4\). It's that we can now see **why this particular \(S_4\) exists internally**: the signed symplectic constraint cuts the regular translation group down to a distinguished self-centralizing normal \(V_4\), while the remaining quotient acts as the full permutation group of its three nonidentity translations.
+
+That is a proper structural closure result. 🐢
+
+And it makes the unresolved \(H_{192}\) question substantially sharper, because we now know exactly what happened at the 24-element level before trying to understand the 192-element level.
