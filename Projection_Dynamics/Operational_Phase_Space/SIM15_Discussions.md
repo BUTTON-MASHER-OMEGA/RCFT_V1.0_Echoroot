@@ -915,3 +915,620 @@ this particular classical symmetry architecture?}
 \]
 
 And *that* is absolutely worth investigating carefully before we decide whether the construction itself has precedent.
+
+
+
+
+
+
+######################
+
+
+
+
+
+
+Oh, this is a *very* informative run. SIM15.1 did considerably more than merely reproduce SIM15.0. The preregistered strongest threefold test actually fired.
+
+The clean headline is
+
+\[
+\boxed{
+L_{192}\cong C_2^3\rtimes S_4
+\quad\triangleleft\quad
+N_{576},
+\qquad
+N_{576}/L_{192}\cong C_3,
+}
+\]
+
+and, crucially, the extension **splits**. The run found order-three elements \(c\notin L\) with
+
+\[
+\langle c\rangle\cap L=\{e\},
+\qquad
+\langle L,c\rangle=N,
+\]
+
+so computationally we have
+
+\[
+\boxed{N_{576}\cong L_{192}\rtimes C_3.}
+\]
+
+There were 48 such order-three complement witnesses. Pasted markdown
+
+That already sharpens the old “3-fold \(H_4\)” intuition enormously. But what happens next is the really juicy part.
+
+### The same \(C_3\) acts at every preregistered layer
+
+The successful \(L\) has exactly **three** successful-class \(C_2^3\) kernels inside it—not something inferred from \(75/25\), but explicitly counted:
+
+\[
+T_1,T_2,T_3\le L.
+\]
+
+And the chosen external order-three element acts
+
+\[
+T_1\longrightarrow T_2\longrightarrow T_3\longrightarrow T_1.
+\]
+
+The computed transport is literally `[1,2,0]`. Pasted markdown
+
+Then the *same \(c\)* acts on the native \(H_4\) polytopes exactly as we had preregistered.
+
+On the 600-cell,
+
+\[
+120=24+32+32+32,
+\]
+
+with the 24-set fixed and
+
+\[
+32_1\to32_2\to32_3\to32_1.
+\]
+
+On the 120-cell,
+
+\[
+600=
+(8+8+8)+(32+32+32)+(96+96+96)+192,
+\]
+
+and that same \(c\) cycles **each of the three equal-size triples**, while leaving the 192-orbit invariant. Pasted markdown
+
+So our preregistered strongest test was essentially:
+
+\[
+\boxed{
+\begin{array}{c}
+T_1\to T_2\to T_3\\
+32_1\to32_2\to32_3\quad(600)\\
+8_1\to8_2\to8_3\quad(120)\\
+32_1\to32_2\to32_3\quad(120)\\
+96_1\to96_2\to96_3\quad(120)
+\end{array}
+}
+\]
+
+under one and the same ambient order-three symmetry.
+
+**It passed.**
+
+That is substantially stronger than observing a bunch of threes.
+
+---
+
+## And the \(D_4\) clue got much stronger
+
+The internal \(192\)-group \(L\) exactly matches the standard \(W(D_4)\) structural data tested by the script:
+
+\[
+|W(D_4)|=192,
+\]
+
+normal \(C_2^3\), and element-order census
+
+\[
+\{1:1,\;2:43,\;3:32,\;4:84,\;6:32\}.
+\]
+
+The successful \(L\) has exactly that census, and its conjugation image on \(T\) is the expected order-24 \(S_4\)-type action. Pasted markdown
+
+Even better, conjugation by our external \(c\) preserves \(L\), has order three, and **is not inner**:
+
+\[
+\operatorname{Ad}_c|_L\notin\operatorname{Inn}(L).
+\]
+
+So the machine correctly reports
+
+\[
+\boxed{\text{OUTER }C_3\text{ ACTION = TRUE}}
+\]
+
+and
+
+\[
+\boxed{\text{TRIALITY CANDIDATE = TRUE}.}
+\]
+
+Pasted markdown
+
+This is now very close to the standard mathematical neighborhood of \(D_4\) triality. I still agree with the conservative gate we put into the code: **don't call it theorem-level \(D_4\) triality yet.** We should explicitly identify \(L\cong W(D_4)\) rather than rely only on matching structural fingerprints, and then show that \(c\)'s outer automorphism corresponds to the standard order-three Dynkin-diagram automorphism.
+
+But at this point that is no longer fishing for triality. It is checking the identity of an object that has already acquired the expected fingerprints.
+
+### The central involution also acquired a geometric identity
+
+This result is beautifully clean:
+
+\[
+\boxed{z=-I}
+\]
+
+on the \(H_4\) roots.
+
+The same central involution is also exactly the antipodal map on the dual 120-cell, with no fixed vertices in either polytope. Pasted markdown
+
+Recall where \(z\) came from. It wasn't inserted as antipodality. It emerged upstream as the unique nontrivial center of the successful 192-group / distinguished fixed translation.
+
+So the chain has become
+
+\[
+\boxed{
+\text{distinguished translation}
+\;\longleftrightarrow\;
+Z(L)\setminus\{e\}
+\;\longleftrightarrow\;
+-I
+\;\longleftrightarrow\;
+\text{antipodal pairing}.
+}
+\]
+
+That's an actual geometric interpretation earned inside \(H_4\).
+
+And notice how nicely that respects our earlier discipline: we did **not** manufacture a signed symplectic form from Euclidean geometry. The run explicitly leaves signed \(\Omega\) unrecovered. Pasted markdown
+
+---
+
+# The failure of \(C_8\) is equally useful
+
+This is exactly why I'm glad we preregistered a strong criterion instead of letting ourselves find a convenient eight-cycle afterward.
+
+There are plenty of regular \(T\)-torsors:
+
+\[
+12 \text{ on 600 vertices},\qquad
+74 \text{ on 120 vertices},
+\]
+
+plus many more on edges. Pasted markdown
+
+But:
+
+\[
+\boxed{
+\#(\text{literal induced }C_8\text{ on 600-cell }Y_8)=0,
+}
+\]
+
+\[
+\boxed{
+\#(\text{literal induced }C_8\text{ on 120-cell }Y_8)=0.
+}
+\]
+
+Pasted markdown
+
+That's not a disappointment. It tells us something important about the relationship between SIM14 and \(H_4\):
+
+\[
+\boxed{
+\text{The SIM14 algebraic symmetry survives in }H_4
+\text{ much more directly than the literal }C_8\text{ carrier does.}
+}
+\]
+
+In other words, we should **not** currently picture the 600-cell as containing our OPS eight-state cycle as an induced little copy.
+
+That's actually consistent with our primitive philosophy:
+
+\[
+(X_8,C_8,p,h,\Omega)
+\]
+
+is a *compound primitive package*. Different pieces need not descend into \(H_4\) by the same functor or appear at the same geometric level.
+
+Here, the \(C_2^3\), distinguished involution, \(S_4\)-extension architecture, and threefold outer symmetry survive extremely strongly. The literal \(C_8\) vertex adjacency does not.
+
+That is exactly the sort of discrimination we wanted SIM15 to produce.
+
+---
+
+## There's one more result I would circle in red
+
+The seven \(V_4\)'s inside the successful \(T=C_2^3\) are **not equivalent once embedded in \(L\)**.
+
+They split:
+
+\[
+\boxed{7=4+3.}
+\]
+
+Four have
+
+\[
+|N_L(K')|=48,\qquad |C_L(K')|=8,
+\]
+
+while three have
+
+\[
+|N_L(K')|=64,\qquad |C_L(K')|=32.
+\]
+
+Their 600- and 120-cell orbit signatures differ as well. Pasted markdown
+
+That deserves attention because the abstract \(C_2^3\) alone gives seven equivalent \(V_4\) planes. Something in the embedding into the successful \(L\subset H_4\) has broken that sevenfold equivalence into two classes.
+
+I would **not interpret \(4+3\) yet**. But it is precisely the kind of internally generated asymmetry that our cartographer-turtle rule says to map before moving on.
+
+---
+
+# Where I think SIM15 stands now
+
+SIM15.0 answered:
+
+\[
+\text{Does the frozen SIM14.8 finite fingerprint survive inside }H_4?
+\]
+
+**Yes, uniquely at the conjugacy-class level tested.**
+
+SIM15.1 has now answered something much stronger:
+
+\[
+\text{Does its ambient }H_4\text{ environment supply a coherent threefold extension?}
+\]
+
+The answer is also **yes**, in a very specific sense:
+
+\[
+\boxed{
+L_{192}\rtimes C_3=N_{576}\le W(H_4),
+}
+\]
+
+where the \(C_3\)
+
+- is genuinely external to \(L\),
+- acts outerly on \(L\),
+- permutes exactly three successful \(C_2^3\) kernels,
+- cycles the repeated native 600-cell orbit family,
+- cycles all three repeated native 120-cell orbit families,
+- and leaves the exceptional single orbits invariant.
+
+Meanwhile \(L\) has the tested \(W(D_4)\) structural fingerprint, and its central involution is literally \(H_4\) antipodality. The complete ambient truth packet passed. Pasted markdown
+
+That is a **much better mathematical candidate for what we've been informally calling “3-fold \(H_4\) symmetry”** than anything we had before SIM15.
+
+I would provisionally define the phenomenon—not the physics—as:
+
+\[
+\boxed{
+\begin{aligned}
+\text{H4 threefold compatibility}
+:={}&
+L\cong W(D_4)\subset W(H_4),\\
+&N_{W(H_4)}(L)/L\cong C_3,\\
+&\text{with the external }C_3\text{ coherently permuting}\\
+&\text{the three compatible }C_2^3\text{ kernels and their}\\
+&\text{corresponding native }H_4\text{ geometric orbit families.}
+\end{aligned}}
+\]
+
+**Status: computationally established except for the explicit theorem-level identification of \(L\) with the standard \(W(D_4)\) representation and \(c\) with standard \(D_4\) triality.**
+
+That distinction matters.
+
+---
+
+## I think SIM15.2 is now obvious
+
+I would **not leave \(H_4\)** yet. We just hit exactly the structural seam we hoped existed.
+
+The next experiment should be extremely narrow:
+
+\[
+\boxed{\textbf{SIM15.2 — D4 TRIALITY IDENTIFICATION AND THREE-KERNEL GEOMETRY}}
+\]
+
+Its job should be to close four remaining questions:
+
+1. **Construct an explicit isomorphism**
+   \[
+   L_{192}\overset{\sim}{\longrightarrow}W(D_4)
+   \]
+   rather than relying on the fingerprint.
+
+2. Under that map, prove that
+   \[
+   cLc^{-1}=L
+   \]
+   induces the standard order-three outer automorphism of \(W(D_4)\), ideally by exhibiting its permutation of the three outer \(D_4\) Dynkin nodes / the associated three eight-dimensional structures. If that passes, we can finally replace “triality candidate” with **triality identified**.
+
+3. Map the three successful kernels
+   \[
+   T_1,T_2,T_3
+   \]
+   separately onto the 600/120-cell geometry and determine whether the three geometric orbit families are naturally attached one-to-one to those kernels. Right now we know the same \(C_3\) cycles both; we haven't yet proved the incidence correspondence between them.
+
+4. Explain the newly discovered
+   \[
+   7=4+3
+   \]
+   split of the seven \(V_4\)'s and determine how \(c\) transports those classes across \(T_1,T_2,T_3\).
+
+And I would **stop the primitive \(C_8\) search there for now**. The strong native test returned zero. We shouldn't weaken the criterion until some later structure gives us a principled reason to ask for a non-induced or projected \(C_8\).
+
+That leaves us doing exactly what you wanted: stick with \(H_4\) until it tells us what the next symmetry comparison should be, rather than rushing through \(F_4,B_4,A_4,E_8\).
+
+Right now \(H_4\) is telling us, rather loudly:
+
+\[
+\boxed{
+C_2^3
+\;\longrightarrow\;
+W(D_4)_{192}
+\;\longrightarrow\;
+W(D_4)_{192}\rtimes C_3
+\;\hookrightarrow\;
+W(H_4)_{14400}.
+}
+\]
+
+**INTERESTING. LOCATE THE INEVITABILITY.** 🐢
+
+
+
+
+
+
+
+###########################
+
+
+
+
+
+Yes — I would freeze this as the conceptual map for **SIM15.2**. The refinement about \(C_5\) is important: it prevents us from prematurely turning \(2,3,5\) into three ontological “layers” when the \(C_5\) behavior may simply be forced by the coset action.
+
+The hierarchy we are actually testing is
+
+\[
+\boxed{
+T\cong C_2^3
+\triangleleft
+L\cong W(D_4)
+\triangleleft
+N=N_{W(H_4)}(L)
+<
+W(H_4)
+}
+\]
+
+with
+
+\[
+8\mid192\mid576\mid14400,
+\]
+
+and therefore
+
+\[
+\boxed{
+L/T\cong S_4,\qquad
+N/L\cong C_3,\qquad
+[W(H_4):N]=25.
+}
+\]
+
+The prime filtration makes the experimental question unusually clean:
+
+\[
+\begin{aligned}
+|T|&=2^3,\\
+|L|&=2^6\cdot3,\\
+|N|&=2^6\cdot3^2,\\
+|W(H_4)|&=2^6\cdot3^2\cdot5^2.
+\end{aligned}
+\]
+
+So yes: **no element of order \(5\) can occur in \(N\)**. Fivefold action necessarily becomes visible only after moving outside the normalizer of a fixed compatible \(L\). That is theorem-level arithmetic once these group orders are fixed.
+
+I particularly like your four gates. I would preserve them essentially verbatim, with two technical refinements.
+
+For **Gate A**, I want SIM15.2 to go beyond another group fingerprint. We should build the standard \(D_4\) root/reflection representation independently, identify a Coxeter generating set
+
+\[
+r_1,r_2,r_3,r_4
+\]
+
+with diagram
+
+\[
+\begin{array}{c}
+r_1\\[-1mm]
+|\\[-1mm]
+r_2-r_3\\[-1mm]
+|\\[-1mm]
+r_4
+\end{array}
+\]
+
+(up to naming), construct the isomorphism from our \(L\), and then calculate conjugation by \(c\) on the corresponding reflection/root data. We only print
+
+\[
+\boxed{\text{D4 TRIALITY IDENTIFIED = TRUE}}
+\]
+
+if the induced automorphism fixes the central node and cyclically permutes the three outer nodes, modulo the expected inner/conjugacy freedom. That closes the remaining gap from SIM15.1 rather than merely strengthening the circumstantial evidence.
+
+For **Gates C/D**, your stabilizer-orbital idea is exactly where I would go. Rather than asking whether \(25=5^2\) “looks affine,” construct
+
+\[
+\mathcal L_{25}
+=
+\{wLw^{-1}:w\in W(H_4)\}
+\]
+
+and let the action itself tell us its geometry. Fix \(L_0\), compute
+
+\[
+N_{W(H_4)}(L_0)\curvearrowright\mathcal L_{25},
+\]
+
+and obtain the subdegrees
+
+\[
+1+d_1+d_2+\cdots=25.
+\]
+
+Those suborbits give the orbitals of the transitive 25-point action. From each paired/self-paired orbital we can construct the corresponding \(W(H_4)\)-invariant graph or directed relation and calculate its degree, connected components, spectrum, triangles/cliques, common-neighbor statistics and full automorphism group where computationally practical.
+
+That gives us a completely blind route:
+
+\[
+25
+\longrightarrow
+\text{subdegrees}
+\longrightarrow
+\text{orbitals}
+\longrightarrow
+\text{invariant incidence structures}
+\]
+
+rather than
+
+\[
+25\longrightarrow\mathbb F_5^2
+\]
+
+because we recognize a square number.
+
+There's one additional test I would add to your map.
+
+SIM15.0 told us every order-five element acts as
+
+\[
+5^5
+\]
+
+on \(\mathcal L_{25}\). But SIM15.2 should determine **how a \(C_5\) orbit intersects the intrinsic \(N\)-suborbits**. If the 25-set acquires nontrivial orbital geometry, then a five-cycle isn't merely transporting five arbitrary compatible architectures. We can ask whether every such pentad has a particular intrinsic relation signature.
+
+For a representative
+
+\[
+f,\qquad f^5=e,
+\]
+
+take
+
+\[
+P_f(L_0)=
+\{L_0,fL_0f^{-1},f^2L_0f^{-2},f^3L_0f^{-3},f^4L_0f^{-4}\}.
+\]
+
+Then characterize that five-set using only the independently discovered orbital relations.
+
+That produces a useful hierarchy of possible results:
+
+\[
+\boxed{
+\begin{array}{cl}
+\text{weak:}&C_5\text{ merely gives fixed-point-free }5^5;\\
+\text{medium:}&C_5\text{ pentads have reproducible orbital signatures};\\
+\text{strong:}&C_5\text{ pentads are intrinsic blocks/incidence objects};\\
+\text{null:}&\text{different }C_5\text{s cut across the 25-set with no additional structure.}
+\end{array}}
+\]
+
+Importantly, “block” there must be computed. A transitive \(W(H_4)\)-action of degree 25 could be primitive, in which case those \(C_5\) pentads emphatically are **not** a five-block decomposition.
+
+The action kernel is similarly high-value. Because the action is conjugation on the conjugacy class of \(L\),
+
+\[
+\ker\bigl(W(H_4)\curvearrowright\mathcal L_{25}\bigr)
+=
+\bigcap_{w\in W(H_4)}wNw^{-1},
+\]
+
+the core of \(N\) in \(W(H_4)\).
+
+So SIM15.2 should print the kernel explicitly, not merely its order. If it is trivial,
+
+\[
+W(H_4)\hookrightarrow S_{25}.
+\]
+
+If it contains the central inversion \(-I\), for example, then the 25 architectures see only the corresponding quotient. Either result tells us exactly how much of ambient \(H_4\) is visible from the architecture family.
+
+And that gives us a very clean preregistered SIM15.2 flow:
+
+\[
+\boxed{
+\begin{array}{c}
+\textbf{I. }L\overset{\rm explicit}{\cong}W(D_4)
+\\
+\downarrow\\
+\textbf{II. }c\text{ explicitly realizes }D_4\text{ triality}
+\\
+\downarrow\\
+\textbf{III. }W(H_4)\curvearrowright\mathcal L_{25}
+\text{ reconstructed completely}
+\\
+\downarrow\\
+\textbf{IV. kernel + blocks + subdegrees + orbitals}
+\\
+\downarrow\\
+\textbf{V. }C_3\text{ and }C_5\text{ compared on the same structures}
+\\
+\downarrow\\
+\textbf{VI. only then ask what the }C_5\text{ pentads actually are.}
+\end{array}}
+\]
+
+I would also retain the native 600/120-cell actions as controls. For the same representative \(c\) and \(f\), print their cycle structures on 600-cell vertices, 120-cell vertices, and the \(25\)-architecture set. That prevents the abstract coset analysis from becoming detached from the actual \(H_4\) geometry that motivated SIM15.
+
+Most importantly, I agree with your conceptual correction:
+
+\[
+\boxed{
+\textbf{We have not discovered three independent }C_2,C_3,C_5
+\textbf{ layers.}
+}
+\]
+
+What we currently know is more precise:
+
+\[
+\boxed{
+\begin{aligned}
+C_2^3 &: \text{belongs to the distinguished operational kernel }T,\\
+C_3 &: \text{appears in }N/L\text{ and acts on a fixed compatible architecture},\\
+C_5 &: \text{cannot occur in }N\text{ and therefore acts through the}\\
+&\qquad\text{ambient }W(H_4)\text{ action on the conjugacy family.}
+\end{aligned}}
+\]
+
+Whether the last line subsequently reveals an intrinsic fivefold organization is exactly what SIM15.2 gets to decide.
+
+And I think that's the right place to be particularly ruthless. If the 25-point action says “there is no \(\mathbb F_5^2\), no five-block system, and the \(5^5\) cycle structure is simply the unavoidable action of order-five elements,” **that is a successful SIM15.2 result**. We will have explained why your earlier attempts to give fivefold symmetry a more local role kept fighting the architecture.
+
+If instead the orbitals expose a previously unseen intrinsic 25-object geometry, we follow that corner.
+
+Maximum freedom in the exploration; minimum freedom in what survives the truth packet. 🐢🔬
