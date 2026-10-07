@@ -2614,3 +2614,77 @@ RESULTS:
 
 
 
+====================================================================================================
+SIM15.5 — 24-CELL STABILIZER / TRIALITY-NORMALIZER IDENTIFICATION
+====================================================================================================
+
+FROZEN QUESTION:
+
+Are the 25 native 24-cell stabilizers exactly the 25 N_W(L)
+triality normalizers, and does this identify the native 0/6
+geometry with the previously discovered 8/12 architecture relations?
+
+No isomorphism or histogram match may substitute for literal subgroup equality.
+No downstream success rescues a failed upstream gate.
+
+====================================================================================================A) FROZEN SIM15.4 REGRESSION
+----------------------------------------------------------------------------------------------------
+H4 roots = 120
+|W(H4)| = 14400
+simple-root indices = [0, 76, 5, 41]
+involutions in W(H4): 571
+C2^3 subgroups: 1200
+C2^3 conjugacy classes: 5
+class sizes: [75, 75, 300, 300, 450]
+class 0: orbit=450 normalizer=32
+class 1: orbit=300 normalizer=48
+class 2: orbit=75 normalizer=192
+  fingerprint: {'T8': True, 'N192': True, 'centralizer_T': False, 'GL24': False, 'GL_S4_hist': False, 'one_nonzero_fixed': True, 'center2': True, 'center_fixed': True} FULL= False
+class 3: orbit=300 normalizer=48
+class 4: orbit=75 normalizer=192
+  fingerprint: {'T8': True, 'N192': True, 'centralizer_T': True, 'GL24': True, 'GL_S4_hist': True, 'one_nonzero_fixed': True, 'center2': True, 'center_fixed': True} FULL= True
+|T0| = 8
+|L0| = 192
+|N0| = 576
+|T75| = 75
+|L25| = 25
+D4 frame count = 4800
+closure-size histogram = {24: 4800}
+distinct 24-root closures = 25
+certified native 24-cells = 25
+native stabilizer-order histogram = {576: 25}
+native pair-relation histogram = {'R6_shared_vertices': 200, 'R0_disjoint': 100}
+native C24 pair orbital sizes = [100, 200]
+|C24 action image| = 7200
+|C24 action kernel| = 2
+z in C24 kernel = True
+GATE A = True
+
+====================================================================================================B) INDEPENDENT ORDER-576 FAMILIES N25 AND S25
+----------------------------------------------------------------------------------------------------
+L entries = 25
+distinct N_W(L_i) = 25
+distinct native stabilizers = 25
+N-family subgroup-order histogram = {576: 25}
+S-family subgroup-order histogram = {576: 25}
+N-family element-order histogram types:
+ count 25 hist = {1: 1, 2: 43, 3: 80, 4: 84, 6: 272, 12: 96}
+S-family element-order histogram types:
+ count 25 hist = {1: 1, 2: 43, 3: 80, 4: 84, 6: 272, 12: 96}
+number of L_i per distinct N_i histogram = {1: 25}
+GATE B = True
+
+====================================================================================================C) KILLER GATE — LITERAL S25 == N25
+----------------------------------------------------------------------------------------------------
+|N25| = 25
+|S25| = 25
+|N25 cap S25| = 25
+|N25 \ S25| = 0
+|S25 \ N25| = 0
+GATE C — LITERAL S25 == N25 = True
+
+====================================================================================================D) CANONICAL C <-> N <-> L CORRESPONDENCE
+----------------------------------------------------------------------------------------------------
+unique L per N = True
+unique C per N = True
+C <-> N equivariant = True
