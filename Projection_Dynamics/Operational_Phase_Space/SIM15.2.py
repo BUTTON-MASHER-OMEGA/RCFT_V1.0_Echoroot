@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-"""
+
 SIM15.2 — PRIME-STRATIFIED H4 ACTION MAP
 ========================================
 
@@ -3106,3 +3105,286 @@ RESULTS:
 
 
 
+
+
+================================================================================
+SIM15.2 — PRIME-STRATIFIED H4 ACTION MAP
+================================================================================
+
+A) INDEPENDENT H4 / POLYTOPE REGRESSION--------------------------------------------------------------------------------
+H4 roots = 120
+root norm^2 set = [2.0]
+|W(H4)| = 14400
+H4 simple-root indices = [0, 76, 5, 41]
+600-cell = 120 vertices, 720 edges, 600 tetrahedral cells
+120-cell = 600 vertices, 1200 edges
+building 120-cell action...
+
+B) RECONSTRUCT T < L < N--------------------------------------------------------------------------------
+involutions in W(H4): 571
+C2^3 subgroups: 1200
+C2^3 conjugacy classes: 5
+class sizes: [75, 75, 300, 300, 450]
+class 0: orbit=450 normalizer=32
+class 1: orbit=300 normalizer=48
+class 2: orbit=75 normalizer=192
+  fingerprint: {'T8': True, 'N192': True, 'centralizer_T': False, 'GL24': False, 'GL_S4_hist': False, 'one_nonzero_fixed': True, 'center2': True, 'center_fixed': True} FULL= False
+class 3: orbit=300 normalizer=48
+class 4: orbit=75 normalizer=192
+  fingerprint: {'T8': True, 'N192': True, 'centralizer_T': True, 'GL24': True, 'GL_S4_hist': True, 'one_nonzero_fixed': True, 'center2': True, 'center_fixed': True} FULL= True
+
+SUCCESSFUL STRUCTURE|T| = 8
+|L| = 192
+|N| = 576
+|W| = 14400
+prime decompositions target: 8 = 2^3; 192 = 2^6*3; 576 = 2^6*3^2; 14400 = 2^6*3^2*5^2
+T normal L = True
+L normal N = True
+[L:T] = 24
+[N:L] = 3
+[W:N] = 25
+
+C) EXTERNAL C3 COMPLEMENT--------------------------------------------------------------------------------
+order-3 complement witnesses = 48
+chosen c order = 3
+c in L = False
+c in N = True
+conjugation by c inner on L = False
+external action outer = True
+
+D) INDEPENDENT STANDARD W(D4)--------------------------------------------------------------------------------
+D4 roots = 24
+|W(D4)| = 192
+W(D4) element-order histogram = {1: 1, 2: 43, 3: 32, 4: 84, 6: 32}
+L element-order histogram = {1: 1, 2: 43, 3: 32, 4: 84, 6: 32}
+
+E) CONSTRUCT D4 COXETER SYSTEM INSIDE L--------------------------------------------------------------------------------
+D4 Coxeter system found = True
+central generator order = 2
+outer generator orders = [2, 2, 2]
+central-outer product orders = [3, 3, 3]
+outer-outer product orders = [2, 2, 2]
+generated order = 192
+
+F) EXPLICIT L -> W(D4) ISOMORPHISM--------------------------------------------------------------------------------
+  L greedy generator count = 3
+explicit group isomorphism found = True
+mapped elements = 192 distinct images = 192
+source generator orders = [4, 4, 4]
+target generator orders = [4, 4, 4]
+
+G) CONSTRUCTIVE D4 TRIALITY TEST--------------------------------------------------------------------------------
+triality diagram action modulo inner = True
+outer-node cycle = (2, 0, 1)
+inner adjustment order = 2
+D4 TRIALITY IDENTIFIED = True
+
+H) THREE-KERNEL REGRESSION--------------------------------------------------------------------------------
+successful-class T <= L = 3
+c transport on successful T kernels = [2, 0, 1]
+intersection of successful T kernels order = 2
+intersection elements orders = [(1, 1), (2, 1)]
+z belongs to every successful T = True
+c fixes z by conjugation = True
+
+I) CONSTRUCT 25-ELEMENT L FAMILY--------------------------------------------------------------------------------
+|conjugacy orbit of L| = 25
+chosen L index = 0
+building W action on L_25...
+|25-action image| = 7200
+
+J) KERNEL OF W(H4) -> S25--------------------------------------------------------------------------------
+|kernel| = 2
+kernel order histogram = {1: 1, 2: 1}
+z in kernel = True
+25-action faithful = False
+
+K) SUBDEGREES AND ACTION RANK--------------------------------------------------------------------------------
+|Stab(L0)| = 576
+Stab(L0) == N = True
+subdegrees = [1, 8, 16]
+rank = 3
+sum = 25
+  suborbit 0: size=1 members=[0]
+  suborbit 1: size=8 members=[1, 3, 6, 10, 15, 18, 20, 23]
+  suborbit 2: size=16 members=[2, 4, 5, 7, 8, 9, 11, 12, 13, 14, 16, 17, 19, 21, 22, 24]
+
+L) BLOCK SYSTEM / PRIMITIVITY TEST--------------------------------------------------------------------------------
+nontrivial blocks containing L0 = 0
+25-action primitive = True
+
+M) ORDERED-PAIR ORBITALS--------------------------------------------------------------------------------
+orbital 0: subdegree=1 ordered_pairs=25 self_paired=True
+orbital 1: subdegree=8 ordered_pairs=200 self_paired=True
+orbital 2: subdegree=16 ordered_pairs=400 self_paired=True
+
+N) INVARIANT ORBITAL GRAPH SIGNATURES--------------------------------------------------------------------------------
+orbital 0: diagonal relation
+
+orbital graph 1  vertices = 25
+  edges = 100
+  degree_hist = {8: 25}
+  components = [25]
+  triangles = 100
+  spectrum = [(-2.0, 16), (3.0, 8), (8.0, 1)]
+  common_neighbor_hist = {('adj', 3): 100, ('nonadj', 2): 200}
+
+orbital graph 2  vertices = 25
+  edges = 200
+  degree_hist = {16: 25}
+  components = [25]
+  triangles = 600
+  spectrum = [(-4.0, 8), (1.0, 16), (16.0, 1)]
+  common_neighbor_hist = {('adj', 9): 200, ('nonadj', 12): 100}
+
+O) ORDER-5 ELEMENT CENSUS--------------------------------------------------------------------------------
+order-5 elements in W(H4) = 624
+order-5 elements in N = 0
+order-5 elements normalizing L = 0
+order-5 conjugacy classes = 5
+order-5 class sizes = [24, 24, 144, 144, 288]
+
+P) C5 ACTION ON L_25--------------------------------------------------------------------------------
+distinct order-5 cycle signatures on L_25 = 1
+  signature {5: 5} count 624
+all order-5 elements act as 5^5 = True
+representative f cycle signature L_25 = {5: 5}
+
+Q) C5 PENTAD ORBITAL SIGNATURES--------------------------------------------------------------------------------
+distinct C5 pentads = 130
+distinct intrinsic orbital signatures of C5 pentads = 2
+  pentad signature 0: occurrences=240
+    orbital counts = ((1, 20),)
+  pentad signature 1: occurrences=2880
+    orbital counts = ((2, 20),)
+C5 pentads that are W-blocks = 0
+
+R) C3 ACTION ON L_25--------------------------------------------------------------------------------
+c cycle signature on L_25 = {1: 4, 3: 7}
+c fixes chosen L0 = True
+cycle signatures of C3 complement witnesses on L_25:
+   {1: 4, 3: 7} count 32
+   {1: 10, 3: 5} count 16
+
+S) PRIME-STRATIFIED C3 / C5 COMPARISON--------------------------------------------------------------------------------
+C3 representative c:
+  order = 3
+  in L = False
+  in N = True
+  L_25 cycles = {1: 4, 3: 7}
+  600-cell cycles = {1: 6, 3: 38}
+  120-cell cycles = {1: 12, 3: 196}
+
+C5 representative f:  order = 5
+  in L = False
+  in N = False
+  normalizes L = False
+  L_25 cycles = {5: 5}
+  600-cell cycles = {5: 24}
+  120-cell cycles = {5: 120}
+
+T) ACTION ON SUCCESSFUL T KERNELS--------------------------------------------------------------------------------
+successful T kernels inside L = 3
+c transport within L = [2, 0, 1]
+successful T kernels inside fLf^-1 = 3
+f transport from kernels in L to kernels in fLf^-1 = [0, 1, 2]
+
+U) PAIRWISE INTERSECTION ORDERS ON L_25--------------------------------------------------------------------------------
+pairwise intersection-order histogram = {8: 100, 12: 200}
+intersection order -> orbital-pair counts:
+  |Li ∩ Lj|=8: {(1, 1): 100}
+  |Li ∩ Lj|=12: {(2, 2): 200}
+
+V) CENTER / SUCCESSFUL-KERNEL INCIDENCE ON L_25--------------------------------------------------------------------------------
+center-size histogram = {2: 25}
+distinct nontrivial central involutions among 25 L's = 1
+all 25 share same central involution = True
+shared central involution equals z = True
+
+W) BLIND 25-SET STRUCTURE SUMMARY--------------------------------------------------------------------------------
+degree = 25
+image order = 7200
+kernel order = 2
+faithful = False
+rank = 3
+subdegrees = [1, 8, 16]
+primitive = True
+nontrivial block sizes = []
+pairwise L-intersection orders = [8, 12]
+number of invariant non-diagonal orbital relations = 2
+distinct C5 pentad orbital signatures = 2
+C5 pentads forming W-blocks = 0
+
+================================================================================X) SIM15.2 HARD GATES
+================================================================================
+GATE A — explicit D4 triality identification: True
+GATE B — C5 excluded from N and acts 5^5: True
+GATE C — 25-action reconstructed: True
+GATE D — blind 25-set combinatorics mapped: True
+
+================================================================================Y) MACHINE TRUTH PACKET
+================================================================================
+H4_order_14400                        : True
+T_order_8                             : True
+L_order_192                           : True
+N_order_576                           : True
+L_over_T_order_24                     : True
+N_over_L_order_3                      : True
+W_over_N_order_25                     : True
+explicit_L_iso_WD4                    : True
+external_C3_outer                     : True
+D4_triality_identified                : True
+three_successful_T_in_L               : True
+C3_cycles_successful_T                : True
+z_common_to_three_T                   : True
+C3_fixes_z                            : True
+L_family_size_25                      : True
+action25_kernel_order                 : 2
+action25_faithful                     : False
+action25_rank                         : 3
+action25_subdegrees                   : [1, 8, 16]
+action25_primitive                    : True
+order5_elements                       : 624
+order5_in_N                           : 0
+order5_normalizing_L                  : 0
+all_order5_cycle_5_5                  : True
+distinct_C5_pentads                   : 130
+C5_pentad_signature_types             : 2
+C5_pentad_blocks                      : 0
+distinct_L_intersection_orders        : [8, 12]
+all_L_share_same_center               : True
+shared_center_is_z                    : True
+
+================================================================================Z) INTERPRETATION GUARDRAILS
+================================================================================
+
+1. C2, C3, and C5 are NOT assumed to be three physical layers.
+
+2. T ~= C2^3 is the distinguished operational 2-primary kernel.
+   This does not imply all twofold symmetry in W(H4) belongs to T.
+
+3. C3 is promoted to D4 triality ONLY if the explicit Coxeter-system
+   test passes modulo inner conjugacy.
+
+4. C5 cannot normalize L if N_W(L) has order 576.  Its appearance
+   on the 25-set is therefore first interpreted as coset/conjugacy
+   transport, not as an independent local operational layer.
+
+5. 25 = 5^2 does NOT imply F5^2.
+
+6. Five 5-cycles do NOT imply five intrinsic pentagons or a block
+   system.  The block and orbital tests decide this.
+
+7. If the 25-action is primitive, any proposed 5+5+5+5+5 global
+   decomposition is rejected unless another independently defined
+   structure supplies it.
+
+8. If the 25-action has nontrivial kernel, report exactly which
+   ambient H4 symmetry becomes invisible at architecture level.
+
+9. Pairwise intersection orders and orbitals are treated as native
+   relational data of the 25 compatible L structures.
+
+10. No RCFT physical interpretation follows from this run alone.
+
+END SIM15.2
