@@ -2612,7 +2612,6 @@ RESULTS:
 
 
 
-
 ====================================================================================================
 SIM15.5 — 24-CELL STABILIZER / TRIALITY-NORMALIZER IDENTIFICATION
 ====================================================================================================
@@ -2705,4 +2704,48 @@ distinct N-intersection orders = True
 GATE F = True
 
 ====================================================================================================G) CLASSIFY N-INTERSECTION GROUPS
+----------------------------------------------------------------------------------------------------
+
+RELATION: R0_disjoint
+distinct actual intersection subgroups = 100
+invariant types = 1
+ count = 100
+  order                   = 72
+  order_hist              = {1: 1, 2: 1, 3: 26, 4: 6, 6: 26, 12: 12}
+  center_order            = 6
+  center_hist             = {1: 1, 2: 1, 3: 2, 6: 2}
+  derived_order           = 8
+  derived_hist            = {1: 1, 2: 1, 4: 6}
+  abelianization_order    = 9
+  normalizer_order        = 144
+  centralizer_order       = 6
+all J in relation W(H4)-conjugate = True
+
+RELATION: R6_shared_vertices
+distinct actual intersection subgroups = 200
+invariant types = 1
+ count = 200
+  order                   = 36
+  order_hist              = {1: 1, 2: 7, 3: 8, 6: 20}
+  center_order            = 6
+  center_hist             = {1: 1, 2: 1, 3: 2, 6: 2}
+  derived_order           = 3
+  derived_hist            = {1: 1, 3: 2}
+  abelianization_order    = 12
+  normalizer_order        = 72
+  centralizer_order       = 6
+all J in relation W(H4)-conjugate = True
+
+R6 action on six shared vertices: {(6,): 200}
+GATE G = True
+
+====================================================================================================H) NATIVE 0/6 GEOMETRY VS L-INTERSECTION 8/12
+----------------------------------------------------------------------------------------------------
+R0_disjoint -> |L_i cap L_j| histogram = {8: 100}
+R6_shared_vertices -> |L_i cap L_j| histogram = {12: 200}
+0 -> 8 and 6 -> 12 = True
+0 -> 12 and 6 -> 8 = False
+GATE H = True
+
+====================================================================================================I) CLASSIFY I8 / I12 AND COMPARE I <= J
 ----------------------------------------------------------------------------------------------------
