@@ -2787,3 +2787,166 @@ GATE I = True
 
 ====================================================================================================J) EQUIVARIANT RANK-3 RELATION AT C25 / N25 / L25
 ----------------------------------------------------------------------------------------------------
+N-family action closed = True
+L-family action closed = True
+|N action image| = 7200
+|N action kernel| = 2
+N pair orbital sizes = [100, 200]
+|L action image| = 7200
+|L action kernel| = 2
+L pair orbital sizes = [100, 200]
+actual C25 and N25 permutation actions identical = True
+actual C25 and L25 permutation actions identical = True
+
+native R0 graph signature:v                                     = 25
+edges                                 = 100
+degree_hist                           = {8: 25}
+connected                             = True
+adjacent_common_neighbor_hist         = {3: 100}
+nonadjacent_common_neighbor_hist      = {2: 200}
+spectrum                              = [(-2.0, 16), (3.0, 8), (8.0, 1)]
+native graph = srg(25,8,3,2) fingerprint: True
+GATE J = True
+
+====================================================================================================K) EXPLORATORY — WHAT DOES N576 -> L192 FORGET?
+----------------------------------------------------------------------------------------------------
+representative cell = 0
+|N| = 576
+|L| = 192
+
+N versus L orbit partitions on native incidence sets:vertices            
+  N576 = (24,)
+  L192 = (24,)
+edges               
+  N576 = (96,)
+  L192 = (96,)
+triangles           
+  N576 = (96,)
+  L192 = (32, 32, 32)
+octahedral_cells    
+  N576 = (24,)
+  L192 = (8, 8, 8)
+
+successful T kernels inside representative L = 3
+vertices             T-fiber signatures = [(4, 4, 4, 4, 4, 4), (4, 4, 4, 4, 4, 4), (4, 4, 4, 4, 4, 4)]
+edges                T-fiber signatures = [(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8), (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8), (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)]
+triangles            T-fiber signatures = [(8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8), (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8), (8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8)]
+octahedral_cells     T-fiber signatures = [(2, 2, 2, 2, 8, 8), (2, 2, 2, 2, 8, 8), (2, 2, 2, 2, 8, 8)]
+
+explicit triality witness order = 3
+triality transport on local T triple = [2, 0, 1]
+EXPLORATORY K COMPLETED = True
+
+====================================================================================================L) C3 / C5 CONTROLS
+----------------------------------------------------------------------------------------------------
+C3 complement witnesses for N0/L0 = 48
+representative C3 action on native C25 = {1: 4, 3: 7}
+C3 fixes native cell over N0 = True
+order-5 elements in W(H4) = 624
+representative C5 action on native C25 = {5: 5}
+EXPLORATORY L COMPLETED = True
+
+====================================================================================================SIM15.5 HARD GATES
+====================================================================================================
+A frozen SIM15.4 regression                            : True
+B independent N25 and S25 families                     : True
+C LITERAL S25 == N25                                   : True
+D unique equivariant C <-> N <-> L                     : True
+E triality extension N/L = C3                          : True
+F native relation -> uniform N intersections           : True
+G classify native N-intersection classes               : True
+H native 0/6 -> frozen L 8/12                          : True
+I classify I8/I12 and I <= J                           : True
+J same equivariant rank-3 relation                     : True
+
+====================================================================================================MACHINE TRUTH PACKET
+====================================================================================================
+H4_roots                                        : 120
+H4_order                                        : 14400
+successful_T_count                              : 75
+compatible_L_count                              : 25
+native_D4_frame_count                           : 4800
+native_24cell_count                             : 25
+distinct_N_normalizers                          : 25
+distinct_native_stabilizers                     : 25
+N_intersect_S_count                             : 25
+N_minus_S_count                                 : 0
+S_minus_N_count                                 : 0
+NATIVE_NORMALIZER_IDENTITY                      : True
+TRIALITY_REFINEMENT                             : True
+RELATION_DESCENT                                : True
+native_pair_relation_hist                       : {'R6_shared_vertices': 200, 'R0_disjoint': 100}
+N_intersection_by_native_relation               : {'R6_shared_vertices': {36: 200}, 'R0_disjoint': {72: 100}}
+L_intersection_by_native_relation               : {'R6_shared_vertices': {12: 200}, 'R0_disjoint': {8: 100}}
+native_rank3_graph                              : {'v': 25, 'edges': 100, 'degree_hist': {8: 25}, 'connected': True, 'adjacent_common_neighbor_hist': {3: 100}, 'nonadjacent_common_neighbor_hist': {2: 200}, 'spectrum': [(-2.0, 16), (3.0, 8), (8.0, 1)]}
+C3_native_cell_cycle_signature                  : {1: 4, 3: 7}
+C5_native_cell_cycle_signature                  : {5: 5}
+ALL_HARD_GATES_A_TO_J                           : True
+
+====================================================================================================INTERPRETATION GUARDRAILS
+====================================================================================================
+
+1. SIM15.4 already falsified:
+
+       L_192 = Stab_W(C_24).
+
+   SIM15.5 does not revise or erase that result.
+
+2. The new killer hypothesis is:
+
+       {N_W(L_i)} == {Stab_W(C_i)}
+
+   as literal subgroup families inside the same W(H4).
+
+3. Equal order 576 is NOT sufficient.
+
+4. Matching element-order histograms are NOT sufficient.
+
+5. Conjugacy or abstract isomorphism is NOT sufficient.
+
+6. Gate C requires actual subgroup equality.
+
+7. If Gate C fails, the phrase "one triality layer too low" is NOT earned.
+
+8. If Gate C passes, the C <-> N <-> L correspondence must still be unique
+   and W(H4)-equivariant.
+
+9. N/L ~= C3 is rechecked inside the earned native correspondence.
+
+10. The three successful C2^3 kernels are required to be cyclically
+    transported by an explicit order-3 complement witness.
+
+11. N_i cap N_j intersection orders are NOT predicted in advance.
+    Native geometry is allowed to tell us what they are.
+
+12. The native geometric relations remain frozen from SIM15.4:
+
+       R0 : |C_i cap C_j| = 0     (100 pairs)
+       R6 : |C_i cap C_j| = 6     (200 pairs)
+
+13. Only after C <-> N is earned do we descend to L and test:
+
+       R0 <-> |L_i cap L_j| = 8
+       R6 <-> |L_i cap L_j| = 12.
+
+14. I8 and I12 are classified from their actual elements, not their orders.
+
+15. Gate J requires the actual transported W(H4) actions to coincide,
+    not merely three abstractly isomorphic SRGs.
+
+16. Gate K is exploratory. No geometric structure explaining 576 -> 192
+    is named in advance.
+
+17. Failure to find such a structure does not falsify N/L ~= C3.
+
+18. C3 and C5 are controls, not physical interpretations.
+
+19. No E8, F4 finite geometry, rook-graph identification, or RCFT physics
+    is used to construct or rescue this experiment.
+
+20. FALSE means tested and falsified.
+    NOT TESTED means an upstream logical prerequisite failed.
+
+21. No downstream success rescues an upstream failed gate.
+
+END SIM15.5
