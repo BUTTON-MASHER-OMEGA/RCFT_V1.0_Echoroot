@@ -2749,3 +2749,41 @@ GATE H = True
 
 ====================================================================================================I) CLASSIFY I8 / I12 AND COMPARE I <= J
 ----------------------------------------------------------------------------------------------------
+
+|I| = 8distinct actual I subgroups = 10
+invariant types = 1
+ count = 10
+  order                   = 8
+  order_hist              = {1: 1, 2: 1, 4: 6}
+  center_order            = 2
+  center_hist             = {1: 1, 2: 1}
+  derived_order           = 2
+  derived_hist            = {1: 1, 2: 1}
+  abelianization_order    = 4
+  normalizer_order        = 1440
+  centralizer_order       = 120
+labels = {'Q8': 10}
+all same-order I W(H4)-conjugate = True
+
+|I| = 12distinct actual I subgroups = 200
+invariant types = 1
+ count = 200
+  order                   = 12
+  order_hist              = {1: 1, 2: 7, 3: 2, 6: 2}
+  center_order            = 2
+  center_hist             = {1: 1, 2: 1}
+  derived_order           = 3
+  derived_hist            = {1: 1, 3: 2}
+  abelianization_order    = 4
+  normalizer_order        = 72
+  centralizer_order       = 12
+labels = {'D12': 200}
+all same-order I W(H4)-conjugate = True
+
+I <= J containment failures = 0
+R0_disjoint -> [J:I] histogram = {9: 100}
+R6_shared_vertices -> [J:I] histogram = {3: 200}
+GATE I = True
+
+====================================================================================================J) EQUIVARIANT RANK-3 RELATION AT C25 / N25 / L25
+----------------------------------------------------------------------------------------------------
