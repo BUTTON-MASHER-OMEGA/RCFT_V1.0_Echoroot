@@ -1,5 +1,5 @@
 
-SIM14.4 — Affine Phase-Space Structure Map
+SIM14.4 — Affine Phase-Space Structure Map 
 ==========================================
 
 Purpose
