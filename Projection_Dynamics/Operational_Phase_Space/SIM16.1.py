@@ -1,6 +1,6 @@
 
 #!/usr/bin/env python3
-"""SIM16.1 — EXACT C8 METRIC LOCALITY / J_COMPLEX SURVIVABILITY
+"""SIM16.1 — EXACT C8 METRIC LOCALITY / J_COMPLEX SURVIVABILITY 
 Frozen SIM16.0 OPS. Exact global classification. No fitting.
 Requires numpy and sympy.
 """
