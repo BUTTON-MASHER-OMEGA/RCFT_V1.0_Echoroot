@@ -1,6 +1,6 @@
 
 #!/usr/bin/env python3
-"""SIM16.2 — OPERATIONAL METRIC IDENTIFIABILITY AND EQUIVALENCE CLOSURE
+"""SIM16.2 — OPERATIONAL METRIC IDENTIFIABILITY AND EQUIVALENCE CLOSURE 
 Exact frozen OPS audit. No dynamics, fitting, or new gauge assumptions.
 Requires: sympy. Gate H is explicitly source-limited provenance metadata.
 """
