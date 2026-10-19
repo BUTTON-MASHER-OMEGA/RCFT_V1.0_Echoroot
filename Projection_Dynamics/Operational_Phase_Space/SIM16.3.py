@@ -1,7 +1,7 @@
 
 #!/usr/bin/env python3
 """
-SIM16.3 — Frozen Projection–Complex Structure Compatibility Audit
+SIM16.3 — Frozen Projection–Complex Structure Compatibility Audit 
 
 Exact finite and symbolic algebra only.
 No ISP dynamics, new physical assumptions, or gauge identifications.
