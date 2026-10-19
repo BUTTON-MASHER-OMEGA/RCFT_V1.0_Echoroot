@@ -1,12 +1,15 @@
 
 #!/usr/bin/env python3
 """
-SIM16.3 — Frozen Projection–Complex Structure Compatibility Audit 
+SIM16.3 — Frozen Projection–Complex Structure Compatibility Audit
 
 Exact finite and symbolic algebra only.
 No ISP dynamics, new physical assumptions, or gauge identifications.
 Dependency: sympy
+
+Includes the final Gate H frozen C8 adjacency closure patch.
 """
+
 import itertools
 import json
 import sympy as sp
@@ -15,12 +18,16 @@ n = 8
 I = sp.eye(n)
 Z = sp.zeros(n)
 
-# Frozen SIM14–16 inputs
+# ============================================================
+# FROZEN SIM14–16 DEFINITIONS
+# ============================================================
+
 p = (1, 0, 3, 2, 5, 4, 7, 6)
 h = (7, 6, 5, 4, 3, 2, 1, 0)
 s = (2, 3, 0, 1, 6, 7, 4, 5)
 
 PAIRS = ((0, 2), (1, 3), (4, 6), (5, 7))
+
 EDGES = {
     (0, 1), (0, 2), (1, 3), (2, 4),
     (3, 5), (4, 6), (5, 7), (6, 7)
@@ -43,6 +50,7 @@ def compose(a, b):
 def closure(gens):
     group = {ident}
     frontier = [ident]
+
     while frontier:
         a = frontier.pop()
         for b in gens:
@@ -50,6 +58,7 @@ def closure(gens):
             if c not in group:
                 group.add(c)
                 frontier.append(c)
+
     return group
 
 
@@ -62,7 +71,11 @@ def pm(g):
 
 def sign(g):
     v = pm(g).T * Om * pm(g)
-    return 1 if v == Om else (-1 if v == -Om else 0)
+    if v == Om:
+        return 1
+    if v == -Om:
+        return -1
+    return 0
 
 
 def expK(x):
@@ -88,9 +101,10 @@ def rows(M):
 
 print("SIM16.3 — FROZEN PROJECTION–COMPLEX STRUCTURE AUDIT")
 
-# =========================================================
+
+# ============================================================
 # GATE A — FROZEN SOURCE RECONSTRUCTION
-# =========================================================
+# ============================================================
 
 T = closure((p, h, s))
 coord = {}
@@ -103,23 +117,31 @@ for bits in range(8):
     coord[g[0]] = bits
 
 vertex = {v: k for k, v in coord.items()}
+
 aff = set()
 
 for a, b, c in itertools.product(range(1, 8), repeat=3):
-    if len({0, a, b, c, a ^ b, a ^ c, b ^ c, a ^ b ^ c}) != 8:
+    directions = {
+        0, a, b, c, a ^ b, a ^ c, b ^ c, a ^ b ^ c
+    }
+    if len(directions) != 8:
         continue
+
     for shift in range(8):
         q = []
         for i in range(8):
             v = coord[i]
             w = shift
+
             if v & 1:
                 w ^= a
             if v & 2:
                 w ^= b
             if v & 4:
                 w ^= c
+
             q.append(vertex[w])
+
         aff.add(tuple(q))
 
 Nplus = sorted(g for g in aff if sign(g) == 1)
@@ -135,12 +157,13 @@ chk(
     and K * K == I
     and K * Om == -Om * K
     and len(EDGES) == 8
-    and all(x in EDGES for x in PAIRS)
+    and all(edge in EDGES for edge in PAIRS)
 )
 
-# =========================================================
+
+# ============================================================
 # GATE B — ORTHOGONAL PROJECTION SECTORS
-# =========================================================
+# ============================================================
 
 P, H, Q = map(pm, (p, h, s))
 
@@ -150,10 +173,12 @@ for i in range(4):
     B[i, 2*i + 1] = 1
 
 eye8 = sp.eye(8)
+
 Up = sp.Matrix.hstack(*[
     (eye8[:, 2*i] + eye8[:, 2*i + 1]) / sp.sqrt(2)
     for i in range(4)
 ])
+
 Um = sp.Matrix.hstack(*[
     (eye8[:, 2*i] - eye8[:, 2*i + 1]) / sp.sqrt(2)
     for i in range(4)
@@ -180,23 +205,30 @@ chk(
 
 chk(
     "B exact all-t commutation coefficients",
-    all(P*M == M*P for M in (Om, K, J0, J0*K))
+    all(
+        P*M == M*P
+        for M in (Om, K, J0, J0*K)
+    )
 )
 
 t = sp.symbols("t", real=True)
 G = expK(t)
 J = J0 * G
 
-# =========================================================
+
+# ============================================================
 # GATE C — RESTRICTED COMPLEX-SYMPLECTIC GEOMETRY
-# =========================================================
+# ============================================================
 
 Op = Up.T * Om * Up
 Ominus = Um.T * Om * Um
+
 Kp = Up.T * K * Up
 Km = Um.T * K * Um
+
 Gp = Up.T * G * Up
 Gm = Um.T * G * Um
+
 Jp = Up.T * J * Up
 Jm = Um.T * J * Um
 
@@ -219,12 +251,15 @@ print("C | J_plus = J_minus =", rows(Jp))
 print("C | J spectrum: +i (2), -i (2)")
 print("C | G spectrum: exp(t) (2), exp(-t) (2)")
 
-# =========================================================
+
+# ============================================================
 # GATE D — BASIN QUOTIENT
-# =========================================================
+# ============================================================
 
 Jbar = sp.simplify(B * J * Up / sp.sqrt(2))
-Ob = Op / 2  # canonical orthogonal section
+
+# The canonical Euclidean section maps y -> Up*y/sqrt(2).
+Ob = Op / 2
 
 chk(
     "D quotient intertwining and induced geometry",
@@ -238,9 +273,10 @@ chk(
 print("D | Direct full-form descent: OBSTRUCTED")
 print("D | Split-induced quotient form: Omega_plus / 2")
 
-# =========================================================
+
+# ============================================================
 # GATE E — PARAMETER IDENTIFIABILITY
-# =========================================================
+# ============================================================
 
 chk(
     "E signed-t algebraic recovery",
@@ -254,9 +290,10 @@ print("E | Algebraic recoverability: YES")
 print("E | Operational observability: UNRESOLVED")
 print("E | Physical parameter selection: UNRESOLVED")
 
-# =========================================================
+
+# ============================================================
 # GATE F — FINITE SYMMETRIES AND NEGATIVE CONTROLS
-# =========================================================
+# ============================================================
 
 chk(
     "F p/h/s covariance and sector invariance",
@@ -271,13 +308,29 @@ chk(
     )
 )
 
-central = [g for g in Npm if pm(g)*P == P*pm(g)]
-normal = [g for g in Npm if pm(g)*P != P*pm(g)]
+central = [
+    g for g in Npm
+    if pm(g)*P == P*pm(g)
+]
+
+noncentral = [
+    g for g in Npm
+    if pm(g)*P != P*pm(g)
+]
+
+chk(
+    "F signed-group sector classification",
+    len(central) == 16
+    and len(noncentral) == 32
+)
 
 print("F | Npm sector-preserving:", len(central))
-print("F | Npm sector-nonpreserving:", len(normal))
+print("F | Npm sector-nonpreserving:", len(noncentral))
 
-# Alternative SIM14 matching M1, with declared orientation.
+
+# Alternative SIM14 perfect matching M1.
+# Orientation is declared; it is not substituted into frozen OPS.
+
 ALT_PAIRS = ((0, 1), (2, 4), (3, 5), (6, 7))
 Om1 = sp.zeros(n)
 
@@ -294,13 +347,19 @@ chk(
     and K1*K1 == I
     and K1*Om1 == -Om1*K1
     and K1 != K
-    and all(tuple(sorted(q)) in EDGES for q in ALT_PAIRS)
+    and all(
+        tuple(sorted(pair)) in EDGES
+        for pair in ALT_PAIRS
+    )
 )
 
-print("F | M1 changes the form; frozen Omega remains unchanged")
+print("F | M1 changes the form; frozen Omega unchanged")
 
-# Alternative four-basin partition.
+
+# Alternative four-basin observation partition.
+
 Balt = sp.zeros(4, 8)
+
 for i, (a, b) in enumerate(
     ((0, 2), (1, 3), (4, 5), (6, 7))
 ):
@@ -318,7 +377,10 @@ chk(
     )
 )
 
-# Generic symplectically conjugate complex structure.
+
+# Generic symplectic conjugacy control.
+# A complex structure need not descend through B.
+
 v = Up[:, 0] + Um[:, 0]
 Tcontrol = I + v*(v.T*Om)
 Jgeneric = Tcontrol*J0*Tcontrol.inv()
@@ -334,9 +396,10 @@ chk(
     )
 )
 
-# =========================================================
+
+# ============================================================
 # GATE G — SYMPLECTIC DESCENT AND CONJUGACY
-# =========================================================
+# ============================================================
 
 S = expK(-t/2)
 Sinv = expK(t/2)
@@ -354,7 +417,9 @@ chk(
     ) == sp.zeros(4)
 )
 
-# Symplectic transformation that fails descent.
+
+# Explicit symplectic transvection that does not descend.
+
 v = Up[:, 0] + Um[:, 0]
 Trans = I + v*(v.T*Om)
 
@@ -373,9 +438,10 @@ print("G | Descent criterion: S(ker B) = ker B")
 print("G | Symplectic descent implies block-diagonal action")
 print("G | Counterexample transvection vector:", rows(v.T))
 
-# =========================================================
+
+# ============================================================
 # GATE H — INTRINSIC VS OBSERVATIONAL EQUIVALENCE
-# =========================================================
+# ============================================================
 
 Swap = Up*Um.T + Um*Up.T
 
@@ -389,37 +455,100 @@ chk(
 )
 
 chk(
-    "H swap fails fixed-basin observation preservation",
+    "H swap fails fixed basin observation",
     B*Swap != B
+)
+
+chk(
+    "H swap exchanges p eigenspaces",
+    Swap*P*Swap == -P
 )
 
 print("H | Intrinsic sector equivalence: YES")
 print("H | Swap preserves frozen P: NO")
 print("H | Swap preserves B: NO")
-print("H | Swap conjugates P to -P:", Swap*P*Swap == -P)
+
+
+# ============================================================
+# GATE H — MINIMAL C8 ADJACENCY CLOSURE PATCH
+# ============================================================
+
+# Frozen graph adjacency operator.
+A = sp.zeros(n)
+
+for i, j in EDGES:
+    A[i, j] = 1
+    A[j, i] = 1
+
+# Restricted adjacency operators in frozen normalized bases.
+Ap = Up.T * A * Up
+Am = Um.T * A * Um
+
+chk(
+    "H frozen C8 adjacency distinguishes intrinsically equivalent sectors",
+    P*A == A*P
+    and Up.T*A*Um == sp.zeros(4)
+    and sp.trace(Ap) == 2
+    and sp.trace(Am) == -2
+    and Swap.T*A*Swap != A
+)
+
+print("H | A_plus =", rows(Ap))
+print("H | A_minus =", rows(Am))
+print(
+    "H | adjacency traces (+,-):",
+    sp.trace(Ap), sp.trace(Am)
+)
+print(
+    "H | adjacency representations not similar "
+    "(unequal traces)"
+)
+
+
+# ============================================================
+# FINAL FINITE GRAPH-SYMMETRY COUNT
+# ============================================================
 
 def preserves_graph(g):
-    return {
+    image_edges = {
         tuple(sorted((g[i], g[j])))
         for i, j in EDGES
-    } == EDGES
+    }
+    return image_edges == EDGES
 
-graph_count = sum(map(preserves_graph, Npm))
+
+graph_count = sum(
+    preserves_graph(g)
+    for g in Npm
+)
+
+chk(
+    "F signed-group graph automorphism count",
+    graph_count == 4
+)
+
 print("F | Npm graph-preserving:", graph_count)
 
-# =========================================================
+
+# ============================================================
 # MACHINE-READABLE TRUTH PACKET
-# =========================================================
+# ============================================================
 
 packet = {
     "sim": "16.3",
     "status": "EXACT_ALGEBRAIC_AUDIT_PASSED",
-    "scope": "Frozen OPS; no ISP or physical boundary",
+    "scope": "Frozen OPS, linear projection, no ISP or physical boundary",
+
+    # Metadata: referenced source SHAs; not runtime-fetched.
     "source_shas": {
-        "SIM16.0.py": "e01b90b751353273241e6c516e30b16571dcbfdf",
-        "SIM16.1.py": "76970c358d128d136782310a2b6afa41efd793f7",
-        "SIM16.2.py": "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"
+        "SIM16.0.py":
+            "e01b90b751353273241e6c516e30b16571dcbfdf",
+        "SIM16.1.py":
+            "76970c358d128d136782310a2b6afa41efd793f7",
+        "SIM16.2.py":
+            "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"
     },
+
     "orders": {
         "T": len(T),
         "AGL": len(aff),
@@ -427,6 +556,7 @@ packet = {
         "Nminus": len(Nminus),
         "Npm": len(Npm)
     },
+
     "ranks": {
         "Vplus": 4,
         "Vminus": 4,
@@ -434,32 +564,52 @@ packet = {
         "Omega_minus": Ominus.rank(),
         "B": B.rank()
     },
+
     "sector_equal_in_normalized_frozen_bases": True,
-    "parameter_recovery": "t=asinh(tr(K_sector G_sector)/4)",
+
+    "parameter_recovery":
+        "t=asinh(tr(K_sector G_sector)/4)",
+
     "direct_symplectic_form_descent": False,
     "split_induced_symplectic_form": True,
     "complex_quotient_descent": True,
     "symplectic_conjugacy_descent": True,
+
     "Npm_sector_preserving": len(central),
-    "Npm_sector_nonpreserving": len(normal),
+    "Npm_sector_nonpreserving": len(noncentral),
     "Npm_graph_preserving": graph_count,
-    "explicit_nondescending_symplectic_witness": rows(Trans),
+
+    "explicit_nondescending_symplectic_witness":
+        rows(Trans),
+
     "alternative_M1_valid": True,
     "alternative_basin_obstructs_J0": True,
     "generic_complex_control_obstructs_descent": True,
+
     "intrinsic_sector_swap_symplectic": True,
     "sector_swap_preserves_p": False,
     "sector_swap_preserves_B": False,
+
+    # New Gate H adjacency findings.
+    "adjacency_sector_traces": [
+        int(sp.trace(Ap)),
+        int(sp.trace(Am))
+    ],
+    "adjacency_restrictions_similar": False,
+    "sector_swap_preserves_adjacency": False,
+
     "operational_observability": "UNRESOLVED",
     "parameter_selection": "UNRESOLVED",
     "new_dynamics": False,
     "new_gauge_group": False
 }
 
-print("TRUTH_PACKET_JSON=" + json.dumps(packet, sort_keys=True))
+print(
+    "TRUTH_PACKET_JSON="
+    + json.dumps(packet, sort_keys=True)
+)
+
 print("END SIM16.3")
-
-
 
 
 
@@ -474,6 +624,9 @@ print("END SIM16.3")
 
 
 
+
+
+RESULTS:
 
 
 SIM16.3 — FROZEN PROJECTION–COMPLEX STRUCTURE AUDIT
@@ -495,10 +648,11 @@ E | Algebraic recoverability: YES
 E | Operational observability: UNRESOLVED
 E | Physical parameter selection: UNRESOLVED
 PASS | F p/h/s covariance and sector invariance
+PASS | F signed-group sector classification
 F | Npm sector-preserving: 16
 F | Npm sector-nonpreserving: 32
 PASS | F M1 valid distinct symplectic carrier
-F | M1 changes the form; frozen Omega remains unchanged
+F | M1 changes the form; frozen Omega unchanged
 PASS | F alternate partition obstructs J0 descent
 PASS | F generic compatible complex structure need not descend
 PASS | G symplectic conjugacy descends for all t
@@ -508,11 +662,17 @@ G | Descent criterion: S(ker B) = ker B
 G | Symplectic descent implies block-diagonal action
 G | Counterexample transvection vector: [['sqrt(2)', '0', '0', '0', '0', '0', '0', '0']]
 PASS | H intrinsic complex-symplectic sector swap
-PASS | H swap fails fixed-basin observation preservation
+PASS | H swap fails fixed basin observation
+PASS | H swap exchanges p eigenspaces
 H | Intrinsic sector equivalence: YES
 H | Swap preserves frozen P: NO
 H | Swap preserves B: NO
-H | Swap conjugates P to -P: True
+PASS | H frozen C8 adjacency distinguishes intrinsically equivalent sectors
+H | A_plus = [['1', '1', '0', '0'], ['1', '0', '1', '0'], ['0', '1', '0', '1'], ['0', '0', '1', '1']]
+H | A_minus = [['-1', '1', '0', '0'], ['1', '0', '1', '0'], ['0', '1', '0', '1'], ['0', '0', '1', '-1']]
+H | adjacency traces (+,-): 2 -2
+H | adjacency representations not similar (unequal traces)
+PASS | F signed-group graph automorphism count
 F | Npm graph-preserving: 4
-TRUTH_PACKET_JSON={"Npm_graph_preserving": 4, "Npm_sector_nonpreserving": 32, "Npm_sector_preserving": 16, "alternative_M1_valid": true, "alternative_basin_obstructs_J0": true, "complex_quotient_descent": true, "direct_symplectic_form_descent": false, "explicit_nondescending_symplectic_witness": [["1", "0", "2", "0", "0", "0", "0", "0"], ["0", "1", "0", "0", "0", "0", "0", "0"], ["0", "0", "1", "0", "0", "0", "0", "0"], ["0", "0", "0", "1", "0", "0", "0", "0"], ["0", "0", "0", "0", "1", "0", "0", "0"], ["0", "0", "0", "0", "0", "1", "0", "0"], ["0", "0", "0", "0", "0", "0", "1", "0"], ["0", "0", "0", "0", "0", "0", "0", "1"]], "generic_complex_control_obstructs_descent": true, "intrinsic_sector_swap_symplectic": true, "new_dynamics": false, "new_gauge_group": false, "operational_observability": "UNRESOLVED", "orders": {"AGL": 1344, "Nminus": 24, "Nplus": 24, "Npm": 48, "T": 8}, "parameter_recovery": "t=asinh(tr(K_sector G_sector)/4)", "parameter_selection": "UNRESOLVED", "ranks": {"B": 4, "Omega_minus": 4, "Omega_plus": 4, "Vminus": 4, "Vplus": 4}, "scope": "Frozen OPS; no ISP or physical boundary", "sector_equal_in_normalized_frozen_bases": true, "sector_swap_preserves_B": false, "sector_swap_preserves_p": false, "sim": "16.3", "source_shas": {"SIM16.0.py": "e01b90b751353273241e6c516e30b16571dcbfdf", "SIM16.1.py": "76970c358d128d136782310a2b6afa41efd793f7", "SIM16.2.py": "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"}, "split_induced_symplectic_form": true, "status": "EXACT_ALGEBRAIC_AUDIT_PASSED", "symplectic_conjugacy_descent": true}
+TRUTH_PACKET_JSON={"Npm_graph_preserving": 4, "Npm_sector_nonpreserving": 32, "Npm_sector_preserving": 16, "adjacency_restrictions_similar": false, "adjacency_sector_traces": [2, -2], "alternative_M1_valid": true, "alternative_basin_obstructs_J0": true, "complex_quotient_descent": true, "direct_symplectic_form_descent": false, "explicit_nondescending_symplectic_witness": [["1", "0", "2", "0", "0", "0", "0", "0"], ["0", "1", "0", "0", "0", "0", "0", "0"], ["0", "0", "1", "0", "0", "0", "0", "0"], ["0", "0", "0", "1", "0", "0", "0", "0"], ["0", "0", "0", "0", "1", "0", "0", "0"], ["0", "0", "0", "0", "0", "1", "0", "0"], ["0", "0", "0", "0", "0", "0", "1", "0"], ["0", "0", "0", "0", "0", "0", "0", "1"]], "generic_complex_control_obstructs_descent": true, "intrinsic_sector_swap_symplectic": true, "new_dynamics": false, "new_gauge_group": false, "operational_observability": "UNRESOLVED", "orders": {"AGL": 1344, "Nminus": 24, "Nplus": 24, "Npm": 48, "T": 8}, "parameter_recovery": "t=asinh(tr(K_sector G_sector)/4)", "parameter_selection": "UNRESOLVED", "ranks": {"B": 4, "Omega_minus": 4, "Omega_plus": 4, "Vminus": 4, "Vplus": 4}, "scope": "Frozen OPS, linear projection, no ISP or physical boundary", "sector_equal_in_normalized_frozen_bases": true, "sector_swap_preserves_B": false, "sector_swap_preserves_adjacency": false, "sector_swap_preserves_p": false, "sim": "16.3", "source_shas": {"SIM16.0.py": "e01b90b751353273241e6c516e30b16571dcbfdf", "SIM16.1.py": "76970c358d128d136782310a2b6afa41efd793f7", "SIM16.2.py": "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"}, "split_induced_symplectic_form": true, "status": "EXACT_ALGEBRAIC_AUDIT_PASSED", "symplectic_conjugacy_descent": true}
 END SIM16.3
