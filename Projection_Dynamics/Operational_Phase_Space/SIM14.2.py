@@ -1897,13 +1897,10 @@ print(
 
 
 
-~~~~~~~~~~~~~~~~~~~~
 
 
 
-
-
-
+"""
 RESULTS:
 
 
@@ -2798,3 +2795,4 @@ Interpretive ceiling:
 1888 |
 
 SIM14.2 tests whether the finite carrier structure recovered in SIM14.1 survives the alternative symplectic-compatible embedding already discovered in SIM14.0. It introduces no new physical or algebraic structure.
+"""
