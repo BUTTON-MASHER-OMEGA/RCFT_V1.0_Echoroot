@@ -1,0 +1,127 @@
+commit 7a172823c9d80170da310d1eda30203f09b26387
+Author: Ben Laurienti <blaurienti@gmail.com>
+Date:   Sat Oct 24 12:34:44 2026 -0700
+
+    Updated candidate symmetry group language
+
+diff --git a/local/constraints/symmetry_chain.md b/local/constraints/symmetry_chain.md
+index 480f6ab..0ae2de1 100644
+--- a/local/constraints/symmetry_chain.md
++++ b/local/constraints/symmetry_chain.md
+@@ -46,37 +46,64 @@ Any admissible symmetry implementation must:
+ 
+ ---
+ 
+-## 2. Current survivor implementation
++## 2. Current survivor implementations (candidates)
+ 
+-The current provisional implementation of the dual-lane structure is:
++The current candidate implementations of the RCMT dual-lane structure are:
+ 
+ \[
+-E_8 \;\longrightarrow\; SO(10) \;\longrightarrow\; Sp(8) \times SO(9)
++Sp(8) \times SO(9)
+ \]
+ 
+-with the following identifications:
++\[
++Sp(8) \times SO(8)
++\]
++
++These are **provisional candidate structures**, not established symmetry decompositions, mandatory group embeddings, or core identities of RCMT.
++
++The proposed lane assignments are:
++
++- **Mode-space lane:** \(Sp(8)\), representing the symplectic structure required by the mode-space constraints.
++- **Geometric lane:** \(SO(9)\) or \(SO(8)\), representing alternative candidate structures for downstream geometric projection.
++- **Low-energy projection target:** A Lorentzian geometric structure compatible with \(SO(3,1)\), together with the required compact internal symmetry, potentially \(SO(4)\).
++
++The two geometric candidates remain subject to comparative constraint testing. Neither is privileged solely by its dimension, subgroup relationships, or compatibility with a previously proposed symmetry chain.
++
++### 2.1 Admissibility requirements
++
++A candidate implementation must:
++
++- Preserve the required separation between the symplectic mode-space lane and the geometric lane.
++- Preserve the symplectic structure without requiring upstream symmetry breaking.
++- Remain compatible with finite, adjacency-first relational construction.
++- Support a well-defined projection interface through which Lorentzian geometry may be represented.
++- Permit the required compact internal symmetry at the appropriate downstream interface.
++- Respect all upstream RCF invariants and sealed RCMT interfaces.
+ 
+-- **Mode‑space lane:** \(Sp(8)\)
+-- **Geometric lane (intermediate):** \(SO(9)\)
+-- **Geometric lane (low‑energy projection):**
++These requirements are **constraints to be demonstrated**, not properties established merely by naming the candidate groups.
++
++### 2.2 Projection boundary
++
++Neither \(SO(9)\) nor \(SO(8)\) is asserted to contain \(SO(3,1)\) through a conventional compact-group symmetry-breaking chain.
++
++The emergence of Lorentzian structure is a **projection-level requirement** whose mathematical realization remains to be specified and verified.
++
++In particular, the appearance of \(SO(3,1)\) does **not** imply an upstream temporal dimension, background spacetime, or substrate metric.
++
++RCMT consumes the temporal ontology and sealed temporal interfaces documented upstream. This section does not redefine upstream time.
++
++### 2.3 Implementation status
++
++The previously explored chain
+ 
+ \[
+-SO(9) \;\longrightarrow\; SO(5) \times SO(3,1) \;\longrightarrow\; SO(4) \times SO(3,1)
++E_8 \longrightarrow SO(10) \longrightarrow Sp(8)\times SO(9)
+ \]
+ 
+-This chain is treated as a **survivor implementation**, not as a core identity of RCMT.
+-
+-Within the current RCMT formalism, this implementation is retained because:
++is retained, where documented, as historical exploratory work rather than a current architectural dependency.
+ 
+-- it is finite and adjacency‑compatible,
+-- it provides a non‑breaking symplectic lane (\(Sp(8)\)),
+-- it yields a Lorentzian geometric lane (\(SO(3,1)\)) **only at the projection layer**,
+-- and it allows a compact internal symmetry (\(SO(4)\)) at low energy.
++Alternative implementations remain admissible if they preserve the required dual-lane structure and satisfy all applicable invariants.
+ 
+-**Note:**
+-The appearance of \(SO(3,1)\) in this chain does *not* imply any upstream notion of time.
+-Lorentzian structure is a **projection-level feature** of the RCMT geometric lane, not a substrate invariant.
+-This statement does not define upstream time. RCMT consumes the temporal ontology and sealed temporal interfaces documented upstream.
++**Selection between candidates remains open pending explicit mathematical and operational verification.**
+ 
+ ---
+ 
+diff --git a/local/invariants.md b/local/invariants.md
+index a713011..85f0a22 100644
+--- a/local/invariants.md
++++ b/local/invariants.md
+@@ -28,14 +28,16 @@ RCMT requires a **finite, adjacency‑compatible dual‑lane symmetry structure*
+ - a **geometric lane** with local Lorentz symmetry, and
+ - a **non‑breaking symplectic mode‑space lane**.
+ 
+-**Current survivor implementation (provisional):**
++**Current survivor implementation (candidates):**
+ 
+ 
+ \[
+-E_8 \rightarrow SO(10) \rightarrow Sp(8) \times SO(9)
++Sp(8) \times SO(9)
+ \]
+ 
+-
++\[
++Sp(8) \times SO(8)
++\]
+ 
+ Alternative implementations are admissible if they preserve the required dual‑lane structure and remain compatible with all invariants.
+ 
+@@ -144,7 +146,7 @@ No model may assume intrinsic or preserved identity across regions of high misma
+ ## Implementation Notes
+ 
+ ### A. Dual‑Lane Symmetry (Provisional)
+-The chain \(E_8 \to SO(10) \to Sp(8) \times SO(9)\) is the **current survivor implementation**.
++Section 2 outlines the **current survivor candidate(s)**.
+ 
+ Any replacement must preserve the dual‑lane structure and satisfy all invariants.
+ 

@@ -1,0 +1,219 @@
+{
+  "status": "PASS",
+  "sympy": "1.14.0",
+  "exact_arithmetic": true,
+  "edge_constraint_states": [
+    {
+      "active_edges": [],
+      "toy_density": "0",
+      "binary_configurations": 256,
+      "linear_survivor_dimension": 8,
+      "projected_linear_survivor_dimension": 4,
+      "restricted_omega_rank": 8,
+      "distinct_projected_binary_configurations": 81,
+      "orthogonal_constraint_algebra_dimension": 28,
+      "local_orthogonal_symplectic_constraint_dimension": 4,
+      "projectable_local_symmetry_dimension": 2,
+      "aggregate_response_descends_through_B": true,
+      "aggregate_response_defect_rank": 0,
+      "hamiltonian_response_C8_sparse": true
+    },
+    {
+      "active_edges": [
+        [
+          0,
+          1
+        ]
+      ],
+      "toy_density": "1/8",
+      "binary_configurations": 128,
+      "linear_survivor_dimension": 7,
+      "projected_linear_survivor_dimension": 4,
+      "restricted_omega_rank": 6,
+      "distinct_projected_binary_configurations": 54,
+      "orthogonal_constraint_algebra_dimension": 21,
+      "local_orthogonal_symplectic_constraint_dimension": 2,
+      "projectable_local_symmetry_dimension": 1,
+      "aggregate_response_descends_through_B": true,
+      "aggregate_response_defect_rank": 0,
+      "hamiltonian_response_C8_sparse": false
+    },
+    {
+      "active_edges": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "toy_density": "3/8",
+      "binary_configurations": 32,
+      "linear_survivor_dimension": 5,
+      "projected_linear_survivor_dimension": 3,
+      "restricted_omega_rank": 4,
+      "distinct_projected_binary_configurations": 18,
+      "orthogonal_constraint_algebra_dimension": 10,
+      "local_orthogonal_symplectic_constraint_dimension": 2,
+      "projectable_local_symmetry_dimension": 1,
+      "aggregate_response_descends_through_B": true,
+      "aggregate_response_defect_rank": 0,
+      "hamiltonian_response_C8_sparse": false
+    },
+    {
+      "active_edges": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "toy_density": "1/2",
+      "binary_configurations": 16,
+      "linear_survivor_dimension": 4,
+      "projected_linear_survivor_dimension": 3,
+      "restricted_omega_rank": 4,
+      "distinct_projected_binary_configurations": 12,
+      "orthogonal_constraint_algebra_dimension": 6,
+      "local_orthogonal_symplectic_constraint_dimension": 1,
+      "projectable_local_symmetry_dimension": 0,
+      "aggregate_response_descends_through_B": false,
+      "aggregate_response_defect_rank": 1,
+      "hamiltonian_response_C8_sparse": false
+    },
+    {
+      "active_edges": [
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "toy_density": "5/8",
+      "binary_configurations": 8,
+      "linear_survivor_dimension": 3,
+      "projected_linear_survivor_dimension": 2,
+      "restricted_omega_rank": 2,
+      "distinct_projected_binary_configurations": 6,
+      "orthogonal_constraint_algebra_dimension": 3,
+      "local_orthogonal_symplectic_constraint_dimension": 0,
+      "projectable_local_symmetry_dimension": 0,
+      "aggregate_response_descends_through_B": true,
+      "aggregate_response_defect_rank": 0,
+      "hamiltonian_response_C8_sparse": false
+    }
+  ],
+  "squeeze_states": [
+    {
+      "q_exp_t": 1,
+      "metric_condition_number": 1,
+      "orthogonal_metric_stabilizer_dimension": 28,
+      "symplectic_metric_stabilizer_dimension": 16,
+      "C8_sparse_stabilizer_dimension": 4,
+      "projectable_local_stabilizer_dimension": 2,
+      "J_and_transport_descend_B": true,
+      "symplectically_conjugate_to_q1": true
+    },
+    {
+      "q_exp_t": 2,
+      "metric_condition_number": 4,
+      "orthogonal_metric_stabilizer_dimension": 28,
+      "symplectic_metric_stabilizer_dimension": 16,
+      "C8_sparse_stabilizer_dimension": 4,
+      "projectable_local_stabilizer_dimension": 2,
+      "J_and_transport_descend_B": true,
+      "symplectically_conjugate_to_q1": true
+    },
+    {
+      "q_exp_t": 4,
+      "metric_condition_number": 16,
+      "orthogonal_metric_stabilizer_dimension": 28,
+      "symplectic_metric_stabilizer_dimension": 16,
+      "C8_sparse_stabilizer_dimension": 4,
+      "projectable_local_stabilizer_dimension": 2,
+      "J_and_transport_descend_B": true,
+      "symplectically_conjugate_to_q1": true
+    }
+  ],
+  "same_density_control": {
+    "active_edges": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        6,
+        7
+      ]
+    ],
+    "toy_density": "1/2",
+    "binary_configurations": 16,
+    "aggregate_response_descends_B": true
+  },
+  "failure_witness": {
+    "kernel_vector": [
+      0,
+      0,
+      1,
+      -1,
+      0,
+      0,
+      0,
+      0
+    ],
+    "B_L_w": [
+      0,
+      1,
+      -1,
+      0
+    ]
+  },
+  "closure": {
+    "constraint_algebras": "centralizer intersections in so(8)",
+    "local_algebras": "abelian subalgebras; all brackets checked"
+  },
+  "seconds": 1.21,
+  "python": "3.12.4",
+  "timeout_seconds": 20,
+  "recorded_inputs_unchanged": true
+}

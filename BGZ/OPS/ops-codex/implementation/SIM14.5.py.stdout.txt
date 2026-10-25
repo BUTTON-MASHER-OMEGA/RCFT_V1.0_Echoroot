@@ -1,0 +1,81 @@
+============================================================================================
+SIM14.5 — AFFINE–SYMPLECTIC COMPATIBILITY CLASSIFICATION
+============================================================================================
+No external group target; no F4/24-cell/E8/H4; no J/g/U4; no ISP/LCO.
+
+A. SANITY
+|K| 4 |G| 8 regular True
+V4s 7 planes 14 parallel classes 7
+Omega antisymmetric True rank 8 det 1
+
+B. DISCOVERY
+|Aut affine| 1344
+Omega classes {'+Omega': 24, '-Omega': 24, 'neither': 1296}
+|N+| 24 |N-| 24 |N +/-| 48
+
+C. ABSTRACT FINGERPRINTS
+N+
+ order = 24
+ element orders = {1: 1, 2: 9, 3: 8, 4: 6}
+ center = 1 orders {1: 1}
+ derived = 12 orders {1: 1, 2: 3, 3: 8}
+ abelianization order = 2
+ conjugacy class sizes = [1, 3, 6, 6, 8]
+ subgroup orders = {1: 1, 12: 1, 2: 9, 24: 1, 3: 4, 4: 7, 6: 4, 8: 3}  total = 30
+ normal subgroup orders = {1: 1, 12: 1, 24: 1, 4: 1}  total = 4
+
+N +/-
+ order = 48
+ element orders = {1: 1, 2: 19, 3: 8, 4: 12, 6: 8}
+ center = 2 orders {1: 1, 2: 1}
+ derived = 12 orders {1: 1, 2: 3, 3: 8}
+ abelianization order = 4
+ conjugacy class sizes = [1, 1, 3, 3, 6, 6, 6, 6, 8, 8]
+ subgroup orders = {1: 1, 12: 5, 16: 3, 2: 19, 24: 3, 3: 4, 4: 31, 48: 1, 6: 12, 8: 19}  total = 98
+ normal subgroup orders = {1: 1, 12: 1, 2: 1, 24: 3, 4: 1, 48: 1, 8: 1}  total = 9
+
+D. INDEX-TWO EXTENSION
+N+ normal = True
+sign homomorphism = True
+N- order histogram = {2: 10, 4: 6, 6: 8}
+order-2 reversing witnesses = 10  split extension = True
+reversers centralizing all N+ = 1
+reverser conjugation fixed-count histogram = {24: 1, 3: 8, 4: 12, 8: 3}
+
+E. ACTIONS
+N+
+  points orbit sizes [4, 4] stabilizers {6: 8}
+  directions orbit sizes [1, 3, 3] stabilizers {24: 1, 8: 6}
+  planes orbit sizes [1, 1, 6, 6] stabilizers {24: 2, 4: 12}
+  parallel classes orbit sizes [1, 3, 3] stabilizers {24: 1, 8: 6}
+N +/-
+  points orbit sizes [8] stabilizers {6: 8}
+  directions orbit sizes [1, 3, 3] stabilizers {16: 6, 48: 1}
+  planes orbit sizes [2, 6, 6] stabilizers {24: 2, 8: 12}
+  parallel classes orbit sizes [1, 3, 3] stabilizers {16: 6, 48: 1}
+
+F. INFORMATION-LOSS ABLATION (AFFINE-RESTRICTED)
++Omega order 24 element orders {1: 1, 2: 9, 3: 8, 4: 6}
++/-Omega order 48 element orders {1: 1, 2: 19, 3: 8, 4: 12, 6: 8}
+|S| order 192 element orders {1: 1, 2: 43, 3: 32, 4: 84, 6: 32}
+partner s order 192 element orders {1: 1, 2: 43, 3: 32, 4: 84, 6: 32}
+
+G. C8 / FROZEN INTERSECTIONS
+Aut(C8) order 16 Omega {'+Omega': 2, '-Omega': 2, 'neither': 12} elements ['()', '(0 1 3 5 7 6 4 2)', '(0 1)(2 3)(4 5)(6 7)', '(0 2 4 6 7 5 3 1)', '(0 2)(1 4)(3 6)(5 7)', '(0 3 7 4)(1 5 6 2)', '(0 3)(2 5)(4 7)', '(0 4 7 3)(1 2 6 5)', '(0 4)(1 6)(3 7)', '(0 5 4 1 7 2 3 6)', '(0 5)(1 3)(2 7)(4 6)', '(0 6 3 2 7 1 4 5)', '(0 6)(1 7)(2 4)(3 5)', '(0 7)(1 5)(2 6)', '(0 7)(1 6)(2 5)(3 4)', '(1 2)(3 4)(5 6)']
+Aut(C8) cap N order 4 Omega {'+Omega': 2, '-Omega': 2} elements ['()', '(0 1)(2 3)(4 5)(6 7)', '(0 6)(1 7)(2 4)(3 5)', '(0 7)(1 6)(2 5)(3 4)']
+Aut(C8) cap N+ order 2 Omega {'+Omega': 2} elements ['()', '(0 1)(2 3)(4 5)(6 7)']
+Stab_C8(p,h) order 4 Omega {'+Omega': 2, '-Omega': 2} elements ['()', '(0 1)(2 3)(4 5)(6 7)', '(0 6)(1 7)(2 4)(3 5)', '(0 7)(1 6)(2 5)(3 4)']
+Stab_C8(p,h,s) order 4 Omega {'+Omega': 2, '-Omega': 2} elements ['()', '(0 1)(2 3)(4 5)(6 7)', '(0 6)(1 7)(2 4)(3 5)', '(0 7)(1 6)(2 5)(3 4)']
+
+H. EXPLICIT N +/- DIRECTION ORBITS
+0 ['001']
+1 ['010', '101', '110']
+2 ['011', '100', '111']
+
+I. MACHINE TRUTH PACKET
+|Aut AG(3,2)| = 1344
+|N+| = 24 |N-| = 24 |N| = 48
+|Z(N+)| = 1 |Z(N)| = 2
+|[N+,N+]| = 12 |[N,N]| = 12
+No external identification made.
+SIM14.5 COMPLETE — classification sanity checks PASS

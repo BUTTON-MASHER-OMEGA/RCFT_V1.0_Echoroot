@@ -1,0 +1,107 @@
+[
+  {
+    "path": "rcmt/smg_v2.1/REFACTOR_STATUS.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/charged_lepton_class.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/neutral_lepton_class.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/modules/README_MODULES.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/stdlib/README_STDLIB.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_physics_adapter.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve existing document references without changing scientific claims"
+  }
+]

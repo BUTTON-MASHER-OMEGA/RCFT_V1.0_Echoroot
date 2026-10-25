@@ -1,0 +1,10 @@
+b7a34065d3cafeab91d02f2bfe2ff513445365d9 2026-07-23T08:42:22-07:00 Initializing git repo
+c7859c5dd1d396398afebe2d2d128cdf57d45d23 2026-07-25T15:39:46-07:00 Started a python library for RCF.
+9840eddbd576ad953d756c3e839a98e917d8d10f 2026-07-25T17:57:41-07:00 Added header to the invariants file.
+cdf08401a839fe1e3a2b20c92f085755e0e409af 2026-07-25T18:05:32-07:00 Forgot to add the files in this commit
+8c7bd510a22c01097e4959344d9499e9548b07ef 2026-07-25T18:38:21-07:00 Applied RCP-1.2 standard to all core files.
+2df9ff3a4641e7993dd1561808b87e78c2676ad5 2026-07-25T18:57:16-07:00 Cleaned up the core-adjacent directory
+d377a73617a7054560122bcbf92d104777bacf8e 2026-07-25T19:54:22-07:00 Cleaned up and standardized the modules directory
+b64f97f704a086f3d8de761dbccb2c093c695529 2026-07-25T20:16:14-07:00 Created new rcf_compressed.md
+8f0c98c81f63a0cf99d60218e78192af09512244 2026-07-25T21:33:16-07:00 Fixed headers
+c419353214ee83d83376747064912544aee257b9 2026-10-24T09:30:56-07:00 Added explicit constraints to candidate geometries

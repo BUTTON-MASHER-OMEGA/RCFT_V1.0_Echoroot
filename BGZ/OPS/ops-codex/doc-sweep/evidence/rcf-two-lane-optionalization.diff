@@ -1,0 +1,119 @@
+commit 8c7bd510a22c01097e4959344d9499e9548b07ef
+Author: Ben Laurienti <blaurienti@gmail.com>
+Date:   Sat Jul 25 18:38:21 2026 -0700
+
+    Applied RCP-1.2 standard to all core files.
+    
+    Relaxed languages in some places.
+    Downgraded 2-lane requirement to optional.
+
+diff --git a/core/relational-constraints/geometry.md b/core/relational-constraints/geometry.md
+index f89f642..e21582e 100644
+--- a/core/relational-constraints/geometry.md
++++ b/core/relational-constraints/geometry.md
+@@ -1,34 +1,43 @@
+-### `geometry.md`
++---
++
++# Dual-Lane Geometry Abstraction Profile
++
++## Document Contract
+ 
+-# Geometry Abstraction Layer
+-## RCF Geometry Contract (Domain‑Agnostic)
++- owner: RCF relational-constraints elaboration
++- type: Contract
++- scope: opt-in dual-lane geometry profile
++- authority: noncanonical implementation profile subordinate to the geometry stack
++- upstream dependencies: `README.md` and `../geometry/README.md`
++- status: experimental
++- purpose: define a candidate dual-lane geometry profile for implementations requiring memory and motion roles
++- anti-backflow: this profile does not define universal RCF geometry, override the geometry stack, or require non-adopting implementations to use dual lanes
+ 
+-This section defines the minimal geometric requirements for any RCF implementation.
++This section defines geometric requirements for implementations adopting this dual-lane profile.
+ 
+ It does **not** assume a specific group, metric, manifold, or domain.
+-It specifies the structural invariants required for RCF dynamics and boundary behavior to be well‑defined.
++It specifies profile-local structures used to represent memory, motion, and boundary behavior.
+ 
+-RCF geometry must be defined at two levels:
++This profile is defined at two levels:
+ 
+ - an **abstraction layer** that specifies structural invariants
+ - an **implementation layer** that instantiates them in a concrete geometry
+ 
+-These constraints form the **Geometry Abstraction Layer**:
+-an upstream contract that all downstream geometries must satisfy.
++These constraints form an optional **Dual-Lane Geometry Abstraction Profile**.
+ 
+ ---
+ 
+ ## 1. Dual‑Lane Requirement
+ 
+-RCF requires two **functionally irreducible** structural roles:
++This profile requires two **functionally irreducible** structural roles:
+ 
+ - **Memory / containment**
+ - **Motion / direction**
+ 
+-These roles cannot collapse without destroying core invariants.
++Within this profile, the two roles are treated as functionally non-eliminable.
+ However, implementations may share representational structure as long as the roles remain distinct.
+ 
+-Any admissible RCF geometry must therefore implement:
++Any geometry adopting this profile must implement:
+ 
+ - a **memory‑preserving lane** (informational structure)
+ - a **motion‑preserving lane** (trajectory structure)
+@@ -64,7 +73,7 @@ The memory lane must support:
+ 
+ - **existence of a conserved informational invariant under admissible refinement**
+ 
+-Any geometry that cannot encode persistent containment plus history‑sensitive refinement is not a valid RCF memory lane.
++Within this profile, a memory lane must encode persistent containment plus history-sensitive refinement.
+ 
+ ---
+ 
+@@ -85,7 +94,7 @@ The motion lane must support:
+ 
+ The exact representation is domain‑dependent.
+ 
+-Any geometry that cannot encode constrained motion and a distinguished minimally constrained sector is not a valid RCF motion lane.
++Within this profile, a motion lane must encode constrained motion and a distinguished minimally constrained sector.
+ 
+ ---
+ 
+@@ -94,7 +103,7 @@ Any geometry that cannot encode constrained motion and a distinguished minimally
+ The two lanes must satisfy:
+ 
+ - **Functional irreducibility**
+-  Neither lane’s functional role can be eliminated without destroying core invariants.
++  Neither lane's functional role is eliminated within this profile.
+ 
+ - **Coherence**
+   Refinement‑time evolution preserves both lane invariants.
+@@ -108,7 +117,7 @@ This prevents redundancy and ensures the dual‑lane structure is load‑bearing
+ 
+ ## 5. Boundary Representation Requirement
+ 
+-Any admissible dual‑lane geometry must induce a **boundary representation**:
++Any geometry adopting this profile must induce a **boundary representation**:
+ 
+ a closed algebra of allowed transformations exposed to the environment.
+ 
+@@ -155,7 +164,7 @@ Any geometric feature must be load‑bearing for dynamics or boundary algebra.
+ 
+ ## Summary
+ 
+-The Geometry Abstraction Layer requires:
++The Dual-Lane Geometry Abstraction Profile requires:
+ 
+ - two independent geometric lanes (memory and motion)
+ - invariant structures in each lane
+@@ -163,4 +172,4 @@ The Geometry Abstraction Layer requires:
+ - an induced boundary transformation algebra
+ - strict minimality
+ 
+-Specific geometries (e.g., particular groups or manifolds) are **implementations** of this contract, not the contract itself.
++Specific geometries are implementations of this optional profile, not universal RCF requirements.

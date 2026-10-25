@@ -1,0 +1,9 @@
+{
+  "status": "reconstructed and graph-verified",
+  "bad_ids": [
+    327,
+    552,
+    578
+  ],
+  "max_intact_error": 9.945841158600991e-05
+}

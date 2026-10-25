@@ -1,0 +1,47 @@
+[
+  {
+    "script": "SIM14.3.py",
+    "exit_code": 0,
+    "seconds": 0.08
+  },
+  {
+    "script": "SIM14.8.py",
+    "exit_code": 0,
+    "seconds": 1.2
+  },
+  {
+    "script": "SIM15.6.py",
+    "exit_code": 0,
+    "seconds": 1.22
+  },
+  {
+    "script": "SIM16.0.py",
+    "exit_code": 0,
+    "seconds": 1.77
+  },
+  {
+    "script": "SIM16.1.py",
+    "exit_code": 0,
+    "seconds": 3.83
+  },
+  {
+    "script": "SIM16.2.py",
+    "exit_code": 0,
+    "seconds": 12.59
+  },
+  {
+    "script": "SIM16.3.py",
+    "exit_code": 0,
+    "seconds": 2.47
+  },
+  {
+    "script": "SIM16.4.py",
+    "exit_code": 0,
+    "seconds": 3.88
+  },
+  {
+    "script": "SIM14.5.py",
+    "exit_code": 0,
+    "seconds": 2.25
+  }
+]

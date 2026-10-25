@@ -1,0 +1,14 @@
+--- INIT HOT LANE PROBE | tau threshold = 1.5 ---
+Rank 03 | Merged  2   +  1   -> Cap   3   | Ratio: 1.500000
+Rank 04 | Merged  3   +  2   -> Cap   5   | Ratio: 1.666667
+Rank 05 | Merged  5   +  3   -> Cap   8   | Ratio: 1.600000
+Rank 06 | Merged  8   +  5   -> Cap  13   | Ratio: 1.625000
+Rank 07 | Merged  13  +  8   -> Cap  21   | Ratio: 1.615385
+Rank 08 | Merged  21  +  13  -> Cap  34   | Ratio: 1.619048
+Rank 09 | Merged  34  +  21  -> Cap  55   | Ratio: 1.617647
+Rank 10 | Merged  55  +  34  -> Cap  89   | Ratio: 1.618182
+Rank 11 | Merged  89  +  55  -> Cap  144  | Ratio: 1.617978
+Rank 12 | Merged 144  +  89  -> Cap  233  | Ratio: 1.618056
+Rank 13 | Merged 233  + 144  -> Cap  377  | Ratio: 1.618026
+Rank 14 | Merged 377  + 233  -> Cap  610  | Ratio: 1.618037
+Rank 15 | Merged 610  + 377  -> Cap  987  | Ratio: 1.618033

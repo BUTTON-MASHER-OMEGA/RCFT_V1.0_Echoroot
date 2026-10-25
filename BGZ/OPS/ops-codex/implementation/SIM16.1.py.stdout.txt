@@ -1,0 +1,35 @@
+SIM16.1 — EXACT C8 METRIC LOCALITY
+A | PASS frozen orders: 8 1344 24 24 48
+A | C8 edges / forbidden pairs: 8 20
+B | PASS symmetric dims: 6 4
+B | PASS tangent dims: 4 2
+B | PASS |Omega| belongs to signed tangent space
+C | PASS local symmetric dims: 3 2
+C | PASS local tangent dims: 2 1
+D | graph-preserving elements N+/Npm: 2 4
+E | PASS exact partner family for every real t
+F | Nplus: 3 metric coordinates
+F | exact compatibility equation: -z0*z2 + z1**2 + 1
+F | exact compatibility equation: z0*z2 - z1**2 - 1
+F | Nplus: G=u D0+v K+w D1
+F | u*w-v^2=1, u>0, w>0
+F | GLOBAL VERDICT: 2D positive family
+F | Npm: 2 metric coordinates
+F | exact compatibility equation: -z0**2 + z1**2 + 1
+F | exact compatibility equation: z0**2 - z1**2 - 1
+F | Npm: G=alpha I+beta K
+F | alpha^2-beta^2=1, alpha>|beta|
+F | GLOBAL THEOREM: G(t)=cosh(t)I+sinh(t)K
+F | GLOBAL VERDICT: PARTNER FAMILY ONLY
+G | Nplus witness 0: forbidden=0.000e+00, signed_J=0.000e+00
+G | Nplus witness 1: forbidden=2.445e-01, signed_J=3.934e-15
+G | Nplus witness 2: forbidden=0.000e+00, signed_J=0.000e+00
+G | Nplus witness 3: forbidden=2.998e-01, signed_J=4.996e-16
+G | Npm witness 0: forbidden=0.000e+00, signed_J=0.000e+00
+G | Npm witness 1: forbidden=2.445e-01, signed_J=3.934e-15
+G | partner t=+0.25: forbidden=0.000e+00, signed_J=0.000e+00
+G | partner t=-0.60: forbidden=0.000e+00, signed_J=0.000e+00
+G | partner t=+1.00: forbidden=0.000e+00, signed_J=2.220e-16
+H | EXACT GLOBAL CLASSIFICATION PASSED
+TRUTH_PACKET_JSON={"Nplus_global_local_family_dimension": 2, "graph_preserving_elements": {"Nplus": 2, "Npm": 4}, "group_orders": {"Nminus": 24, "Nplus": 24, "Npm": 48}, "local_symmetric_dimensions": {"Nplus": 3, "Npm": 2}, "local_tangent_dimensions": {"Nplus": 2, "Npm": 1}, "partner_matrix": [[0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0]], "proof_method": "Exact invariant sparse metric space, G*Omega*G=Omega, and SPD eigenvalue criterion", "scope": "Frozen OPS, strong C8 metric sparsity", "signed_global_verdict": "PARTNER_FAMILY_ONLY", "signed_local_family": "G(t)=cosh(t)*I+sinh(t)*abs(Omega), t in R", "sim": "16.1", "status": "EXACT_PROOF", "symmetric_dimensions": {"Nplus": 6, "Npm": 4}, "tangent_dimensions": {"Nplus": 4, "Npm": 2}}
+END SIM16.1

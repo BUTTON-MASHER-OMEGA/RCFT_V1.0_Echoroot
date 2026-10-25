@@ -1,0 +1,487 @@
+
+================================================================================================================
+SIM14.3 — V4 ORBIT-BRIDGE CLASSIFICATION
+================================================================================================================
+
+NO ISP / LCO dynamics are run in SIM14.3.
+NO stochastic sampling, fitting, optimization, or new geometry.
+
+Primary question:
+
+    What property of s relative to K=<p,h> determines regularity
+    of G_s=<K,s> on the eight-state microscopic carrier?
+
+The orbit-transition matrix B(s) is measured independently of
+the subsequent regularity classification.
+
+----------------------------------------------------------------------------------------------------------------
+1. FROZEN SIM14 LABORATORY
+----------------------------------------------------------------------------------------------------------------
+X8                  : (0, 1, 2, 3, 4, 5, 6, 7)
+C8 cycle order      : (0, 1, 3, 5, 7, 6, 4, 2)
+C8 edges            : {0-1, 0-2, 1-3, 2-4, 3-5, 4-6, 5-7, 6-7}
+
+Projection basins   : {0: [0, 1], 1: [2, 3], 2: [4, 5], 3: [6, 7]}
+
+p                   : (0 1)(2 3)(4 5)(6 7)
+h                   : (0 7)(1 6)(2 5)(3 4)
+
+M1                  : {0-1, 2-4, 3-5, 6-7}
+s1                  : (0 1)(2 4)(3 5)(6 7)
+
+M2                  : {0-2, 1-3, 4-6, 5-7}
+s2                  : (0 2)(1 3)(4 6)(5 7)
+
+----------------------------------------------------------------------------------------------------------------
+2. PRE-SYMPLECTIC BASE GROUP K = <p,h>
+----------------------------------------------------------------------------------------------------------------
+|K|                 : 4
+Element orders      : {1: 1, 2: 3}
+p,h commute         : True
+K ~= V4             : True
+
+K elements:
+    ()
+    (0 1)(2 3)(4 5)(6 7)
+    (0 6)(1 7)(2 4)(3 5)
+    (0 7)(1 6)(2 5)(3 4)
+
+----------------------------------------------------------------------------------------------------------------
+3. K ACTION ON X8
+----------------------------------------------------------------------------------------------------------------
+Number of K-orbits  : 2
+Orbit-size multiset : [4, 4]
+
+O0 = [0, 1, 6, 7]
+O1 = [2, 3, 4, 5]
+
+vertex   orbit-size   stabilizer-size
+  0           4                 1
+  1           4                 1
+  2           4                 1
+  3           4                 1
+  4           4                 1
+  5           4                 1
+  6           4                 1
+  7           4                 1
+
+----------------------------------------------------------------------------------------------------------------
+4. M1 / M2 RELATION TO THE PRE-EXISTING K-ORBITS
+----------------------------------------------------------------------------------------------------------------
+B(s1) = [4,0; 0,4]
+B(s2) = [0,4; 4,0]
+
+Rows = source K-orbits.
+Columns = destination K-orbits.
+
+No interpretation of these matrices is used to define regularity.
+
+----------------------------------------------------------------------------------------------------------------
+5. SIM14.2 REPRODUCTION THROUGH THE K+s LENS
+----------------------------------------------------------------------------------------------------------------
+M1
+------------------------------------------------------------------------
+s                     : (0 1)(2 4)(3 5)(6 7)
+matching              : {0-1, 2-4, 3-5, 6-7}
+B(s)                  : [4,0; 0,4]
+
+|<K,s>|               : 8
+element-order hist    : {1: 1, 2: 7}
+
+orbits                : [[0, 1, 6, 7], [2, 3, 4, 5]]
+orbit-size multiset   : (4, 4)
+stabilizer sizes      : (2, 2, 2, 2, 2, 2, 2, 2)
+kernel size           : 1
+
+transitive            : False
+free                  : False
+regular               : False
+
+matching in C8        : True
+s is C8 automorphism  : False
+preserves Pi setwise : True
+
+M2
+------------------------------------------------------------------------
+s                     : (0 2)(1 3)(4 6)(5 7)
+matching              : {0-2, 1-3, 4-6, 5-7}
+B(s)                  : [0,4; 4,0]
+
+|<K,s>|               : 8
+element-order hist    : {1: 1, 2: 7}
+
+orbits                : [[0, 1, 2, 3, 4, 5, 6, 7]]
+orbit-size multiset   : (8,)
+stabilizer sizes      : (1, 1, 1, 1, 1, 1, 1, 1)
+kernel size           : 1
+
+transitive            : True
+free                  : True
+regular               : True
+
+matching in C8        : True
+s is C8 automorphism  : False
+preserves Pi setwise : True
+
+
+----------------------------------------------------------------------------------------------------------------
+6. ENUMERATION CONTROL
+----------------------------------------------------------------------------------------------------------------
+All perfect matchings on 8 labeled vertices: 105
+Expected                            : 105
+All enumerated involutions unique   : True
+All are fixed-point-free involutions: True
+
+----------------------------------------------------------------------------------------------------------------
+7. COMMUTING FIXED-POINT-FREE INVOLUTION CLASS S_K
+----------------------------------------------------------------------------------------------------------------
+|S_K|                        : 13
+
+Definition:
+
+  S_K = {s : s^2=e, Fix(s)=empty, [s,p]=[s,h]=e}
+
+M1 included                  : True
+M2 included                  : True
+
+----------------------------------------------------------------------------------------------------------------
+8. COMPLETE STRUCTURAL CLASSIFICATION OF S_K
+----------------------------------------------------------------------------------------------------------------
+ID   tag   s                              inK  C8   B(s)              |G|   orbits       free  trans  regular
+----------------------------------------------------------------------------------------------------------------
+ 1         (0 1)(2 3)(4 5)(6 7)           True False [4,0; 0,4]           4   (4, 4)        True  False   False
+ 2   M1    (0 1)(2 4)(3 5)(6 7)           False True [4,0; 0,4]           8   (4, 4)       False  False   False
+ 3         (0 1)(2 5)(3 4)(6 7)           False False [4,0; 0,4]           8   (4, 4)       False  False   False
+ 4   M2    (0 2)(1 3)(4 6)(5 7)           False True [0,4; 4,0]           8   (8,)          True   True    True
+ 5         (0 3)(1 2)(4 7)(5 6)           False False [0,4; 4,0]           8   (8,)          True   True    True
+ 6         (0 4)(1 5)(2 6)(3 7)           False False [0,4; 4,0]           8   (8,)          True   True    True
+ 7         (0 5)(1 4)(2 7)(3 6)           False False [0,4; 4,0]           8   (8,)          True   True    True
+ 8         (0 6)(1 7)(2 3)(4 5)           False False [4,0; 0,4]           8   (4, 4)       False  False   False
+ 9         (0 6)(1 7)(2 4)(3 5)           True False [4,0; 0,4]           4   (4, 4)        True  False   False
+10         (0 6)(1 7)(2 5)(3 4)           False False [4,0; 0,4]           8   (4, 4)       False  False   False
+11         (0 7)(1 6)(2 3)(4 5)           False False [4,0; 0,4]           8   (4, 4)       False  False   False
+12         (0 7)(1 6)(2 4)(3 5)           False False [4,0; 0,4]           8   (4, 4)       False  False   False
+13         (0 7)(1 6)(2 5)(3 4)           True False [4,0; 0,4]           4   (4, 4)        True  False   False
+
+----------------------------------------------------------------------------------------------------------------
+9. DOES B(s) CLASSIFY THE ACTION TYPE?
+----------------------------------------------------------------------------------------------------------------
+Number of distinct B(s) types: 2
+
+B(s) = [0,4; 4,0]
+  count              : 4
+  group orders       : [8]
+  orbit types        : [(8,)]
+  free values        : [True]
+  transitive values  : [True]
+  regular values     : [True]
+  regularity uniform : True
+  contains           : ['M2']
+
+B(s) = [4,0; 0,4]
+  count              : 9
+  group orders       : [4, 8]
+  orbit types        : [(4, 4)]
+  free values        : [False, True]
+  transitive values  : [False]
+  regular values     : [False]
+  regularity uniform : True
+  contains           : ['M1']
+
+B(s) type perfectly classifies regularity: True
+
+----------------------------------------------------------------------------------------------------------------
+10. REGULARITY LEDGER INSIDE S_K
+----------------------------------------------------------------------------------------------------------------
+Total commuting candidates     : 13
+Regular candidates             : 4
+Nonregular candidates          : 9
+
+Regular fraction              : 0.3076923076923077
+
+Regular B(s) types            : ['[0,4; 4,0]']
+Nonregular B(s) types         : ['[4,0; 0,4]']
+
+----------------------------------------------------------------------------------------------------------------
+11. CANDIDATE ORBIT-BRIDGE LAW
+----------------------------------------------------------------------------------------------------------------
+Complete orbit-exchange candidates: 4
+Non-exchange candidates            : 9
+
+Regular among complete exchanges   : 4 / 4
+Regular among non-exchanges        : 0 / 9
+
+Complete exchange necessary for regularity: True
+Complete exchange sufficient for regularity: True
+Complete exchange iff regularity            : True
+
+----------------------------------------------------------------------------------------------------------------
+12. COUNTEREXAMPLE SEARCH
+----------------------------------------------------------------------------------------------------------------
+Regular but NOT complete exchange: 0
+
+Complete exchange but NOT regular: 0
+
+----------------------------------------------------------------------------------------------------------------
+13. ACTION-TYPE CLASSIFICATION
+----------------------------------------------------------------------------------------------------------------
+Number of distinct action classes: 3
+
+CLASS 1
+  |G|         : 4
+  orbit sizes : (4, 4)
+  free        : True
+  transitive  : False
+  regular     : False
+  count       : 3
+  B types     : ['[4,0; 0,4]']
+
+CLASS 2
+  |G|         : 8
+  orbit sizes : (4, 4)
+  free        : False
+  transitive  : False
+  regular     : False
+  count       : 6
+  B types     : ['[4,0; 0,4]']
+  contains    : ['M1']
+
+CLASS 3
+  |G|         : 8
+  orbit sizes : (8,)
+  free        : True
+  transitive  : True
+  regular     : True
+  count       : 4
+  B types     : ['[0,4; 4,0]']
+  contains    : ['M2']
+
+
+----------------------------------------------------------------------------------------------------------------
+14. WHAT ADDITIONAL RESTRICTION DOES C8 CONTRIBUTE?
+----------------------------------------------------------------------------------------------------------------
+Commuting candidates with matching fully in C8: 2
+Commuting candidates outside C8             : 11
+
+Regular among C8-contained                  : 1 / 2
+Regular outside C8                          : 3 / 11
+
+C8-contained candidates:
+
+ M1   (0 1)(2 4)(3 5)(6 7)           B=[4,0; 0,4]         orbits=(4, 4)     regular=False
+ M2   (0 2)(1 3)(4 6)(5 7)           B=[0,4; 4,0]         orbits=(8,)       regular=True
+
+----------------------------------------------------------------------------------------------------------------
+15. M1 / M2 LOCATION IN S_K
+----------------------------------------------------------------------------------------------------------------
+M1
+  s                 : (0 1)(2 4)(3 5)(6 7)
+  B(s)              : [4,0; 0,4]
+  complete bridge   : False
+  in K              : False
+  C8-contained      : True
+  |G|               : 8
+  orbit sizes       : (4, 4)
+  free              : False
+  transitive        : False
+  regular           : False
+
+M2
+  s                 : (0 2)(1 3)(4 6)(5 7)
+  B(s)              : [0,4; 4,0]
+  complete bridge   : True
+  in K              : False
+  C8-contained      : True
+  |G|               : 8
+  orbit sizes       : (8,)
+  free              : True
+  transitive        : True
+  regular           : True
+
+
+----------------------------------------------------------------------------------------------------------------
+16. ALGEBRAIC COMPRESSION CHECK
+----------------------------------------------------------------------------------------------------------------
+Candidates already in K : 3
+Candidates outside K    : 10
+
+|G| for s in K          : [4]
+|G| for s outside K     : [8]
+
+All outside-K candidates produce abstract order-8 groups: True
+All outside-K group elements have order <=2: True
+
+----------------------------------------------------------------------------------------------------------------
+17. NONIDENTITY FIXED-POINT LEDGER
+----------------------------------------------------------------------------------------------------------------
+  3 x fixed-point pattern (0, 0, 0)
+  4 x fixed-point pattern (0, 0, 0, 0, 0, 0, 0)
+  6 x fixed-point pattern (0, 0, 0, 0, 0, 4, 4)
+
+M1 nonidentity fixed-point counts: (0, 0, 0, 0, 0, 4, 4)
+M2 nonidentity fixed-point counts: (0, 0, 0, 0, 0, 0, 0)
+
+----------------------------------------------------------------------------------------------------------------
+18. PREREGISTERED OUTCOME CLASSIFICATION
+----------------------------------------------------------------------------------------------------------------
+OUTCOME A — EXACT ORBIT-BRIDGE LAW: within the complete commuting fixed-point-free class S_K, complete exchange of the pre-existing K-orbits is equivalent to regularity of <K,s> on X8.
+
+----------------------------------------------------------------------------------------------------------------
+19. C8-SPECIFIC CONTEXT
+----------------------------------------------------------------------------------------------------------------
+C8-contained commuting candidates: 2
+C8-contained regular candidates  : 1
+C8-contained nonregular candidates: 1
+
+Within S_K, the C8 containment restriction leaves exactly one regular matching.
+
+----------------------------------------------------------------------------------------------------------------
+20. SIM14.3 TRUTH-PACKET LEDGER
+----------------------------------------------------------------------------------------------------------------
+K=<p,h> has order 4                                   : True
+K ~= V4                                               : True
+
+Number of pre-symplectic K-orbits                     : 2
+K-orbit size multiset                                 : [4, 4]
+
+All perfect matchings enumerated                      : 105
+Expected perfect matching count                       : 105
+Commuting class |S_K|                                 : 13
+
+M1 belongs to S_K                                     : True
+M2 belongs to S_K                                     : True
+
+M1 B(s)                                               : [4,0; 0,4]
+M2 B(s)                                               : [0,4; 4,0]
+
+M1 regular                                            : False
+M2 regular                                            : True
+
+B(s) perfectly classifies regularity                  : True
+Complete orbit exchange necessary                     : True
+Complete orbit exchange sufficient                    : True
+Complete orbit exchange iff regularity                : True
+
+C8-contained candidates inside S_K                    : 2
+C8-contained regular candidates                       : 1
+
+STATUS:
+
+OUTCOME A — EXACT ORBIT-BRIDGE LAW: within the complete commuting fixed-point-free class S_K, complete exchange of the pre-existing K-orbits is equivalent to regularity of <K,s> on X8.
+
+C8 CONTEXT:
+
+Within S_K, the C8 containment restriction leaves exactly one regular matching.
+
+----------------------------------------------------------------------------------------------------------------
+21. INTERPRETATION RULES
+----------------------------------------------------------------------------------------------------------------
+
+A. SIM14.3 first derives the orbit structure of K=<p,h>. It does not
+   hard-code a two-orbit decomposition.
+
+B. B(s) records how a candidate conjugate matching acts relative to those
+   pre-existing K-orbits. B(s) is computed without using the regularity
+   result.
+
+C. Regularity is independently determined from the actual permutation
+   action of G_s=<K,s>.
+
+D. If complete K-orbit exchange is equivalent to regularity throughout
+   S_K, SIM14.3 has isolated an exact finite structural discriminator
+   inside the tested class.
+
+E. If complete exchange is only necessary, only sufficient, or neither,
+   the stronger iff statement must be rejected.
+
+F. C8 containment is a secondary filter. A regularity law found throughout
+   S_K must not be falsely attributed to C8.
+
+G. M1 must not be discarded merely because its action is nonregular.
+   SIM14.3 classifies the mathematical distinction; it does not decide
+   which embedding is physically preferred.
+
+H. No PG(2,2) reconstruction is needed here. The abstract Fano incidence
+   downstream of (Z_2)^3 was already established in SIM14.1/14.2.
+
+I. SIM14.3 makes no physical claim about octonions, nonassociativity,
+   E8/RE8/4_21, H4, spinors, quantum mechanics, or physical spacetime.
+
+J. If an exact iff criterion appears, the next step is an analytic proof,
+   not immediately another simulation.
+
+
+----------------------------------------------------------------------------------------------------------------
+22. IMPLEMENTATION SANITY CHECKS
+----------------------------------------------------------------------------------------------------------------
+All implementation sanity checks PASS.
+
+----------------------------------------------------------------------------------------------------------------
+23. COMPACT FINAL CLASSIFICATION
+----------------------------------------------------------------------------------------------------------------
+ID   tag   inK   C8   bridge   B(s)              |G|   orbit sizes    free   trans   regular
+----------------------------------------------------------------------------------------------------------------
+ 1         True False   False   [4,0; 0,4]           4   (4, 4)         True   False     False
+ 2   M1    False True   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+ 3         False False   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+ 4   M2    False True    True   [0,4; 4,0]           8   (8,)           True    True      True
+ 5         False False    True   [0,4; 4,0]           8   (8,)           True    True      True
+ 6         False False    True   [0,4; 4,0]           8   (8,)           True    True      True
+ 7         False False    True   [0,4; 4,0]           8   (8,)           True    True      True
+ 8         False False   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+ 9         True False   False   [4,0; 0,4]           4   (4, 4)         True   False     False
+10         False False   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+11         False False   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+12         False False   False   [4,0; 0,4]           8   (4, 4)        False   False     False
+13         True False   False   [4,0; 0,4]           4   (4, 4)         True   False     False
+
+----------------------------------------------------------------------------------------------------------------
+24. SIM14.3 FINAL TRUTH PACKET
+----------------------------------------------------------------------------------------------------------------
+Question:
+
+    What distinguishes the regular M2 realization from the nonregular M1 realization relative to K=<p,h>?
+
+Frozen:
+
+    X8
+    C8
+    p
+    h
+    projection partition
+    M1
+    M2
+
+Candidate class:
+
+    all fixed-point-free involutions s commuting with both p and h
+
+Primary diagnostic:
+
+    B_ab(s) = #{x in O_a : s(x) in O_b}
+
+Independent endpoint:
+
+    regularity of <K,s> on X8
+
+RESULT:
+
+OUTCOME A — EXACT ORBIT-BRIDGE LAW: within the complete commuting fixed-point-free class S_K, complete exchange of the pre-existing K-orbits is equivalent to regularity of <K,s> on X8.
+
+C8 SECONDARY RESULT:
+
+Within S_K, the C8 containment restriction leaves exactly one regular matching.
+
+Interpretive ceiling:
+
+Finite carrier mathematics only. No downstream physical identification is licensed by SIM14.3.
+
+================================================================================================================
+SIM14.3 COMPLETE
+================================================================================================================
+STATUS:
+
+OUTCOME A — EXACT ORBIT-BRIDGE LAW: within the complete commuting fixed-point-free class S_K, complete exchange of the pre-existing K-orbits is equivalent to regularity of <K,s> on X8.
+
+If an exact iff criterion has appeared, stop the numerical sequence
+and prove the criterion analytically before promoting it.

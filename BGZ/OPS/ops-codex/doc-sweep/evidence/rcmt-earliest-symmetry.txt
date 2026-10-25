@@ -1,0 +1,143 @@
+# symmetry_chain.md
+RCMT Symmetry Chain Specification (v1.0)
+
+This document specifies the **symmetry structure** assumed by Relational Coherence Mode Theory (RCMT).
+It is downstream of the Relational Coherence Framework (RCF) and must remain compatible with the RCMT physics invariants.
+
+This file defines:
+
+- the required **dual‑lane structure**,
+- the current **survivor implementation**,
+- and the distinction between **requirements** and **replaceable details**.
+
+It does **not** assert ontology; it constrains admissible symmetry representations.
+
+---
+
+## 1. Dual‑lane symmetry requirement
+
+RCMT requires a **finite, adjacency‑compatible dual‑lane symmetry structure** with:
+
+- a **geometric lane**:
+
+  - locally Lorentzian,
+  - compatible with \(SO(3,1)\),
+  - with compact internal symmetry at low energy,
+
+- a **mode‑space lane**:
+
+  - symplectic (Sp‑type),
+  - non‑breaking under all admissible dynamics,
+  - serving as the structural domain for mode-structure not present in the geometric lane.
+
+Any admissible symmetry implementation must:
+
+- realize these two lanes,
+- keep the mode‑space lane unbroken,
+- and remain compatible with all RCMT invariants.
+
+---
+
+## 2. Current survivor implementation
+
+The current working implementation of the dual‑lane structure is:
+
+\[
+E_8 \;\longrightarrow\; SO(10) \;\longrightarrow\; Sp(8) \times SO(9)
+\]
+
+with the following identifications:
+
+- **Mode‑space lane:** \(Sp(8)\)
+- **Geometric lane (intermediate):** \(SO(9)\)
+- **Geometric lane (low‑energy projection):**
+
+\[
+SO(9) \;\longrightarrow\; SO(5) \times SO(3,1) \;\longrightarrow\; SO(4) \times SO(3,1)
+\]
+
+This chain is treated as a **survivor implementation**, not as a core identity of RCMT.
+
+It is admissible because:
+
+- it is finite and adjacency‑compatible,
+- it provides a non‑breaking symplectic lane (\(Sp(8)\)),
+- it yields a Lorentzian geometric lane (\(SO(3,1)\)) **only at the projection layer**,
+- and it allows a compact internal symmetry (\(SO(4)\)) at low energy.
+
+**Note:**
+The appearance of \(SO(3,1)\) in this chain does *not* imply any upstream notion of time.
+Lorentzian structure — and therefore time — is a **projection‑level feature** of the geometric lane, not a substrate invariant.
+Upstream dynamics rely solely on the **Upstream Time Index** provided by `time_interface`, which is an ordering parameter, not a geometric time coordinate.
+
+---
+
+## 3. Required vs. replaceable structure
+
+### 3.1 Required structural features
+
+Any alternative symmetry implementation must preserve:
+
+- **Dual‑lane structure:**
+  - one Lorentz‑compatible geometric lane,
+  - one non‑breaking symplectic mode‑space lane.
+
+- **Finite, adjacency‑compatible groups:**
+  - no non‑compact global curvature groups,
+  - no infinite towers or KK‑like extensions.
+
+- **Projection compatibility:**
+  - the geometric lane must admit a projection to \(SO(3,1)\) with compact internal symmetry,
+  - the mode‑space lane must support a measure structure suitable for induced probabilistic behavior (Born‑like rules).
+
+### 3.2 Replaceable implementation details
+
+The following are **replaceable**, provided all invariants and structural requirements remain satisfied:
+
+- the specific choice of \(E_8\) as the parent group,
+- the specific intermediate \(SO(10)\),
+- the specific factorization into \(Sp(8) \times SO(9)\),
+- the specific choice of \(SO(4)\) as the internal compact group, if an alternative with equivalent properties is found.
+
+Any replacement must:
+
+- preserve dual‑lane structure,
+- remain finite and adjacency‑compatible,
+- and maintain compatibility with the RCMT invariants file.
+
+---
+
+## 4. Relation to RCMT invariants
+
+This symmetry chain is constrained by, and must remain compatible with, at least:
+
+- **Adjacency‑First Invariant**
+  (no background metric; symmetry acts on relational structure)
+
+- **Dual‑Lane Symmetry Invariant**
+  (this file refines that invariant)
+
+- **Finite Structure Invariant**
+  (no infinite towers, no non‑compact global groups)
+
+- **Mode‑Space Projection Invariant**
+  (symplectic lane must support projection into the geometric lane)
+
+- **Local Curvature Constraint**
+  (no global curvature groups; curvature must be local and representational)
+
+No symmetry implementation may violate these constraints.
+
+---
+
+## 5. Status and future revisions
+
+- **Status:**
+  This symmetry chain is the **current RCMT v1.x implementation**.
+
+- **Provisional nature:**
+  If a better‑fit symmetry structure is found that satisfies all RCMT invariants and preserves the dual‑lane architecture, it may replace this chain without modifying the RCF upstream core.
+
+- **Intended use:**
+  This file serves as the reference for any RCMT module that depends on symmetry structure (e.g., mode‑space definitions, projection rules, or representation choices).
+

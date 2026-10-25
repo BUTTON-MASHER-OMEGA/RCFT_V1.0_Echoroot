@@ -1,0 +1,6 @@
+--- 4096-State Non-Markovian U(1) Probe (gamma=0) ---
+Total native updates executed: 3456
+
+Pearson Correlation between C(mu) and Delta V: 0.4073
+Maximum Global Damage (Delta V): -0.2304
+Absolute Minimum Motif Tension: 0.0000

@@ -1,0 +1,911 @@
+[
+  {
+    "path": "rcf/modules/lco/interface.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Make non-mutation and lack of descent guarantee explicit at public interface"
+  },
+  {
+    "path": "rcf/modules/physics/physics-contract.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Remove universal descent requirement from downstream physics summary"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/sectorization.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Replace scorer-as-pruning actor"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/README.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Propagate scoring/policy/aggregation ownership"
+  },
+  {
+    "path": "rcmt/global/README.md",
+    "decisions": [
+      "D7",
+      "D8"
+    ],
+    "reason": "Remove LCO mutation from global examples"
+  },
+  {
+    "path": "rcmt/local/constraints/lco.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Threshold enforcement belongs to policy"
+  },
+  {
+    "path": "rcmt/local/constraints/projection.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Threshold enforcement belongs to policy"
+  },
+  {
+    "path": "rcmt/local/constraints/lco.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Candidate-relative scoring boundary"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/charge.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Separate evaluation from policy acceptance in examples"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/color.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Separate evaluation from policy acceptance in examples"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/lorentz.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Separate evaluation from policy acceptance in examples"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/spin.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Separate evaluation from policy acceptance in examples"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/actions.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Correct acceptance actor"
+  },
+  {
+    "path": "rcmt/local/interpretations.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "LCO evaluator is not a scheduler"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/effective_field_contract.md",
+    "decisions": [
+      "D3",
+      "D7",
+      "D8"
+    ],
+    "reason": "Construction/export boundary"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/effective_field_contract.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Remove guaranteed coherent-state output from LCO"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_interpretation_rule.md",
+    "decisions": [
+      "D3",
+      "D7",
+      "D8"
+    ],
+    "reason": "Construction/export boundary"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_interpretation_rule.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Remove guaranteed coherent-state output from LCO"
+  },
+  {
+    "path": "rcmt/local/constraints/symmetry_chain.md",
+    "decisions": [
+      "D2"
+    ],
+    "reason": "Classify residual bare Sp notation as historical"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Remove unbalanced inline-code delimiter from migrated purpose"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-routing.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Proposed normative extension is a conditional contract, not an activated rule"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-routing.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Preserve proposed/adopter-only scope"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/allowed_usage.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/forbidden_usage.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interpretations.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/formal_structure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve named upstream inputs from existing module Position in Stack and dependency declarations; no new APIs"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/group_structure_constraints.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Resolve explicitly named group-structure owner"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/group_structure_constraints.md",
+    "decisions": [
+      "D3",
+      "D10"
+    ],
+    "reason": "Correct conceptual legacy group path to existing public interface"
+  },
+  {
+    "path": "rcmt/smg_v2.1/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/smg_contract.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/interfaces.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/invariants.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/primitives.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_physics_adapter.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/adjacency_refinements.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/containment_refinements.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/geometry_constraints.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/time_constraints.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/examples.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/interface.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/operators.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/physics_bindings.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/claims/dual_closure.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/gamma_generations.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/mode_dictionary.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/exports/standard_model_kinematics.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/policies/limitations_and_boundaries.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/gauge_translation.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/spinor_mapping.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/zeta_resonance.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Distinguish historical compliance prose from current header validation"
+  }
+]

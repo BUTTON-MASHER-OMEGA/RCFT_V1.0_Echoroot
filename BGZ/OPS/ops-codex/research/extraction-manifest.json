@@ -1,0 +1,191 @@
+[
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.0.py",
+    "kept_source_lines": [
+      1,
+      1249
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.1.py",
+    "kept_source_lines": [
+      1,
+      1350
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.2.py",
+    "kept_source_lines": [
+      1,
+      1899
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.3.py",
+    "kept_source_lines": [
+      1,
+      1999
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.4.py",
+    "kept_source_lines": [
+      1,
+      1833
+    ],
+    "prepended_opening_docstring": true,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.5.py",
+    "kept_source_lines": [
+      1,
+      208
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.6.py",
+    "kept_source_lines": [
+      1,
+      2801
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.7.py",
+    "kept_source_lines": [
+      1,
+      1931
+    ],
+    "prepended_opening_docstring": true,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM14.8.py",
+    "kept_source_lines": [
+      1,
+      2187
+    ],
+    "prepended_opening_docstring": true,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.0.py",
+    "kept_source_lines": [
+      1,
+      1723
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.1.py",
+    "kept_source_lines": [
+      1,
+      1794
+    ],
+    "prepended_opening_docstring": true,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.2.py",
+    "kept_source_lines": [
+      1,
+      3095
+    ],
+    "prepended_opening_docstring": true,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.3.py",
+    "kept_source_lines": [
+      1,
+      3155
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.4.py",
+    "kept_source_lines": [
+      1,
+      1752
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.5.py",
+    "kept_source_lines": [
+      1,
+      2602
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM15.6.py",
+    "kept_source_lines": [
+      1,
+      289
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM16.0.py",
+    "kept_source_lines": [
+      1,
+      285
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM16.1.py",
+    "kept_source_lines": [
+      1,
+      354
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM16.2.py",
+    "kept_source_lines": [
+      1,
+      296
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM16.3.py",
+    "kept_source_lines": [
+      1,
+      628
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  },
+  {
+    "source": "projects/Operational_Phase_Space/SIM16.4.py",
+    "kept_source_lines": [
+      1,
+      659
+    ],
+    "prepended_opening_docstring": false,
+    "extracted_syntax": "valid"
+  }
+]
