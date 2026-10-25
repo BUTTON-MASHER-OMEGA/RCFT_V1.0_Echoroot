@@ -1,0 +1,47 @@
+SIM16.3 — FROZEN PROJECTION–COMPLEX STRUCTURE AUDIT
+PASS | A frozen groups and matrix identities
+PASS | B orthogonal 4+4 decomposition
+PASS | B exact all-t commutation coefficients
+PASS | C restricted symplectic and complex structures
+C | Omega_plus = Omega_minus = [['0', '1', '0', '0'], ['-1', '0', '0', '0'], ['0', '0', '0', '1'], ['0', '0', '-1', '0']]
+C | K_plus = K_minus = [['0', '1', '0', '0'], ['1', '0', '0', '0'], ['0', '0', '0', '1'], ['0', '0', '1', '0']]
+C | J_plus = J_minus = [['-sinh(t)', '-cosh(t)', '0', '0'], ['cosh(t)', 'sinh(t)', '0', '0'], ['0', '0', '-sinh(t)', '-cosh(t)'], ['0', '0', 'cosh(t)', 'sinh(t)']]
+C | J spectrum: +i (2), -i (2)
+C | G spectrum: exp(t) (2), exp(-t) (2)
+PASS | D quotient intertwining and induced geometry
+D | Direct full-form descent: OBSTRUCTED
+D | Split-induced quotient form: Omega_plus / 2
+PASS | E signed-t algebraic recovery
+E | t = asinh(tr(K_sector * G_sector)/4)
+E | Algebraic recoverability: YES
+E | Operational observability: UNRESOLVED
+E | Physical parameter selection: UNRESOLVED
+PASS | F p/h/s covariance and sector invariance
+PASS | F signed-group sector classification
+F | Npm sector-preserving: 16
+F | Npm sector-nonpreserving: 32
+PASS | F M1 valid distinct symplectic carrier
+F | M1 changes the form; frozen Omega unchanged
+PASS | F alternate partition obstructs J0 descent
+PASS | F generic compatible complex structure need not descend
+PASS | G symplectic conjugacy descends for all t
+PASS | G explicit non-descending symplectic transvection
+PASS | G symplectic-orthogonal sector splitting
+G | Descent criterion: S(ker B) = ker B
+G | Symplectic descent implies block-diagonal action
+G | Counterexample transvection vector: [['sqrt(2)', '0', '0', '0', '0', '0', '0', '0']]
+PASS | H intrinsic complex-symplectic sector swap
+PASS | H swap fails fixed basin observation
+PASS | H swap exchanges p eigenspaces
+H | Intrinsic sector equivalence: YES
+H | Swap preserves frozen P: NO
+H | Swap preserves B: NO
+PASS | H frozen C8 adjacency distinguishes intrinsically equivalent sectors
+H | A_plus = [['1', '1', '0', '0'], ['1', '0', '1', '0'], ['0', '1', '0', '1'], ['0', '0', '1', '1']]
+H | A_minus = [['-1', '1', '0', '0'], ['1', '0', '1', '0'], ['0', '1', '0', '1'], ['0', '0', '1', '-1']]
+H | adjacency traces (+,-): 2 -2
+H | adjacency representations not similar (unequal traces)
+PASS | F signed-group graph automorphism count
+F | Npm graph-preserving: 4
+TRUTH_PACKET_JSON={"Npm_graph_preserving": 4, "Npm_sector_nonpreserving": 32, "Npm_sector_preserving": 16, "adjacency_restrictions_similar": false, "adjacency_sector_traces": [2, -2], "alternative_M1_valid": true, "alternative_basin_obstructs_J0": true, "complex_quotient_descent": true, "direct_symplectic_form_descent": false, "explicit_nondescending_symplectic_witness": [["1", "0", "2", "0", "0", "0", "0", "0"], ["0", "1", "0", "0", "0", "0", "0", "0"], ["0", "0", "1", "0", "0", "0", "0", "0"], ["0", "0", "0", "1", "0", "0", "0", "0"], ["0", "0", "0", "0", "1", "0", "0", "0"], ["0", "0", "0", "0", "0", "1", "0", "0"], ["0", "0", "0", "0", "0", "0", "1", "0"], ["0", "0", "0", "0", "0", "0", "0", "1"]], "generic_complex_control_obstructs_descent": true, "intrinsic_sector_swap_symplectic": true, "new_dynamics": false, "new_gauge_group": false, "operational_observability": "UNRESOLVED", "orders": {"AGL": 1344, "Nminus": 24, "Nplus": 24, "Npm": 48, "T": 8}, "parameter_recovery": "t=asinh(tr(K_sector G_sector)/4)", "parameter_selection": "UNRESOLVED", "ranks": {"B": 4, "Omega_minus": 4, "Omega_plus": 4, "Vminus": 4, "Vplus": 4}, "scope": "Frozen OPS, linear projection, no ISP or physical boundary", "sector_equal_in_normalized_frozen_bases": true, "sector_swap_preserves_B": false, "sector_swap_preserves_adjacency": false, "sector_swap_preserves_p": false, "sim": "16.3", "source_shas": {"SIM16.0.py": "e01b90b751353273241e6c516e30b16571dcbfdf", "SIM16.1.py": "76970c358d128d136782310a2b6afa41efd793f7", "SIM16.2.py": "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"}, "split_induced_symplectic_form": true, "status": "EXACT_ALGEBRAIC_AUDIT_PASSED", "symplectic_conjugacy_descent": true}
+END SIM16.3

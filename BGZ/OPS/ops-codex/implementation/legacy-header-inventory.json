@@ -1,0 +1,3928 @@
+[
+  {
+    "path": "rcmt/README.md",
+    "opening": [
+      "# RCMT — Relational Coherence Mode Theory",
+      "",
+      "RCMT is the physics‑focused theory built within the Relational Coherence Framework (RCF).",
+      "Where RCF provides the upstream relational substrate and structural rules, RCMT applies those",
+      "rules to physical systems, symmetry, dynamics, and projection.",
+      "",
+      "RCMT is not a standalone framework.",
+      "It is a **downstream theory** compiled against the RCF upstream core.",
+      "",
+      "Research Status",
+      "",
+      "RCMT is an active downstream interpretation built on RCF. Documents describe the current architecture and hypotheses under evaluation. Mathematical derivations, simulations, and empirical mappings are ongoing. The repository is intended to evolve as coherence improves.",
+      "",
+      "---",
+      "",
+      "## What RCMT Is"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/constraints.md",
+    "opening": [
+      "### rcmt/global/constraints.md",
+      "",
+      "#### Constraints on RCMT Global Invariants",
+      "",
+      "##### 1. Purpose",
+      "This document specifies the admissibility criteria for implementing RCMT’s three global invariants:",
+      "",
+      "- twist,",
+      "- winding,",
+      "- holonomy.",
+      "",
+      "An implementation is admissible only if these invariants remain globally encoded, locally trivial, and resistant to all purely local operations, while remaining compatible with the RCMT substrate.",
+      "",
+      "---",
+      "",
+      "##### 2. Normative Form"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/invariants.md",
+    "opening": [
+      "### rcmt/global/invariants.md",
+      "",
+      "#### Global invariants (RCMT global)",
+      "",
+      "##### 1. Purpose",
+      "",
+      "This document defines global invariants in RCMT as properties of closed relational structures that persist after all local pruning, smoothing, or coherence repair has been applied.",
+      "",
+      "Local operators such as LCO may make a neighborhood look regular, flat, or coherent, but they cannot remove a genuine global invariant unless a genuinely global transformation acts on the structure.",
+      "",
+      "This file defines the category and its core examples. It does not claim that every possible invariant has been enumerated.",
+      "",
+      "---",
+      "",
+      "##### 2. Local vs. global",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/README.md",
+    "opening": [
+      "### rcmt/global/README.md",
+      "",
+      "#### Global invariants (RCMT global)",
+      "",
+      "##### 1. Purpose",
+      "This document defines **global invariants** in RCMT: properties of configurations that **cannot be altered by any purely local operation**.",
+      "",
+      "Local operators (like LCO) may change representations, smooth mismatch, or prune noise, but **global invariants persist** unless a specifically global transformation acts on them.",
+      "",
+      "This file does **not** enumerate all possible invariants; it defines the category they belong to.",
+      "",
+      "---",
+      "",
+      "##### 2. Local vs global",
+      "",
+      "**Local properties:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/local/experiments.md",
+    "opening": [
+      "# RCMT Experimental Description Guidelines",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: downstream experimental descriptions",
+      "- depends_on: `invariants.md`, `constraints/measurement.md`, and `constraints/projection.md`",
+      "- authority: non-canonical usage guidance",
+      "- direction: experiments consume RCMT contracts; examples do not define them",
+      "- compression_rule: omit from the canonical shard or summarize as usage guidance",
+      "",
+      "## Purpose",
+      "",
+      "This document provides **guidelines** for describing physical experiments in the language of Relational Coherence Mode Theory (RCMT).",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `invariants.md`, `constraints/measurement.md`, and `constraints/projection.md`",
+      "- authority: non-canonical usage guidance"
+    ]
+  },
+  {
+    "path": "rcmt/local/interpretations.md",
+    "opening": [
+      "# RCMT Interpretations",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: optional downstream readings of RCMT structure",
+      "- depends_on: `invariants.md` and applicable `constraints/*` contracts",
+      "- authority: non-canonical",
+      "- direction: RCMT structures may be interpreted downstream using this file; interpretations do not modify constraints",
+      "- compression_rule: omit by default or retain in an explicitly labeled interpretation capsule",
+      "",
+      "## Purpose",
+      "",
+      "This document provides **interpretive guidance** for how Relational Coherence Mode Theory",
+      "(RCMT) relates to familiar physical concepts."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `invariants.md` and applicable `constraints/*` contracts",
+      "- authority: non-canonical"
+    ]
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "opening": [
+      "# RCMT Physics Invariants",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Invariant",
+      "- scope: RCMT-local; downstream of RCF",
+      "- authority: highest within RCMT, subordinate to all upstream RCF contracts",
+      "- purpose: constrain the admissible model space for RCMT physics modules",
+      "- anti-backflow: these invariants do not redefine RCF invariants, LCO ownership, Time, projection, or geometry",
+      "",
+      "These invariants define the **admissible structural constraints** for physics modules within the Relational Coherence Mode Theory (RCMT).",
+      "",
+      "They do not assert a complete physical model; they constrain the **space of valid models** that may be expressed downstream of the Relational Coherence Framework (RCF).",
+      "",
+      "Any model violating these invariants is out of scope for RCMT."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- authority: highest within RCMT, subordinate to all upstream RCF contracts"
+    ]
+  },
+  {
+    "path": "rcmt/local/README.md",
+    "opening": [
+      "# RCMT Local Layer",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: project-local, downstream of RCF",
+      "- purpose: define compression order, authority, and file roles for `rcmt/local`",
+      "- upstream authority: `theory/rcf_projects/rcf_compressed.md`",
+      "- compression guidance: `theory/rcf_projects/rcp-1.1.md`",
+      "",
+      "## Authority Rule",
+      "",
+      "RCF owns its invariant kernel, temporal ontology, LCO scoring contract, geometry stack, and projection handoff.",
+      "",
+      "RCMT consumes those upstream contracts and defines model-local physics constraints, provisional implementations, downstream interpretations, and experimental description guidance."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- upstream authority: `theory/rcf_projects/rcf_compressed.md`"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/README.md",
+    "opening": [
+      "# `physics_interface/README.md`",
+      "",
+      "## purpose",
+      "",
+      "The `physics_interface/` layer defines the **public interface contract** for the physics project.",
+      "",
+      "It exists to make clear:",
+      "",
+      "* what downstream physics modules may import",
+      "* what they are expected to expose",
+      "* what boundaries they must respect",
+      "* how the physics project compiles against RCF",
+      "",
+      "This layer defines **structure**, not interpretation.",
+      "",
+      "---"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/README.md",
+    "opening": [
+      "# SMGv2.1 - Standard Model of Geometry",
+      "",
+      "## Status",
+      "",
+      "SMGv2.1 is a downstream, theory-facing domain model.",
+      "",
+      "It is not neutral prose.",
+      "It is not RCF canon.",
+      "It is not an upstream physics-interface or gcm-interface module.",
+      "",
+      "SMGv2.1 is a scoped translation bridge that consumes read-only upstream structural records and maps them into a forceful Standard Model-facing semantic frame.",
+      "",
+      "---",
+      "",
+      "## Purpose",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/smg_contract.md",
+    "opening": [
+      "# SMGv2.1 Core Contract",
+      "",
+      "## Purpose",
+      "",
+      "This document is the authoritative scope contract for SMGv2.1.",
+      "",
+      "SMGv2.1 is a downstream domain model and translation bridge.",
+      "It consumes upstream structural records and maps them into a Standard Model-facing semantic system.",
+      "",
+      "SMGv2.1 is allowed to be forceful.",
+      "Its force applies inside the SMGv2.1 domain model and to downstream models that choose to adopt it.",
+      "",
+      "---",
+      "",
+      "## 1. Imported Facts",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/invariants/holonomy.md",
+    "opening": [
+      "### rcmt/global/invariants/holonomy.md",
+      "",
+      "#### Holonomy as a global invariant",
+      "",
+      "##### 1. Purpose",
+      "This document defines **holonomy** as a **global invariant** in RCMT: a persistent net transformation of a transported frame, mode-vector, or relational direction after completing a closed circuit.",
+      "",
+      "Holonomy is not a property of any single local patch. It is a property of the **entire closed relational path**.",
+      "",
+      "---",
+      "",
+      "##### 2. Local coherence, global accumulation",
+      "",
+      "Holonomy has the following pattern:",
+      "",
+      "- **Locally:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/invariants/twist.md",
+    "opening": [
+      "### rcmt/global/invariants/twist.md",
+      "",
+      "#### Twist as a global invariant",
+      "",
+      "##### 1. Purpose",
+      "This document defines **twist** as a **global invariant** in RCMT: a persistent mismatch in orientation or frame transport that remains after all local pruning or coherence repair has been applied.",
+      "",
+      "Twist is not a property of a single unit or local patch. It is a property of the **entire loop or boundary**.",
+      "",
+      "---",
+      "",
+      "##### 2. Local flatness, global mismatch",
+      "",
+      "Twist has the following pattern:",
+      "",
+      "- **Locally:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/global/invariants/winding.md",
+    "opening": [
+      "### rcmt/global/invariants/winding.md",
+      "",
+      "#### Winding as a global invariant",
+      "",
+      "##### 1. Purpose",
+      "This document defines **winding** as a **global invariant** in RCMT: a persistent non-contractibility of an adjacency structure that remains after all local simplification or coherence repair has been applied.",
+      "",
+      "Winding is not a property of a single link or local patch. It is a property of the **entire closed adjacency structure**.",
+      "",
+      "---",
+      "",
+      "##### 2. Local simplicity, global entanglement",
+      "",
+      "Winding has the following pattern:",
+      "",
+      "- **Locally:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/local/constraints/cosmology.md",
+    "opening": [
+      "# RCMT Cosmology",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: optional RCMT cosmology models",
+      "- depends_on: `../invariants.md`, `projection.md`, `mode_space.md`, `lco.md`, and `identity.md`",
+      "- status: provisional downstream interpretation",
+      "- compression_rule: retain as scoped interpretation; do not promote to invariant or upstream fact",
+      "",
+      "This document describes how large‑scale cosmological behavior is represented in Relational",
+      "Coherence Mode Theory (RCMT).",
+      "It is downstream of the RCMT invariants, projection, mode‑space, LCO, and identity",
+      "specifications.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md`, `projection.md`, `mode_space.md`, `lco.md`, and `identity.md`",
+      "- status: provisional downstream interpretation",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/decoherence.md",
+    "opening": [
+      "# RCMT Decoherence",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT-local decoherence representation",
+      "- depends_on: `../invariants.md`, `projection.md`, `measurement.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "",
+      "This document defines **decoherence** as represented in Relational Coherence Mode Theory (RCMT).",
+      "",
+      "It is downstream of the RCMT invariants, projection, measurement, and LCO specifications.",
+      "",
+      "Decoherence is modeled as **environmental boundary‑constraint resolution**, not as a dynamical process, collapse mechanism, or ontological transition.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md`, `projection.md`, `measurement.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/direction_semantics.md",
+    "opening": [
+      "# RCMT Local Direction Semantics",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: module-local semantic refinement",
+      "- depends_on: upstream direction-bearing unit contract",
+      "- status: current RCMT interpretation; replaceable without changing upstream",
+      "",
+      "### **Purpose**",
+      "",
+      "This document specifies how RCMT interprets the *local direction* carried by each unit.",
+      "Upstream defines only the invariant:",
+      "",
+      "> **Each unit carries a direction.**"
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: upstream direction-bearing unit contract",
+      "- status: current RCMT interpretation; replaceable without changing upstream"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/geometry.md",
+    "opening": [
+      "# RCMT Geometric Lane",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT geometric-lane representation",
+      "- depends_on: upstream geometry stack, `../invariants.md`, `projection.md`, and `mode_space.md`",
+      "- status: downstream geometry-usage contract",
+      "- anti-backflow: this file consumes upstream geometry outputs and does not redefine geometry ownership",
+      "",
+      "This document defines the **geometric lane** in Relational Coherence Mode Theory (RCMT).",
+      "",
+      "It is downstream of the RCMT invariants, mode‑space, projection, LCO, and cosmology specifications.",
+      "",
+      "The geometric lane is a **representational domain** for:"
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: upstream geometry stack, `../invariants.md`, `projection.md`, and `mode_space.md`",
+      "- status: downstream geometry-usage contract",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/identity.md",
+    "opening": [
+      "# RCMT Structural Identity",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT-local structural identity",
+      "- depends_on: `../invariants.md`, `projection.md`, `decoherence.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "",
+      "This document defines **structural identity** as represented in Relational Coherence Mode Theory (RCMT).",
+      "It is downstream of the RCMT invariants, projection, mode‑space, measurement, and LCO specifications.",
+      "",
+      "Identity in RCMT is a **pattern‑persistence property**, not an intrinsic attribute or ontological label.",
+      "",
+      "---"
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md`, `projection.md`, `decoherence.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/lco.md",
+    "opening": [
+      "# RCMT LCO Consumption Contract",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT consumption profile for upstream LCO outputs",
+      "- upstream_owner: RCF LCO module",
+      "- depends_on: upstream LCO contract and `../invariants.md`",
+      "- status: downstream compatibility specification",
+      "- anti-backflow: this file does not define, modify, or retune the LCO",
+      "",
+      "This document defines how Relational Coherence Mode Theory (RCMT) **consumes the upstream Local Coherence Operator (LCO) contract**.",
+      "Within RCMT, LCO outputs are consumed as local structural admissibility scores.",
+      "It is downstream of the Relational Coherence Framework (RCF) and must remain compatible",
+      "with all RCMT invariants."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- upstream_owner: RCF LCO module",
+      "- depends_on: upstream LCO contract and `../invariants.md`",
+      "- status: downstream compatibility specification",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/measurement.md",
+    "opening": [
+      "# RCMT Measurement",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT-local measurement representation",
+      "- depends_on: `../invariants.md`, `projection.md`, `mode_space.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "- prohibition: this file does not add an upstream measurement postulate",
+      "",
+      "This document specifies how **measurement** is represented in Relational Coherence Mode Theory (RCMT).",
+      "",
+      "It is downstream of the RCMT invariants, symmetry_chain, mode_space, and projection specifications.",
+      "",
+      "Measurement here is a **structural pattern**:"
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md`, `projection.md`, `mode_space.md`, and upstream LCO outputs",
+      "- status: current module-local specification",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/mode_space.md",
+    "opening": [
+      "# RCMT Mode Space",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: module-local mode-space requirements",
+      "- depends_on: `../invariants.md` and `symmetry_chain.md`",
+      "- status: required dual-lane role with provisional group realization",
+      "",
+      "This document defines the **mode‑space lane** required by Relational Coherence Mode Theory (RCMT).",
+      "",
+      "It is downstream of the Relational Coherence Framework (RCF) and must remain compatible with the RCMT invariants and the symmetry chain specification.",
+      "",
+      "This file describes:",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md` and `symmetry_chain.md`",
+      "- status: required dual-lane role with provisional group realization",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/projection.md",
+    "opening": [
+      "# RCMT Mode-Space Projection",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: RCMT mode-space-to-geometric-lane mapping",
+      "- depends_on: upstream projection outputs, `../invariants.md`, `symmetry_chain.md`, and `mode_space.md`",
+      "- status: module-local projection contract",
+      "- anti-backflow: this file does not redefine the upstream discrete-to-continuous projection handoff",
+      "",
+      "This document defines the **RCMT-local projection structure** required between the RCMT mode-space and geometric lanes.",
+      "",
+      "RCMT-local projection is the representational bridge between the symplectic mode-space lane and the geometric lane.",
+      "",
+      "It is downstream of the Relational Coherence Framework (RCF) and must remain compatible with the RCMT invariants, the symmetry chain, and the mode‑space specification."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: upstream projection outputs, `../invariants.md`, `symmetry_chain.md`, and `mode_space.md`",
+      "- status: module-local projection contract",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/constraints/symmetry_chain.md",
+    "opening": [
+      "# RCMT Symmetry Chain",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: current symmetry implementation",
+      "- depends_on: RCF core constraints and `../invariants.md`",
+      "- status: provisional survivor implementation",
+      "- replacement_rule: any replacement must preserve the required RCMT dual-lane contract",
+      "",
+      "This document specifies the **symmetry structure** assumed by Relational Coherence Mode Theory (RCMT).",
+      "It is downstream of the Relational Coherence Framework (RCF) and must remain compatible with the RCMT physics invariants.",
+      "",
+      "This file defines:",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: RCF core constraints and `../invariants.md`",
+      "- status: provisional survivor implementation",
+      "- **Status:**"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/actions.md",
+    "opening": [
+      "# RCMT Symmetry Actions",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: provisional finite-transformation interpretation",
+      "- depends_on: `generators.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: replaceable downstream implementation",
+      "- prohibition: actions do not define upstream admissibility or guarantee identity continuity",
+      "",
+      "## Purpose",
+      "",
+      "This file defines **actions** in RCMT.",
+      "",
+      "Actions are finite transformations constructed from generators defined in `generators.md`."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `generators.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: replaceable downstream implementation"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/generators.md",
+    "opening": [
+      "# RCMT Symmetry Generators",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: provisional generator interpretation",
+      "- depends_on: `../constraints/symmetry_chain.md` and upstream LCO outputs",
+      "- status: replaceable downstream implementation",
+      "- prohibition: generators do not define upstream admissibility or preserve identity",
+      "",
+      "## Purpose",
+      "",
+      "This file defines **generators** in RCMT.",
+      "",
+      "Generators specify the **infinitesimal transformation directions** permitted by the symmetry structure defined in `symmetry_chain`."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../constraints/symmetry_chain.md` and upstream LCO outputs",
+      "- status: replaceable downstream implementation"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/README.md",
+    "opening": [
+      "",
+      "# RCMT Symmetry Groups",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: model-local transformation interpretation layer",
+      "- depends_on: `../invariants.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: provisional downstream structure",
+      "- anti-backflow: this layer does not define groups, invariants, or LCO behavior",
+      "",
+      "## Purpose",
+      "",
+      "`symmetry_groups` is the **interpretation layer** that translates the upstream `symmetry_chain.md` into physics-usable structure.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `../invariants.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: provisional downstream structure"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/representations.md",
+    "opening": [
+      "# RCMT Symmetry Representations",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Contract",
+      "- scope: provisional response representation",
+      "- depends_on: `actions.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: replaceable downstream implementation",
+      "- prohibition: representations do not define new groups, invariants, or identity guarantees",
+      "",
+      "## Purpose",
+      "",
+      "This file defines **representations** in RCMT.",
+      "",
+      "Representations describe how relational structures respond to admissible transformations defined by the symmetry_chain."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: `actions.md`, `../constraints/symmetry_chain.md`, and upstream LCO outputs",
+      "- status: replaceable downstream implementation"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/charge.md",
+    "opening": [
+      "# RCMT Charge Pattern",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: provisional symmetry pattern",
+      "- symmetry_source: `U(1)`-type structure permitted by the current RCMT implementation",
+      "- authority: non-canonical",
+      "- compression_rule: retain only as a scoped downstream pattern",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the **charge pattern** in RCMT.",
+      "",
+      "The charge pattern describes how persistent relational structures exhibit phase-like alignment behavior under a `U(1)`-type generator/action structure."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- authority: non-canonical",
+      "- identity status: alignment-dependent"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/color.md",
+    "opening": [
+      "# RCMT Color Pattern",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: provisional symmetry pattern",
+      "- symmetry_source: `SU(3)`-type structure permitted by the current RCMT implementation",
+      "- authority: non-canonical",
+      "- compression_rule: retain only as a scoped downstream pattern",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the **color pattern** in RCMT.",
+      "",
+      "The color pattern describes how multi-component relational structures cycle through compatibility states under an `SU(3)`-type generator/action structure."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- authority: non-canonical",
+      "- identity status: alignment-dependent"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/lorentz.md",
+    "opening": [
+      "# RCMT Lorentz Pattern",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: provisional boundary/frame pattern",
+      "- symmetry_source: `SO(3,1)`-type structure permitted at the RCMT projection layer",
+      "- authority: non-canonical",
+      "- compression_rule: retain only as a scoped downstream pattern",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the **Lorentz pattern** in RCMT.",
+      "",
+      "The Lorentz pattern describes how boundary-compatible frames transform under an `SO(3,1)`-type generator/action structure."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- authority: non-canonical",
+      "- identity status: alignment-dependent"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/README.md",
+    "opening": [
+      "# RCMT Symmetry Patterns",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Status",
+      "- scope: provisional examples and reusable modeling patterns",
+      "- depends_on: parent symmetry-group contracts",
+      "- authority: non-canonical",
+      "- compression_rule: omit unless a downstream interpretation capsule is requested",
+      "",
+      "## Purpose",
+      "",
+      "This directory contains **reference transformation patterns** for RCMT.",
+      "",
+      "Patterns demonstrate how symmetry-derived generators and actions may be applied to relational structures."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- depends_on: parent symmetry-group contracts",
+      "- authority: non-canonical"
+    ]
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/spin.md",
+    "opening": [
+      "# RCMT Spin Pattern",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT",
+      "- type: Interpretation",
+      "- scope: provisional symmetry pattern",
+      "- symmetry_source: `SU(2)`-type structure permitted by the current RCMT implementation",
+      "- authority: non-canonical",
+      "- compression_rule: retain only as a scoped downstream pattern",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the **spin pattern** in RCMT.",
+      "",
+      "The spin pattern describes how an internal mode grammar may transform under an `SU(2)`-type generator/action structure."
+    ],
+    "declarations": [
+      "- owner: RCMT",
+      "- authority: non-canonical",
+      "- identity status: alignment-dependent"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/boson_like_patterns.md",
+    "opening": [
+      "# Boson-Like Pattern Classification",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate classification of coherent local behavioral records",
+      "- depends_on: `geometry_behavior_contract.md`, `echoon_field.md`, and `closure_reinjection_cycles.md`",
+      "- status: provisional and noncanonical",
+      "- anti-backflow: boson-like labels do not alter echoon grammar or establish particle identity",
+      "",
+      "## Purpose",
+      "",
+      "This file defines optional RCMT labels for higher-order patterns assembled from valid echoon-pattern records, mismatch-gradient records, and closure-reinjection sequences.",
+      "",
+      "The label **boson-like** denotes a downstream analogy. It is not an imported Standard Model label, a particle claim, or a physical field claim."
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md`, `echoon_field.md`, and `closure_reinjection_cycles.md`",
+      "- status: provisional and noncanonical"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/closure_reinjection_cycles.md",
+    "opening": [
+      "# Closure-Reinjection Sequences",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate sequencing of imported closure and reinjection event labels",
+      "- depends_on: `geometry_behavior_contract.md` and `../../../abstract/echoon_minimal_closure/local/abstract_interface.md`",
+      "- status: provisional",
+      "- anti-backflow: this file describes event sequences and does not define event mechanics or causes",
+      "",
+      "## Purpose",
+      "",
+      "This file defines candidate RCMT sequence descriptions for local closure and reinjection records associated with survivor neighborhoods.",
+      "",
+      "## Inputs"
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md` and `../../../abstract/echoon_minimal_closure/local/abstract_interface.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/coherence_gradients.md",
+    "opening": [
+      "# Coherence Gradients",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: gain-oriented reversal of a valid adjacency-local mismatch ordering",
+      "- depends_on: `geometry_behavior_contract.md`, `mismatch_gradients.md`, `../../local/constraints/lco.md`, and `../../local/constraints/geometry.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not define coherence, LCO scoring, geometry, or metric structure",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the gain-oriented complement to mismatch gradients.",
+      "",
+      "A coherence gradient records ordered variation in retained or recovered coherence across adjacent projected configurations. Where mismatch gradients emphasize refinement burden and loss, coherence gradients emphasize admissible organization and gain."
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md`, `mismatch_gradients.md`, `../../local/constraints/lco.md`, and `../../local/constraints/geometry.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/echoon_field.md",
+    "opening": [
+      "# Echoon Pattern Layer",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate local organization of imported echoon records",
+      "- depends_on: `geometry_behavior_contract.md` and `../../../abstract/echoon_minimal_closure/local/abstract_interface.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not redefine echoon labels, transitions, density bands, closure, reinjection, or decay",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the candidate RCMT pattern layer historically called the **echoon field**. The word *field* is retained only as a downstream organizational analogy. The represented object is a finite, adjacency-indexed collection of imported echoon records.",
+      "",
+      "## Inputs"
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md` and `../../../abstract/echoon_minimal_closure/local/abstract_interface.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/geometry_behavior_contract.md",
+    "opening": [
+      "# Geometry-Behavior Contract",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Contract",
+      "- scope: inputs, outputs, permissions, and prohibitions for candidate local behavior descriptions",
+      "- depends_on: `README.md`",
+      "- status: authoritative module-local contract",
+      "- anti-backflow: outputs from this module cannot alter imported records or their ownership",
+      "",
+      "## Inputs",
+      "",
+      "The module may consume:",
+      "",
+      "- adjacency and local geometry records from the upstream geometry stack;"
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `README.md`",
+      "- status: authoritative module-local contract"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/high_density_events.md",
+    "opening": [
+      "# High-Density Event Classification",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate classification of concentrated local behavioral records",
+      "- depends_on: `geometry_behavior_contract.md`, `echoon_field.md`, `mismatch_gradients.md`, and `closure_reinjection_cycles.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not define upstream density regimes, geometry candidates, admissibility, or cosmological dynamics",
+      "",
+      "## Purpose",
+      "",
+      "This file defines candidate RCMT classifications for local neighborhoods containing declared concentrations of mismatch samples, echoon density labels, survivor records, or reinjection events.",
+      "",
+      "High density is always relative to an explicit imported density band or a declared module-local threshold. It is not a physical energy density."
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md`, `echoon_field.md`, `mismatch_gradients.md`, and `closure_reinjection_cycles.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/mismatch_gradients.md",
+    "opening": [
+      "# Mismatch Gradients",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate adjacency-local comparison of imported mismatch samples",
+      "- depends_on: `geometry_behavior_contract.md`, `../../local/constraints/lco.md`, and `../../local/constraints/geometry.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not define mismatch, LCO scoring, geometry, or metric structure",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the loss-oriented RCMT description of ordered variation among mismatch samples attached to adjacent projected configurations. It tracks increasing refinement burden, mismatch accumulation, or coherence loss as represented by the imported scoring profile.",
+      "",
+      "The gain-oriented complement is defined in `coherence_gradients.md`."
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md`, `../../local/constraints/lco.md`, and `../../local/constraints/geometry.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/README.md",
+    "opening": [
+      "# RCMT Geometry-Behavior Module",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Contract",
+      "- scope: candidate RCMT behavioral mappings over imported local geometry records",
+      "- upstream authority: RCF geometry, projection, and LCO contracts",
+      "- depends_on: `../../local/README.md`, `../../../abstract/echoon_minimal_closure/README.md`, and `../survivor_matter_structure/README.md`",
+      "- downstream consumers: `../metric/` and RCMT cosmology models",
+      "- status: compression-preparation",
+      "- anti-backflow: this module does not redefine upstream geometry, LCO evaluation, projection, echoon grammar, or survivor identity",
+      "",
+      "## Purpose",
+      "",
+      "This module defines candidate RCMT interpretations of how imported survivor, mismatch, and echoon records may be organized into local behavioral descriptions."
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- upstream authority: RCF geometry, projection, and LCO contracts",
+      "- depends_on: `../../local/README.md`, `../../../abstract/echoon_minimal_closure/README.md`, and `../survivor_matter_structure/README.md`",
+      "- status: compression-preparation"
+    ]
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/survivor_interaction_rules.md",
+    "opening": [
+      "# Survivor Interaction Patterns",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Geometry-Behavior",
+      "- type: Interpretation",
+      "- scope: candidate local associations among imported survivor and behavioral records",
+      "- depends_on: `geometry_behavior_contract.md`, `../survivor_matter_structure/README.md`, `mismatch_gradients.md`, and `echoon_field.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not redefine survivor identities, forces, or upstream transition rules",
+      "",
+      "## Purpose",
+      "",
+      "This file defines candidate RCMT descriptions for local record changes involving two or more survivor records. **Interaction** means a traceable local association under declared rules; it does not mean a fundamental force or particle exchange.",
+      "",
+      "## Admission Rule"
+    ],
+    "declarations": [
+      "- owner: RCMT Geometry-Behavior",
+      "- depends_on: `geometry_behavior_contract.md`, `../survivor_matter_structure/README.md`, `mismatch_gradients.md`, and `echoon_field.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/metric_interface.md",
+    "opening": [
+      "# Refinement-Summary Metric Interface",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Contract",
+      "- scope: allowed inputs, outputs, transformations, and extension points for this profile",
+      "- depends_on: `README.md` and `../geometry_behavior/geometry_behavior_contract.md`",
+      "- status: authoritative module-local interface",
+      "- anti-backflow: profile outputs cannot modify or reinterpret source records",
+      "- sibling boundary: this interface governs only this directory",
+      "",
+      "## Required Inputs",
+      "",
+      "Every operation requires:",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `README.md` and `../geometry_behavior/geometry_behavior_contract.md`",
+      "- status: authoritative module-local interface"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_clumping_potential.md",
+    "opening": [
+      "# RCMT Clumping Score",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional local aggregation score over declared metric-profile summaries",
+      "- depends_on: `metric_interface.md`, `rcmt_curvature_summary.md`, `rcmt_echoon_density_metric.md`, and `rcmt_survivor_influence_metric.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: this score does not create clumping behavior, attraction, or cosmological dynamics",
+      "",
+      "## Purpose",
+      "",
+      "This file defines a local aggregation-score template. The historical name **clumping potential** is retained as analogy language; the canonical output is a `clumping-score-record`.",
+      "",
+      "## Inputs"
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md`, `rcmt_curvature_summary.md`, `rcmt_echoon_density_metric.md`, and `rcmt_survivor_influence_metric.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_curvature_summary.md",
+    "opening": [
+      "# RCMT Second-Order Variation Summary",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional second-order finite variation over local profile records",
+      "- depends_on: `metric_interface.md` and `rcmt_gradient_tensor.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: curvature-like output does not redefine geometry or establish physical curvature",
+      "",
+      "## Purpose",
+      "",
+      "This file defines a second-order local variation summary. The historical name **curvature summary** is retained as an analogy; the canonical output is a `curvature-summary-record`.",
+      "",
+      "## Discrete Canonical Form"
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md` and `rcmt_gradient_tensor.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_echoon_density_metric.md",
+    "opening": [
+      "# RCMT Echoon Density Summary",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional comparison of imported echoon density-band and pattern records",
+      "- depends_on: `metric_interface.md`, `../geometry_behavior/echoon_field.md`, and `rcmt_gradient_tensor.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: this summary does not redefine echoon density bands, coherence criteria, or transitions",
+      "",
+      "## Purpose",
+      "",
+      "This file defines a profile for comparing local echoon density-band and echoon-pattern records. The historical name **echoon density metric** does not imply a continuous field or an independent echoon density primitive.",
+      "",
+      "## Inputs"
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md`, `../geometry_behavior/echoon_field.md`, and `rcmt_gradient_tensor.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_effective_metric.md",
+    "opening": [
+      "# RCMT Effective Comparison",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional weighted comparison of local Geometry-Behavior records",
+      "- depends_on: `metric_interface.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: the comparison does not alter source features or define upstream distance",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the base composite comparison for this metric profile. The historical name **effective metric** is retained as a profile label; the canonical output is an `effective-comparison-record`.",
+      "",
+      "## Feature Vector"
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_gradient_tensor.md",
+    "opening": [
+      "# RCMT First-Order Variation Summary",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional first-order finite variation over adjacent profile records",
+      "- depends_on: `metric_interface.md` and `rcmt_effective_metric.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: this summary does not redefine Geometry-Behavior gradients or create dynamics",
+      "",
+      "## Purpose",
+      "",
+      "This file defines a first-order variation summary. The historical name **gradient tensor** denotes an optional mathematical encoding; the canonical output is a finite `gradient-summary-record`.",
+      "",
+      "## Discrete Canonical Form"
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md` and `rcmt_effective_metric.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_survivor_influence_metric.md",
+    "opening": [
+      "# RCMT Survivor Influence Summary",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Interpretation",
+      "- scope: optional pairwise summary over imported survivor interaction-pattern records",
+      "- depends_on: `metric_interface.md`, `../geometry_behavior/survivor_interaction_rules.md`, and `rcmt_effective_metric.md`",
+      "- status: provisional profile definition",
+      "- anti-backflow: this summary does not create survivor interactions or strengthen candidate interaction claims",
+      "",
+      "## Purpose",
+      "",
+      "This file defines a pairwise summary of records already classified by Geometry-Behavior as candidate interaction patterns.",
+      "",
+      "**Influence** is a profile label for record association. It is not force, causation, or an interaction law."
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- depends_on: `metric_interface.md`, `../geometry_behavior/survivor_interaction_rules.md`, and `rcmt_effective_metric.md`",
+      "- status: provisional profile definition"
+    ]
+  },
+  {
+    "path": "rcmt/modules/metric/README.md",
+    "opening": [
+      "# RCMT Refinement-Summary Metric Profile",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- type: Contract",
+      "- scope: optional downstream metric summaries over traceable RCMT records",
+      "- upstream authority: `../../../rcf_compressed.md`",
+      "- depends_on: `../geometry_behavior/README.md` and `../geometry_behavior/geometry_behavior_contract.md`",
+      "- possible downstream adoption boundary: `../../physics_interface/local/emergent_metric_geometry/`",
+      "- status: compression-preparation",
+      "- anti-backflow: this profile cannot alter geometry, projection, LCO, echoon, survivor, or Geometry-Behavior records",
+      "- non-exclusivity: this profile does not own all RCMT metrics and does not constrain sibling metric modules",
+      "",
+      "## Purpose",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Refinement-Summary Metric Profile",
+      "- upstream authority: `../../../rcf_compressed.md`",
+      "- depends_on: `../geometry_behavior/README.md` and `../geometry_behavior/geometry_behavior_contract.md`",
+      "- status: compression-preparation"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/README.md",
+    "opening": [
+      "",
+      "# Matter Structure Module (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: downstream candidate particle and survivor-identity interpretations",
+      "- upstream authority: `../../../rcf_compressed.md`",
+      "- depends_on: `../../smg_v2.1/README.md`",
+      "- downstream consumer: `../geometry_behavior/`",
+      "- status: active exploratory model",
+      "- anti-backflow: particle mappings do not redefine geometry, projection, LCO, SMGv2.1, or physics-interface ownership",
+      "",
+      "## Ownership Boundary",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- upstream authority: `../../../rcf_compressed.md`",
+      "- depends_on: `../../smg_v2.1/README.md`",
+      "- status: active exploratory model"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/baryon_class.md",
+    "opening": [
+      "# Baryon Class",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate baryon-like containment class",
+      "- depends_on: `hadron_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: this class does not define closure mechanics, projection, or LCO behavior",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the current RCMT interpretation of baryon-like structures.",
+      "",
+      "It establishes the general characteristics shared by stable baryon-like containment regimes while remaining independent of specific Standard Model mappings."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/hadron_contract.md",
+    "opening": [
+      "# Hadron Contract",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Contract",
+      "- scope: candidate single-survivor containment assumptions",
+      "- depends_on: `../README.md`",
+      "- status: active exploratory contract",
+      "- anti-backflow: this contract does not define upstream survivor, projection, or LCO behavior",
+      "",
+      "## Purpose",
+      "",
+      "This contract establishes the architectural interpretation of hadron-like structures within the current RCMT framework.",
+      "",
+      "It defines the local assumptions used by the Hadron Module while preserving compatibility with upstream RCF invariants."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `../README.md`",
+      "- status: active exploratory contract"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/hadron_work_profile.md",
+    "opening": [
+      "# Hadron Work Profile",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate work-profile interpretation for hadron-like containment",
+      "- depends_on: `hadron_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: work-profile claims do not modify LCO scoring or Geometry-Behavior records",
+      "",
+      "## Purpose",
+      "",
+      "This document describes the current RCMT interpretation of the relational work associated with hadron-like containment structures.",
+      "",
+      "It focuses on stable containment and persistent internal organization."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/meson_class.md",
+    "opening": [
+      "# Meson Class",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate transitional meson-like containment class",
+      "- depends_on: `hadron_contract.md` and `../local/meson_offset_conflicts.md`",
+      "- status: provisional",
+      "- anti-backflow: this class does not define decay, collapse, projection, or LCO behavior",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the current RCMT interpretation of meson-like structures.",
+      "",
+      "It establishes the general characteristics shared by meson-like containment regimes while remaining independent of specific Standard Model mappings."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md` and `../local/meson_offset_conflicts.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/meson_like.md",
+    "opening": [
+      "# Meson-Like Structure",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate Standard Model-facing meson mapping",
+      "- depends_on: `hadron_contract.md`, `meson_class.md`, and `../local/meson_offset_conflicts.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define physical meson identity, decay, or LCO behavior",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the current RCMT interpretation of meson-like structures.",
+      "",
+      "It provides a Standard Model-facing mapping for a meson-like containment regime."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md`, `meson_class.md`, and `../local/meson_offset_conflicts.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/neutron_like.md",
+    "opening": [
+      "# Neutron-Like Structure",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate neutron-facing mapping of the baryon class",
+      "- depends_on: `hadron_contract.md` and `baryon_class.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define Standard Model identity or upstream behavior",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the current RCMT interpretation of neutron-like structures.",
+      "",
+      "It provides a Standard Model-facing mapping for a stable baryon-like containment regime."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md` and `baryon_class.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/proton_like.md",
+    "opening": [
+      "# Proton-Like Structure",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Interpretation",
+      "- scope: candidate proton-facing mapping of the baryon class",
+      "- depends_on: `hadron_contract.md` and `baryon_class.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define Standard Model identity or upstream behavior",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the current RCMT interpretation of proton-like structures.",
+      "",
+      "It provides a Standard Model-facing mapping for a stable baryon-like containment regime."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `hadron_contract.md` and `baryon_class.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/README.md",
+    "opening": [
+      "# Hadron Module (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- type: Contract",
+      "- scope: downstream candidate hadron-like containment model",
+      "- depends_on: `../README.md` and `hadron_contract.md`",
+      "- status: active exploratory model",
+      "- anti-backflow: hadron mappings do not define upstream geometry, LCO, projection, or Geometry-Behavior",
+      "",
+      "## Purpose",
+      "",
+      "The Hadron Module explores stable containment interpretations through the lens of relational coherence.",
+      "",
+      "Within the current RCMT interpretation, hadron-like structures are modeled as containment structures whose internal behavior emerges from bounded modes, closure relationships, and local constraint organization."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Hadrons",
+      "- depends_on: `../README.md` and `hadron_contract.md`",
+      "- status: active exploratory model"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/interfaces/geometry_behavior_bridge.md",
+    "opening": [
+      "# Geometry-Behavior Bridge (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: one-way identity-record handoff to Geometry-Behavior",
+      "- depends_on: `../README.md` and `../../geometry_behavior/geometry_behavior_contract.md`",
+      "- status: active downstream interface",
+      "- anti-backflow: Geometry-Behavior outputs do not redefine particle or survivor classifications in this module",
+      "",
+      "## Overview",
+      "This document defines the boundary between the Survivor Matter Structure Module and the Geometry-Behavior Module. The goal is to ensure that identity-level interpretations introduced here do not pre-empt or constrain downstream modeling of:",
+      "",
+      "- echoon-pattern records,",
+      "- mismatch gradients,"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `../../geometry_behavior/geometry_behavior_contract.md`",
+      "- status: active downstream interface"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/interfaces/smg_alignment.md",
+    "opening": [
+      "# SMG Alignment (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: downstream semantic-alignment interface",
+      "- depends_on: `../local/smg_alignment_contract.md`",
+      "- status: provisional interface",
+      "- anti-backflow: this interface consumes SMGv2.1 labels read-only and does not own geometric projection",
+      "",
+      "## Overview",
+      "This document describes how the Survivor Matter Structure Module aligns with SMGv2.1. The goal is to maintain a clean separation between:",
+      "",
+      "- SMGv2.1's semantic translation over imported 600-cell / 120-cell records,",
+      "- and this module’s candidate interpretation of offset regimes on the 120‑cell survivor."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../local/smg_alignment_contract.md`",
+      "- status: provisional interface"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/charged_lepton_class.md",
+    "opening": [
+      "# Charged Lepton Class (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate charged-lepton survivor class",
+      "- depends_on: `README.md`, `lepton_work_profile.md`, and `../local/spinor_projection_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: this class does not define projection, LCO scoring, or Standard Model identity",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of charged lepton-like survivor structures.",
+      "",
+      "Within the current interpretation, charged leptons are modeled as:"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `README.md`, `lepton_work_profile.md`, and `../local/spinor_projection_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/electron_like.md",
+    "opening": [
+      "# Electron-Like Regime (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate electron-facing persistence regime",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define Standard Model identity, projection, or LCO behavior",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of the electron-like survivor regime.",
+      "",
+      "Within the current interpretation, the electron-like regime serves as the baseline charged-lepton persistence state."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/lepton_work_profile.md",
+    "opening": [
+      "# Lepton Work Profile (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate work-profile ordering among lepton-like regimes",
+      "- depends_on: `README.md`",
+      "- status: provisional",
+      "- anti-backflow: this profile consumes LCO records and does not define or retune LCO scoring",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of LCO work profiles within lepton-like survivor regimes.",
+      "",
+      "The purpose of this file is to provide a common interpretation layer for:"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `README.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/muon_like.md",
+    "opening": [
+      "# Muon-Like Regime (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate muon-facing persistence regime",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define decay dynamics, projection, or LCO behavior",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of the muon-like survivor regime.",
+      "",
+      "Within the current interpretation, the muon-like regime is treated as a higher-work charged-lepton persistence state that remains structurally compatible with the electron-like survivor class."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/neutral_lepton_class.md",
+    "opening": [
+      "# Neutral Lepton Class (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate neutral-lepton survivor class",
+      "- depends_on: `README.md`, `lepton_work_profile.md`, and `../local/spinor_projection_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: this class does not define projection, LCO scoring, or Standard Model identity",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of neutral lepton-like survivor structures.",
+      "",
+      "Within the current interpretation, neutral leptons are modeled as:"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `README.md`, `lepton_work_profile.md`, and `../local/spinor_projection_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/neutrino_like.md",
+    "opening": [
+      "# Neutrino-Like Regime (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate neutrino-facing shallow-offset regime",
+      "- depends_on: `neutral_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define weak-interaction dynamics, projection, or LCO behavior",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of the neutrino-like survivor regime.",
+      "",
+      "Within the current interpretation, neutrino-like regimes represent shallow-offset, weakly coupled, single-phase survivor configurations associated with minimal externally resolvable mismatch."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `neutral_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/README.md",
+    "opening": [
+      "# Lepton Structures (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Contract",
+      "- scope: downstream candidate lepton-like persistence model",
+      "- depends_on: `../README.md` and `../local/spinor_projection_contract.md`",
+      "- status: active exploratory model",
+      "- anti-backflow: lepton mappings do not define survivor geometry, projection, LCO, SMGv2.1, or metric behavior",
+      "",
+      "## Purpose",
+      "",
+      "This directory explores a candidate RCMT interpretation of lepton-like survivor structures.",
+      "",
+      "Within the current interpretation, leptons are modeled as:"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `../README.md` and `../local/spinor_projection_contract.md`",
+      "- status: active exploratory model"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/tau_like.md",
+    "opening": [
+      "# Tau-Like Regime (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- type: Interpretation",
+      "- scope: candidate tau-facing high-compression persistence regime",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional",
+      "- anti-backflow: this mapping does not define high-compression geometry, decay dynamics, projection, or LCO behavior",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the current RCMT interpretation of the tau-like survivor regime.",
+      "",
+      "Within the current interpretation, the tau-like regime represents the highest-compression charged-lepton persistence state currently considered within the charged-lepton survivor class."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure / Leptons",
+      "- depends_on: `charged_lepton_class.md` and `lepton_work_profile.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/fermion_contract.md",
+    "opening": [
+      "# Fermion Unification Contract (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: candidate fermion-like identity classifications",
+      "- depends_on: `../README.md` and `spinor_projection_contract.md`",
+      "- status: active exploratory contract",
+      "- anti-backflow: this contract does not define survivor geometry, projection mechanics, LCO scoring, or SMG semantics",
+      "",
+      "## 1. Scope",
+      "This module proposes a **candidate interpretation** for fermion‑like structures within RCMT.",
+      "It does not assert a canonical ontology.",
+      "Its purpose is to organize downstream reasoning about survivor offset regimes.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `spinor_projection_contract.md`",
+      "- status: active exploratory contract"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/flavor_renegotiation.md",
+    "opening": [
+      "# Flavor-Like Renegotiation in Survivor Offset Regimes (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Interpretation",
+      "- scope: candidate flavor-like reclassification among deep offset regimes",
+      "- depends_on: `../README.md` and `phase_cycle_baryons.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not define transition dynamics, LCO scoring, or SMG semantics",
+      "",
+      "## Overview",
+      "This document explores a candidate RCMT interpretation in which flavor‑like transitions may be modeled as **deep offset renegotiations** within a shared survivor geometry. The goal is to describe the identity structure of these transitions without asserting a physical mechanism or pre‑empting the downstream geometry‑behavior module, which will address mismatch redistribution, collapse behavior, and reinjection cycles.",
+      "",
+      "Flavor‑like behavior is treated here as a **structural reconfiguration** of the survivor’s offset regime rather than as a change in fundamental identity.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `phase_cycle_baryons.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/meson_offset_conflicts.md",
+    "opening": [
+      "# Meson-Like Offset Conflicts (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Interpretation",
+      "- scope: candidate transient two-phase meson-like identity",
+      "- depends_on: `../README.md` and `phase_cycle_baryons.md`",
+      "- status: provisional",
+      "- anti-backflow: this file does not define mismatch propagation, collapse, or LCO scoring",
+      "",
+      "## Overview",
+      "This document explores a candidate RCMT interpretation in which meson‑like behavior may be modeled as **two‑phase offset conflicts** within a shared survivor geometry. The goal is to describe the identity structure of these configurations without pre‑empting the downstream geometry‑behavior module, which will address collapse dynamics, mismatch gradients, and reinjection cycles.",
+      "",
+      "Meson‑like structures are treated here as **transient offset regimes**, not as fundamental entities.",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `phase_cycle_baryons.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/phase_cycle_baryons.md",
+    "opening": [
+      "# Phase-Cycle Structure in Baryon-Like Survivors (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Interpretation",
+      "- scope: candidate A/B/C phase-cycle model for baryon-like identity",
+      "- depends_on: `../README.md` and `fermion_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: phase-cycle claims do not define LCO behavior or downstream dynamics",
+      "",
+      "## Overview",
+      "This document explores a candidate RCMT interpretation in which baryon‑like behavior may be modeled using **phase‑cycle dynamics** of a deeply offset 120‑cell survivor.",
+      "",
+      "The goal is to provide a structural vocabulary for:",
+      ""
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `fermion_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/smg_alignment_contract.md",
+    "opening": [
+      "# SMG Alignment Contract (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: read-only adoption of SMGv2.1 semantic mappings",
+      "- depends_on: `../README.md` and `../../../smg_v2.1/smg_contract.md`",
+      "- status: active exploratory contract",
+      "- anti-backflow: this contract cannot modify SMGv2.1 or upstream projection ownership",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the alignment boundary between:",
+      "",
+      "- SMGv2.1 (semantic projection), and"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `../../../smg_v2.1/smg_contract.md`",
+      "- status: active exploratory contract"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/spinor_projection_contract.md",
+    "opening": [
+      "# Spinor Projection Contract (Candidate RCMT Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Contract",
+      "- scope: candidate compatibility mapping from imported orientation records to spinor-facing language",
+      "- depends_on: `../README.md` and `../../../smg_v2.1/translations/spinor_mapping.md`",
+      "- status: active exploratory contract",
+      "- anti-backflow: this contract does not define upstream projection, spinors, or SMGv2.1 translation rules",
+      "",
+      "## 1. Purpose",
+      "",
+      "This file defines the candidate alignment boundary between:",
+      "",
+      "- 600-cell survivor geometry,"
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `../../../smg_v2.1/translations/spinor_mapping.md`",
+      "- status: active exploratory contract"
+    ]
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/survivor_offset_regimes.md",
+    "opening": [
+      "# Survivor Offset Regimes (Candidate Interpretation)",
+      "",
+      "## Document Contract",
+      "",
+      "- owner: RCMT Survivor Matter Structure",
+      "- type: Interpretation",
+      "- scope: candidate offset-based particle classifications",
+      "- depends_on: `../README.md` and `fermion_contract.md`",
+      "- status: provisional",
+      "- anti-backflow: offset regimes do not alter survivor admissibility or LCO records",
+      "",
+      "## Overview",
+      "This document explores a candidate RCMT interpretation in which fermion‑like behaviors may arise from **offset regimes** of a shared survivor geometry.",
+      "The goal is to provide a compact structural vocabulary for downstream reasoning without asserting a canonical ontology.",
+      "",
+      "The survivor geometry used here is the **120‑cell**, treated as a candidate model for persistent configurations under LCO evaluation."
+    ],
+    "declarations": [
+      "- owner: RCMT Survivor Matter Structure",
+      "- depends_on: `../README.md` and `fermion_contract.md`",
+      "- status: provisional"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/local/interfaces.md",
+    "opening": [
+      "# Local Interfaces (local/interfaces.md)",
+      "",
+      "## Purpose",
+      "This file defines the public interfaces exposed by the project‑specific upstream layer (`local/`).",
+      "Downstream modules may access local‑layer content only through this interface and the adapters it exposes.",
+      "These interfaces provide stable, explicit access points to project‑specific invariants, primitives, and constraints.",
+      "",
+      "This file:",
+      "- does not redefine RCF core interfaces",
+      "- does not introduce interpretive semantics",
+      "- does not introduce hidden state",
+      "- exposes only explicit, adjacency‑safe structures",
+      "- prevents downstream modules from accessing upstream internals",
+      "",
+      "---",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/invariants.md",
+    "opening": [
+      "# Project‑Specific Invariants (local/invariants.md)",
+      "",
+      "## Purpose",
+      "This file defines the upstream‑adjacent invariants specific to this project.",
+      "These invariants refine RCF core constraints and shape all downstream physics modules.",
+      "They are loaded before any module in `physics/`.",
+      "",
+      "These invariants:",
+      "- do not redefine RCF core invariants",
+      "- do not introduce interpretive semantics",
+      "- do not introduce hidden state",
+      "- do not introduce downstream assumptions",
+      "- refine only what this project requires",
+      "",
+      "---",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/primitives.md",
+    "opening": [
+      "# Project‑Specific Primitives (local/primitives.md)",
+      "",
+      "## Purpose",
+      "This file declares all project‑specific primitives that downstream modules may use.",
+      "Primitives defined here extend the RCF core primitive set without redefining it.",
+      "",
+      "All primitives must:",
+      "- be explicit",
+      "- be non‑interpretive",
+      "- be adjacency‑compatible",
+      "- be safe for downstream propagation",
+      "- avoid introducing hidden state",
+      "",
+      "No downstream module may introduce new primitives outside this file.",
+      "",
+      "No project‑specific local primitives are currently declared."
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/modules/README_MODULES.md",
+    "opening": [
+      "# Modules Layer — Downstream Domain Content",
+      "",
+      "The `modules/` directory contains the **downstream components** of the project.",
+      "Modules define the actual domain content of the theory being built on top of RCF.",
+      "",
+      "This layer is where users express concepts, structures, and relationships specific to their project’s domain.",
+      "",
+      "---",
+      "",
+      "## What Belongs in `modules/`",
+      "",
+      "- Domain modules written in Markdown",
+      "- Definitions, claims, and structures expressed in Typed English",
+      "- Components that depend on:",
+      "  - the RCF upstream core (`rcf_compressed.md`)",
+      "  - the project’s local invariants (`local/invariants.md`)"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/adjacency_contract.md",
+    "opening": [
+      "# **Adjacency Contract (AC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines **adjacency** in RCMT — the primitive relational structure on which mismatch, survivors, modes, geometry candidates, propagation, and coherence all depend.",
+      "",
+      "Adjacency is **the substrate relation**.",
+      "It is not space, not distance, not a metric, not a graph embedded anywhere.",
+      "Everything else is layered on top of it.",
+      "",
+      "---",
+      "",
+      "## 1. Purpose",
+      "",
+      "> **Define adjacency as the primitive relational structure of the substrate and the constraints on how it may be used.**",
+      "",
+      "Adjacency is the base relation for all upstream structure."
+    ],
+    "declarations": [
+      "**Owner:** RCMT adjacency module",
+      "- Owner: **RCMT adjacency module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/basin_contract.md",
+    "opening": [
+      "# Basin Contract (BC‑1.0)",
+      "*RCMT → RCF‑compatible, RCP‑typed*",
+      "",
+      "This contract defines **basin structure** in RCMT—how basins organize adjacency, constrain propagation, shape coherence, and gate which patterns can stabilize as survivors, modes, and geometry candidates.",
+      "",
+      "Basins are **upstream organizational structure**, not potentials, not energy wells, not fields.",
+      "",
+      "---",
+      "",
+      "## 1. Purpose",
+      "",
+      "**Purpose:**",
+      "Define basin structure as the organizational scaffold that constrains mismatch, propagation, coherence, and survivor formation.",
+      "",
+      "Basins explain *where* patterns can live and *how* they tend to persist or transition.",
+      ""
+    ],
+    "declarations": [
+      "**Owner:** RCMT basin module",
+      "- Owner: RCMT basin module"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/coherence_contract.md",
+    "opening": [
+      "# **Coherence Contract (CC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines how **coherence** is evaluated, maintained, and enforced in RCMT.",
+      "Coherence is the upstream scoring mechanism that determines:",
+      "",
+      "- which mismatch patterns persist",
+      "- which survivors stabilize",
+      "- which modes remain valid",
+      "- how propagation behaves",
+      "- which geometry candidates survive projection",
+      "",
+      "Coherence is **not** energy, not probability, not amplitude, not a field, and not a metric.",
+      "It is the **consistency score** of relational structure under the invariants.",
+      "",
+      "---"
+    ],
+    "declarations": [
+      "**Owner:** RCMT coherence module",
+      "- Owner: **RCMT coherence module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/effective_field_contract.md",
+    "opening": [
+      "### `rcmt/pipeline/effective_field_contract.md`",
+      "",
+      "---",
+      "",
+      "# **Effective Field Contract (EFC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines how **effective field behavior** is exposed by the projection layer.",
+      "It does **not** define fields as ontological objects.",
+      "It specifies the **interface** by which downstream modules may interpret mismatch propagation.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the projection‑level interface for interpreting mismatch propagation as effective field‑like behavior.**"
+    ],
+    "declarations": [
+      "**Owner:** Projection layer",
+      "**Owner:** Projection layer",
+      "- Owner: **Projection layer**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/field_mode_coupling_contract.md",
+    "opening": [
+      "### `physics_interface/pipeline/field_mode_coupling_contract.md`",
+      "",
+      "# Field–Mode Coupling Contract (FMC‑1.0)",
+      "*RCMT → Projection, RCP‑typed*",
+      "",
+      "This contract defines how **modes** and **mismatch propagation** combine upstream to support **effective field‑like behavior** downstream under projection.",
+      "",
+      "It does **not** define fields as ontological objects.",
+      "It defines which upstream structures are allowed to be interpreted as field‑like.",
+      "",
+      "---",
+      "",
+      "## 1. Purpose",
+      "",
+      "**Purpose:**",
+      "Define the upstream conditions under which:"
+    ],
+    "declarations": [
+      "**Owner:** RCMT field–mode coupling module",
+      "- Owner: RCMT field–mode coupling module"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/geometry_candidate_contract.md",
+    "opening": [
+      "# **Geometry Candidate Contract (GCC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines what qualifies as a **geometry candidate** in RCMT.",
+      "Geometry candidates are **survivor‑derived structures** that projection may interpret as geometric‑lane artifacts (e.g., 120‑cell boundary, spinor‑like orientation, curvature‑like variation).",
+      "",
+      "Geometry candidates are **not** geometric objects upstream.",
+      "They are **survivor structures** that *support* geometric interpretation downstream.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the upstream criteria for geometry candidates and the interface they expose to projection.**",
+      "",
+      "Geometry candidates provide the substrate for the geometric lane."
+    ],
+    "declarations": [
+      "**Owner:** RCMT geometry‑candidate module",
+      "- Owner: **RCMT geometry‑candidate module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/geometry_mode_coupling_contract.md",
+    "opening": [
+      "# **Geometry–Mode Coupling Contract (GMC‑1.0)**",
+      "*RCMT → Projection, RCP‑typed*",
+      "",
+      "This contract defines how **modes** couple to **geometry candidates** upstream, producing the structured patterns that projection interprets as **spinor‑like**, **orientation‑like**, or **geometric‑lane** behavior.",
+      "",
+      "Upstream, this coupling is purely structural.",
+      "Downstream, projection may interpret it as geometry, spin, or orientation.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the upstream structural relationship between modes and geometry candidates, and the conditions under which projection may interpret their coupling as geometric or spinor‑like.**",
+      "",
+      "This is the backbone of spin, chirality, and geometric alignment.",
+      ""
+    ],
+    "declarations": [
+      "**Owner:** Geometry–mode coupling module",
+      "- Owner: RCMT geometry–mode coupling module"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/mismatch_taxonomy_contract.md",
+    "opening": [
+      "# **Mismatch Taxonomy Contract (MTC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines the **canonical mismatch categories** used by RCMT.",
+      "These categories are upstream‑safe, projection‑neutral, and required for all downstream interpretation rules.",
+      "",
+      "The taxonomy ensures that mismatch behavior is described **without** implying fields, forces, particles, or mechanisms.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the canonical categories of mismatch used by RCMT for compression, projection, and downstream interpretation.**",
+      "",
+      "**Type:** Purpose",
+      "**Owner:** RCMT upstream mismatch module"
+    ],
+    "declarations": [
+      "**Owner:** RCMT upstream mismatch module",
+      "- Owner: **RCMT mismatch module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/mode_contract.md",
+    "opening": [
+      "### `pipeline/mode_contract.md`",
+      "",
+      "---",
+      "",
+      "# **Mode Contract (MC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines what a **mode** is in RCMT, how modes arise from survivors, how they persist upstream, and how projection is allowed to interpret them downstream.",
+      "",
+      "Modes are **upstream structural patterns**, not geometric waves, not fields, not excitations, and not ontological objects.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the upstream semantics of modes, their stability criteria, and the interface they expose to projection.**"
+    ],
+    "declarations": [
+      "**Owner:** RCMT mode module",
+      "- Owner: **RCMT mode module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/overview.md",
+    "opening": [
+      "### `rcmt/pipeline/overview.md`",
+      "",
+      "---",
+      "",
+      "# **RCMT Pipeline Overview (v1.0)**",
+      "",
+      "This document defines the **end‑to‑end pipeline** of RCMT:",
+      "how upstream relational structure becomes a coherent state, how local operators act, and how geometric interpretation arises only at the projection layer.",
+      "",
+      "This file does **not** define ontology.",
+      "It specifies the **flow of operations** and the **boundaries between layers**.",
+      "",
+      "---",
+      "",
+      "## **1. Pipeline summary**",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/physics_interface_contract.md",
+    "opening": [
+      "# Physics‑Interface Contract (PIC‑1.0)",
+      "*RCMT → Projection → Physics modules, RCP‑typed*",
+      "",
+      "This contract defines the **API boundary** between the projection layer and all downstream physics modules.",
+      "",
+      "Physics modules never see upstream RCMT objects directly.",
+      "They only see **projection outputs**, and must treat them as **effective artifacts**, not ontology.",
+      "",
+      "---",
+      "",
+      "## 1. Purpose",
+      "",
+      "**Purpose:**",
+      "Define what physics modules may:",
+      "",
+      "- **consume** from projection"
+    ],
+    "declarations": [
+      "**Owner:** Physics‑interface layer",
+      "- Owner: **Physics‑interface layer**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_contract.md",
+    "opening": [
+      "# **Projection Contract (PCX‑1.0)**",
+      "*RCMT → RCF‑compatible, RCP‑typed*",
+      "",
+      "Projection is the **boundary layer** between upstream RCMT structure and downstream physics‑shaped modules.",
+      "It is the **only** module allowed to produce geometric‑lane artifacts, field‑like behavior, or continuous‑looking structure.",
+      "",
+      "Projection does **not** generate upstream structure.",
+      "Projection **interprets** upstream structure.",
+      "",
+      "This contract defines the full responsibilities, constraints, and interfaces of the projection layer.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the complete projection layer: its inputs, outputs, responsibilities, prohibitions, and interface with physics modules.**"
+    ],
+    "declarations": [
+      "**Owner:** Projection layer",
+      "- Owner: Projection layer"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_interpretation_rule.md",
+    "opening": [
+      "# **Projection Interpretation Rule (PIR‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "> **Projection does not create new structure.",
+      "> Projection exposes downstream‑interpretable structure already present in the coherent relational state.**",
+      "",
+      "This rule defines how projection is allowed to *interpret* upstream adjacency, mismatch, and geometry‑candidate structure without ever redefining upstream meaning.",
+      "",
+      "---",
+      "",
+      "## **1. Ownership**",
+      "**Projection owns interpretation, not generation.**",
+      "",
+      "- Projection **defines** the mapping from coherent relational state → geometric lane.",
+      "- Projection **does not define** upstream adjacency, mismatch, or basin structure.",
+      "- Projection **exposes** geometric‑lane artifacts (metric‑like, field‑like, curvature‑like)."
+    ],
+    "declarations": [
+      "**Owner:** Projection layer",
+      "**Owner:** Projection layer",
+      "**Owner:** Projection layer",
+      "**Owner:** Projection layer",
+      "**Owner:**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/propagation_contract.md",
+    "opening": [
+      "# **Propagation Contract (PC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines the upstream semantics of **propagation** in RCMT.",
+      "Propagation is the movement of mismatch, mode structure, or survivor‑derived signatures **across adjacency**, prior to any geometric or field‑like interpretation.",
+      "",
+      "Propagation is **not** motion in space, not waves, not fields, not particles.",
+      "It is the **update of relational structure** under the invariants of the substrate.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define how mismatch, modes, and survivor signatures propagate across adjacency in the upstream substrate.**",
+      "",
+      "Propagation is the backbone of all downstream interpretations (field‑like, wave‑like, particle‑like), but is not any of those things upstream."
+    ],
+    "declarations": [
+      "**Owner:** RCMT propagation module",
+      "- Owner: **RCMT propagation module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/stability_contract.md",
+    "opening": [
+      "# **Stability Contract (SC‑1.0)**",
+      "*RCMT → RCF‑compatible, RCP‑typed*",
+      "",
+      "This contract defines **stability** in RCMT — the upstream criterion that determines whether mismatch patterns, survivors, modes, and geometry candidates persist across evaluations.",
+      "",
+      "Stability is **not** energy minimization, not equilibrium, not a potential well, not a force balance.",
+      "It is **coherence‑driven persistence** under adjacency and basin constraints.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the upstream criteria for stability, how stability is evaluated, and how stable structures are exposed to projection.**",
+      "",
+      "Stability determines what survives long enough to matter downstream.",
+      ""
+    ],
+    "declarations": [
+      "**Owner:** RCMT stability module",
+      "- Owner: RCMT stability module"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/survivor_contract.md",
+    "opening": [
+      "# **Survivor Contract (SC‑1.0)**",
+      "*(RCMT → RCF‑compatible, RCP‑typed)*",
+      "",
+      "This contract defines what counts as a **survivor** in RCMT.",
+      "Survivors are stable mismatch‑binding structures that persist across evaluations and expose interpretable structure to projection.",
+      "",
+      "This contract ensures survivors remain **upstream objects**, not geometric or field‑like entities.",
+      "",
+      "---",
+      "",
+      "## **1. Purpose**",
+      "",
+      "> **Define the canonical criteria for survivor formation, stability, and interface exposure.**",
+      "",
+      "Survivors are the upstream origin of matter‑like behavior in RCMT.",
+      ""
+    ],
+    "declarations": [
+      "**Owner:** RCMT survivor module",
+      "- Owner: **RCMT survivor module**"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/survivor_mode_coupling_contract.md",
+    "opening": [
+      "# Survivor–Mode Coupling Contract (SMC‑1.0)",
+      "*RCMT → Projection, RCP‑typed*",
+      "",
+      "This contract defines how **modes** couple to **survivors** upstream, producing the structured patterns that projection interprets as **matter‑like entities** with **spin/charge‑like attributes** and **persistent identity**.",
+      "",
+      "Upstream, this is just stable structure plus internal patterning.",
+      "Downstream, it looks like particles.",
+      "",
+      "---",
+      "",
+      "## 1. Purpose",
+      "",
+      "**Purpose:**",
+      "Define the upstream structural relationship between survivors and modes, and the conditions under which projection may interpret their coupling as **matter‑like**.",
+      "",
+      "**Type:** Purpose"
+    ],
+    "declarations": [
+      "**Owner:** Survivor–mode coupling module",
+      "- Owner: RCMT survivor–mode coupling module"
+    ]
+  },
+  {
+    "path": "rcmt/physics_interface/stdlib/README_STDLIB.md",
+    "opening": [
+      "# Standard Library Layer — Optional Shared Utilities",
+      "",
+      "The `stdlib/` directory contains **optional shared utilities** that support module development.",
+      "This layer is downstream‑adjacent: it is not upstream, but it is not domain‑specific either.",
+      "",
+      "The stdlib provides reusable patterns, helpers, and structural components that multiple modules may depend on.",
+      "",
+      "---",
+      "",
+      "## What Belongs in `stdlib/`",
+      "",
+      "- Reusable structural patterns",
+      "- Helper definitions used by multiple modules",
+      "- Common idioms expressed in Typed English",
+      "- Shared utilities that simplify module construction",
+      "- Components that are not domain‑specific but support domain work"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "opening": [
+      "# Local → Geometry Adapter (local/adapters/local_to_geometry_adapter.md)",
+      "",
+      "## Purpose",
+      "This adapter defines the explicit, canonical pathways through which geometry modules may import project‑specific refinements from the `local/` layer.",
+      "",
+      "This adapter:",
+      "- does not override geometry‑continuous or geometry‑discrete",
+      "- does not introduce new geometry primitives",
+      "- does not introduce interpretive semantics",
+      "- ensures geometry remains upstream‑owned",
+      "",
+      "---",
+      "",
+      "## 1. Importable Local Elements",
+      "",
+      "### 1.1 Invariants"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_physics_adapter.md",
+    "opening": [
+      "# Local → Physics Adapter (local/adapters/local_to_physics_adapter.md)",
+      "",
+      "## Purpose",
+      "This adapter defines the explicit, canonical pathways through which downstream physics modules may import project‑specific invariants, primitives, and constraints from the `local/` layer.",
+      "",
+      "This adapter:",
+      "- does not introduce new invariants",
+      "- does not introduce interpretive semantics",
+      "- does not bypass local constraints",
+      "- ensures downstream modules remain adjacency‑safe",
+      "",
+      "---",
+      "",
+      "## 1. Importable Local Elements",
+      "",
+      "### 1.1 Invariants"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/adjacency_refinements.md",
+    "opening": [
+      "# Adjacency Refinements (local/constraints/adjacency_refinements.md)",
+      "",
+      "## Purpose",
+      "This file defines project‑specific refinements to RCF adjacency rules.",
+      "These refinements constrain how downstream modules may construct, modify, or propagate adjacency relations.",
+      "",
+      "These refinements:",
+      "- do not override RCF core adjacency axioms",
+      "- do not introduce non‑local adjacency",
+      "- do not introduce interpretive semantics",
+      "- remain explicit and canonical",
+      "",
+      "---",
+      "",
+      "## 1. Allowed Adjacency Refinements",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/containment_refinements.md",
+    "opening": [
+      "# Containment Refinements (local/constraints/containment_refinements.md)",
+      "",
+      "## Purpose",
+      "This file defines project‑specific refinements to RCF containment rules.",
+      "Containment describes structural inclusion relationships and must remain explicit and upstream‑compatible.",
+      "",
+      "These refinements:",
+      "- do not override RCF core containment axioms",
+      "- do not introduce hidden containment",
+      "- do not introduce interpretive semantics",
+      "",
+      "---",
+      "",
+      "## 1. Allowed Containment Refinements",
+      "",
+      "### 1.1 Explicit Containment Extensions"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/geometry_constraints.md",
+    "opening": [
+      "# Geometry Constraints (local/constraints/geometry_constraints.md)",
+      "",
+      "## Purpose",
+      "This file defines project‑specific refinements to RCF geometry rules.",
+      "Geometry must remain upstream‑owned and invariant‑compatible.",
+      "",
+      "These refinements:",
+      "- do not override geometry‑continuous or geometry‑discrete",
+      "- do not introduce hidden geometry",
+      "- do not introduce interpretive semantics",
+      "",
+      "---",
+      "",
+      "## 1. Geometry Ownership",
+      "",
+      "### 1.1 Upstream Geometry"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/group_structure_constraints.md",
+    "opening": [
+      "# Group Structures Constraints",
+      "",
+      "This file defines how physics modules may consume the structural labels provided",
+      "by `foundation/abstract/group_structures`.",
+      "",
+      "Physics modules may use:",
+      "",
+      "- `group-state-label`",
+      "- `projection-operator-label`",
+      "- `continuous-limit-map`",
+      "- `phase-orientation-band`",
+      "",
+      "Physics modules must not:",
+      "",
+      "- reinterpret these labels as physical operators,",
+      "- assign intrinsic domain semantics to the labels themselves,"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/time_constraints.md",
+    "opening": [
+      "# Time Constraints (local/constraints/time_constraints.md)",
+      "",
+      "## Purpose",
+      "Defines project‑specific refinements to RCF time rules.",
+      "Time must remain explicit, emergent, and downstream‑owned.",
+      "",
+      "These refinements:",
+      "- do not override the Upstream Time Index",
+      "- do not introduce alternative upstream ordering indices",
+      "- do not introduce interpretive temporal semantics",
+      "",
+      "---",
+      "",
+      "## 1. Time Ownership Invariants",
+      "",
+      "### 1.1 Ownership"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/examples.md",
+    "opening": [
+      "# Examples: continuous_field_theory",
+      "",
+      "## Example 1: Field Lift",
+      "",
+      "Given:",
+      "- discrete support: {A, B}",
+      "- field values: vA, vB",
+      "",
+      "Apply:",
+      "`lift_field({A, B}, {vA, vB})`",
+      "",
+      "Result:",
+      "- continuous support",
+      "- continuous assignment record",
+      "",
+      "---"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Continuous Field Theory — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in",
+      "`continuous_field_theory`.",
+      "",
+      "It lifts **discrete fields** into **continuous fields** over a continuous support \\(X\\),",
+      "but still under strict RCF constraints:",
+      "",
+      "- no PDEs",
+      "- no action principles",
+      "- no variational calculus",
+      "- no metric usage",
+      "- no hidden interpolation",
+      "- no interpretive semantics"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/interface.md",
+    "opening": [
+      "# Interface: continuous_field_theory",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for constructing and updating continuous fields.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Discrete Field Inputs",
+      "- field support",
+      "- field assignment record",
+      "- field update record",
+      "",
+      "### 2. Temporal Inputs",
+      "- physics‑time index"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/operators.md",
+    "opening": [
+      "# Operators: continuous_field_theory",
+      "",
+      "## Purpose",
+      "Defines canonical operators for lifting and updating continuous fields.",
+      "",
+      "---",
+      "",
+      "## 1. `lift_field`",
+      "Lifts a discrete field to a continuous support.",
+      "",
+      "**Inputs:**",
+      "- discrete field support",
+      "- field assignment record",
+      "",
+      "**Outputs:**",
+      "- continuous field support \\(X\\)"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/README.md",
+    "opening": [
+      "# continuous_field_theory",
+      "",
+      "## Purpose",
+      "`continuous_field_theory` defines the continuous field layer that emerges from discrete field structures and physics‑time.",
+      "It provides the minimal continuous representation required before metric assignment and amplitude structure.",
+      "",
+      "This module does not define PDEs, action principles, or variational calculus.",
+      "It defines only the structural layer that allows continuous fields to exist.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- relational_field_theory_discrete",
+      "- time_bridge",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/examples.md",
+    "opening": [
+      "# Examples: conversion_laws",
+      "",
+      "## Example 1: Discrete → Continuous",
+      "",
+      "Given:",
+      "- discrete field Fd",
+      "",
+      "Apply:",
+      "`discrete_to_continuous(Fd) → Fc`",
+      "",
+      "Result:",
+      "- explicit continuous field Fc",
+      "",
+      "---",
+      "",
+      "## Example 2: Continuous → Metric"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Conversion Laws — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in",
+      "`conversion_laws`.",
+      "",
+      "It specifies **legal, explicit, invariant‑safe conversions** between:",
+      "",
+      "- discrete fields",
+      "- continuous fields",
+      "- metric‑aware fields",
+      "- amplitude‑aware fields",
+      "",
+      "No reinterpretation, no hidden transformations, no PDEs, no dynamics.",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/interface.md",
+    "opening": [
+      "# Interface: conversion_laws",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for converting between physics representations.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "- discrete field structures",
+      "- continuous field structures",
+      "- metric assignment records",
+      "- relational amplitude records",
+      "",
+      "---",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/operators.md",
+    "opening": [
+      "# Operators: conversion_laws",
+      "",
+      "## Purpose",
+      "Defines canonical conversion operators across representations.",
+      "",
+      "---",
+      "",
+      "## 1. `discrete_to_continuous`",
+      "**Inputs:** discrete field, support",
+      "**Outputs:** continuous field, support",
+      "",
+      "Rules:",
+      "- explicit mapping",
+      "- no hidden interpolation",
+      "",
+      "---"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/README.md",
+    "opening": [
+      "# conversion_laws",
+      "",
+      "## Purpose",
+      "`conversion_laws` defines the structural rules for converting between discrete, continuous, metric, and amplitude‑level representations.",
+      "It is the final coordination layer of the physics stack.",
+      "",
+      "This module does not introduce new physics.",
+      "It enforces compatibility and legality of conversions.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- continuous_field_theory",
+      "- emergent_metric_geometry",
+      "- relational_quantum_mechanics"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/examples.md",
+    "opening": [
+      "# Examples: emergent_metric_geometry",
+      "",
+      "## Purpose",
+      "Provides small, explicit examples of metric assignment.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "---",
+      "",
+      "## Example 1: Metric Assignment",
+      "",
+      "**Given:**",
+      "- continuous support: `x0`",
+      "- physics‑time index: `τ0`",
+      "",
+      "**Apply:**",
+      "`assign_metric(x0, τ0) → g0`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Emergent Metric Geometry — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in `emergent_metric_geometry`.",
+      "It introduces **metric structure** for the first time in the RCF stack, but only in a minimal, explicit, non‑interpretive form.",
+      "",
+      "No curvature, no geodesics, no PDEs, no Einstein equations, no metric evolution.",
+      "",
+      "This module provides the structural layer required before amplitude‑level structures in `relational_quantum_mechanics`.",
+      "",
+      "---",
+      "",
+      "# 1. Inputs from Upstream Modules",
+      "",
+      "We reuse:"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/interface.md",
+    "opening": [
+      "# Interface: emergent_metric_geometry",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for introducing metric structure.",
+      "All downstream modules must use this interface when referencing metric geometry.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Physics‑Time Inputs",
+      "Imported from `time_bridge`:",
+      "- physics‑time index",
+      "- temporal boundary record",
+      "",
+      "### 2. Continuous Field Inputs"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/operators.md",
+    "opening": [
+      "# Operators: emergent_metric_geometry",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to assign metric structure and construct metric boundaries.",
+      "These operators are explicit, invariant‑safe, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `assign_metric`",
+      "Assigns a metric value to a continuous support location.",
+      "",
+      "**Inputs:**",
+      "- continuous support",
+      "- local geometry constraints",
+      "- physics‑time index (optional)",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/README.md",
+    "opening": [
+      "# emergent_metric_geometry",
+      "",
+      "## Purpose",
+      "`emergent_metric_geometry` introduces a metric assignment layer into the physics stack.",
+      "It defines how continuous field structures and physics‑time indices combine to produce a downstream‑safe metric geometry record.",
+      "",
+      "This module does not define curvature, geodesics, PDEs, or dynamical metric evolution.",
+      "It defines only the minimal structural layer required for metric assignment to exist.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- relational_field_theory_discrete",
+      "- time_bridge",
+      "- continuous_field_theory (structural inputs only)"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/allowed_usage.md",
+    "opening": [
+      "# Allowed usage patterns for group_structures labels",
+      "",
+      "This document specifies **allowed usage patterns** for physics modules that consume group structure labels.",
+      "",
+      "All usage must remain compatible with:",
+      "",
+      "- the upstream `rcf/modules/group_structures/` constraints,",
+      "- the interpretations in `interpretations.md`,",
+      "- the interface contract in `interface.md`.",
+      "",
+      "---",
+      "",
+      "## 1. Sector partitioning",
+      "",
+      "Physics modules may:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/examples.md",
+    "opening": [
+      "# Examples of group_structures usage",
+      "",
+      "This document provides **illustrative examples** of safe and unsafe usage patterns for group structure labels.",
+      "",
+      "These are schematic and not tied to a specific physics implementation.",
+      "",
+      "---",
+      "",
+      "## 1. Safe example: sector partitioning in a field module",
+      "",
+      "A field theory module defines several sectors of fields, each associated with a `group-state-label`.",
+      "",
+      "- Each sector corresponds to a different symmetry regime.",
+      "- The module uses `group-state-label` to:",
+      "  - partition its configuration space,",
+      "  - define which interactions are allowed between sectors,"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/forbidden_usage.md",
+    "opening": [
+      "# Forbidden usage patterns for group_structures labels",
+      "",
+      "This document specifies **forbidden usage patterns** for physics modules that consume group structure labels.",
+      "",
+      "These patterns are disallowed because they:",
+      "",
+      "- violate upstream invariants,",
+      "- overload structural labels with physical semantics,",
+      "- risk contaminating RCF core with domain-specific assumptions.",
+      "",
+      "---",
+      "",
+      "## 1. Treating labels as operators",
+      "",
+      "Physics modules must **not**:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interface.md",
+    "opening": [
+      "# Interface for group_structures",
+      "",
+      "This document defines the **interface contract** between:",
+      "",
+      "- the upstream abstract module: `rcf/modules/group_structures/`, and",
+      "- downstream physics modules that consume group structure labels.",
+      "",
+      "The goal is to make the usage of group structure labels:",
+      "",
+      "- explicit,",
+      "- constrained,",
+      "- composable,",
+      "- and safe with respect to upstream invariants.",
+      "",
+      "---",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interpretations.md",
+    "opening": [
+      "# Default interpretations of group_structures labels",
+      "",
+      "This document provides **default physics-facing interpretations** of the abstract group structure labels.",
+      "",
+      "These are **interpretations**, not redefinitions. They must remain compatible with the upstream abstract module.",
+      "",
+      "---",
+      "",
+      "## 1. group-state-label",
+      "",
+      "**Interpretation:**",
+      "A `group-state-label` is a **symmetry sector identifier**.",
+      "",
+      "Physics modules may treat it as:",
+      "",
+      "- a handle for partitioning states, fields, or configurations into symmetry-related sectors,"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/README.md",
+    "opening": [
+      "# group_structures",
+      "",
+      "This module provides the **physics-facing interpretation layer** for the upstream `rcf/modules/group_structures` module.",
+      "",
+      "It does **not** define physics, operators, fields, or dynamics.",
+      "",
+      "Instead, it:",
+      "",
+      "- interprets abstract group structure labels in a way that is usable by physics modules,",
+      "- specifies what physics modules **may** assume about these labels,",
+      "- specifies what physics modules **may not** assume,",
+      "- preserves the upstream invariants and constraints defined in `rcf/modules/group_structures`,",
+      "- acts as a firewall to prevent physics semantics from leaking upstream into RCF core.",
+      "",
+      "This module is part of the `physics_interface/local` layer and is intended to be:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/examples.md",
+    "opening": [
+      "# Examples: relational_dynamics",
+      "",
+      "## Purpose",
+      "Provides small, adjacency‑safe examples of dynamic propagation.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "---",
+      "",
+      "## Example 1: Admissible Update",
+      "",
+      "**Given:**",
+      "- transition descriptor: `T`",
+      "- adjacency: {A, B, C}",
+      "",
+      "**Apply:**",
+      "`admissible_update(T, {A, B, C}) → allowed`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Relational Dynamics — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in `relational_dynamics`.",
+      "It builds on `relational_kinematics` by adding **admissibility** and **propagation**, still under strict adjacency and non‑interpretive constraints.",
+      "",
+      "No metric, no physics‑time, no PDEs, no hidden scheduler.",
+      "",
+      "---",
+      "",
+      "# 1. Base Structures from Relational Kinematics",
+      "",
+      "We reuse:",
+      "",
+      "- graph \\(G = (V, E)\\)"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/interface.md",
+    "opening": [
+      "# Interface: relational_dynamics",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for dynamic propagation.",
+      "All downstream modules must use this interface when determining admissibility and adjacency‑local evolution.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Kinematic Inputs",
+      "Imported from `relational_kinematics`:",
+      "- transition descriptor",
+      "- boundary record",
+      "",
+      "### 2. Adjacency Structure"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/operators.md",
+    "opening": [
+      "# Operators: relational_dynamics",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to evaluate admissibility and propagate transitions.",
+      "These operators are adjacency‑safe, explicit, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `admissible_update`",
+      "Determines whether a proposed transition is allowed.",
+      "",
+      "**Inputs:**",
+      "- transition descriptor",
+      "- adjacency neighborhood",
+      "- local invariants",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/README.md",
+    "opening": [
+      "# relational_dynamics",
+      "",
+      "## Purpose",
+      "`relational_dynamics` defines the downstream‑safe rules for how admissible local transitions propagate across adjacency.",
+      "It builds directly on `relational_kinematics` and provides the structural machinery required for discrete, adjacency‑local evolution.",
+      "",
+      "This module does not define continuous evolution, metric‑based dynamics, or physics‑time behavior.",
+      "It defines only the discrete propagation rules permitted before `time_bridge`.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "`relational_dynamics` is loaded immediately after `relational_kinematics`.",
+      "",
+      "It depends on:",
+      "- relational_kinematics"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/examples.md",
+    "opening": [
+      "# Examples: relational_field_theory_discrete",
+      "",
+      "## Purpose",
+      "Provides small, adjacency‑safe examples of discrete field behavior.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "---",
+      "",
+      "## Example 1: Field Assignment",
+      "",
+      "**Given:**",
+      "- adjacency index: A",
+      "- field value: `v0`",
+      "",
+      "**Apply:**",
+      "`assign_field(A, v0)`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Relational Field Theory (Discrete) — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in",
+      "`relational_field_theory_discrete`.",
+      "",
+      "It lifts **admissible dynamic propagation** into **discrete field structure**:",
+      "",
+      "- adjacency‑indexed fields",
+      "- explicit field assignments",
+      "- explicit field updates",
+      "- no metric",
+      "- no continuous interpolation",
+      "- no amplitudes",
+      "- no PDEs"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/interface.md",
+    "opening": [
+      "# Interface: relational_field_theory_discrete",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for constructing and updating discrete fields.",
+      "All downstream modules must use this interface when working with adjacency‑indexed field structures.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Propagation Inputs",
+      "Imported from `relational_dynamics`:",
+      "- propagation record",
+      "- discrete field handoff record",
+      "",
+      "### 2. Adjacency Structure"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/operators.md",
+    "opening": [
+      "# Operators: relational_field_theory_discrete",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to construct and update discrete fields.",
+      "These operators are adjacency‑safe, explicit, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `assign_field`",
+      "Assigns a field value to a discrete support location.",
+      "",
+      "**Inputs:**",
+      "- adjacency index",
+      "- field value",
+      "- local invariants",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/README.md",
+    "opening": [
+      "# relational_field_theory_discrete",
+      "",
+      "## Purpose",
+      "`relational_field_theory_discrete` defines the discrete field layer that emerges from adjacency‑local propagation.",
+      "It converts admissible dynamic updates into structured field assignments without invoking metric structure or continuous geometry.",
+      "",
+      "This module provides the minimal field‑level representation required before `continuous_field_theory` and `emergent_metric_geometry`.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- relational_kinematics",
+      "- relational_dynamics",
+      "",
+      "It depends on:"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/examples.md",
+    "opening": [
+      "# Examples: relational_kinematics",
+      "",
+      "## Purpose",
+      "Provides small, adjacency‑safe examples of kinematic transitions.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "---",
+      "",
+      "## Example 1: Local Update",
+      "",
+      "**Given:**",
+      "- node A with adjacency {B, C}",
+      "- local state: `s0`",
+      "",
+      "**Apply:**",
+      "`local_update(s0, {B, C}) → s1`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Relational Kinematics — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in `relational_kinematics`.",
+      "All definitions are adjacency‑local, invariant‑safe, and non‑interpretive.",
+      "No metric, no physics‑time, no PDEs, no hidden state.",
+      "",
+      "---",
+      "",
+      "# 1. Underlying Discrete Structure",
+      "",
+      "## 1.1 Adjacency Graph",
+      "Let the kinematic substrate be a finite or countable graph:",
+      "",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/interface.md",
+    "opening": [
+      "# Interface: relational_kinematics",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for kinematic transitions.",
+      "All downstream modules must use this interface when describing admissible local changes.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Discrete Geometry Inputs",
+      "- adjacency list (explicit)",
+      "- survivor record (geometry‑discrete)",
+      "",
+      "### 2. Continuous Shadow Inputs (consumed from geometry-continuous outputs)",
+      "- shadow coordinate (geometry‑continuous)"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/operators.md",
+    "opening": [
+      "# Operators: relational_kinematics",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to construct kinematic transitions.",
+      "These operators are adjacency‑safe, explicit, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `local_update`",
+      "Describes an admissible change to a local configuration.",
+      "",
+      "**Inputs:**",
+      "- local state",
+      "- adjacency neighborhood",
+      "- invariant constraints",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/README.md",
+    "opening": [
+      "# relational_kinematics",
+      "",
+      "## Purpose",
+      "`relational_kinematics` defines the downstream‑safe kinematic layer for the physics stack.",
+      "It provides the minimal structural machinery required to describe admissible local transitions without invoking metric structure, physics‑time, or continuous geometry.",
+      "",
+      "This module is the entry point for all downstream physics behavior.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "`relational_kinematics` is the first physics module loaded after the upstream RCF invariants and the project‑specific `local/` layer.",
+      "",
+      "It depends on:",
+      "- geometry‑discrete survivor records",
+      "- geometry‑continuous shadow records"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/examples.md",
+    "opening": [
+      "# Examples: relational_quantum_mechanics",
+      "",
+      "## Purpose",
+      "Provides small, explicit examples of relational amplitude behavior.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "---",
+      "",
+      "## **Example 1: Amplitude Assignment**",
+      "",
+      "**Given:**",
+      "- adjacency index: `A`",
+      "- local invariant record: `I_A`",
+      "- physics‑time index: `τ`",
+      "",
+      "**Apply:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Relational Quantum Mechanics — Formal Structure",
+      "",
+      "## Purpose",
+      "This file defines the mathematical structures permitted in",
+      "`relational_quantum_mechanics`.",
+      "",
+      "It introduces **relational amplitudes** for the first time in the RCF stack:",
+      "- adjacency‑indexed",
+      "- invariant‑aware",
+      "- time‑indexed",
+      "- explicit",
+      "- non‑interpretive",
+      "",
+      "No Hilbert spaces, no wavefunctions, no probability interpretation,",
+      "no collapse, no operator algebra, no PDEs, no hidden state."
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/interface.md",
+    "opening": [
+      "# Interface: relational_quantum_mechanics",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for constructing and updating relational amplitudes.",
+      "All downstream modules must use this interface when referencing amplitude‑level structure.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Temporal Inputs",
+      "Imported from `time_bridge`:",
+      "- physics‑time index",
+      "",
+      "### 2. Local Invariants",
+      "Imported from:"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/operators.md",
+    "opening": [
+      "# Operators: relational_quantum_mechanics",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to assign and update relational amplitudes.",
+      "These operators are adjacency‑safe, explicit, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `assign_amplitude`",
+      "Assigns an amplitude value to an adjacency‑indexed support.",
+      "",
+      "**Inputs:**",
+      "- adjacency index",
+      "- local invariant record",
+      "- physics‑time index (optional)",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/README.md",
+    "opening": [
+      "# relational_quantum_mechanics",
+      "",
+      "## Purpose",
+      "`relational_quantum_mechanics` introduces adjacency‑indexed, invariant‑aware amplitude structure into the physics stack.",
+      "It defines how relational amplitude assignments are constructed and updated without invoking Hilbert spaces, metric geometry, or interpretive quantum semantics.",
+      "",
+      "",
+      "This module provides the minimal structural layer required before downstream conversion laws.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- time_bridge",
+      "",
+      "It depends on:"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/examples.md",
+    "opening": [
+      "# Examples: time_bridge",
+      "",
+      "## Purpose",
+      "Provides small, explicit examples of time‑bridge usage.",
+      "These examples illustrate structure only and do not introduce interpretation.",
+      "",
+      "The **Upstream Time Index** is not temporal.",
+      "It is a symbolic ordering key supplied by upstream modules.",
+      "",
+      "---",
+      "",
+      "## Example 1: Time Mapping",
+      "",
+      "**Given:**",
+      "- Upstream Time Index: `t0`",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/formal_structure.md",
+    "opening": [
+      "# formal_structure.md",
+      "Time Bridge — Formal Structure",
+      "",
+      "## Purpose",
+      "Defines the mathematical structures permitted in `time_bridge`.",
+      "Introduces **Physics Time** as a downstream index derived from an **Upstream Time Index**, without adding dynamics, metric, or interpretation.",
+      "",
+      "No PDEs, no time dilation, no hidden scheduler, no modification of upstream ordering.",
+      "",
+      "---",
+      "",
+      "# 1. Upstream Time Index",
+      "",
+      "## 1.1 Upstream Ordering Set",
+      "Assume an upstream, totally ordered set:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/interface.md",
+    "opening": [
+      "# Interface: time_bridge",
+      "",
+      "## Purpose",
+      "Defines the explicit interface for introducing Physics Time.",
+      "All downstream modules must use this interface when referencing temporal structure.",
+      "",
+      "The **Upstream Time Index** is not temporal.",
+      "It is a symbolic ordering key.",
+      "",
+      "---",
+      "",
+      "## Inputs",
+      "",
+      "### 1. Upstream Time Index",
+      "Imported from upstream:",
+      "- upstream ordering index"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/operators.md",
+    "opening": [
+      "# Operators: time_bridge",
+      "",
+      "## Purpose",
+      "Defines the canonical operators used to construct the Physics‑Time index and temporal boundaries.",
+      "These operators are explicit, invariant‑safe, and non‑interpretive.",
+      "",
+      "---",
+      "",
+      "## 1. `map_time`",
+      "Constructs the mapping from the Upstream Time Index to Physics‑Time.",
+      "",
+      "**Inputs:**",
+      "- Upstream Time Index",
+      "- local time constraints",
+      "",
+      "**Outputs:**"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/README.md",
+    "opening": [
+      "# time_bridge",
+      "",
+      "## Purpose",
+      "`time_bridge` introduces Physics‑Time into the downstream physics stack.",
+      "It provides the explicit, invariant‑safe handoff from an **Upstream Time Index** (a symbolic ordering key) to the Physics‑Time index used by continuous and metric layers.",
+      "",
+      "This module does not define dynamics, metric evolution, or continuous time flow.",
+      "It defines only the structural bridge that makes Physics‑Time available.",
+      "",
+      "---",
+      "",
+      "## Position in the Stack",
+      "Loaded after:",
+      "- relational_kinematics",
+      "- relational_dynamics",
+      "- relational_field_theory_discrete"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "opening": [
+      "# SMGv2.1 GCM Bindings",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the read-only upstream structures SMGv2.1 imports from `gcm_interface`.",
+      "",
+      "This is a binding file.",
+      "It contains no SMGv2.1 thesis claims and no downstream policy.",
+      "",
+      "---",
+      "",
+      "## 1. Chromatic-12 Binding",
+      "",
+      "- upstream source: `gcm_interface/survivor_indexing.md`",
+      "- imported structure: 12-element base mode index",
+      "- local binding name: `BaseMode_Index`"
+    ],
+    "declarations": [
+      "- owner: `gcm_interface`",
+      "- owner: `gcm_interface`",
+      "- owner: `gcm_interface`",
+      "- owner: `gcm_interface`"
+    ]
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/physics_bindings.md",
+    "opening": [
+      "# SMGv2.1 Physics Interface Bindings",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the read-only upstream structures SMGv2.1 imports from `physics_interface`.",
+      "",
+      "This is a binding file.",
+      "It contains no SMGv2.1 thesis claims and no downstream enforcement policy.",
+      "",
+      "---",
+      "",
+      "## 1. Support Binding",
+      "",
+      "- upstream source: `physics_interface/conversion_laws/formal_structure.md`",
+      "- imported structure:",
+      "  - discrete support set"
+    ],
+    "declarations": [
+      "- owner: `physics_interface`",
+      "- owner: `physics_interface`",
+      "- owner: `physics_interface`",
+      "- owner: `physics_interface`",
+      "- owner: `physics_interface`"
+    ]
+  },
+  {
+    "path": "rcmt/smg_v2.1/claims/dual_closure.md",
+    "opening": [
+      "# SMGv2.1 Dual Closure Claim",
+      "",
+      "## Purpose",
+      "",
+      "This file defines Dual Closure as an SMGv2.1-local thesis claim.",
+      "",
+      "It is not a neutral binding file.",
+      "It is not an upstream RCF proof artifact.",
+      "It is the central claim document for the SMGv2.1 domain model.",
+      "",
+      "---",
+      "",
+      "## 1. Core Thesis",
+      "",
+      "SMGv2.1 asserts that the Standard Model-facing vacuum is best modeled as the downstream semantic shadow of a discrete structure satisfying two closure pressures at once:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/gamma_generations.md",
+    "opening": [
+      "# SMGv2.1 Gamma Generation Map",
+      "",
+      "## Purpose",
+      "",
+      "This file maps upstream gamma-plateau bindings to downstream generation labels inside SMGv2.1.",
+      "",
+      "This is a dictionary file.",
+      "It is not an upstream proof file.",
+      "",
+      "---",
+      "",
+      "## 1. Source Binding",
+      "",
+      "SMGv2.1 consumes:",
+      "",
+      "- `Gamma_Plateaus = [A, B, C]`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/mode_dictionary.md",
+    "opening": [
+      "# SMGv2.1 Mode Dictionary",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the SMGv2.1 semantic lookup table from upstream structural indices to downstream Standard Model-facing labels.",
+      "",
+      "This is a dictionary file.",
+      "It maps names.",
+      "It does not prove that the names are upstream facts.",
+      "",
+      "---",
+      "",
+      "## 1. Source Bindings",
+      "",
+      "This dictionary consumes:",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/exports/standard_model_kinematics.md",
+    "opening": [
+      "# SMGv2.1 Standard Model Kinematics Export",
+      "",
+      "## Purpose",
+      "",
+      "This file provides a downstream-readable SMGv2.1 export payload.",
+      "",
+      "It initializes Standard Model-facing continuous forms as SMGv2.1-authorized downstream approximations.",
+      "It is not a contract file and not a policy file.",
+      "",
+      "---",
+      "",
+      "## 1. Export Status",
+      "",
+      "- export type: downstream payload",
+      "- authority scope: SMGv2.1 adopters",
+      "- required contract: `smg_contract.md`"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/policies/limitations_and_boundaries.md",
+    "opening": [
+      "# SMGv2.1 Limitations and Boundaries Policy",
+      "",
+      "## Purpose",
+      "",
+      "This file defines downstream policy for models adopting SMGv2.1.",
+      "",
+      "These policies are scoped to SMGv2.1.",
+      "They are not universal physics decrees.",
+      "",
+      "---",
+      "",
+      "## 1. PDE Breakage Policy",
+      "",
+      "For downstream models using SMGv2.1:",
+      "",
+      "- a continuous singularity is treated as a failure of the SMGv2.1 downstream approximation"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-routing.md",
+    "opening": [
+      "# Routing Invariants for the SMGv2.1 Translation Interface",
+      "",
+      "Status:",
+      "Tier: Core Architecture (SMGv2.1)",
+      "Canon: Proposed",
+      "Scope: Translation Contract",
+      "",
+      "---",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the routing identities required by the SMGv2.1 translation interface.",
+      "",
+      "These routing identities are SMGv2.1-local translation requirements unless explicitly imported through an upstream binding.",
+      "",
+      "SMGv2.1 does not prescribe how projection is implemented."
+    ],
+    "declarations": [
+      "Status:"
+    ]
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-tranlsation.md",
+    "opening": [
+      "# 24-Cell Translation Contract",
+      "",
+      "---",
+      "",
+      "## Purpose",
+      "",
+      "This document defines the translation interface consumed by SMGv2.1 when interpreting projected routing records.",
+      "",
+      "It establishes the minimal routing identities required for SMGv2.1 semantic interpretation.",
+      "",
+      "This document does not define projection mechanics, particle dynamics, Local Coherence Operator behavior, or upstream RCMT structure.",
+      "",
+      "Unless explicitly imported through an upstream binding, the routing identities described here are SMGv2.1-local translation constructs.",
+      "",
+      "---",
+      ""
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/gauge_translation.md",
+    "opening": [
+      "# SMGv2.1 Gauge Translation Bridge",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the SMGv2.1 translation bridge from Chromatic-12 semantic subsets to downstream gauge-language forms.",
+      "",
+      "This is a translation file.",
+      "It is not a binding file and does not claim that gauge groups are upstream facts.",
+      "",
+      "---",
+      "",
+      "## 1. Translation Scope",
+      "",
+      "SMGv2.1 maps:",
+      "",
+      "- `Octet` to downstream `SU(3)`-style gauge language"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/spinor_mapping.md",
+    "opening": [
+      "# SMGv2.1 Spinor Translation Bridge",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the SMGv2.1 translation bridge from discrete adjacency orientation patterns to downstream spinor and chirality language.",
+      "",
+      "This is not an upstream geometry file.",
+      "It is a downstream interpretive bridge scoped to SMGv2.1.",
+      "",
+      "---",
+      "",
+      "## 1. Spin Translation",
+      "",
+      "SMGv2.1 treats downstream spin language as a semantic compression of local adjacency orientation and structural torsion.",
+      "",
+      "For downstream models adopting SMGv2.1:"
+    ],
+    "declarations": []
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/zeta_resonance.md",
+    "opening": [
+      "# SMGv2.1 Zeta Resonance Translation Bridge",
+      "",
+      "## Purpose",
+      "",
+      "This file defines the SMGv2.1 translation bridge from discrete spectral structure to downstream mass-ratio and resonance language.",
+      "",
+      "This is a thesis-forward translation file.",
+      "Its claims are scoped to SMGv2.1.",
+      "",
+      "---",
+      "",
+      "## 1. Spectral Vacuum Thesis",
+      "",
+      "SMGv2.1 models the vacuum as a constrained spectral network rather than an empty continuous container.",
+      "",
+      "Within SMGv2.1:"
+    ],
+    "declarations": []
+  }
+]

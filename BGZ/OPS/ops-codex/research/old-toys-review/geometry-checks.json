@@ -1,0 +1,182 @@
+{
+  "polytope-packing.py": [
+    {
+      "vertices": 8,
+      "unique_vertices": 8,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [],
+      "nearest_degree_histogram": {
+        "6": 8
+      }
+    },
+    {
+      "vertices": 24,
+      "unique_vertices": 24,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.5
+      ],
+      "nearest_degree_histogram": {
+        "8": 24
+      }
+    },
+    {
+      "vertices": 120,
+      "unique_vertices": 120,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.30902,
+        0.5,
+        0.80902
+      ],
+      "nearest_degree_histogram": {
+        "12": 120
+      }
+    }
+  ],
+  "h3-parameter-sweep.py": [
+    {
+      "vertices": 5,
+      "unique_vertices": 5,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [],
+      "nearest_degree_histogram": {
+        "4": 5
+      }
+    },
+    {
+      "vertices": 8,
+      "unique_vertices": 8,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [],
+      "nearest_degree_histogram": {
+        "6": 8
+      }
+    },
+    {
+      "vertices": 24,
+      "unique_vertices": 24,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.5
+      ],
+      "nearest_degree_histogram": {
+        "8": 24
+      }
+    },
+    {
+      "vertices": 120,
+      "unique_vertices": 120,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.30902,
+        0.5,
+        0.80902
+      ],
+      "nearest_degree_histogram": {
+        "12": 120
+      }
+    }
+  ],
+  "Matthew/dynamic_crystalization.py": [
+    {
+      "vertices": 8,
+      "unique_vertices": 8,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [],
+      "nearest_degree_histogram": {
+        "6": 8
+      }
+    },
+    {
+      "vertices": 24,
+      "unique_vertices": 24,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.5
+      ],
+      "nearest_degree_histogram": {
+        "8": 24
+      }
+    },
+    {
+      "vertices": 120,
+      "unique_vertices": 120,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.30902,
+        0.5,
+        0.80902
+      ],
+      "nearest_degree_histogram": {
+        "12": 120
+      }
+    }
+  ],
+  "cell-600-test.py": [
+    {
+      "vertices": 120,
+      "unique_vertices": 120,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.30902,
+        0.5,
+        0.80902
+      ],
+      "nearest_degree_histogram": {
+        "12": 120
+      }
+    }
+  ],
+  "constraint_regime_sweep.py": [
+    {
+      "vertices": 120,
+      "unique_vertices": 120,
+      "norm_range": [
+        1.0,
+        1.0
+      ],
+      "positive_dot_tiers": [
+        0.30902,
+        0.5,
+        0.80902
+      ],
+      "nearest_degree_histogram": {
+        "12": 120
+      }
+    }
+  ]
+}

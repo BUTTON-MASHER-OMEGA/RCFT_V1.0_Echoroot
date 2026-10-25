@@ -1,0 +1,30 @@
+{
+  "source_changes": 244,
+  "changes_by_area": {
+    "rcf": 28,
+    "rcmt": 166,
+    "projects/Operational_Phase_Space": 44,
+    "projects/lisi-smg-test": 6
+  },
+  "unchanged_frozen_inputs": [
+    "projects/lisi-smg-test/references/smg_v2.1_concat.md",
+    "projects/lisi-smg-test/references/cpt_and_triality_lisi.pdf",
+    "projects/lisi-smg-test/reference_geometry/120cell_vertices.txt",
+    "projects/lisi-smg-test/reference_geometry/120cell_adjacency.txt",
+    "projects/lisi-smg-test/reference_geometry/600cell_adjacency.txt"
+  ],
+  "preexisting_caches_unchanged": true,
+  "historical_density_table_unchanged": true,
+  "clean_ops_scripts": 21,
+  "bounded_ops_runs": 8,
+  "skipped_ops_runs": 13,
+  "matching_historical_json_packets": 4,
+  "rcmt_canonical_structures": 165,
+  "unresolved_source_documents": 4,
+  "generated_registry_unready": true,
+  "header_dependency_cycles": 0,
+  "active_body_missing_paths": 0,
+  "source_manifests_verified": true,
+  "bounded_test_log": "bounded-tests.txt",
+  "test_summary": ".....................                                                    [100%]\n21 passed in 0.94s"
+}

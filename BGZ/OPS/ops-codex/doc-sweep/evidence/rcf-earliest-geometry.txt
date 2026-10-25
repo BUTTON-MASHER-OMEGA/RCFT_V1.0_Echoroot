@@ -1,0 +1,166 @@
+### `geometry.md`
+
+# Geometry Abstraction Layer
+## RCF Geometry Contract (Domain‑Agnostic)
+
+This section defines the minimal geometric requirements for any RCF implementation.
+
+It does **not** assume a specific group, metric, manifold, or domain.
+It specifies the structural invariants required for RCF dynamics and boundary behavior to be well‑defined.
+
+RCF geometry must be defined at two levels:
+
+- an **abstraction layer** that specifies structural invariants
+- an **implementation layer** that instantiates them in a concrete geometry
+
+These constraints form the **Geometry Abstraction Layer**:
+an upstream contract that all downstream geometries must satisfy.
+
+---
+
+## 1. Dual‑Lane Requirement
+
+RCF requires two **functionally irreducible** structural roles:
+
+- **Memory / containment**
+- **Motion / direction**
+
+These roles cannot collapse without destroying core invariants.
+However, implementations may share representational structure as long as the roles remain distinct.
+
+Any admissible RCF geometry must therefore implement:
+
+- a **memory‑preserving lane** (informational structure)
+- a **motion‑preserving lane** (trajectory structure)
+
+The lanes must be **functionally irreducible but representationally compatible**.
+
+This dual‑lane architecture is the minimal structure capable of supporting:
+
+- history‑sensitive refinement
+- constrained evolution
+- cost/drag analogues
+- stable boundary behavior
+
+> “cost” is representational, not energetic
+
+---
+
+## 2. Memory‑Preserving Lane (Informational Structure)
+
+The memory lane must support:
+
+- a nondegenerate containment structure
+  (e.g., symplectic form, conserved measure, or equivalent invariant)
+
+- a distinguished refinement direction
+  (a memory axis or ordering parameter)
+
+- a misalignment cost function
+  (distance from the memory direction)
+
+- non‑Markovian evolution
+  (history‑sensitive admissibility)
+
+- **existence of a conserved informational invariant under admissible refinement**
+
+Any geometry that cannot encode persistent containment plus history‑sensitive refinement is not a valid RCF memory lane.
+
+---
+
+## 3. Motion‑Preserving Lane (Trajectory Structure)
+
+The motion lane must support:
+
+- directional trajectories
+
+- resistance to deformation
+  (curvature/stiffness analogue)
+
+- **a minimally constrained sector**
+  (directions with locally minimal drag relative to the system’s cost metric)
+
+- compatibility with local transformation structure
+  (whatever “local symmetry” means in the domain)
+
+The exact representation is domain‑dependent.
+
+Any geometry that cannot encode constrained motion and a distinguished minimally constrained sector is not a valid RCF motion lane.
+
+---
+
+## 4. Compatibility Requirement
+
+The two lanes must satisfy:
+
+- **Functional irreducibility**
+  Neither lane’s functional role can be eliminated without destroying core invariants.
+
+- **Coherence**
+  Refinement‑time evolution preserves both lane invariants.
+
+- **Interoperability**
+  Cost/drag arises from interaction between lanes, not from either lane alone.
+
+This prevents redundancy and ensures the dual‑lane structure is load‑bearing.
+
+---
+
+## 5. Boundary Representation Requirement
+
+Any admissible dual‑lane geometry must induce a **boundary representation**:
+
+a closed algebra of allowed transformations exposed to the environment.
+
+This boundary algebra must:
+
+- be derived from the bulk dual‑lane geometry
+- be internally consistent
+- be closed under composition
+
+The interpretation of the algebra is domain‑dependent:
+
+- physics → gauge symmetries
+- business systems → roles, permissions, workflows
+- ML → observable state transitions
+- cognition → behavioral interface
+
+The abstraction requires only:
+
+> The system exposes a well‑defined transformation algebra determined by its geometry.
+
+This ensures visible behavior is constrained by structure rather than arbitrary rule sets.
+
+---
+
+## 6. Minimality Requirement
+
+The geometry must be:
+
+- **Eliminable**
+  No structure beyond what RCF dynamics require.
+
+- **Non‑redundant**
+  No duplicated roles across lanes.
+
+- **Invariant‑preserving**
+  Core invariants survive refinement.
+
+- **Accident‑free**
+  No features justified solely by implementation convenience.
+
+Any geometric feature must be load‑bearing for dynamics or boundary algebra.
+
+---
+
+## Summary
+
+The Geometry Abstraction Layer requires:
+
+- two independent geometric lanes (memory and motion)
+- invariant structures in each lane
+- refinement‑time compatibility
+- an induced boundary transformation algebra
+- strict minimality
+
+Specific geometries (e.g., particular groups or manifolds) are **implementations** of this contract, not the contract itself.

@@ -1,0 +1,90 @@
+[
+  {
+    "path": "rcf/modules/gcm_interface/survivor_indexing.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Align active public indexing prose with approved target-driven history"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/mode-structure.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Remove universal and independent-emergence implications"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/symmetry-alignment.md",
+    "decisions": [
+      "D6",
+      "D9"
+    ],
+    "reason": "Keep alignment narrative explicitly historical/profile-scoped"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/time_constraints.md",
+    "decisions": [
+      "D3",
+      "D5"
+    ],
+    "reason": "Resolve event-order versus physics-time ambiguity against explicit upstream owner"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Avoid suggesting downstream refinements grant access or new requirements to upstream RCF modules"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/coherence_contract.md",
+    "decisions": [
+      "D3",
+      "D8"
+    ],
+    "reason": "Constrain local scoring terminology to imported-record interpretation"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/candidate-geometries/density-regimes.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Put historical evidence status in the document contract"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/600-cell/survival-stats.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Put historical evidence status in the document contract"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/dual-5-demicube/survival-stats.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Put historical evidence status in the document contract"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/e8/survival-stats.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Put historical evidence status in the document contract"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/mismatch-function.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Distinguish formula specification from unverified historical numerical records"
+  },
+  {
+    "path": "rcmt/local/constraints/mode_space.md",
+    "decisions": [
+      "D2"
+    ],
+    "reason": "Replace residual implementation-selected wording with active research candidate status"
+  }
+]

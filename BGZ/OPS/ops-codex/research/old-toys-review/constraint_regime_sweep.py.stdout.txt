@@ -1,0 +1,18 @@
+--- 600-Cell (Standard Density) Relational Profile ---
+Vertex Count (Constraint Capacity): 120
+Total Unique Tiers (Full Spectrum): 8
+Stable Positive Tiers (Shadow):     3
+Tier Values: [0.80902, 0.5, 0.30902]
+
+--- Dual 5-Demicube (Supermassive Regime) ---
+Vertex Count (Constraint Capacity): 26
+Total Unique Tiers (Full Spectrum): Highly Irregular (Anisotropic)
+Stable Positive Tiers (Shadow):     Slush-Dominated
+Tier Values: [Non-uniform due to hyper-compression]
+
+--- E8 Lattice (Terminal Extrema) Relational Profile ---
+Vertex Count (Constraint Capacity): 240
+Total Unique Tiers (Full Spectrum): 4
+Stable Positive Tiers (Shadow):     1
+Tier Values: [0.5]
+

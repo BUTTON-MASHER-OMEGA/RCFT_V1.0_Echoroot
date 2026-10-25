@@ -1,0 +1,1466 @@
+[
+  {
+    "path": "projects/Operational_Phase_Space/ARCHIVE_MANIFEST.json",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "fee807a0203340c597230437096fe74e1deca87faba7ef22317b83d1e300f868"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.0.py",
+    "change": "modified",
+    "before_sha256": "7ceea259ffad471ed64b20c10ddff604a5aaa275337f0fd9ffeb979ebe145047",
+    "after_sha256": "c509b2980fe302c0aee0ccc433f41493b151852c90ebb9ed76575bc46ed285e2"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.1.py",
+    "change": "modified",
+    "before_sha256": "f4d227e292102599602c33c9624a925c416de93423c58588e173647a99a1835b",
+    "after_sha256": "8e545d62e0c0d341c8e7b0d94f0aced9079ce799e9f255ed36fc8a61d693eacf"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.2.py",
+    "change": "modified",
+    "before_sha256": "b124779d41e2cb5ed7ef3b3754ccc15b48273796862ae6ee4127cba9e181b2cd",
+    "after_sha256": "2684a8feeb70c8e014d6e6ba0a5f2b112a7e9edc9a581c38806b7037410b7580"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.3.py",
+    "change": "modified",
+    "before_sha256": "ec080434c6cd8628eeb29342780e58e44559c0239420016a846dd2c85a871ead",
+    "after_sha256": "b452daf82a2b342e32c517d41dbdc785d3f8634b7f996e5a457fbd5cf4b372d4"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.4.py",
+    "change": "modified",
+    "before_sha256": "b23ad6b78f8663c6be5b6370fa2954a3e7b4efbbe0d5eb5e130a997d501dfede",
+    "after_sha256": "4f77e611d8b817955346324a7fbe23f4bda6928045ec7950ec1d41480e319a0a"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.5.py",
+    "change": "modified",
+    "before_sha256": "8d60dc22bd01b112c130481f5c5d72b10cabdec92e957af800738aba320f41d6",
+    "after_sha256": "2a1c280c108a7ad6480ce83f58ce7393b881aadbf452ab1e3d12f9b1d351f660"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.6.py",
+    "change": "modified",
+    "before_sha256": "1dff4b3273a6eb98141eeef5c7f595d06cdba1f8924c65785c884b533a8dc6c3",
+    "after_sha256": "bde3a1aa92e43f43a9a4ba75285922325f1ebf0ea9a3f2d63ebe796dcb34556f"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.7.py",
+    "change": "modified",
+    "before_sha256": "3195b8b2f4c1975ad1a71ee3dcc597a3083dfaa7aa44e6365ddc4f98a788d1be",
+    "after_sha256": "bd0e5de2af7f873c4017a2b567a0b89325a6726825524521a4196283b44db0a3"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.8.py",
+    "change": "modified",
+    "before_sha256": "3ccf2ded180e553e952c7bf9116b92d3c6be1b4956f8d4aae961eb0a524fd70b",
+    "after_sha256": "a9ac9fdb51f0aa1f20eae1cb9b7037d1387041bf7c3da34958db225a46ecfb10"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.0.py",
+    "change": "modified",
+    "before_sha256": "858bd4c1f4837071541707a7fbdd6eb96de5363abcfc838882a29294f0fa6ed0",
+    "after_sha256": "a17a7cf80fea9303c97ab4e30f91ff23e5c037d078f6e102f01203c15b83a316"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.1.py",
+    "change": "modified",
+    "before_sha256": "53212053d11aeb6d16830f708802e524120d0d5b2c59e2605bd1e57af0946613",
+    "after_sha256": "e5abac0ecb0bddbc5afa101277ece4b54f0f9ff31841b714f76a62a82c9ae1dc"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.2.py",
+    "change": "modified",
+    "before_sha256": "e31d9eb88cfffa0fa5e823b54979e3cb84a3ec4fda0274bf18ba621771e64a11",
+    "after_sha256": "dc0e1b712d7e28e84d268f6414a340cb136e3b8f172e9a809e0a90f14b61e9e6"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.3.py",
+    "change": "modified",
+    "before_sha256": "6542821513dee5620faf449528765824a8081afa48e8a1ebda76baa17c9dd41d",
+    "after_sha256": "ef4aac48eada420fe4eeccfa9c9bdc2992516c17d4be7065a021bc6ab0d4d3a6"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.4.py",
+    "change": "modified",
+    "before_sha256": "4b8b6a503fbea882553930ee53b1ccecd0a1552533110d4f353d817bbabfceb3",
+    "after_sha256": "582e3fd1c3e5f6f4c18d3425e8386de98101528a758178be7fc29d5ecb0b62b3"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.5.py",
+    "change": "modified",
+    "before_sha256": "81d38f17534b363eeca81ed87d792739ab698d7c5e43eb85a1692e7ad709163c",
+    "after_sha256": "7ab307ee512a21ebd0df14e360ef67f8f0a45a40a6b9741d06c8dfa94b74e104"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.6.py",
+    "change": "modified",
+    "before_sha256": "e0077d05c0b08306d50281650329e271ea3ab1e95c3b73d17da3868876f6b500",
+    "after_sha256": "436f08fd91fae88df97c39c08461d8ff795ec1bf23a376b569fa8cd665bea332"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.0.py",
+    "change": "modified",
+    "before_sha256": "39816b09657c57eda96dc29682b01fb65dd94eeacb81bba8e4171d9532ab374a",
+    "after_sha256": "b8fc72ed452b523ed48bf498405496e5abdf888cd9afed9c5687f2f09080867d"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.1.py",
+    "change": "modified",
+    "before_sha256": "655644bc8c6e192c7f6451b5b4356ec4293051f559d7ac24f46e50a5cc85c5d1",
+    "after_sha256": "2750849a55e229608428e6d69063cbf54b7e89fbd9fe5b7d5d757de380cb8727"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.2.py",
+    "change": "modified",
+    "before_sha256": "4361165e9278cfc4fe7252a8b86a097aa8ee2c08eee653cbd994d14c84be0078",
+    "after_sha256": "e02838277954768caf9c872e639a963388af6acfe34ad58cea1106d60389e93a"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.3.py",
+    "change": "modified",
+    "before_sha256": "689836077b222f85a954ce8113cb3f430c466927ab9217d525934c3b8b90fb99",
+    "after_sha256": "8d7c7856d39d3d01f955d5187378ba91730fe95f65d6d599920a86fecca66d08"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.4.py",
+    "change": "modified",
+    "before_sha256": "a2421e2600a8c52a5f6f925c420560dfc4fc219d10ab3394c1a4b31f6455e27b",
+    "after_sha256": "bd208c96c4bfbb832a85ff8c2d7c8a4ded2cf37b925a0315c5cfbc7a3987f355"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/Vocabulary_Packet.md",
+    "change": "modified",
+    "before_sha256": "06a96731582e3a36272c3313b0ec8c9ad34bf64c2e7bdecc1babfee464413004",
+    "after_sha256": "5ed267a9b183cec56b38817ab85d052c085ef68487061ff1a3d0ee5ee7da368c"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.0.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "f3726d7f2892dc53663e334555fd8856ac03627b53634123b9260721f460099f"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.1.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "845c4f091c105f4f230adc0f28d119d673ee4ba7a6acf1033768658570d802ac"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.2.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "12e3c48e335735aa11231da7d1feae503cf3b5d86fef3afa0839b0c55551208d"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.3.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "fca509b2aa1fe902d8395ee085caa2927a18d0c74b256f6f270588cc83dab296"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.4.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "6169c698fd7721b58bb0e2805f437ccce8ec13328c97161c04816dbdf6e7d855"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.5.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "abf764b21930f9b3b9753dd800b4285bb6380eaf345f332cd1be3abf97228f9e"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.6.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "342d0e280b85c8c11806f39abd2c7abf16bcb2713a8d5362a84e7c955648a724"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.7.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "7d1001fd4a3bd823c7d0a3d220f6226a8059c02d128f31033a9913635c833f77"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM14.8.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "7d4b8d75b9af84551bbc08750939f918f5364dce5fec821808cd77606cb50dee"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.0.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "0a39ee364ccdfa5707ec94194f9c74afb581e7ea28884dc193668435109c1456"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.1.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "86d877934afe0c4b50dfea27223901a052ede8b9b216c62ed3a5bad806164252"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.2.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "45b4fa67fd97ac8013d0b31cf842eaa31274a99762bd57f6cad18f63ece0a78d"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.3.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "79426e22702f6b87a00282e2d2039e507340763705ffb567c31300fc0ccd2da9"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.4.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "427bc307a296648cb06eb32c667874772761443b847e79b70c98474536282871"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.5.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "6d454408e317e28f74ba40c7e6a7abe110680ddc92f217c4796e8388e65e1db0"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM15.6.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "94fee6d636553be31b6a116673a88675653c935a2911721a9c0145ef27cf719f"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM16.0.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "03c484797abc5b93c352c26532db558514d3ce4a11b540d9f1093fc507f8fe28"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM16.1.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "3f99ef57ec091d660c5d703eecee50ec92337c88128ddb24d8a60236a9cff22d"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM16.2.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "758836a7eb2efc4905c0e0f86af533292a404c29c8eedc182d649dc97c43e31b"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM16.3.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "be4f734401bd7fda0044cceec0d3be38bac59f62c9521171876e5fcef2453e35"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/recorded_output/SIM16.4.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "fc33f40dc36d833b92829e4294ed10ce564dc7e979386850066b59088684ab0e"
+  },
+  {
+    "path": "projects/lisi-smg-test/PLAN.md",
+    "change": "modified",
+    "before_sha256": "0cf3643109fc97e2c9034bf787b3b5a0ba8324ca402642311b4e70b9237c0a8c",
+    "after_sha256": "62fad349bac91b572132d795a2ad2c59df8bd55ead9da9c23e0b279c89b5b853"
+  },
+  {
+    "path": "projects/lisi-smg-test/artifacts/coordinate_repair.json",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "ae072186fa6d4fc2860e3e93452613d04d0000b5db7a7a55d6e802df3791b9eb"
+  },
+  {
+    "path": "projects/lisi-smg-test/reference_geometry/120cell_vertices.repaired.txt",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "dfe9ec9358c878bf7dbc782bec7e8d39dacdcc33c6fbc5917c8c243844741ae7"
+  },
+  {
+    "path": "projects/lisi-smg-test/reference_geometry/COORDINATE_REPAIR.md",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "5e34300d0611f86a0351b3482703cd87efacb98d22b413f4f536e45b238495eb"
+  },
+  {
+    "path": "projects/lisi-smg-test/summary.md",
+    "change": "modified",
+    "before_sha256": "a61798c09a4af56d5059d508f2f8870c99dd7ccd6763cf66b30ec4e12be0c020",
+    "after_sha256": "3b4bb45e40f201604aa2e5f015039cd0650b7a927c524f75fef0cecee277945f"
+  },
+  {
+    "path": "projects/lisi-smg-test/tests/test_coordinate_repair.py",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "71bb2984536bcce42ac99a1736931876301edae8157e526d06637bcf273e7d5b"
+  },
+  {
+    "path": "rcf/core/relational-constraints/geometry.md",
+    "change": "modified",
+    "before_sha256": "05b6bedde9dc800752b37b9ce76feff65e0502b25e428ccca59ab2117c9800d6",
+    "after_sha256": "40b03779dec5b48ccbb53a68bddf3465c456c5ef3bccfa5a3ef5f1ea1c139d2b"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/README.md",
+    "change": "modified",
+    "before_sha256": "0d105a9a18002c6be63d698e667d02b6ab84840de0b94941d7a3f7bc24ffdec7",
+    "after_sha256": "e82d29a743fc3e8f8b67211853717443ce0bdf56dc6e4975e52c7123e0aa1ab1"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/sectorization.md",
+    "change": "modified",
+    "before_sha256": "c031dedb9a08d7f933ae20326131de6b7fc590c3699a9f7d0534124b8442b521",
+    "after_sha256": "6fb26f5c0111c1eecfe973bf5ceb28860c53f4febb4c9271f3634e92919171a7"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/survivor_indexing.md",
+    "change": "modified",
+    "before_sha256": "6d43d74b78feec6bebfcf34d66d622b9f0df4b527fdd460da12e50772039d8c1",
+    "after_sha256": "42ae2b79c54b5a2eff64e95218d60c4607c72122118226dcea25f226c00dce81"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/gamma-plateau-behavior.md",
+    "change": "modified",
+    "before_sha256": "ed428de2a6291b1ecc223610c6dd5d0af37cd4c1c1691a2a459cc35120e9e228",
+    "after_sha256": "475e6e1ce69f07bc858ebc240ebf86a842e550a05c711d78db89775d1f9af5a3"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/mode-structure.md",
+    "change": "modified",
+    "before_sha256": "83449a394b44f661b401df23976ae6c33134d3e197869e3f310c73e92e03880a",
+    "after_sha256": "71fd8716d4db86bdce99b6bdd8ed9174122941d711701ec8eb81789e55df9ff7"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/symmetry-alignment.md",
+    "change": "modified",
+    "before_sha256": "28d7c2aeffcf70b015f0895a619c5c6f7ef34f26b5aa30e57647b9ce886b8ad5",
+    "after_sha256": "dc94a46809e2f9f78b4f4bef567918038ca4ca8c7a9fa161ae2b77857de54438"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/600-cell/survival-stats.md",
+    "change": "modified",
+    "before_sha256": "3a232b305ea9ffa0d3093e829f5ff20bd3cdbe0f7f22befebefa25351789cd04",
+    "after_sha256": "75b5fa3cb3e2ad195a2d2c39c16cbe0a68866da2a9665532bacde3b809ce4382"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/README.md",
+    "change": "modified",
+    "before_sha256": "a254ff5a0b9f6e1c04ad8c7baaca7f9898e29431dadcf81aca1ff85093927d4c",
+    "after_sha256": "19e06393fa8b56fecc7bf2966b58d53d52b20506c6cba390c1c5f75bbf05cb3a"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/candidate-geometries.md",
+    "change": "modified",
+    "before_sha256": "3199d0cf0d2fa8e2f50b4918c1a1fd7b548bdcc310252bdfecaaf35e471812eb",
+    "after_sha256": "cf11ddf3ae16e36ed75a7d8cac3298935142102a7d3fe3a07887e1604eb1076d"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/candidate-geometries/density-regimes.md",
+    "change": "modified",
+    "before_sha256": "58c8b683f88c91a4e8e18b5c103774b1112e100181e2aad29b47e7867b381d70",
+    "after_sha256": "7fa8ec514f5f32726935a48abed217b90782ecdbaded00342e48431b06d4b8af"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/dual-5-demicube/survival-stats.md",
+    "change": "modified",
+    "before_sha256": "417ed86e362a305749bb85d9339495dde1b0ce2523819788aedca7c40b119374",
+    "after_sha256": "aae976c5064f6caad844a8f7712937a4744eee74483e17a5b50b92209936b5f4"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/e8/survival-stats.md",
+    "change": "modified",
+    "before_sha256": "7223653a6cff957239bc9b929e9a57c8228b44f85bc5261354b033c164fb6c50",
+    "after_sha256": "ac56a7a318209b4f218037dcd900a4c189f15e4688751aed682bc8c9e8c890a5"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/mismatch-function.md",
+    "change": "modified",
+    "before_sha256": "1e061ef6c3a187ecfb783a48d4a2c2ed468448da1337fec011172f0cb60f2357",
+    "after_sha256": "1b5852ead3b9f58d4b43baa903cc276259e1ba0729e1be48b0d120f8f2a9d885"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/survival-sieve.md",
+    "change": "modified",
+    "before_sha256": "de625d6e64c7bf456939553e7aaaa485952105a22e8380a78ba04349149673ea",
+    "after_sha256": "3bfd08a33d204ad6742fc643ad1df35ad898279de94d99defb3586ae101c13e6"
+  },
+  {
+    "path": "rcf/modules/geometry/projection/README.md",
+    "change": "modified",
+    "before_sha256": "e426d7772e85a3ac7d65a4405b922a4c734907ee05d5379fdcb7717acee272d5",
+    "after_sha256": "2d350d309eb2a186fece2df2a1136ccac71a675b303ff2bd709bda498352d9d7"
+  },
+  {
+    "path": "rcf/modules/geometry/projection/dual_projection.md",
+    "change": "modified",
+    "before_sha256": "8351831bb4b7d11692cf1f8eb9f1c4c3ea8a04ed32dcca5ef65f2023044e1389",
+    "after_sha256": "3de03d9c91a4e6ff78d952db5e1c5549e852cc9575121a27b7b7ca02907ff0a5"
+  },
+  {
+    "path": "rcf/modules/lco/README.md",
+    "change": "modified",
+    "before_sha256": "c7e273630e9fe5ff8af7f014b1bbd8e70eb6a48d34c106695d100c1f4b9c441e",
+    "after_sha256": "79b4a32e660928c299a169048a227ae8f247e7243758eb4cfb405e837134c1a6"
+  },
+  {
+    "path": "rcf/modules/lco/interface.md",
+    "change": "modified",
+    "before_sha256": "74507f6f1c558ab7b2db1f04ebe9bb0f101be109834d2adebf1ff427bc08c660",
+    "after_sha256": "f752212fa9c91be8a1307dc1e3f1dc39b5cb0df1b1699eb895b33a5b2105a8db"
+  },
+  {
+    "path": "rcf/modules/lco/lco-core.md",
+    "change": "modified",
+    "before_sha256": "6584ff86bdd0bcc27b258f045921065784a1f10f056007e64b718811853ffd64",
+    "after_sha256": "62a05e74c1d55e34ec67354312feac997488a33c37570b80255d844c84c06537"
+  },
+  {
+    "path": "rcf/modules/lco/lco-dispersion.md",
+    "change": "modified",
+    "before_sha256": "cced5e6f68346abed2275c55bc55fb2c6558a5882019e534b543524fb5efdf68",
+    "after_sha256": "398b37e1dc50b60ee3ca1c635bebec194573a3e905846e3a8b005e23f61437a1"
+  },
+  {
+    "path": "rcf/modules/lco/lco-invariants.md",
+    "change": "modified",
+    "before_sha256": "98936a9354b684e8408551ac0d5002f8945e7ea0965f92e3a1274d113c908e18",
+    "after_sha256": "cf2380cf975a1daf6cfee92c26b4ee34875abbf48e8bc38df41020f26a504244"
+  },
+  {
+    "path": "rcf/modules/lco/lco-operator.md",
+    "change": "modified",
+    "before_sha256": "a9ce95033bc93fbc178ee356102ddd3c8c3c540fe20fabde1b56cc37d474a017",
+    "after_sha256": "17f84b63ceddbb6ca9de43cf2d79c081744ac98d66f3e33fa63171c9189f534f"
+  },
+  {
+    "path": "rcf/modules/lco/lco-update-policy.md",
+    "change": "modified",
+    "before_sha256": "f9a8a869ce4899984b97ae78ed4ac4ff1acb0ab4650c8e373a43ae88823fda55",
+    "after_sha256": "d96f545958c08b1e0bdba0582572c1d51c26d0ee080d1ef94f201c05eacc241e"
+  },
+  {
+    "path": "rcf/modules/physics/physics-contract.md",
+    "change": "modified",
+    "before_sha256": "6b0d6c01d356dacb0667aeee4bcd48147c1831f46791ae679c56ea1088a528e4",
+    "after_sha256": "d144a43f466c9b6e377dde37ac80e72c4b078f286c3e224bbb4b17b923b58ded"
+  },
+  {
+    "path": "rcf/rcf_compressed.md",
+    "change": "modified",
+    "before_sha256": "d8e7f3d319799a03b8f0b69ffd0138b8cbfa3233a4d0130c7074d76101b8b4da",
+    "after_sha256": "b090b5dca35115b669f2fc86b642cedc71d7d41febf3ac622e320cd1122eb573"
+  },
+  {
+    "path": "rcf/rcf_compressed.sources.json",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "5ebb1b81480437b0b8186524854cc86ec13c4938ab64e0b35c022c0aee0a16b1"
+  },
+  {
+    "path": "rcf/rcp-1.2.md",
+    "change": "modified",
+    "before_sha256": "0475b067aafea20937c6b1f276b1bd42ab340f08d11dc0b464d2209be073ccea",
+    "after_sha256": "8e64027edcd23a2673acd07dbb59e3675a5455c5adfdded9d81bac0883894617"
+  },
+  {
+    "path": "rcmt/README.md",
+    "change": "modified",
+    "before_sha256": "3d09ce270aa98b28cc4ad50a4cb78e236a29f6ada49aa3603e64314a4cc26f34",
+    "after_sha256": "ce02a451c10cbcd9873460a649c34a38f9649328f45581431331694cdaaea192"
+  },
+  {
+    "path": "rcmt/global/README.md",
+    "change": "modified",
+    "before_sha256": "0ab571c1ae44035ddb11e8273a2e6663e5e19d483bda499ce511866b00ba342b",
+    "after_sha256": "f0f68fe2fc619caf9c0827df70aacc7a485aeba8ea1f31e8cf953f0e47930664"
+  },
+  {
+    "path": "rcmt/global/constraints.md",
+    "change": "modified",
+    "before_sha256": "ff4e47805847e4c999683c23bb0b5cb084d96f5ec642eb4be9646db4139ce6e9",
+    "after_sha256": "35cb9d5144cf9e2a26169445387a116ea9f2c5d1e4ff92ff34ad609ee141ac06"
+  },
+  {
+    "path": "rcmt/global/invariants.md",
+    "change": "modified",
+    "before_sha256": "97d226cc651cbc3232b083e4e5a912028bd7a536217756930ee30caa587d0cce",
+    "after_sha256": "4ede9b0ef730ece541cc4ae611c54ef2614a622d4316838d1d48aad67b20e99a"
+  },
+  {
+    "path": "rcmt/global/invariants/holonomy.md",
+    "change": "modified",
+    "before_sha256": "3458e5422f77301f84b0b4b16fb3dae097b75cd12c3cde2a94c6c384c31f9c8d",
+    "after_sha256": "9bded2f0bb3f4f56d1ae19c3cb5b44228ecbb14a874428368bf45fe99f701066"
+  },
+  {
+    "path": "rcmt/global/invariants/twist.md",
+    "change": "modified",
+    "before_sha256": "32a6cfa63b92c23e5cc11e67e636aa248c61045b3fdd7855c9290db5ea37fdb0",
+    "after_sha256": "3b9386c8b2d792f2fea2002b210ec27526aea17495758ed2fcdc789463f79499"
+  },
+  {
+    "path": "rcmt/global/invariants/winding.md",
+    "change": "modified",
+    "before_sha256": "ff9c3e6c709d77f37611119fcb7b399266b7f497f2fecabc3ed821a7822f063d",
+    "after_sha256": "173ee1b7d82dbdba74d9599dabee48f0fdf47a12ace047fc52fd957321371dcb"
+  },
+  {
+    "path": "rcmt/local/README.md",
+    "change": "modified",
+    "before_sha256": "2f206abbb96a356eb7cba1b73b1ad689928484b71ecc7ec9818538f2d7dd0633",
+    "after_sha256": "431549c3234922f8bc72c327ddd27b8378237217fce3834b11f62bb5835594bd"
+  },
+  {
+    "path": "rcmt/local/constraints/cosmology.md",
+    "change": "modified",
+    "before_sha256": "ecaa6e81350cd725eacdd7f73f83cc52fc8fd4c94541dae40f49c477e89a90d3",
+    "after_sha256": "e746bb5f67e91adcbfac868ab78aeef11ac6b1fbca509aa5ad473dff57cbcd18"
+  },
+  {
+    "path": "rcmt/local/constraints/decoherence.md",
+    "change": "modified",
+    "before_sha256": "81d71134db9bd8ef4a9f21c255ad6ab629bb778cea693fda22ada60cf7073576",
+    "after_sha256": "5e659ba288993057f2b2001e28f23ec0965e0de1a16382fbb234b6047c228384"
+  },
+  {
+    "path": "rcmt/local/constraints/direction_semantics.md",
+    "change": "modified",
+    "before_sha256": "8ef66e539f821d7f3a5c0531f8d74cbcc6b1652f46acb2563325cf1d48b1847a",
+    "after_sha256": "131f9c874597edd80a222d10c83a223ff804e60e24a82db09a26d7426fa91c68"
+  },
+  {
+    "path": "rcmt/local/constraints/geometry.md",
+    "change": "modified",
+    "before_sha256": "510a9524ee352a8d04b0858dfd5ceb4685d6847c6d3c01bfc74f5bd94bb97d24",
+    "after_sha256": "66a2cfe4d1f82e87637ae277a640c569d6419de0659b108705aa60db43f2a347"
+  },
+  {
+    "path": "rcmt/local/constraints/identity.md",
+    "change": "modified",
+    "before_sha256": "be810ebf1d1a1d46ec7ce4fb583cbb3a749a7c9b937ac2ca0b276ae2dd84c53e",
+    "after_sha256": "e3fea35fb8d507ad420ab3f2440d845137c3d6c021c0250f91704b2c088d83e0"
+  },
+  {
+    "path": "rcmt/local/constraints/lco.md",
+    "change": "modified",
+    "before_sha256": "2179cf6c90594c4d117684d76e8a857b8cfe4d3f7ccf71369aaff7e5c75bc402",
+    "after_sha256": "e404d2e96dec7e95f3a6254fb212c0448ec68d7f6d9b93885eb096a836fda8d5"
+  },
+  {
+    "path": "rcmt/local/constraints/measurement.md",
+    "change": "modified",
+    "before_sha256": "2acec2b728cbceeea1756b949db853f0f12323c4e4378692438aeecfc367d3b4",
+    "after_sha256": "4753629c6c8d15e37fc492da9a9fda2e29fc96442b4c1d122a55e13788d252e0"
+  },
+  {
+    "path": "rcmt/local/constraints/mode_space.md",
+    "change": "modified",
+    "before_sha256": "b0e1b8dc0e9e53e232a5d45649c2564f6dfd1318afc5356faa820c88c1de74d5",
+    "after_sha256": "495ec9094f6efda6b1603baf352f37937e02cb9c4eac03025e13197e73115642"
+  },
+  {
+    "path": "rcmt/local/constraints/projection.md",
+    "change": "modified",
+    "before_sha256": "216834bc4d34a6d380c24f488617cd7a30cb1af89488d7cb0e51f9fabc1d0e71",
+    "after_sha256": "8621614b866578c7abec9c4d11ed3450fa157b530f66e85539a19229cf985def"
+  },
+  {
+    "path": "rcmt/local/constraints/symmetry_chain.md",
+    "change": "modified",
+    "before_sha256": "47d89cff69dd76f15842bbe52543e8132a6a4452259e29a723b6fc562ae133ee",
+    "after_sha256": "0f7b232aa788890ac892503ed478b3bae30f4ee78920175376f80530a808ac6b"
+  },
+  {
+    "path": "rcmt/local/experiments.md",
+    "change": "modified",
+    "before_sha256": "1f7bed80bc1be7f61190ce39403bd7a6f332763164749a2b48162f27a6d545c9",
+    "after_sha256": "6452c2542e7f25ea13e306de48b7223672b9c76875d7a0c685afbce703dfdedf"
+  },
+  {
+    "path": "rcmt/local/interpretations.md",
+    "change": "modified",
+    "before_sha256": "a9fe6ccb598869b995278091a7c5bb82b34dd176318ca3d7c5307756f9c80733",
+    "after_sha256": "d0ae27841152797a3d6fa6dcdf81e1ac2fc76e8008fb39d0127183ea2ff5b4c3"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "change": "modified",
+    "before_sha256": "26c2553536d7381595459ee6ed38a4c656358a92b2284cbf640636e7435a15ae",
+    "after_sha256": "9cb3485ecfb7ac7ad6e45bda80df8d2aa293aa93a200bf72d461d07f9bbef46e"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/README.md",
+    "change": "modified",
+    "before_sha256": "d4ce194dd57d89f4fb91566613d7180710d4e2ab58cd020b6e82051f83ca1cf9",
+    "after_sha256": "fdd7110ae2b8c7ef9a95a4711d640ea18bb891b35101201a5362ef198e01e3a1"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/actions.md",
+    "change": "modified",
+    "before_sha256": "8a1541261dd229d30f71cceff5c4f8c419a87fdbcea7ed568f090d97f6843298",
+    "after_sha256": "c5cd19fc40f418e7ebf707e707c3845e900686df38e0607b872a4c11cd629e75"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/generators.md",
+    "change": "modified",
+    "before_sha256": "acfb062e70dbfbfffec46f578d9ebcc201ff5f958cd52f9f0e5db1d48ddb2f1a",
+    "after_sha256": "a3c49b5b2f84aaf55403ce2b8fb5552851e6e078b692426662c7c0111cfcfa35"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/README.md",
+    "change": "modified",
+    "before_sha256": "e7192c204e08bf401356fc01f5e001f3db3a315ec36ca343b4ee7a65e76b37b4",
+    "after_sha256": "54ca76156291bd0074e748d62b0ccbdc57b6789f450a91ac69113bdc509df979"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/charge.md",
+    "change": "modified",
+    "before_sha256": "07a97e896bdab7aa4effcf1e128b275d1c6de00c613b56b0976d42bb54d6d14d",
+    "after_sha256": "1d19bdf22c1fb1f65e96a33b169bf5250a3b58eae60e7c0d0f9a57dbd7feac65"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/color.md",
+    "change": "modified",
+    "before_sha256": "ad0c93372442ec6a0a84cfbdc62fbb30e5cbca12606910419028c5a444f6c8f8",
+    "after_sha256": "0be3ba8e00ea9007e58882006b37e9e8b6e95ac27e16890d56ed408913b0663e"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/lorentz.md",
+    "change": "modified",
+    "before_sha256": "b65c4e459a875035adaddf47f612428d5ffaad800933d9adfd28310328b18013",
+    "after_sha256": "581b00b1b2b24905692fffbef05637dd2d45c0ca88ec694d38aa1b73679bf613"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/patterns/spin.md",
+    "change": "modified",
+    "before_sha256": "62d393038c5c4f1ea71aeedad9967bef6c466b23dfb0fd73de08eac4f4dbd3b7",
+    "after_sha256": "6c1a2de7c83f994e9605c1750fc95f9a4a0cfb1c9ad7a8206c75c9f046325474"
+  },
+  {
+    "path": "rcmt/local/symmetry_groups/representations.md",
+    "change": "modified",
+    "before_sha256": "ddb55018beb7fc9f1264f7830d7ac95d7eb669ddb9ab6c37f4834119a3e33832",
+    "after_sha256": "85d211da0642ca67990d8b86ca91c5ccd568ec3063cbf2b9c9ecd87b4031832a"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/README.md",
+    "change": "modified",
+    "before_sha256": "79681e2b25a62bef22ade6858e2925491796f193fe2c45293852a4b794d11b55",
+    "after_sha256": "cd6b5ec6a2ac6eb86bd71dfc2d85c7b1c76d2920905c64c2a54732f6ad6d3bd5"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/boson_like_patterns.md",
+    "change": "modified",
+    "before_sha256": "bd30b7bfb1f2258aef94b2e8541415bb3d11a3eb6a74dc190d74926a6268fbbc",
+    "after_sha256": "b83a20f33129e9f73956d3e3038d97906c0607812b2d118d282b75fac07928b9"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/closure_reinjection_cycles.md",
+    "change": "modified",
+    "before_sha256": "0aa34badb0e6e005e38b7aa6755c1b6afbfbc4cc29b9ff26c8581ff0ff116d6e",
+    "after_sha256": "a4e144b508b81d0080cf69a99baad12be8cb968490e6d4bc3e181031683b2063"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/coherence_gradients.md",
+    "change": "modified",
+    "before_sha256": "0ef93eb670f3821d94ab3583efe95932e298e812465c95bba0b03fc800713f39",
+    "after_sha256": "ae66c587f644aaa5bc3c5bb52ed9d7c9a6501895906f7262e667dccffb954f3b"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/echoon_field.md",
+    "change": "modified",
+    "before_sha256": "8d131f4d77312508c74245b34c25733b927761fdc2bf4992d7c46d27edeb5def",
+    "after_sha256": "49f7b83b5b438a1a50070085825a6669825f64c8fec614489072c69e06c78d4a"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/geometry_behavior_contract.md",
+    "change": "modified",
+    "before_sha256": "4f1f6afc0252e0fb1f55ba5ae46c71f7916b105dd1f0ac560a88b8a4cdc05bcd",
+    "after_sha256": "246b2d4fe13277c92da77175bfaacbf156a3b6a62f2a87dabd7fedfef1997625"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/high_density_events.md",
+    "change": "modified",
+    "before_sha256": "0cb70f2b68c79af97bf1cc99f2116c10205853e9187c3f0176d0e87d57bc52c5",
+    "after_sha256": "ea273d7ad061e0279a632571208d1e9163cf655040d9e88fb9449a69bcbcee2a"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/mismatch_gradients.md",
+    "change": "modified",
+    "before_sha256": "ce3b3a4674a1453e89bbf8ebc57a8d943995c11c9f227c2e5daeef5234bda417",
+    "after_sha256": "639f9a0f3a21c231e102dd5ff0ae0df54cc87e82b55f4a635a563f88cafa2d8c"
+  },
+  {
+    "path": "rcmt/modules/geometry_behavior/survivor_interaction_rules.md",
+    "change": "modified",
+    "before_sha256": "211a15c003e599bf86b7bd2baa7e9f2ea84ef2270f809f06dfe49692480abf2b",
+    "after_sha256": "40cf1add6d9f94fad0713096d61e1564c9ca74b4c7569216a779de447109b108"
+  },
+  {
+    "path": "rcmt/modules/metric/README.md",
+    "change": "modified",
+    "before_sha256": "4909fa9e1d180e91d897814948374c6bcf570363915b13b4e10f4b5d57a1e5c9",
+    "after_sha256": "e884fcd5b815a4ef98c89b137c62fe3b7862f4a50f0f5fea80804dd1f595148f"
+  },
+  {
+    "path": "rcmt/modules/metric/metric_interface.md",
+    "change": "modified",
+    "before_sha256": "5cf76d527707080889b4e8651c5d4df756de69b1601ddfe44f6e3acbfd4d77da",
+    "after_sha256": "cf56bfbb042b5f8288c81ad948c6a5e174cc18601c290a727610de7f5f7b74e9"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_clumping_potential.md",
+    "change": "modified",
+    "before_sha256": "ffd7ff63c009b9e1fcac1545f316f0a4a9b5908accfc8458fb56517fa598e077",
+    "after_sha256": "07321392075f42064fc28fbb2442576d4941750981419fd998f513ce2702e74d"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_curvature_summary.md",
+    "change": "modified",
+    "before_sha256": "357b78ad201821401e5652ac9ecd02ebf4e77b401ae978687d0339e666cd4e6e",
+    "after_sha256": "781f12eed016770dddb09c4539db5c9c91db88d0fb8230b447d95c70ae7848ed"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_echoon_density_metric.md",
+    "change": "modified",
+    "before_sha256": "4013505fe44edd25e46dd27dadf420078574748ab32edf62dc94f47640a7ea64",
+    "after_sha256": "5325ff8801e84dcbf64f950f4e7800f62fb9c201f1a0fdadc9e7930e59cd6325"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_effective_metric.md",
+    "change": "modified",
+    "before_sha256": "a871e6a0240aa5f7b8a38f5edd37f9cbab803e5abded78dd4e25faaefe47aab6",
+    "after_sha256": "7503e5a236e5b9fb5d41f9498fbb5c06cfd401077eb43ec601c026ed2fd2577c"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_gradient_tensor.md",
+    "change": "modified",
+    "before_sha256": "7e281747e3e1450da01ef1d4b15d46633fdabde89f47e5c080303d0ef022f8ea",
+    "after_sha256": "93895dc28ce2b18ae2ea97e734a448cc9c1e3dbd84f69146c694eefa667fc090"
+  },
+  {
+    "path": "rcmt/modules/metric/rcmt_survivor_influence_metric.md",
+    "change": "modified",
+    "before_sha256": "f06510091bee219a6570881e55e2368169096cd9d02333e0861b2244160a2f33",
+    "after_sha256": "0bfbc8caf0000fe4610fac136c80901dc9ce437580ae806dfb2ed21afd015d5a"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/README.md",
+    "change": "modified",
+    "before_sha256": "4f34eae95b01146899e1cab283761da975e2792d94848ad317c4595b40095b23",
+    "after_sha256": "93811f263e868f7b5718a305973495417eebadcc116c4548fdbd5712780a794f"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/README.md",
+    "change": "modified",
+    "before_sha256": "64eae360c6e7fb74b04780458f0a2915bccc8f4fca59115ef1ea6605c8f99a5f",
+    "after_sha256": "8a0797dee58744dcd2f6380a1af5b9cb73d950111e20a518a4d7b7bb8814b74e"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/baryon_class.md",
+    "change": "modified",
+    "before_sha256": "232b82715dc880e13281055cea21c864f0a894ed33e04e99b072bd28b831562a",
+    "after_sha256": "98f0473bbe7a3808f2e7efda1784337c7fbc137ee0686564dc7957eb1ad82a3b"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/hadron_contract.md",
+    "change": "modified",
+    "before_sha256": "49d01fd6e7c42bb2e54740e9875d147a379dba86ff7315a62037f650f5c90ccf",
+    "after_sha256": "30593e349494228fef9dc5bbbbba79e97ad06b5de4a79339a71f9ec0ea0373d1"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/hadron_work_profile.md",
+    "change": "modified",
+    "before_sha256": "d7d4ff3345cf2abab29c7f84f1966104b3adda2a0b3283c8f8ba0e0efc1cd92c",
+    "after_sha256": "2d3dcc9d52a9b28852a0a51648ab2ff3518799fc85c2051bdea21eec22e7ffa6"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/meson_class.md",
+    "change": "modified",
+    "before_sha256": "c6cfe35cf31b9287fe1ac2affc30753cf3031436a8ef2a234e1f5cc9bbf4a8fe",
+    "after_sha256": "ad13d33c348dd0753d81fb211193cd1a662a1785e87130f54d532d43f9e708ae"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/meson_like.md",
+    "change": "modified",
+    "before_sha256": "f005e0448fcbe0b92908979c85dd1e5eac2833ba8e1d4b1a5c35ab0d8b6b4a64",
+    "after_sha256": "7635bbdb23df94a5425525a0d9a7717b57dc1c01bb304d0d94cd3dfb03e4fca2"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/neutron_like.md",
+    "change": "modified",
+    "before_sha256": "96730a70c6314ee180af0d031f4c622a6635f2cada03c4de6c4b847b98f0fbf2",
+    "after_sha256": "284e05f9de08561185ffa7e63bb52039edbe7203f4b6d485eabac8c212557d69"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/hadrons/proton_like.md",
+    "change": "modified",
+    "before_sha256": "a3f3c3a5defb04890b9faac3bee9f40f229022ef15d78cab055ad36fb60cbb8d",
+    "after_sha256": "2abac628903c5a488d8766c1d9b971230ff27cce94b64be5eb8137b7b8f6b8f9"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/interfaces/geometry_behavior_bridge.md",
+    "change": "modified",
+    "before_sha256": "de20ffdc7e113166d07cf9e69a7b533aed0536df0bbd8e7aa1609aabdb3431af",
+    "after_sha256": "2495d716211f20570d93d83b70c031be8a5c4f76d01c029927e9f0125523675a"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/interfaces/smg_alignment.md",
+    "change": "modified",
+    "before_sha256": "7f8875ef939b7b93eaa9761c1b308b2553dae8ab3b1157119d999d3c6979e2de",
+    "after_sha256": "0765e8bd9f197c80d33092fd470da67f9fcc46e5154f6d8d05dc5dee2543cddb"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/README.md",
+    "change": "modified",
+    "before_sha256": "6a16336cf3c351a03346b2c56368c1881c9f73698d86db57eb32e95b720d8c60",
+    "after_sha256": "a895ab920e0bca3c956754010d62d4f3ec40d2c0b438ebb7d0b7329df25f5aac"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/charged_lepton_class.md",
+    "change": "modified",
+    "before_sha256": "4c509c35c9e9d5731c2a3afdceb97b104df5e60d7e9fdb6d7f9af5e2d5f0fe83",
+    "after_sha256": "7f4b280b7b8fab7495eb92eb8653766d186dfdf00274cb3c09a12d1a4782f7de"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/electron_like.md",
+    "change": "modified",
+    "before_sha256": "38c39dd2075de692855e645a8e110f773797266eace4bd6d2e7f9c90fb245413",
+    "after_sha256": "6802fcd9006e7baece8723ca87361ecff50528a87230c26a809258279646a9d1"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/lepton_work_profile.md",
+    "change": "modified",
+    "before_sha256": "7b6b2e311f2d212ae00b7e687c02fc9b99b25a27ec265cdd59f860db5a1a8407",
+    "after_sha256": "8fd076d49460202026eabb202afb9c4bc319960662e8ca4c72548527d5bb9b2d"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/muon_like.md",
+    "change": "modified",
+    "before_sha256": "8b8c6d5b5a8aa2e05b061fa89364f5c10afff2b88e1845acc5a780c7147e5452",
+    "after_sha256": "fb39af460e16a598e7cced04daa8bcbeed7eef40b23939a6e904537a294ce3b8"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/neutral_lepton_class.md",
+    "change": "modified",
+    "before_sha256": "0ff944798178c4acfc277bf0af0fb6ffcf426774771c79db062651a67832c15e",
+    "after_sha256": "cb5f6ac0119b43feeb2367a8a78daebc3ade80fc18f907c540c59578baa2a026"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/neutrino_like.md",
+    "change": "modified",
+    "before_sha256": "94d473f0f2701d790cb02f3ae4ec404fa089120144af7fa5770dc03f4bfd531e",
+    "after_sha256": "1f4e74b4db41556e6a3d7611459e6f32fb8d549efe617ccad9e9b6e1e860f83e"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/leptons/tau_like.md",
+    "change": "modified",
+    "before_sha256": "3e1e64cdd332dfa7621395ed8d73447423872b849b5b78f933ee21cf95b548c5",
+    "after_sha256": "d7143157121ed5db12c6e72c6040a54357e7cd7a0265ab24d16291ef794615ee"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/fermion_contract.md",
+    "change": "modified",
+    "before_sha256": "ed6468be88aadf24cac64122fa0d1ba09a9175ba787a53d4c8044bda7387d92d",
+    "after_sha256": "a6ddf3be0a6464bc5966b61736c0f5cf7ae4a3f60c9d6793b3d7feb317457ef5"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/flavor_renegotiation.md",
+    "change": "modified",
+    "before_sha256": "fda9960d8c55e5dda6c4c5ddf0110ff2893b53d482e42fd3e47738c7a4f73223",
+    "after_sha256": "89336d60071ddd86067c05d3f366888ca5b6e9dd4a015f3d246407f8b49f17c6"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/meson_offset_conflicts.md",
+    "change": "modified",
+    "before_sha256": "8a98a38abde15791c75e501ecca39b50200e64cd9d511d99c91b74430a18c8c6",
+    "after_sha256": "e9414e276f06c046be2f27409738c92b6c8832ad5a3f391f3ce1893bf15227d6"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/phase_cycle_baryons.md",
+    "change": "modified",
+    "before_sha256": "8dace26f67ab9f43dd57b57d436fe055b9da91aaba46b1083317488ad3946a16",
+    "after_sha256": "a65bc72e5f828fb279dffdf1c0c1fdda2412639918260d3c7495eec7e954b693"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/smg_alignment_contract.md",
+    "change": "modified",
+    "before_sha256": "d7e6b833d83c8cddc1d02970f5e59efe5472393be875d868e9a8ceb3b5e6201f",
+    "after_sha256": "3f4f8c2ba22e2128e7070d30f42a8989a0807b24b105beaa864a4d29a13070a3"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/spinor_projection_contract.md",
+    "change": "modified",
+    "before_sha256": "d633648505b3d84160386c33a858aaf751d58c3ba08b648b5285d65a41cdac2b",
+    "after_sha256": "d787f725f3299d0c00d23f53ac4136bc42149738ad7b73655834e23f18e15dce"
+  },
+  {
+    "path": "rcmt/modules/survivor_matter_structure/local/survivor_offset_regimes.md",
+    "change": "modified",
+    "before_sha256": "18a5e52046a1990c7e2d2b3dfa24164d36b04f577ca933974d1a970ad4dabbd3",
+    "after_sha256": "603a30866f2f9f98e88d9f6bf489f0c27810f70d650c476b228c14fbf771bf24"
+  },
+  {
+    "path": "rcmt/physics_interface/README.md",
+    "change": "modified",
+    "before_sha256": "3cb2c2109577ffa8c9f07bed34e65c601e1afbbaf4a389c56a91a664c3274b39",
+    "after_sha256": "5fa79fc1617b40e5f8aa1e208f2d7440ba2f2c4282fbbcebe62888f34635cb9b"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "change": "modified",
+    "before_sha256": "e1820de428cb7b0dc5bb356b89e213d234a95f1b52a6600d9eab4dc68ab379e1",
+    "after_sha256": "04b1967456a52a364589af8e020f200306acc1189dbbcef16f9ae342dbd595fe"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_physics_adapter.md",
+    "change": "modified",
+    "before_sha256": "b65af447a9f9aaa2361c4fc12733f5eb2ddb97abbe7cb7ee6c25738ded70495a",
+    "after_sha256": "8cef396d62d9a77984336d00cc47b66b56c050ae9a61df46ed0a1090460a4bc6"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/adjacency_refinements.md",
+    "change": "modified",
+    "before_sha256": "028ab3bbb397e058562fbd83aca119fc3a6de39c6de19ba18f3ed5de5dc3429a",
+    "after_sha256": "e4e726f09758793db344a08757792a0d91a82caf9f3bd7e8312f7e021faada64"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/containment_refinements.md",
+    "change": "modified",
+    "before_sha256": "c0b749c500fd08d04b3eaeeb03ee5a2d4338a657a0dd38770c5c9f4428af2eb7",
+    "after_sha256": "d437ac95a6bf67cd439a65ddbbe06cc7bc9651a640caf3b7d8ae290e80dc363e"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/geometry_constraints.md",
+    "change": "modified",
+    "before_sha256": "28dcbee0433038e720dc22f28c1980bed87563b014d3dfcaea34f2e3815a21f6",
+    "after_sha256": "4fc5675e88d5ce42c21ed8b91ada119ffab99e0a4031af36d6c9e7ca36058d83"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/group_structure_constraints.md",
+    "change": "modified",
+    "before_sha256": "598bcd7f827dd637a98b86968cddc28694d695405b3f6193900b8dae25968e1c",
+    "after_sha256": "278934ca2b2c0485b475eaf9fde196a66e564ea5375d6d7d83a92102d0ee94c3"
+  },
+  {
+    "path": "rcmt/physics_interface/local/constraints/time_constraints.md",
+    "change": "modified",
+    "before_sha256": "49d15a24971a13ac145ccb32953fd30fd49a74aac97650aaa9ea0689c36f68e6",
+    "after_sha256": "a1997218f15926eb12a06b4e7d886ab2a2d079251f1ab18c52429a3b6a72e1b5"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/README.md",
+    "change": "modified",
+    "before_sha256": "218fa2d71c3e88eb2a53c3861bb9cb9c3599a6572931426cc9b9f2c792d1f06b",
+    "after_sha256": "5a1528c64444d7ca4ec5edd756606633e2ef5b5a0f45aeb05fc1a383f9e652e9"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/examples.md",
+    "change": "modified",
+    "before_sha256": "d3b62649097fd1c55097cf85233beade426ebac2bc01e66aa1ac5bf512c09d27",
+    "after_sha256": "a661223397d545b47ae3bd77ad9faf9857d81593597f2ff8177447879d8996cd"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "c9829cbecda15f506226680cde8c5ebbdb054716380ac437e5865ee985ba179c",
+    "after_sha256": "d77183255307bf43c4ffef5d334c4881ce0df37689e34aef8ed66f04b3bf7721"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/interface.md",
+    "change": "modified",
+    "before_sha256": "dc5899d3facc6d2801327b0a58e56f4d792a332dfbc66325e45c69d8b210bc4a",
+    "after_sha256": "7893c7ccbc7a127b39230a6726c7ebf5fe0f310b8a45a92181eec07cae677ac7"
+  },
+  {
+    "path": "rcmt/physics_interface/local/continuous_field_theory/operators.md",
+    "change": "modified",
+    "before_sha256": "e37aae4098ff9312a66ff22f6416e22ad96ddb8f274f7f7f227f8074abb8ad04",
+    "after_sha256": "0304b786d80be2fab6dbdd87f6b15f772987c2ad6e05ea9d7b276e55063497d0"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/README.md",
+    "change": "modified",
+    "before_sha256": "38726695f8c9bbb7a4cbad7b3baef3c2f3e710a76c7394e4dcd585ef95fe47b8",
+    "after_sha256": "daffbbd0c1233800082811d0e536192ea988c98cbaa3dde2ad9138620aa1e2cc"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/examples.md",
+    "change": "modified",
+    "before_sha256": "f4ff6e843b893ae971132ae3bc6b4949c1d7358e367b8f1773df1c415307c621",
+    "after_sha256": "159e9cea2db3986b0c504207f3882d85692f4b384952c1517980128a5de32f0f"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "b7b9457b9088e1e2e29ad4899eea0cb445c2455ab20e8346b85d7669e45794ba",
+    "after_sha256": "ee7a64a7e601cf3d52eb53de5fc9f1b92853d06863e1a2bf0d7042e66bb4d1ba"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/interface.md",
+    "change": "modified",
+    "before_sha256": "8f6665b1fbd4b7e4ca06189dd39ec1db6f3a8477253c04cfada1dda7859ab81d",
+    "after_sha256": "b0757ee6e6650c721fac3cd6501bace2f43b19a1ed76be2a83e1b1b14ed59317"
+  },
+  {
+    "path": "rcmt/physics_interface/local/conversion_laws/operators.md",
+    "change": "modified",
+    "before_sha256": "876208ce618f4d46d52e4ad7a94994ec29065f86f13ee15333c385a21be3b879",
+    "after_sha256": "31c77a76e9d992a5d1f152a97daf52c1b4529afef0ea71f66d811fcb7fb55631"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/README.md",
+    "change": "modified",
+    "before_sha256": "7e5e323648c4be132d37152aa87227ab53cf2e7664661b5c72a22f55c93938d8",
+    "after_sha256": "868eac24572e63ac26b0780ca39453482e5757acf75787e9a58393b89d54c15c"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/examples.md",
+    "change": "modified",
+    "before_sha256": "4c93750d999ad9635266677dea85ebb88e208215476020bb05d0bc918c6f8ce5",
+    "after_sha256": "50d9b4ff44c9be793204b262610cace3c775ade8521f886e1a69dea010f8e243"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "741841c39ddb76dacb722c8c890cfeeb4bb0901fa7299dc5703e9d7154f344b4",
+    "after_sha256": "44a7fc795e5e76f8565cad5519cbea387848a076f7f568929a076afcc0325373"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/interface.md",
+    "change": "modified",
+    "before_sha256": "fd0a2aab17151eb178b89e0862ac3d314f22ffcce51f723f4dd45a3540aa6283",
+    "after_sha256": "df5a868a911f482916e669816aedd60e9a4db1abd6609ef9da697f70c825ece8"
+  },
+  {
+    "path": "rcmt/physics_interface/local/emergent_metric_geometry/operators.md",
+    "change": "modified",
+    "before_sha256": "68e60ebbbe825b8500e0cd2c4ad58b73d1306a49be8c9e53fad98ca5f1988ffc",
+    "after_sha256": "cc941ea6ef1f733f6aad3241fd510860df36cbea15f9518289d61179d822c90c"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/README.md",
+    "change": "modified",
+    "before_sha256": "aa90feb21ba7dc7b61f0eb07f8252059b959ebd6c32b56580a54c73afe187ca1",
+    "after_sha256": "365d76d4f05f45162b633983cbde65380388e4ab350f8621df1ba64283ddd6c8"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/allowed_usage.md",
+    "change": "modified",
+    "before_sha256": "9f09ea0cf5a3fc28377fb4e0222fb61f5844afc3eca240077f0fca2081ec9c75",
+    "after_sha256": "d006cd9e61fb455311efc51d9f76963204f2b092ea0ac308b30cca6f0c061a59"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/examples.md",
+    "change": "modified",
+    "before_sha256": "3631197c4d8879f43e0c924ba9253d20c5992f074271c90518e524ee189bf9ce",
+    "after_sha256": "4b6eec771e1c0872fa705fc7fd7eb318d1869356f44f58ce902fa33b0afd7721"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/forbidden_usage.md",
+    "change": "modified",
+    "before_sha256": "13298fe3142660af0701b2f14b28361599005c6b31bf3f189a0f674c49484809",
+    "after_sha256": "c179fb12c4f5e4df7276bd4fd2fb4594cb206d00252c07f446310fc77ca99ebb"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interface.md",
+    "change": "modified",
+    "before_sha256": "2d93fdcf75ff93e228f77c473d9138e27738109d439aa392a9e53bcda8ba73d3",
+    "after_sha256": "cc39a5b171a841bdfc2ef9d09fe19d67aea51c90ded67bbc5ca39320590adf5a"
+  },
+  {
+    "path": "rcmt/physics_interface/local/group_structures/interpretations.md",
+    "change": "modified",
+    "before_sha256": "6be68e67b7aee3e0179e40c3f232661ff591fb01145480efac5d25964210717b",
+    "after_sha256": "bcab5361373fc683ab34acae444cb7bc27a94bd9863260e3d0872b1d16e3277a"
+  },
+  {
+    "path": "rcmt/physics_interface/local/interfaces.md",
+    "change": "modified",
+    "before_sha256": "cc2c2fe180c125e74a0c4586d189025d049c021a812e33e677904c6126697787",
+    "after_sha256": "456e4835e4e64ed223cd4122c27b178d15af155951fab338ab5cc9eff0cd4c3c"
+  },
+  {
+    "path": "rcmt/physics_interface/local/invariants.md",
+    "change": "modified",
+    "before_sha256": "778bd46630bf95e325d7cd9c271a4b14899b7fba2514de381c01473b57370abd",
+    "after_sha256": "61ae36cfebc2dd5a72ec6c47c9c6e70b6417f04157a0bdf3c5f05bc7aa08a45a"
+  },
+  {
+    "path": "rcmt/physics_interface/local/primitives.md",
+    "change": "modified",
+    "before_sha256": "a0e4f5ceef79811489da9825a3adaa669c7c5fb6de251940dec484c86daf7edd",
+    "after_sha256": "fd1d3342fe81ac99d8ad8c523abf5d614d3187d1514aed586546061259598402"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/README.md",
+    "change": "modified",
+    "before_sha256": "ef066429b1cf507b6ea917aa3d29a045cad4bb2377d87ae0401c39635cdb2711",
+    "after_sha256": "4f939322ea13b6ad5aada2c11939809fd3f3ffa5137dbeb932cd417680a2c914"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/examples.md",
+    "change": "modified",
+    "before_sha256": "65bf2e6514851c0897dbbd5e9185e76bfd272de980854f84f2901633395ccbbf",
+    "after_sha256": "d3bf61d99981662cb3a0a6c6e64856d0629fdd79ea610862f2d871ab334d56f0"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "51232829ed621def54869935f5500867118f105d77a81a82c1a256a523605d19",
+    "after_sha256": "6eb268786429e1b8c44ad63e0a0af6311b78770ef8df2a47c0ebfc7b40cce0b5"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/interface.md",
+    "change": "modified",
+    "before_sha256": "dd2bb6a2f951f818a225625d89f0d23ac75d68e9c18f0d780e4a4ea919df10a4",
+    "after_sha256": "d4e8348ffca89ef0fd33e2bf311b79bbb9cf960289cee5e4c68c9b43031dde63"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_dynamics/operators.md",
+    "change": "modified",
+    "before_sha256": "09e10ce0717282bbde10d4e69d71574e3e511cc86502b569d85304312a123b23",
+    "after_sha256": "7c9bd475b4297d618d5b18667d44a7b0329e94ca4f2f7b4d7890d9b25a7abbf7"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/README.md",
+    "change": "modified",
+    "before_sha256": "de953d6a6b60612703a8161c07daf5bc23d11535048a6884f7600b2b94808018",
+    "after_sha256": "5cc523e15a78e8f36d674bdd691e2648630014d33492941123abb95dfe82097f"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/examples.md",
+    "change": "modified",
+    "before_sha256": "a4b652dee4bd16baa051e849641ac8e23b8fcb5e87dfb5242935598c01d430f6",
+    "after_sha256": "dfa4860c3fb930cbc4fc46e929cafd4eeddd5d5cab6a07bb88f1ac7d45ce5ead"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "05c73cba194145014ca501e0c434a7355977abd7f64e2b81ca2d8eb469bf6bf6",
+    "after_sha256": "74e958871a2eae4f665a4df33e022305f8f09ee78f9210d80547f3c61b0cb311"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/interface.md",
+    "change": "modified",
+    "before_sha256": "a9d0e88664af1bbb3a3cf43651f84638804dc6d241da9788f41996c54c36a402",
+    "after_sha256": "dd2f7630bb5ed5c58cdbfab5dfb6e1d698f3d66ac86648d086bb9bb94a189758"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_field_theory_discrete/operators.md",
+    "change": "modified",
+    "before_sha256": "ac7ccaac7e1eb914ac486ee2bcd55c73ff6ee855d9ce4c3c5c7ec8b90e764931",
+    "after_sha256": "65e47d7ba2f5d6385aec1db5a81b668436b3c8b018541766f5fe26b13b46ebdb"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/README.md",
+    "change": "modified",
+    "before_sha256": "2f8ba04afcbca81d8b57ff65c2147be094c19b93254564775239cbdc7988d7a3",
+    "after_sha256": "4bc58def64fbd9e627f60c153004dbabac3eff32fb9e569ec5df2a956dbd4c9b"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/examples.md",
+    "change": "modified",
+    "before_sha256": "73efc4d52965fe2899c887995fe6720bde5992b0d851f2f19322d537143b9384",
+    "after_sha256": "45ca1ec1bd1c03f6c128dc3b3ad67827c9117a96201bc36016671d178305b4f5"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "363f3831efc1277409e4af6827200b48e0c94c03a5639b8709dffc5b8c97d345",
+    "after_sha256": "8b3efe862c3ab81c1f19c55736879800217bba1c2d805fe0d703380f9ac80caa"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/interface.md",
+    "change": "modified",
+    "before_sha256": "cea2bc8e03046e285218b769e22cdb6dd9202e1d25282d3fc29fcdf67f9f56e7",
+    "after_sha256": "21f0c096920f24398583105a8593137629cb002be55127c804f853e41fde0b15"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_kinematics/operators.md",
+    "change": "modified",
+    "before_sha256": "d48496ee63e6b34f318efd1f1e81ed3dbafc71ac643976449130b6f6b6e9066b",
+    "after_sha256": "e2dad157c2ddbf9f8b88b607641443fb7f26adad4bd0480f09812ea5336f4a95"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/README.md",
+    "change": "modified",
+    "before_sha256": "f610324fdef021a3000a70f7063dbe996276862ec2b8ccce630b9046906e6486",
+    "after_sha256": "da5f14bfd1abc28ea61739594bc7275387576bb15bd7341f17bbe458c68e32eb"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/examples.md",
+    "change": "modified",
+    "before_sha256": "59ee51c0c37297a6af56a965dd69b237b78c7d836e66d4e8716f11feaca4fca4",
+    "after_sha256": "1ae803737db9e3f99e451bab6b8eda4fba80cdb6a1f3f54fade1c7c331e31758"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "b61c9d148a878f0648f73c248522512aa9eb8be979926f1837bb269825b867d2",
+    "after_sha256": "1e35ac578fedebc795ac8198c5bc4ddef4484ebade960284a3d561da1dcd791a"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/interface.md",
+    "change": "modified",
+    "before_sha256": "d3764a6ebf8670d7d42867a46638e6b5a7e0d91281a569d4577dd9d221b383a7",
+    "after_sha256": "711887148aeeb92a1ded1f95a7ef0b325183c7beeba049bc223233f718b35d02"
+  },
+  {
+    "path": "rcmt/physics_interface/local/relational_quantum_mechanics/operators.md",
+    "change": "modified",
+    "before_sha256": "73f5e2801353a44d5c89741690ccc97a1775c81fe68657dd65dfdb72adcadbf0",
+    "after_sha256": "968ed6e86f28b7f788026725a567a7c29b08e76b7e8bf82b15e90c3755f7c37b"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/README.md",
+    "change": "modified",
+    "before_sha256": "f4b0d677dbe8cdfed5bd6560efe72f36019704cc3a23748bfdf9cf3a504cec2a",
+    "after_sha256": "25ecd8b7e6be237827b6384f2a44ad1396d8d65bddfab623c960a2f0c447704d"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/examples.md",
+    "change": "modified",
+    "before_sha256": "c705de57004984a5f4207478c1faf695475b6c331e263cb3a97325285a64739a",
+    "after_sha256": "4aa62d19864e8dbf614e563f091adf8b52af8d624254e35b7ff79004327d866a"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/formal_structure.md",
+    "change": "modified",
+    "before_sha256": "5c4bd2cc6aa3687789f17908f378d8a78f2368b450c1e183ef2d93db6761d431",
+    "after_sha256": "56050d90573b5a0d7b094adf5004fa1119ba25a757e02f706f2c4060712b4039"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/interface.md",
+    "change": "modified",
+    "before_sha256": "ff0cda07ddc897f6d9f4186b8c02667450d00624dc49a7a9a01a2c4d7849b2c4",
+    "after_sha256": "ae3a1564ccfebef9dcc441a75d9e7614455d8527753d51b56a682272995940fb"
+  },
+  {
+    "path": "rcmt/physics_interface/local/time_bridge/operators.md",
+    "change": "modified",
+    "before_sha256": "2094ed1950aef159be32cff8d8a598b63053b0fe842b72b179e822986f5aeba4",
+    "after_sha256": "bf39c0749c5196029e115c5c4f2bdfa985a1c92d1d2f12b75d33cca21439a3a2"
+  },
+  {
+    "path": "rcmt/physics_interface/modules/README_MODULES.md",
+    "change": "modified",
+    "before_sha256": "973276c64628675ae1f6bd9ac97ba2600443183b15a9fc2281462871d20bbddc",
+    "after_sha256": "89b2fbc3bbc8e844c29dca0d01e9b51226e997a9cd4699e931883aacc3bc5bf2"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/adjacency_contract.md",
+    "change": "modified",
+    "before_sha256": "1538f27e96088910737608cc8934cb15e5a3dc2a9752e1bcc3094a6d6400cf86",
+    "after_sha256": "7939400d71671233a6bf71ca37383c3e8ade1ae644e26e393e7e961fac3cc5ef"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/basin_contract.md",
+    "change": "modified",
+    "before_sha256": "0adf2a8821b990fb6908bf0b55a88b847d6048fc43dc6e4dfc21a5b6180f6d0c",
+    "after_sha256": "71230917d92fa8c776e657ea968f5f9efaded1e3fdfc4e805743354d898cb292"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/coherence_contract.md",
+    "change": "modified",
+    "before_sha256": "5c268798a796338e2b620cf811ff422e2435358d0aa95115966baa26be438f35",
+    "after_sha256": "e9314a56425c569e2fce6a0df49bad33807adda6d1c700b3183aa26c0d505f22"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/effective_field_contract.md",
+    "change": "modified",
+    "before_sha256": "8411ca9eb36bc303a3621d436b28ca1076df4ef7214c8092024875c7cd8d8f0d",
+    "after_sha256": "6fab67252b8347a30d2d8d9431a26402ea155df8335f07d94082006ff0558d89"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/field_mode_coupling_contract.md",
+    "change": "modified",
+    "before_sha256": "5ad24e4189daca0ba64532d1d52d7a0190743f1dd36b1bb503d0b623e2c03133",
+    "after_sha256": "c55f736f09707eb7323c6ccaed15755353b309bed642b014a6a7d42456b927e0"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/geometry_candidate_contract.md",
+    "change": "modified",
+    "before_sha256": "dc58cbc175e95e0903d4604ae8827f3a7845a741faca7ff2ea938d3d3a065759",
+    "after_sha256": "3169fc636469f51d9f9a510639320d622d03862df7a73c3ac8526889e57b220e"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/geometry_mode_coupling_contract.md",
+    "change": "modified",
+    "before_sha256": "f1dc421fb118bdbb762a89f45e3d8951d18566c9c4badafbfd3445cb97b8f20c",
+    "after_sha256": "96cc9833591ba118a47d7395df087562abc1965682e225dbed7cd74b22cb7f2a"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/mismatch_taxonomy_contract.md",
+    "change": "modified",
+    "before_sha256": "fca5d79b4a3118760d89630bf96d8a3817e4c71bc472f016386d40191b43f794",
+    "after_sha256": "6f471430e93668b0b03f56a8005ba787af68ff8bfdbb28e4befdb6a02eb5f93c"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/mode_contract.md",
+    "change": "modified",
+    "before_sha256": "f533943c2f567137c67e5298b2ddd663005be9b83a6355226b590b9c6b98f083",
+    "after_sha256": "a672691d681f8a1dd28da78dc4d750ebb98794ff617e9829ae52ad326f3cd9c4"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/overview.md",
+    "change": "modified",
+    "before_sha256": "3250fc8ddf38a128f4bdc342b48d2c4ac9bfea2111bdd763c75a9f170b1738f9",
+    "after_sha256": "5adcbe6c8aed466e780983721115b8d46bcb86cc70e8e1664ed8d40499c84ced"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/physics_interface_contract.md",
+    "change": "modified",
+    "before_sha256": "1f2dd9b875508bd9ff6965aa3a4670ece90d987d37d12b69252007c3d73cbbe1",
+    "after_sha256": "9caf41f684b97b6d662d09e30bf2e090b539c25d1338a63f9a42d5cb616cf5a0"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_contract.md",
+    "change": "modified",
+    "before_sha256": "33b12601c2658b02a310fc1b7c5d9afe7e0d5a5c1eab4855a6e9cf8172d3a7a7",
+    "after_sha256": "db5dc26783cf8f940c8026c9cf1894d075e50a1f87f577373cb8aee16b4ab4cf"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_interpretation_rule.md",
+    "change": "modified",
+    "before_sha256": "915e540bd6cf93ec9e8fe464a7942227acfb198c117d827a7e556a314c2cf320",
+    "after_sha256": "e8527e16f9dedf88ca7b90f5978c1368b3a43c86a860b653cb2004f06dd4f2b5"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/propagation_contract.md",
+    "change": "modified",
+    "before_sha256": "f2bd87303a7ba463053e30191e2db2287e3662252d5b354c957d7de01db51aa5",
+    "after_sha256": "6f5a647aa74cb79c0d493388b5fb123d32010b67221e37cbe89ed3d8d97fa8a7"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/stability_contract.md",
+    "change": "modified",
+    "before_sha256": "3b82b9e8c186b9fb79ca0c232779afb89f64bc59e56ecb3305d742b463e58eb4",
+    "after_sha256": "b98df54a3780c6532985e6ee51de0e5e8911f97f300ed4e580153d12eb751963"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/survivor_contract.md",
+    "change": "modified",
+    "before_sha256": "c5db35ec27d657f18e853e248f6e89bb7ab0c94555d763e0cbf4ff79b1b81c67",
+    "after_sha256": "c2bdbe1e09bf5c3f92ece93787d5311771f1a0099a5dd98e186d806ae69fd72d"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/survivor_mode_coupling_contract.md",
+    "change": "modified",
+    "before_sha256": "ffa251168bf16eb172bfb5f7d2ee841dfdeaab3d083dc898b015e1f52128d90d",
+    "after_sha256": "3a3f660a4da1451e2836ce9d7883dfa92390f6a36b78098880b417d7dfffadba"
+  },
+  {
+    "path": "rcmt/physics_interface/stdlib/README_STDLIB.md",
+    "change": "modified",
+    "before_sha256": "14a1fd9709cff1ffcb40e31a45dad37b0a8002d7ba202951392af62b5bd847a1",
+    "after_sha256": "11c846b38a5b72068a240aaaa6fc45015ab9d60cb8806afdaa6a051d7047decd"
+  },
+  {
+    "path": "rcmt/rcmt_compressed.md",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "36077dc399682b83a70d604915fcd514c187133ea82e1ea9cf1ae1b5b4fde1da"
+  },
+  {
+    "path": "rcmt/rcmt_compressed.sources.json",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "d508179179517b5fa58e0e6ccd70a9c39716a0bbf18cb7ff28fb0cd32d06b984"
+  },
+  {
+    "path": "rcmt/smg_v2.1/README.md",
+    "change": "modified",
+    "before_sha256": "62dea338985dc834f18b972bcd18dbe854e2d9d260a357127000d62cc2465bcf",
+    "after_sha256": "32fe6c53d6772e9bac13a81c7c58566cce64f12e34c92fcfc1ba56f614935949"
+  },
+  {
+    "path": "rcmt/smg_v2.1/REFACTOR_STATUS.md",
+    "change": "added",
+    "before_sha256": null,
+    "after_sha256": "498c5243a135ad7cd78b7d1556422be84a0e7d10ef8e4f5240e92f0b8dc145e5"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "change": "modified",
+    "before_sha256": "36c27111d6f012d1bbeb27cd3437d58155b6183ce419c6e57c8215b659a7dd3a",
+    "after_sha256": "9e87f0495e253f38f6b5aaaa171105fa95521c2cd5b8984e843f5a8728243b92"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/physics_bindings.md",
+    "change": "modified",
+    "before_sha256": "bc11dd251f2876749c380d5bad0dab235d19c258a876731ec35fd8fd74a918f9",
+    "after_sha256": "155cec956f801b080445eed4836fa5e5bd618ccfb36ab4ed1bf318c76c3496a5"
+  },
+  {
+    "path": "rcmt/smg_v2.1/claims/dual_closure.md",
+    "change": "modified",
+    "before_sha256": "d54f409f39f98e5092527974f1b3a53816207666741230dcfd1741baf1557281",
+    "after_sha256": "44a88d6540e8ac589719859bf2ef302fdb9f2063bc041d41ba28b81c9919e2b2"
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/gamma_generations.md",
+    "change": "modified",
+    "before_sha256": "8f0bd9c829ab5153996d5a72c085ba4ca0b3cdbf33cc119b3b7479c4dd7bdbc4",
+    "after_sha256": "25a3d666b8410c7b59d7cd2ee57200cc6757bf845dff8fcdf19851befd496461"
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/mode_dictionary.md",
+    "change": "modified",
+    "before_sha256": "803954a179f837244a122475faa9faf8901e9a3fcad52702d50a3227c31444eb",
+    "after_sha256": "b7d9420addc8c9190c155cee18ff5e8c1b4167093dee4f2128f9edc9f6193dd7"
+  },
+  {
+    "path": "rcmt/smg_v2.1/exports/standard_model_kinematics.md",
+    "change": "modified",
+    "before_sha256": "c95b0ebd15d50ff767f8c1961d4fab7d8f60d2bc731b64aec8e7180a7db0dfcc",
+    "after_sha256": "2ae13a9a47aeb13c4ba8270c6f5612e31e85277ee812f7d64fbb5547614be7c9"
+  },
+  {
+    "path": "rcmt/smg_v2.1/policies/limitations_and_boundaries.md",
+    "change": "modified",
+    "before_sha256": "44df5d3dc1cdc8a0fb7b1348c4c313896a7c88ee2c33b44f1cc709a380c9a5af",
+    "after_sha256": "bced0dd5a62651568328b01e65f0afe9f65f5a3653c4cdccd18eecf5a479d55e"
+  },
+  {
+    "path": "rcmt/smg_v2.1/smg_contract.md",
+    "change": "modified",
+    "before_sha256": "a4a218459a644da8876597745ec360b62f90cecc3a59a8fc71b79a9394f89294",
+    "after_sha256": "afe056f3177680bf4d705962ee546e4ce09791f9152e82f9c8b52b5bda88983b"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-routing.md",
+    "change": "modified",
+    "before_sha256": "48c491ab8a53a6421f96f97a2e17f4f3df700ee438e407b178f274d237d57e81",
+    "after_sha256": "8ce254b5ef2c545895f7b00db882c4e569a00c54eb28cc0fd176248fb8d61463"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-tranlsation.md",
+    "change": "modified",
+    "before_sha256": "99ba94243a3375f200551a604cd81adea7a96c30caa562633fe123636a105c75",
+    "after_sha256": "216a8a728f9dd1db9e859c5a240f15f128bbed456b15473c5f29fa29559b8ec9"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/gauge_translation.md",
+    "change": "modified",
+    "before_sha256": "752b165d1110bab10d5b45f4f5aff780199484496c6b19ce35fcc47a8217c431",
+    "after_sha256": "2f2e24ad2c1c7d2264a5d1d3cac21c1e100c1bd6aa8755ea09f2001cfd240b4a"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/spinor_mapping.md",
+    "change": "modified",
+    "before_sha256": "70d6b111aecc710c572f528145e53c00a70c2c4f0d62a052e62b39a5ae9f35bf",
+    "after_sha256": "cdd5278d316b6117146ea381f84490e783aa7de513cd10115a2a460d248c48cc"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/zeta_resonance.md",
+    "change": "modified",
+    "before_sha256": "03cbb9d865388af6a13ca4d85c221527d56e4363faa462e41bcc10abccbf0206",
+    "after_sha256": "e4eb25f25c773f6945000da687f99d72e28c04766be0c64d12b5639b68da0f09"
+  }
+]

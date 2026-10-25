@@ -1,0 +1,150 @@
+Source changes since baseline: {}
+[
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.0.py",
+    "lines": 1615,
+    "syntax": "invalid",
+    "error_line": 1267,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.1.py",
+    "lines": 2266,
+    "syntax": "invalid",
+    "error_line": 1366,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.2.py",
+    "lines": 2800,
+    "syntax": "invalid",
+    "error_line": 1912,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.3.py",
+    "lines": 2894,
+    "syntax": "invalid",
+    "error_line": 2010,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.4.py",
+    "lines": 2184,
+    "syntax": "invalid",
+    "error_line": 2,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.5.py",
+    "lines": 299,
+    "syntax": "invalid",
+    "error_line": 217,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.6.py",
+    "lines": 3118,
+    "syntax": "invalid",
+    "error_line": 2815,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.7.py",
+    "lines": 2040,
+    "syntax": "invalid",
+    "error_line": 1,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM14.8.py",
+    "lines": 2328,
+    "syntax": "invalid",
+    "error_line": 2,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.0.py",
+    "lines": 2028,
+    "syntax": "invalid",
+    "error_line": 1739,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.1.py",
+    "lines": 2422,
+    "syntax": "invalid",
+    "error_line": 1,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.2.py",
+    "lines": 3390,
+    "syntax": "invalid",
+    "error_line": 2,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.3.py",
+    "lines": 3457,
+    "syntax": "invalid",
+    "error_line": 3171,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.4.py",
+    "lines": 1941,
+    "syntax": "invalid",
+    "error_line": 1766,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.5.py",
+    "lines": 2952,
+    "syntax": "invalid",
+    "error_line": 2616,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM15.6.py",
+    "lines": 366,
+    "syntax": "invalid",
+    "error_line": 298,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.0.py",
+    "lines": 318,
+    "syntax": "invalid",
+    "error_line": 300,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.1.py",
+    "lines": 400,
+    "syntax": "invalid",
+    "error_line": 366,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.2.py",
+    "lines": 339,
+    "syntax": "invalid",
+    "error_line": 310,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.3.py",
+    "lines": 678,
+    "syntax": "invalid",
+    "error_line": 632,
+    "error": "invalid character '\u2014' (U+2014)"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/SIM16.4.py",
+    "lines": 698,
+    "syntax": "invalid",
+    "error_line": 666,
+    "error": "invalid character '\u2014' (U+2014)"
+  }
+]

@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "sympy": "1.14.0",
+  "exact_arithmetic": true,
+  "frozen": {
+    "PAIRS": [
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        7
+      ]
+    ],
+    "EDGES": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        5
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        7
+      ],
+      [
+        6,
+        7
+      ]
+    ],
+    "p": [
+      1,
+      0,
+      3,
+      2,
+      5,
+      4,
+      7,
+      6
+    ],
+    "h": [
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "s": [
+      2,
+      3,
+      0,
+      1,
+      6,
+      7,
+      4,
+      5
+    ]
+  },
+  "standard_SO9_to_R8": {
+    "descendable_lie_algebra_dimension": 28,
+    "extra_generators_failing_kernel_invariance": 8,
+    "bracket_defect_nonzero_entries": [
+      [
+        0,
+        2,
+        -1
+      ],
+      [
+        2,
+        0,
+        1
+      ]
+    ],
+    "bracket_defect_rank": 2,
+    "standard_SO8_block_descent": true
+  },
+  "fixed_form_controls": {
+    "so8_preserving_omega_dimension": 16,
+    "so9_preserving_omega_plus_zero_dimension": 16,
+    "C8_sparse_so8_preserving_omega_dimension": 4,
+    "local_rotation_pairs": [
+      [
+        0,
+        2
+      ],
+      [
+        1,
+        3
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        5,
+        7
+      ]
+    ],
+    "local_rotation_algebra_abelian": true
+  },
+  "same_R8_direct_product_control": {
+    "local_sp_generators": 12,
+    "commuting_so8_dimension": 0
+  },
+  "orbit_bridge_control": {
+    "order": 8,
+    "regular": true,
+    "all_determinants_plus_one": true,
+    "same_action_embeds_in_SO8_and_axis_fixing_SO9": true
+  },
+  "seconds": 0.752,
+  "python": "3.12.4",
+  "worker_timeout_seconds": 15,
+  "recorded_inputs_unchanged": true
+}

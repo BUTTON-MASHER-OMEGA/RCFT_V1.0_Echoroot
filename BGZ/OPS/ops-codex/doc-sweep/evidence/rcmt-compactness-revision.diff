@@ -1,0 +1,32 @@
+commit b7eecd0dfd8080864b34441af86329f819cba65a
+Author: Ben Laurienti <blaurienti@gmail.com>
+Date:   Sat Oct 24 12:43:11 2026 -0700
+
+    Changed wording of section 10
+    
+    Scoped compactness requirement to the geomery lane
+
+diff --git a/local/invariants.md b/local/invariants.md
+index 85f0a22..c6c3f5a 100644
+--- a/local/invariants.md
++++ b/local/invariants.md
+@@ -91,13 +91,14 @@ Within RCMT, curvature must be represented as a **local, continuous shadow** com
+ ---
+ 
+ ## 10. Finite Structure Invariant
+-All symmetry groups used in RCMT must be:
+ 
+-- finite in representation,
+-- compact (except local Lorentz),
+-- and adjacency‑compatible.
++All symmetry structures used in RCMT must admit finite-dimensional, adjacency-compatible representations.
+ 
+-No infinite towers, KK modes, string excitations, or non‑compact global groups.
++The **geometric lane** is subject to compactness constraints, except for local Lorentz structure introduced at the projection interface.
++
++The **symplectic mode-space lane** is governed by its own preservation and admissibility constraints and is not required to be compact solely by this invariant.
++
++No infinite towers, KK modes, string excitations, or non-compact global geometric groups are admissible.
+ 
+ ---
+ 

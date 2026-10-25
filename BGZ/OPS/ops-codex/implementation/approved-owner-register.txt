@@ -1,0 +1,519 @@
+# RCF / RCMT Documentation Sweep
+## Owner Decision Register — D1–D11
+
+**Status:** Approved owner decisions  
+**Date:** 2026-10-24  
+**Purpose:** Resolve the eleven decision gates identified by the Codex documentation audit and authorize the corresponding documentation and research-artifact repairs.
+
+---
+
+## General Execution Instructions
+
+This document records the owner's decisions for the current documentation sweep.
+
+Codex is authorized to implement the approved changes, subject to the boundaries stated below.
+
+### Governing rules
+
+1. Preserve the architectural separation between RCF, RCMT, and downstream SMG interpretations.
+2. Preserve existing mathematical results, research history, and failed experiments unless a specific correction is authorized.
+3. Do not invent mathematical derivations, numerical provenance, missing data, or physical validation.
+4. Distinguish established mathematical results, architectural choices, provisional hypotheses, historical constructions, and research targets.
+5. Apply corrections to active documentation without silently rewriting the meaning of historical research.
+6. Report unresolved conflicts rather than selecting new theoretical commitments without authorization.
+7. Keep substantive changes reviewable and traceable.
+8. Regenerate compressed or derived documentation after authoritative source changes are complete.
+
+The decisions below supersede conflicting recommendations in the original audit proposal.
+
+---
+
+# D1 — Two-Lane Architecture
+
+**Decision: Preserve mandatory two-lane architecture in RCMT; retain optionality in RCF.**
+
+RCF intentionally relaxed the original mandatory memory/motion two-lane requirement to an optional architectural profile.
+
+RCMT independently adopts a mandatory two-lane architecture consisting of:
+
+- A symplectic mode-space lane.
+- A geometric lane.
+
+This is a valid downstream specialization and does not conflict with RCF's optional profile.
+
+### Authorized changes
+
+- Preserve the mandatory two-lane requirement in RCMT.
+- Preserve the optional two-lane profile in RCF.
+- Clarify that RCMT's requirement is an adopted architectural constraint.
+- Record the historical memory/motion rationale where supported.
+- Distinguish architectural adoption from a demonstrated mathematical necessity theorem.
+- Remove language implying that RCF universally requires the same architecture.
+
+### Restrictions
+
+Do not demote RCMT's two-lane requirement.
+
+Do not invent a necessity proof or assert that projection alone establishes the requirement.
+
+---
+
+# D2 — Symplectic Group Selection
+
+**Decision: Sp(8,R) remains an active research candidate, not an established requirement.**
+
+RCMT's symplectic lane is mandatory under D1, but its specific mathematical realization remains under investigation.
+
+The current research is examining **Sp(8,R)** as a possible implementation.
+
+### Authorized changes
+
+- Identify Sp(8,R) as an active candidate.
+- Preserve the distinction between the required symplectic lane and a proposed realization.
+- Qualify candidate group-product notation appropriately.
+- Identify unresolved representation, carrier, projection, and compatibility questions.
+- Update documentation that incorrectly presents a particular symplectic group as finalized.
+
+### Restrictions
+
+Do not declare Sp(8,R) mathematically necessary or physically validated.
+
+Do not silently select a real form, representation, or product-group construction.
+
+---
+
+# D3 — Physics Interface Responsibilities
+
+**Decision: Preserve both interface families with distinct responsibilities.**
+
+The apparent conflict between the physics-interface README and the pipeline Physics Interface Contract arises from insufficiently distinguished consumer stages.
+
+The intended separation is:
+
+**Construction-facing interfaces**
+
+May consume explicitly authorized local and upstream records to construct projected representations.
+
+**Effective-output physics consumers**
+
+Consume exported projected artifacts and must not independently access raw substrate structures.
+
+### Authorized changes
+
+- Document the two interface responsibilities explicitly.
+- Clarify which permissions apply at each stage.
+- Preserve the pipeline contract's restrictions for effective-output consumers.
+- Preserve authorized local-record access for construction-facing adapters.
+- Identify ambiguous modules requiring explicit stage assignment.
+
+### Restrictions
+
+Do not merge the two permission sets into one unrestricted interface.
+
+Do not assume that directory placement establishes consumer permissions.
+
+Do not introduce new APIs or module ownership decisions without authorization.
+
+---
+
+# D4 — Compactness Requirements
+
+**Decision: Remove the blanket compactness requirement.**
+
+Compactness must be scoped to the particular mathematical structure or declared representation profile.
+
+It is not a universal RCMT requirement.
+
+### Authorized changes
+
+- Remove or qualify universal compactness language.
+- Preserve compactness where a specific adopted profile explicitly requires it.
+- Preserve the symplectic lane's exemption from automatic compactness requirements.
+- Treat compact global-invariant transport representations as optional unless separately required by an adopted profile.
+- Permit consideration of noncompact symmetry groups subject to applicable locality, finite-representation, and adjacency-compatibility constraints.
+
+### Restrictions
+
+This decision does not validate Sp(8,R) or any other specific noncompact group.
+
+Do not infer that removing the compactness restriction removes other RCMT constraints.
+
+**Classification:** Approved architectural constraint revision.
+
+---
+
+# D5 — Gamma and Kappa Parameter Separation
+
+**Decision: Preserve distinct parameter meanings and qualify historical sweep notation.**
+
+The audit identified overlapping uses of gamma.
+
+Current relevant quantities include:
+
+- **κ:** Local constraint-density parameter in the Temporal Interface.
+- **γ:** Bounded memory-weighting parameter in the Temporal/LCO interface.
+- **Historical sweep gamma:** Parameter used in older geometry-survivorship studies, including values outside the bounded memory-weight range.
+
+These quantities must not be treated as identical without an explicit mapping.
+
+### Authorized changes
+
+- Preserve the current κ and bounded γ definitions.
+- Distinguish historical sweep notation from current interface parameters.
+- Rename or qualify historical sweep gamma where necessary for clarity.
+- Preserve original historical numerical values and formulas.
+- Document the absence of an established mapping between these parameters.
+
+### Restrictions
+
+Do not invent a conversion, normalization, or fitted transformation.
+
+Do not change LCO parameter semantics during this cleanup.
+
+Defer unresolved parameter relationships to future research and LCO implementation work.
+
+---
+
+# D6 — Density Sweep and Numerical Provenance
+
+**Decision: Preserve historical findings while accurately classifying their evidential status.**
+
+The density sweep tables, tier-drag narrative, and crossover thresholds originate from older exploratory research.
+
+Their original execution provenance may no longer be available.
+
+The audit also identified numerical behavior that is not explained by the currently documented fixed-coefficient affine formula.
+
+### Authorized changes
+
+- Preserve the reported historical numbers.
+- Preserve the historical tier-drag and crossover discussion.
+- Identify the provenance gap.
+- Classify the results as historical, repository-reported exploratory findings where reproduction is not established.
+- Explain that the reported table is not verified output of the stated fixed-coefficient formula.
+- Identify unresolved numerical relationships for future reproduction.
+
+### Restrictions
+
+Do not fabricate missing runs, coefficients, seeds, or computational methods.
+
+Do not silently alter historical results to fit a formula.
+
+Do not promote unverified historical results into binding numerical constraints.
+
+A new reproduction study may be conducted separately when the relevant implementation and parameter definitions are ready.
+
+---
+
+# D7 — Projection Down and Relational Carriers
+
+**Decision: Treat Π↓ as a downstream compatibility diagnostic, not an inverse reconstruction mechanism.**
+
+Projection responsibilities must remain separated from upstream survivor selection.
+
+The intended interpretation is:
+
+- **Π↑:** Constructs a representation from authorized discrete survivor records.
+- **Π↓:** Evaluates downstream compatibility, consistency, or representational loss.
+
+Π↓ does not independently reconstruct substrate state or control upstream survivorship.
+
+### Authorized changes
+
+- Clarify the respective domains and responsibilities of Π↑ and Π↓.
+- Describe Π↓ as a diagnostic or compatibility operation.
+- Remove or qualify unsupported reconstruction and fixed-point claims.
+- Preserve the geometry-neutral LCO contract.
+- Restrict triangle-specific evaluation to explicitly declared downstream profiles.
+- Clarify that global-invariant evaluation may require adjacency together with declared orientation or transport information.
+
+### Restrictions
+
+Do not introduce an inverse-projection algorithm.
+
+Do not authorize feedback into the upstream survivor sieve.
+
+Do not introduce new triangle-packing requirements into the core LCO.
+
+Do not invent missing carrier structures or transport algorithms.
+
+---
+
+# D8 — LCO Evaluation and Update Policy
+
+**Decision: The LCO is an evaluator, not a monotonic optimization mechanism.**
+
+The LCO evaluates supplied admissible candidates and returns the highest-coherence or lowest-mismatch result according to its scoring contract.
+
+It makes **no guarantee that neighborhood mismatch decreases** relative to the previous state.
+
+Lowest mismatch means lowest among the evaluated candidates, not necessarily lower than the neighborhood's previous mismatch.
+
+### Authorized changes
+
+1. Remove universal monotonic-descent claims attributed to the LCO.
+2. Clarify that the LCO ranks or evaluates candidates under its declared scoring contract.
+3. Clarify that selecting the best available candidate does not guarantee improvement over the previous neighborhood state.
+4. Preserve the separation between evaluation, update-policy decisions, and state mutation.
+5. Distinguish deterministic scoring from stochastic selection policies.
+6. Where separately declared policy profiles impose acceptance restrictions, document those restrictions as policy-specific rather than LCO guarantees.
+7. Correct examples that imply the LCO guarantees convergence or decreasing mismatch.
+
+### Restrictions
+
+The LCO does not independently mutate neighborhood state.
+
+The LCO does not guarantee convergence, zero mismatch, or basin stabilization.
+
+Do not implement or select a new update algorithm.
+
+Do not impose a universal descent requirement.
+
+**This decision explicitly replaces the audit's recommendation to preserve non-increasing mismatch as a general LCO commitment.**
+
+---
+
+# D9 — GCM Indexing, Routing, and Historical 12/36-Mode Construction
+
+**Decision: Preserve historical indexing and clarify its target-driven origin.**
+
+The historical mode construction used:
+
+- **12 antipodal-pair modes.**
+- **3 offset regimes.**
+- **36 indexed configurations** from the 12 × 3 construction.
+
+The three offset regimes appear to have been motivated by the target of representing the Standard Model's three generations.
+
+They should not be presented as an independently derived prediction of three generations.
+
+The precise historical offset interpretation remains subject to source verification.
+
+### Authorized changes
+
+- Confirm and correct the authoritative public GCM indexing reference.
+- Preserve the original 12/36-mode construction and its historical rationale.
+- Distinguish geometric indexing from physical interpretation.
+- Describe the three-regime choice as historically target-driven unless independent derivation evidence is recovered.
+- Preserve independently established geometric properties of the antipodal-pair construction.
+- Keep proposed 24-cell routing identities provisional unless explicitly adopted.
+- Preserve SMG-specific mode policies as downstream model commitments where already adopted.
+
+### Restrictions
+
+Do not promote 12 or 36 modes into universal GCM requirements.
+
+Do not describe three generations as independently derived from the geometry.
+
+Do not silently remove existing SMG adopter-specific policies; classify their scope and evidential status correctly.
+
+Do not invent a new generation mechanism or routing architecture.
+
+---
+
+# D10 — RCP-1.2 Protocol Clarification and Full RCMT Migration
+
+**Decision: Clarify the RCP-1.2 header specification and upgrade the entire RCMT Markdown documentation corpus to RCP-1.2.**
+
+RCF was previously migrated to RCP-1.2.
+
+RCMT was not comprehensively migrated.
+
+The owner now explicitly authorizes a repository-wide RCMT migration.
+
+## A. Header sentinel clarification
+
+RCP-1.2 contains ambiguous wording concerning a leading header sentinel.
+
+Clarify that the required opening structure is:
+
+1. A single document H1 heading.
+2. The canonical Document Contract immediately following the heading.
+
+Do not require an additional undefined delimiter or sentinel marker.
+
+Update corresponding validation language.
+
+## B. RCMT migration scope
+
+Upgrade all RCMT Markdown documents that are not already compliant with RCP-1.2.
+
+This includes applicable:
+
+- Local and global documentation.
+- Constraints and invariants.
+- Physics interfaces.
+- SMG documentation.
+- Module documentation.
+- READMEs and indexes.
+- Other Markdown files within the RCMT repository.
+
+## C. Migration requirements
+
+- Use `rcf/rcp-1.2.md` as the authoritative protocol.
+- Apply the required header structure, metadata fields, field naming, and ordering.
+- Preserve scientific and mathematical content.
+- Preserve existing ownership, authority, scope, status, and dependency relationships.
+- Verify the meaning of legacy `depends_on` fields before mapping them to canonical upstream dependencies.
+- Do not invent missing dependencies or authority assignments.
+- Preserve the historical status of older research documents.
+- For frozen artifacts whose content must remain byte-for-byte unchanged, use a compliant wrapper or external manifest and record the exception.
+- Validate against the full RCP-1.2 specification, not merely field presence.
+
+## D. Execution
+
+- Perform migration in reviewable batches.
+- Keep RCF protocol corrections separate from RCMT migration changes.
+- Produce a migration report identifying changed documents, exceptions, unresolved metadata, and validation results.
+- Regenerate compressed artifacts after authoritative source changes are complete.
+
+**Classification:** Approved repository-wide documentation maintenance.
+
+---
+
+# D11 — OPS Executable Artifacts and Lisi Coordinate Repair
+
+**Decision: Repair the identified defects and verify the results.**
+
+The owner authorizes actual repair, not merely documentation of the problems.
+
+## A. OPS executable scripts
+
+Some historical OPS Python files contain embedded simulation output or other non-executable material.
+
+### Authorized changes
+
+- Preserve the original research artifacts through Git history or explicit archival copies.
+- Separate executable Python from recorded output.
+- Produce clean, executable versions of affected scripts.
+- Preserve original recorded results separately.
+- Execute repaired scripts.
+- Compare reproduced outputs against historical results.
+- Report differences and unresolved reproduction failures.
+- Add regression tests where practical.
+
+### Restrictions
+
+Do not change the mathematical calculation simply to reproduce a historical output.
+
+Do not fabricate missing provenance.
+
+Preserve historical failed experiments and results.
+
+## B. Lisi coordinate integrity
+
+The audit identified duplicate coordinate keys and possible graph-coordinate alignment defects.
+
+### Authorized changes
+
+- Investigate the coordinate duplicates and alignment failures.
+- Recover the intended mapping from available sources, construction rules, or reproducible generation methods.
+- Correct coordinate data and indexing when the correction can be mathematically verified.
+- Validate coordinate uniqueness, expected vertex counts, graph correspondence, and affected downstream tests.
+- Record the source and verification method for each substantive correction.
+- Isolate unresolved coordinate-dependent findings from verified graph-only findings.
+
+### Restrictions
+
+Do not invent coordinates or mappings to satisfy expected counts.
+
+Do not silently modify mathematical assumptions.
+
+If the intended mapping cannot be established, preserve the unresolved defect and report it.
+
+## C. Repair report
+
+Produce a report identifying:
+
+- Original defects.
+- Files changed.
+- Repair methods.
+- Source provenance.
+- Tests executed.
+- Reproduced results.
+- Differences from historical findings.
+- Remaining limitations.
+
+**Classification:** Approved research-artifact maintenance and verification.
+
+---
+
+# Execution and Dependency Order
+
+The eleven decisions are approved as a coordinated cleanup pass.
+
+Recommended execution order:
+
+### Phase 1 — Resolve authoritative wording
+
+Apply D1–D9 to the relevant source contracts and active documentation.
+
+Ensure that architectural boundaries, parameter definitions, historical claims, and module responsibilities are internally consistent.
+
+Do not perform unrelated theory development.
+
+### Phase 2 — Repair research artifacts
+
+Implement D11.
+
+Preserve original research history, execute repaired scripts, validate coordinate corrections, and document remaining limitations.
+
+Any findings that would require new architectural decisions must be reported separately.
+
+### Phase 3 — RCP-1.2 migration
+
+Implement D10 across the RCMT repository.
+
+Apply the clarified protocol and migrate headers while preserving the substantive content and status established in earlier phases.
+
+### Phase 4 — Cross-document validation
+
+Perform a follow-up consistency audit covering:
+
+- RCF/RCMT authority boundaries.
+- Active versus historical claims.
+- Module responsibility and interface permissions.
+- Mathematical notation and parameter identity.
+- Document dependencies and links.
+- RCP-1.2 compliance.
+- OPS executability and reproduction.
+- Lisi coordinate integrity.
+- Outstanding research questions.
+
+### Phase 5 — Regenerate derived artifacts
+
+Rebuild compressed shards, generated summaries, and other derived documentation only after authoritative sources are updated and validated.
+
+Identify source revisions and unresolved limitations in the resulting artifacts.
+
+---
+
+# Required Deliverables
+
+Codex should produce:
+
+1. **Change ledger:** Files changed, decisions applied, and reasons for each substantive modification.
+2. **RCP-1.2 migration report:** Coverage, validation results, exceptions, and unresolved metadata.
+3. **Research repair report:** OPS and Lisi corrections, verification, and remaining defects.
+4. **Final consistency report:** Resolved conflicts, outstanding issues, and any additional owner decisions required.
+
+Do not claim completion for work that remains unresolved.
+
+---
+
+# Final Authorization
+
+**D1–D11 are approved for implementation according to the decisions and restrictions in this document.**
+
+The objective is to bring the active RCF/RCMT documentation and supporting research artifacts into a consistent, maintainable, verifiable state.
+
+This authorization includes:
+
+- Documentation corrections.
+- Approved architectural clarification and constraint revisions.
+- Full RCMT RCP-1.2 migration.
+- Repair and verification of identified OPS and Lisi research-artifact defects.
+
+It does not authorize unrelated theory redesign, new physical claims, invented mathematical results, or undocumented changes to research assumptions.
+
+**End of owner decision register.**

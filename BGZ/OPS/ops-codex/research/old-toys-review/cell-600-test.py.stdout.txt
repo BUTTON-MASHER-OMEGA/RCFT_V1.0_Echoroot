@@ -1,0 +1,14 @@
+--- Continuous Projection Invariant Spectrum ---
+Reference phi (φ)    = 1.61803
+Reference φ/2        = 0.80902
+Reference 1/(2φ)     = 0.30902
+
+Extracted Unique Relational Distances (Dot Products):
+ 0.80902  <-- [ φ / 2 ]
+ 0.50000  <-- [ 1 / 2 ]
+ 0.30902  <-- [ 1 / 2φ ]
+ 0.00000  <-- [ 0 (Orthogonal) ]
+-0.30902  <-- [ -1 / 2φ ]
+-0.50000  <-- [ -1 / 2 ]
+-0.80902  <-- [ -φ / 2 ]
+-1.00000  <-- [ -1 (Antipodal) ]

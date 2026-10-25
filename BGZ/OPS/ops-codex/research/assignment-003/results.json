@@ -1,0 +1,720 @@
+{
+  "status": "PASS",
+  "sympy": "1.14.0",
+  "exact_arithmetic": true,
+  "mapping": {
+    "origin": 0,
+    "ordered_torsor_generators": [
+      "p",
+      "s",
+      "h"
+    ],
+    "canonical_unit_index_by_OPS_state": [
+      0,
+      1,
+      2,
+      3,
+      7,
+      6,
+      5,
+      4
+    ],
+    "basis_signs_by_OPS_state": [
+      1,
+      1,
+      1,
+      -1,
+      1,
+      1,
+      -1,
+      -1
+    ],
+    "F_columns_OPS_to_octonions": [
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        -1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        -1,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "triality": {
+    "norm_polarization_checks": 64,
+    "generator_triples": 28,
+    "infinitesimal_covariance_matrix_checks": 224,
+    "explicit_bracket_pairs": 4,
+    "F01_spin_generator_square": "-I/4; a 2pi vector rotation lifts to -I on both spinors"
+  },
+  "pairing": {
+    "p_equals_unsigned_L1": true,
+    "p_is_octonion_automorphism": false,
+    "diagonal_p_triality_values_before_after": [
+      1,
+      0
+    ],
+    "Ps": [
+      [
+        "0",
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0"
+      ]
+    ],
+    "Pc": [
+      [
+        "-1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "1",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "-1",
+        "0"
+      ],
+      [
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0",
+        "1"
+      ]
+    ],
+    "vector_p_audit": {
+      "preserves_omega": true,
+      "C8_sparse_matrix": false,
+      "descends_B": true,
+      "commutes_adjacency": true
+    },
+    "spin_s_p_audit": {
+      "preserves_omega": false,
+      "C8_sparse_matrix": false,
+      "descends_B": true,
+      "commutes_adjacency": false
+    },
+    "spin_c_p_audit": {
+      "preserves_omega": false,
+      "C8_sparse_matrix": true,
+      "descends_B": false,
+      "commutes_adjacency": false
+    },
+    "finite_lift_covariance_checks": 8
+  },
+  "adjacency": {
+    "C8_components": [
+      8
+    ],
+    "two_unit_matching_components": [
+      4,
+      4
+    ],
+    "s_is_graph_automorphism": false
+  },
+  "forms_and_projection": {
+    "full_vector_symplectic_subalgebra_dimension": 16,
+    "C8_sparse_dimension": 4,
+    "B_projectable_local_dimension": 2,
+    "L_basis_audits": [
+      {
+        "preserves_omega": true,
+        "C8_sparse_matrix": true,
+        "descends_B": true,
+        "commutes_adjacency": true
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": false,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": true,
+        "C8_sparse_matrix": true,
+        "descends_B": true,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": false,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": false,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": true,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": true,
+        "commutes_adjacency": false
+      },
+      {
+        "preserves_omega": false,
+        "C8_sparse_matrix": false,
+        "descends_B": false,
+        "commutes_adjacency": false
+      }
+    ],
+    "nonprojectable_F02_kernel_vector": [
+      1,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "B_F02_w": [
+      0,
+      -1,
+      0,
+      0
+    ],
+    "full_T_descends_B_in_all_slots": false,
+    "T_kernel_witness": 1
+  },
+  "nonassociativity": {
+    "OPS_state_triple": [
+      1,
+      2,
+      7
+    ],
+    "left_bracket_product": [
+      0,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0
+    ],
+    "right_bracket_product": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ],
+    "associator": [
+      0,
+      0,
+      0,
+      0,
+      -2,
+      0,
+      0,
+      0
+    ],
+    "L1_L2_minus_Lproduct_rank": 4,
+    "operator_composition_associative": true,
+    "positive_eight_states_closed": false
+  },
+  "compatibility": {
+    "identical_Gram_triality_values": [
+      1,
+      0
+    ]
+  },
+  "multiplication_table": [
+    [
+      {
+        "sign": 1,
+        "state": 0
+      },
+      {
+        "sign": 1,
+        "state": 1
+      },
+      {
+        "sign": 1,
+        "state": 2
+      },
+      {
+        "sign": 1,
+        "state": 3
+      },
+      {
+        "sign": 1,
+        "state": 4
+      },
+      {
+        "sign": 1,
+        "state": 5
+      },
+      {
+        "sign": 1,
+        "state": 6
+      },
+      {
+        "sign": 1,
+        "state": 7
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 1
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": -1,
+        "state": 3
+      },
+      {
+        "sign": 1,
+        "state": 2
+      },
+      {
+        "sign": 1,
+        "state": 5
+      },
+      {
+        "sign": -1,
+        "state": 4
+      },
+      {
+        "sign": -1,
+        "state": 7
+      },
+      {
+        "sign": 1,
+        "state": 6
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 2
+      },
+      {
+        "sign": 1,
+        "state": 3
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": -1,
+        "state": 1
+      },
+      {
+        "sign": 1,
+        "state": 6
+      },
+      {
+        "sign": 1,
+        "state": 7
+      },
+      {
+        "sign": -1,
+        "state": 4
+      },
+      {
+        "sign": -1,
+        "state": 5
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 3
+      },
+      {
+        "sign": -1,
+        "state": 2
+      },
+      {
+        "sign": 1,
+        "state": 1
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": -1,
+        "state": 7
+      },
+      {
+        "sign": 1,
+        "state": 6
+      },
+      {
+        "sign": -1,
+        "state": 5
+      },
+      {
+        "sign": 1,
+        "state": 4
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 4
+      },
+      {
+        "sign": -1,
+        "state": 5
+      },
+      {
+        "sign": -1,
+        "state": 6
+      },
+      {
+        "sign": 1,
+        "state": 7
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": 1,
+        "state": 1
+      },
+      {
+        "sign": 1,
+        "state": 2
+      },
+      {
+        "sign": -1,
+        "state": 3
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 5
+      },
+      {
+        "sign": 1,
+        "state": 4
+      },
+      {
+        "sign": -1,
+        "state": 7
+      },
+      {
+        "sign": -1,
+        "state": 6
+      },
+      {
+        "sign": -1,
+        "state": 1
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": 1,
+        "state": 3
+      },
+      {
+        "sign": 1,
+        "state": 2
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 6
+      },
+      {
+        "sign": 1,
+        "state": 7
+      },
+      {
+        "sign": 1,
+        "state": 4
+      },
+      {
+        "sign": 1,
+        "state": 5
+      },
+      {
+        "sign": -1,
+        "state": 2
+      },
+      {
+        "sign": -1,
+        "state": 3
+      },
+      {
+        "sign": -1,
+        "state": 0
+      },
+      {
+        "sign": -1,
+        "state": 1
+      }
+    ],
+    [
+      {
+        "sign": 1,
+        "state": 7
+      },
+      {
+        "sign": -1,
+        "state": 6
+      },
+      {
+        "sign": 1,
+        "state": 5
+      },
+      {
+        "sign": -1,
+        "state": 4
+      },
+      {
+        "sign": 1,
+        "state": 3
+      },
+      {
+        "sign": -1,
+        "state": 2
+      },
+      {
+        "sign": 1,
+        "state": 1
+      },
+      {
+        "sign": -1,
+        "state": 0
+      }
+    ]
+  ],
+  "seconds": 0.746,
+  "python": "3.12.4",
+  "timeout_seconds": 25,
+  "recorded_inputs_unchanged": true
+}

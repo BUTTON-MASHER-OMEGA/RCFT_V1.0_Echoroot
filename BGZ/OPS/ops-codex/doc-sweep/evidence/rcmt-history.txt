@@ -1,0 +1,10 @@
+e9c51a3d123a42e639f137e38d0286b772d0694b 2026-07-23T18:15:50-07:00 Initializing RCMT repo
+fca6aef8ce121360146787af4428f60b8d4b1143 2026-07-23T18:55:13-07:00 Cleaned up and prepped local files for compression
+8df7164d639996aefb2baadd543e7c894f54f09a 2026-07-23T19:20:46-07:00 Cleaned up geometry behavior documents
+debdd0fdbb348af6ce61f2bb1ae22fdd35cd2dca 2026-07-23T19:29:58-07:00 Added a coherence gradient doc
+53fcdefa974024f392e3a929022d86801d749732 2026-07-23T19:53:40-07:00 Cleaned up the metric module
+881bb2e7c144fec6829920bf2c28a26313cd70b7 2026-07-23T20:41:27-07:00 Cleaned up modules/survivor_matter_structure
+038a59ef7d8428d37cbd686a02a66e87d9ebc45d 2026-07-23T21:34:53-07:00 Initial commit
+842669de01485ab018bbc910939cdb988ae3f6df 2026-10-24T09:35:39-07:00 Added not to readme.
+7a172823c9d80170da310d1eda30203f09b26387 2026-10-24T12:34:44-07:00 Updated candidate symmetry group language
+b7eecd0dfd8080864b34441af86329f819cba65a 2026-10-24T12:43:11-07:00 Changed wording of section 10

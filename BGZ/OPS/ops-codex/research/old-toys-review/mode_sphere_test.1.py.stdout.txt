@@ -1,0 +1,9 @@
+--- 64-State Vector Mode Sphere Probe (U(1) Embedded) ---
+
+Local Vector Cost C(mu) vs Global Change Delta V (Updates Only):
+  C_mu  count  mean  min  max
+0.3889      8   1.0    1    1
+0.4414     16  -1.0   -1   -1
+1.5000      4   3.0    3    3
+
+Pearson Correlation: 0.7628

@@ -1,0 +1,37 @@
+[
+  {
+    "script": "v_test.1.py",
+    "exit_code": 0,
+    "seconds": 0.969
+  },
+  {
+    "script": "mode_sphere_test.1.py",
+    "exit_code": 0,
+    "seconds": 0.625
+  },
+  {
+    "script": "u1-relational-universe-probe.py",
+    "exit_code": 0,
+    "seconds": 0.89
+  },
+  {
+    "script": "skew_probe.py",
+    "exit_code": 0,
+    "seconds": 0.907
+  },
+  {
+    "script": "isp_phi_probe.py",
+    "exit_code": 0,
+    "seconds": 0.031
+  },
+  {
+    "script": "cell-600-test.py",
+    "exit_code": 0,
+    "seconds": 0.219
+  },
+  {
+    "script": "constraint_regime_sweep.py",
+    "exit_code": 0,
+    "seconds": 0.312
+  }
+]

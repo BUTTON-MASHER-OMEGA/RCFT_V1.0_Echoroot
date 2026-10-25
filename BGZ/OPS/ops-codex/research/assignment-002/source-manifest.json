@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-24",
+  "commits": {
+    "rcf": "57af06b5ac7c73b66839f70ebba3293399a1c880",
+    "rcmt": "666ed97aaa1d11f82d0a9881e99bb0c9cae2d225"
+  },
+  "source_sha256": {
+    "rcf/modules/temporal-interface/local-constraint-density.md": "32361397bac770a3a3aaa37b3ab6904e75ca46e3ad7a1365a82ce4f514824868",
+    "rcf/modules/geometry/discrete/candidate-geometries/density-regimes.md": "7fa8ec514f5f32726935a48abed217b90782ecdbaded00342e48431b06d4b8af",
+    "rcmt/local/invariants.md": "416d3074b17b0989566bcf01421475228595128c59bf2c1881c9a6341382bee7",
+    "rcmt/local/constraints/symmetry_chain.md": "163cbd536d710a5dfe4a69dc3ea7aa47b232e5a411d7b0c9eff30d85c635bbdf",
+    "rcmt/local/constraints/projection.md": "bfaadb3d05c2bbae38503732e767966f05ae0e94f83fbb16d66387abd72e05f2",
+    "projects/Operational_Phase_Space/SIM16.1.py": "2750849a55e229608428e6d69063cbf54b7e89fbd9fe5b7d5d757de380cb8727",
+    "projects/Operational_Phase_Space/SIM16.3.py": "8d7c7856d39d3d01f955d5187378ba91730fe95f65d6d599920a86fecca66d08",
+    "projects/Operational_Phase_Space/SIM16.4.py": "bd208c96c4bfbb832a85ff8c2d7c8a4ded2cf37b925a0315c5cfbc7a3987f355",
+    "projects/ops-codex/research/assignment-001/report.md": "d5e2201cf39f761ebc2faee678a193421d358b69e61a010babc3c3482adc36f3",
+    "projects/ops-codex/research/assignment-001/results.json": "e570c141ecccef4379cff2f8275cf2d17d82c12cd1babc93b1288cde04f31f80",
+    "projects/ops-codex/implementation/ops-repair-verification.json": "3010a528eb5635463c93673dacf91b5a931cad3941aaad5ed0f94a48659b3fcf"
+  },
+  "non_repository_inputs": "Copied OPS research files and prior independent Codex report/results",
+  "script_sha256": "d7e6313393337a5312e96009a2e96649f2d2225e4c72ed086833a4b3d763b141"
+}

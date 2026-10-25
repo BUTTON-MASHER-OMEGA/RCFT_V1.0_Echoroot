@@ -1,0 +1,8 @@
+--- 64-State Exhaustive Probe (Updated) ---
+
+Local Cost C(mu) vs Global Change Delta V (Updates Only):
+    C_mu  count  mean  min  max
+0.000000      8  -3.0   -3   -3
+1.555556     24  -1.0   -1   -1
+
+Pearson Correlation between C(mu) and Delta V: 1.0000

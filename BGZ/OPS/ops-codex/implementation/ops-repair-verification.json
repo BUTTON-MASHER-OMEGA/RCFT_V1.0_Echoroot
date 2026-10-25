@@ -1,0 +1,200 @@
+[
+  {
+    "script": "SIM14.3.py",
+    "exit_code": 0,
+    "seconds": 0.08,
+    "historical_packet_present": false,
+    "reproduced_packet_present": false,
+    "packet_equal": null,
+    "normalized_historical_lines": 320,
+    "normalized_reproduced_lines": 319,
+    "historical_lines_present_in_reproduction": 319,
+    "historical_lines_not_repeated": [
+      "RESULTS:"
+    ]
+  },
+  {
+    "script": "SIM14.5.py",
+    "exit_code": 0,
+    "seconds": 2.19,
+    "historical_packet_present": false,
+    "reproduced_packet_present": false,
+    "packet_equal": null,
+    "normalized_historical_lines": 71,
+    "normalized_reproduced_lines": 69,
+    "historical_lines_present_in_reproduction": 69,
+    "historical_lines_not_repeated": [
+      "Results",
+      "** Process exited - Return Code: 0 **"
+    ]
+  },
+  {
+    "script": "SIM14.8.py",
+    "exit_code": 0,
+    "seconds": 1.0,
+    "historical_packet_present": false,
+    "reproduced_packet_present": false,
+    "packet_equal": null,
+    "normalized_historical_lines": 116,
+    "normalized_reproduced_lines": 126,
+    "historical_lines_present_in_reproduction": 104,
+    "historical_lines_not_repeated": [
+      "RESULTS:",
+      "A. FROZEN / REGRESSION SANITY|G| 8",
+      "B. CONJUGATION ACTION Psi : H192 -> GL(3,2)|im Psi| 24",
+      "C. STABILIZER TEST FOR 001 = s_Omega|Stab_GL(001)| 24",
+      "D. BLIND CLASSIFICATION OF Q_ACT = im Psi|Q_act| 24",
+      "E. COMMON FIXED SUBSPACEFix_G(Q_act) ['000', '001']",
+      "F. ZERO-TRANSLATION SECTION Q0|Q0| 24",
+      "G. ORIGIN-CHANGE AUDITorigins tested 8",
+      "H. CENTER / FIXED-DIRECTION CLOSURE|Z(H192)| 2",
+      "I. MACHINE TRUTH PACKETFROZEN / THEOREM-CONSEQUENCE CHECKS",
+      "NEW SIM14.8 TARGETS|Stab_GL(001)|=24 True",
+      "No dynamics, LCO/ISP, J, metric, physical interpretation,D4, Weyl-group, 24-cell, F4, or E8 identification added."
+    ]
+  },
+  {
+    "script": "SIM15.6.py",
+    "exit_code": 0,
+    "seconds": 1.16,
+    "historical_packet_present": false,
+    "reproduced_packet_present": false,
+    "packet_equal": null,
+    "normalized_historical_lines": 60,
+    "normalized_reproduced_lines": 59,
+    "historical_lines_present_in_reproduction": 59,
+    "historical_lines_not_repeated": [
+      "** Process exited - Return Code: 0 **"
+    ]
+  },
+  {
+    "script": "SIM16.0.py",
+    "exit_code": 0,
+    "seconds": 1.53,
+    "historical_packet_present": true,
+    "reproduced_packet_present": true,
+    "packet_equal": true,
+    "normalized_historical_lines": 20,
+    "normalized_reproduced_lines": 19,
+    "historical_lines_present_in_reproduction": 14,
+    "historical_lines_not_repeated": [
+      "RESULTS:",
+      "F | Nplus witness 0: max_residual=2.33e-15, ||G-I||=1.0607",
+      "F | Nplus witness 1: max_residual=3.33e-16, ||G-I||=0.572286",
+      "F | Nplus witness 2: max_residual=7.63e-16, ||G-I||=1.0607",
+      "F | Npm witness 0: max_residual=2.41e-15, ||G-I||=1.0607",
+      "F | Npm witness 1: max_residual=3.33e-16, ||G-I||=0.572286"
+    ]
+  },
+  {
+    "script": "SIM16.1.py",
+    "exit_code": 0,
+    "seconds": 3.28,
+    "historical_packet_present": true,
+    "reproduced_packet_present": true,
+    "packet_equal": true,
+    "normalized_historical_lines": 36,
+    "normalized_reproduced_lines": 35,
+    "historical_lines_present_in_reproduction": 31,
+    "historical_lines_not_repeated": [
+      "RESULTS:",
+      "G | Nplus witness 1: forbidden=2.445e-01, signed_J=2.276e-15",
+      "G | Nplus witness 3: forbidden=2.998e-01, signed_J=4.163e-16",
+      "G | Npm witness 1: forbidden=2.445e-01, signed_J=2.359e-15",
+      "G | partner t=+1.00: forbidden=0.000e+00, signed_J=0.000e+00"
+    ]
+  },
+  {
+    "script": "SIM16.3.py",
+    "exit_code": 0,
+    "seconds": 2.14,
+    "historical_packet_present": true,
+    "reproduced_packet_present": true,
+    "packet_equal": true,
+    "normalized_historical_lines": 48,
+    "normalized_reproduced_lines": 47,
+    "historical_lines_present_in_reproduction": 47,
+    "historical_lines_not_repeated": [
+      "RESULTS:"
+    ]
+  },
+  {
+    "script": "SIM16.4.py",
+    "exit_code": 0,
+    "seconds": 3.12,
+    "historical_packet_present": true,
+    "reproduced_packet_present": true,
+    "packet_equal": true,
+    "normalized_historical_lines": 34,
+    "normalized_reproduced_lines": 33,
+    "historical_lines_present_in_reproduction": 33,
+    "historical_lines_not_repeated": [
+      "RESULTS:"
+    ]
+  },
+  {
+    "script": "SIM14.0.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM14.1.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM14.2.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM14.4.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM14.6.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM14.7.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.0.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.1.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.2.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.3.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.4.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM15.5.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  },
+  {
+    "script": "SIM16.2.py",
+    "status": "not run: runtime restriction; static parse only",
+    "note": "Prior onboarding evidence, if any, is separate and not represented as a new run."
+  }
+]

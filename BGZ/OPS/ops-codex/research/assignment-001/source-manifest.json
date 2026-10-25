@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-24",
+  "commits": {
+    "rcf": "57af06b5ac7c73b66839f70ebba3293399a1c880",
+    "rcmt": "666ed97aaa1d11f82d0a9881e99bb0c9cae2d225"
+  },
+  "non_repository_inputs": "OPS copied research record and prior Codex artifacts",
+  "source_sha256": {
+    "rcf/core/relational-constraints/geometry.md": "40b03779dec5b48ccbb53a68bddf3465c456c5ef3bccfa5a3ef5f1ea1c139d2b",
+    "rcmt/local/constraints/symmetry_chain.md": "163cbd536d710a5dfe4a69dc3ea7aa47b232e5a411d7b0c9eff30d85c635bbdf",
+    "rcmt/local/constraints/mode_space.md": "87bc9740850ee9dadd1f3d696d667a08398deb63593d70b58091d30f38f8c443",
+    "rcmt/local/constraints/projection.md": "bfaadb3d05c2bbae38503732e767966f05ae0e94f83fbb16d66387abd72e05f2",
+    "projects/Operational_Phase_Space/V4_Orbit-Bridge_Regularity_Theorem.md": "91135e868355501845986dee0a1c3b2fbc36e73d4e5e89833004e084dcda5f76",
+    "projects/Operational_Phase_Space/SIM14_Discussions.md": "f8b024d88b4500d412a922179b6fdf28383516d9f92754fea56738ddd6c7ae87",
+    "projects/Operational_Phase_Space/SIM15_Discussions.md": "930a959dee262fe39b2dc565066e601e2eb61a41c33c299fcc27a4e32062fa7b",
+    "projects/Operational_Phase_Space/SIM14.3.py": "b452daf82a2b342e32c517d41dbdc785d3f8634b7f996e5a457fbd5cf4b372d4",
+    "projects/Operational_Phase_Space/SIM15.2.py": "dc0e1b712d7e28e84d268f6414a340cb136e3b8f172e9a809e0a90f14b61e9e6",
+    "projects/Operational_Phase_Space/SIM16.0.py": "b8fc72ed452b523ed48bf498405496e5abdf888cd9afed9c5687f2f09080867d",
+    "projects/Operational_Phase_Space/SIM16.1.py": "2750849a55e229608428e6d69063cbf54b7e89fbd9fe5b7d5d757de380cb8727",
+    "projects/Operational_Phase_Space/SIM16.4.py": "bd208c96c4bfbb832a85ff8c2d7c8a4ded2cf37b925a0315c5cfbc7a3987f355",
+    "projects/Operational_Phase_Space/recorded_output/SIM14.3.txt": "fca509b2aa1fe902d8395ee085caa2927a18d0c74b256f6f270588cc83dab296",
+    "projects/Operational_Phase_Space/recorded_output/SIM15.2.txt": "45b4fa67fd97ac8013d0b31cf842eaa31274a99762bd57f6cad18f63ece0a78d",
+    "projects/Operational_Phase_Space/recorded_output/SIM15.4.txt": "427bc307a296648cb06eb32c667874772761443b847e79b70c98474536282871",
+    "projects/Operational_Phase_Space/recorded_output/SIM15.6.txt": "94fee6d636553be31b6a116673a88675653c935a2911721a9c0145ef27cf719f",
+    "projects/ops-codex/implementation/ops-repair-verification.json": "3010a528eb5635463c93673dacf91b5a931cad3941aaad5ed0f94a48659b3fcf",
+    "projects/ops-codex/implementation/SIM16.4.py.stdout.txt": "80c3bdac457f296a697841d57c4bab61e8564f6bc9e21806f8bdf0871cedc6d2"
+  },
+  "script_sha256": "0d4a274c0d03e1338b61eab789d966dc422b6500fea418c7359da6d7157cd150"
+}

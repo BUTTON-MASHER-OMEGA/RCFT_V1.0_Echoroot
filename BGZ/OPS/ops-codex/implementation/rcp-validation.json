@@ -1,0 +1,65 @@
+{
+  "documents": 165,
+  "structural_pass": 165,
+  "compression_ready_by_header_dependency_screen": 160,
+  "unresolved": [
+    {
+      "path": "rcmt/local/constraints/direction_semantics.md",
+      "structural_pass": true,
+      "compression_ready": false,
+      "errors": [
+        "declared unresolved source metadata"
+      ],
+      "dependencies": []
+    },
+    {
+      "path": "rcmt/modules/geometry_behavior/closure_reinjection_cycles.md",
+      "structural_pass": true,
+      "compression_ready": false,
+      "errors": [
+        "declared unresolved source metadata"
+      ],
+      "dependencies": [
+        "rcmt/modules/geometry_behavior/geometry_behavior_contract.md"
+      ]
+    },
+    {
+      "path": "rcmt/modules/geometry_behavior/echoon_field.md",
+      "structural_pass": true,
+      "compression_ready": false,
+      "errors": [
+        "declared unresolved source metadata"
+      ],
+      "dependencies": [
+        "rcmt/modules/geometry_behavior/geometry_behavior_contract.md"
+      ]
+    },
+    {
+      "path": "rcmt/modules/geometry_behavior/README.md",
+      "structural_pass": true,
+      "compression_ready": false,
+      "errors": [
+        "declared unresolved source metadata"
+      ],
+      "dependencies": [
+        "rcmt/local/README.md",
+        "rcmt/modules/survivor_matter_structure/README.md"
+      ]
+    },
+    {
+      "path": "rcmt/rcmt_compressed.md",
+      "structural_pass": true,
+      "compression_ready": false,
+      "errors": [
+        "declared unresolved source metadata"
+      ],
+      "dependencies": [
+        "rcmt/README.md",
+        "rcmt/local/invariants.md",
+        "rcf/rcp-1.2.md"
+      ]
+    }
+  ],
+  "dependency_cycles": [],
+  "scope": "Full canonical opening, field order/nonempty/type, unique headings outside fences, resolved header paths, anti-backflow and status/authority checks; graph cycles; owner/boundary semantic review separately recorded. A mechanical pass alone is not full semantic RCP certification."
+}

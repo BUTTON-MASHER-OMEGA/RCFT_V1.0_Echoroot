@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-24",
+  "source_sha256": {
+    "projects/Operational_Phase_Space/SIM16.4.py": "bd208c96c4bfbb832a85ff8c2d7c8a4ded2cf37b925a0315c5cfbc7a3987f355",
+    "projects/Operational_Phase_Space/SIM16.3.py": "8d7c7856d39d3d01f955d5187378ba91730fe95f65d6d599920a86fecca66d08",
+    "projects/Operational_Phase_Space/SIM15.2.py": "dc0e1b712d7e28e84d268f6414a340cb136e3b8f172e9a809e0a90f14b61e9e6",
+    "projects/Operational_Phase_Space/recorded_output/SIM15.2.txt": "45b4fa67fd97ac8013d0b31cf842eaa31274a99762bd57f6cad18f63ece0a78d",
+    "projects/Operational_Phase_Space/V4_Orbit-Bridge_Regularity_Theorem.md": "91135e868355501845986dee0a1c3b2fbc36e73d4e5e89833004e084dcda5f76",
+    "projects/ops-codex/research/assignment-001/report.md": "d5e2201cf39f761ebc2faee678a193421d358b69e61a010babc3c3482adc36f3",
+    "projects/ops-codex/research/assignment-002/report.md": "5b6995af9f608f09c73228b56a32e2655c71697bb01760ffca027726dcbaa8f2",
+    "rcf/modules/lco/lco-primitives.md": "d89b3baee5f7390d91dcdb289cc2e4047c0e6f0ee56488ea9617bd46082a9877",
+    "rcf/modules/lco/lco-invariants.md": "cf2380cf975a1daf6cfee92c26b4ee34875abbf48e8bc38df41020f26a504244",
+    "rcf/modules/lco/lco-operator.md": "17f84b63ceddbb6ca9de43cf2d79c081744ac98d66f3e33fa63171c9189f534f",
+    "rcf/modules/lco/lco-update-policy.md": "d96f545958c08b1e0bdba0582572c1d51c26d0ee080d1ef94f201c05eacc241e",
+    "rcmt/local/invariants.md": "416d3074b17b0989566bcf01421475228595128c59bf2c1881c9a6341382bee7",
+    "rcmt/local/constraints/symmetry_chain.md": "163cbd536d710a5dfe4a69dc3ea7aa47b232e5a411d7b0c9eff30d85c635bbdf",
+    "rcmt/local/constraints/projection.md": "bfaadb3d05c2bbae38503732e767966f05ae0e94f83fbb16d66387abd72e05f2"
+  },
+  "commits": {
+    "rcf": "57af06b5ac7c73b66839f70ebba3293399a1c880",
+    "rcmt": "666ed97aaa1d11f82d0a9881e99bb0c9cae2d225"
+  },
+  "script_sha256": "8f8a4ccb5c6363c350bc2bb7c90bdc1ec59400310137e41a4ec737f2a64d6105",
+  "non_repository_inputs": "Copied OPS artifacts and independent Codex OPS-001/002 reports",
+  "external_reference": "https://math.ucr.edu/home/baez/octonions/node7.html"
+}

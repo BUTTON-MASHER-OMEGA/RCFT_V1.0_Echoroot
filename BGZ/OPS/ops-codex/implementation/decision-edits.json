@@ -1,0 +1,708 @@
+[
+  {
+    "path": "rcf/rcp-1.2.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Clarify opening structure; no extra sentinel or delimiter",
+    "before": "0475b067aafea20937c6b1f276b1bd42ab340f08d11dc0b464d2209be073ccea",
+    "after": "2ea26a420746c3bfcf7197c2c82e215948e72f23f25e95d6aff2baee0b621663"
+  },
+  {
+    "path": "rcf/rcp-1.2.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Clarify canonical opening",
+    "before": "2ea26a420746c3bfcf7197c2c82e215948e72f23f25e95d6aff2baee0b621663",
+    "after": "8e64027edcd23a2673acd07dbb59e3675a5455c5adfdded9d81bac0883894617"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D1",
+      "D2"
+    ],
+    "reason": "Owner clarification — 2026-10-24",
+    "before": "26c2553536d7381595459ee6ed38a4c656358a92b2284cbf640636e7435a15ae",
+    "after": "17a55179b32d28576f0f55708bf5dab759967980e979e873ab5fa95c538ad0cc"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D2"
+    ],
+    "reason": "Identify real symplectic research candidate without adopting it",
+    "before": "17a55179b32d28576f0f55708bf5dab759967980e979e873ab5fa95c538ad0cc",
+    "after": "65b65386c5a97b188e7211d78c1354c6ca5e243eb0771531a9041639d34cc62f"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D2"
+    ],
+    "reason": "Identify real symplectic research candidate without adopting it",
+    "before": "65b65386c5a97b188e7211d78c1354c6ca5e243eb0771531a9041639d34cc62f",
+    "after": "34fdf6b1e358763b5a9e7109e7ac9d63aa3a0984bf91e596667172467e91cea6"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D4"
+    ],
+    "reason": "Remove universal compactness; preserve other constraints",
+    "before": "34fdf6b1e358763b5a9e7109e7ac9d63aa3a0984bf91e596667172467e91cea6",
+    "after": "dc3dec2b7bd501be9bae9f4b8a5e4c87cd77e67d9f89cc042da9eebdc4b41fa8"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D4"
+    ],
+    "reason": "Keep finite/local curvature exclusions distinct from compactness",
+    "before": "dc3dec2b7bd501be9bae9f4b8a5e4c87cd77e67d9f89cc042da9eebdc4b41fa8",
+    "after": "4c6b37a004220c287b922f095327302b7b6b9b6c973ecaa37a134124da861743"
+  },
+  {
+    "path": "rcmt/local/invariants.md",
+    "decisions": [
+      "D5"
+    ],
+    "reason": "Separate density and bounded memory weight",
+    "before": "4c6b37a004220c287b922f095327302b7b6b9b6c973ecaa37a134124da861743",
+    "after": "3d666949cac17dc0a08cb49bb3f849fb052e1d47c55076fdabb4f6fbe062760e"
+  },
+  {
+    "path": "rcmt/local/constraints/mode_space.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4"
+    ],
+    "reason": "Propagate candidate and profile-specific compactness language",
+    "before": "b0e1b8dc0e9e53e232a5d45649c2564f6dfd1318afc5356faa820c88c1de74d5",
+    "after": "5d14a4aa6513d1d68792248390c581dc6a5c057d17bf9bd408381243cf066734"
+  },
+  {
+    "path": "rcmt/local/constraints/mode_space.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4"
+    ],
+    "reason": "Architectural status and realization limits",
+    "before": "5d14a4aa6513d1d68792248390c581dc6a5c057d17bf9bd408381243cf066734",
+    "after": "d0fa44050cbd8b28fa71b4184929de3bd1d11db4d4a9b95336514a1c3d11dcfe"
+  },
+  {
+    "path": "rcmt/local/constraints/symmetry_chain.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4"
+    ],
+    "reason": "Propagate candidate and profile-specific compactness language",
+    "before": "47d89cff69dd76f15842bbe52543e8132a6a4452259e29a723b6fc562ae133ee",
+    "after": "04de9749f3b1022580a9a4d90fd7bf723936d3f98df19a67b445bd6a90e55ac7"
+  },
+  {
+    "path": "rcmt/local/constraints/symmetry_chain.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4"
+    ],
+    "reason": "Architectural status and realization limits",
+    "before": "04de9749f3b1022580a9a4d90fd7bf723936d3f98df19a67b445bd6a90e55ac7",
+    "after": "e0d39d00c67db14471922643aa8a7539223785de298d2781296235dc23e9cfd7"
+  },
+  {
+    "path": "rcmt/local/constraints/projection.md",
+    "decisions": [
+      "D2",
+      "D4",
+      "D7"
+    ],
+    "reason": "Distinguish schematic state projection from group homomorphism",
+    "before": "216834bc4d34a6d380c24f488617cd7a30cb1af89488d7cb0e51f9fabc1d0e71",
+    "after": "f2d9c54b941130cc9238c4d61dd887a49910845cc51eef545e64264d3ec3ccf5"
+  },
+  {
+    "path": "rcmt/local/constraints/projection.md",
+    "decisions": [
+      "D2",
+      "D4",
+      "D7"
+    ],
+    "reason": "Projection scope",
+    "before": "f2d9c54b941130cc9238c4d61dd887a49910845cc51eef545e64264d3ec3ccf5",
+    "after": "218efafd5a79d208a04b5b71499ecdf3bacc468181ec52a31dac914e40ef0da4"
+  },
+  {
+    "path": "rcmt/local/constraints/geometry.md",
+    "decisions": [
+      "D4"
+    ],
+    "reason": "Replace blanket internal compactness with declared profile",
+    "before": "510a9524ee352a8d04b0858dfd5ceb4685d6847c6d3c01bfc74f5bd94bb97d24",
+    "after": "4dc0848b0ceb1d51211b6cb8bc23330f85906c180d34349df3798bb42bac8bd2"
+  },
+  {
+    "path": "rcmt/global/constraints.md",
+    "decisions": [
+      "D4",
+      "D7",
+      "D8"
+    ],
+    "reason": "Scope compactness, transport inputs and local evaluation actors",
+    "before": "ff4e47805847e4c999683c23bb0b5cb084d96f5ec642eb4be9646db4139ce6e9",
+    "after": "bc0d71b74ee7cdccedde70b069e28328f63af0113ab5aa506be3fe0946ea001d"
+  },
+  {
+    "path": "rcmt/physics_interface/README.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Consumer responsibilities",
+    "before": "3cb2c2109577ffa8c9f07bed34e65c601e1afbbaf4a389c56a91a664c3274b39",
+    "after": "2599a862865188f5e8cfac159af3dee179ace620f2dc514a55c683f82f6188d7"
+  },
+  {
+    "path": "rcmt/physics_interface/README.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Limit local input permissions to construction-facing responsibility",
+    "before": "2599a862865188f5e8cfac159af3dee179ace620f2dc514a55c683f82f6188d7",
+    "after": "7bbb75198582498637c8858b592fc7f2eb624e28a2a80cab556e645aa368c040"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/physics_interface_contract.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Scope effective-artifact-only firewall to effective consumers",
+    "before": "1f2dd9b875508bd9ff6965aa3a4670ece90d987d37d12b69252007c3d73cbbe1",
+    "after": "f309c6c0e3ee04744d4c9d791caad0db7f383500878dc232fb75b4098f887b8b"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/physics_interface_contract.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Consumer-stage scope",
+    "before": "f309c6c0e3ee04744d4c9d791caad0db7f383500878dc232fb75b4098f887b8b",
+    "after": "6370cf7adc1b5fd0f61b3302ea36f13e374c166d919483e1605839d7ec801677"
+  },
+  {
+    "path": "rcmt/physics_interface/local/interfaces.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Construction-facing import scope",
+    "before": "cc2c2fe180c125e74a0c4586d189025d049c021a812e33e677904c6126697787",
+    "after": "e1f992ded40fd9728c18386a8a22548c6c995dc9ce5368f56815abbed7226988"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_physics_adapter.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Construction-facing import scope",
+    "before": "b65af447a9f9aaa2361c4fc12733f5eb2ddb97abbe7cb7ee6c25738ded70495a",
+    "after": "b112325673243fe163418415c5e1e0992fa28bffff8e0c347c392db877aa6ed0"
+  },
+  {
+    "path": "rcmt/physics_interface/local/adapters/local_to_geometry_adapter.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Construction-facing import scope",
+    "before": "e1820de428cb7b0dc5bb356b89e213d234a95f1b52a6600d9eab4dc68ab379e1",
+    "after": "c2ff0830839406240da86cdfeec8e694cd7ab57d65b1d28e4c1170fc34b84b07"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/overview.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D7",
+      "D8",
+      "D9"
+    ],
+    "reason": "Replace stale active overview; preserve full prior source in baseline",
+    "before": "3250fc8ddf38a128f4bdc342b48d2c4ac9bfea2111bdd763c75a9f170b1738f9",
+    "after": "34649792e86ed2571bf1821abf96b25fcf66357090b04f7aa720f1eb271df0a8"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_contract.md",
+    "decisions": [
+      "D3",
+      "D7"
+    ],
+    "reason": "Construction-facing representation scope",
+    "before": "33b12601c2658b02a310fc1b7c5d9afe7e0d5a5c1eab4855a6e9cf8172d3a7a7",
+    "after": "77d30397a9bc1159a42d61287e95a482b9dd1916f4661e27584512d4ebdf08b2"
+  },
+  {
+    "path": "rcmt/physics_interface/pipeline/projection_contract.md",
+    "decisions": [
+      "D3",
+      "D7"
+    ],
+    "reason": "Remove overbroad sole-producer claim",
+    "before": "77d30397a9bc1159a42d61287e95a482b9dd1916f4661e27584512d4ebdf08b2",
+    "after": "5def6d755836b5e3bbfbfe11b24b34f503ffbc3caeb18a9ab2ba6137113b59e5"
+  },
+  {
+    "path": "rcf/core/relational-constraints/geometry.md",
+    "decisions": [
+      "D1"
+    ],
+    "reason": "Qualify minimality without demoting RCMT requirement",
+    "before": "05b6bedde9dc800752b37b9ce76feff65e0502b25e428ccca59ab2117c9800d6",
+    "after": "16feb88f0741d90e11543c1db21ccbff5543399d040c758095bdf2ccde7582a3"
+  },
+  {
+    "path": "rcf/core/relational-constraints/geometry.md",
+    "decisions": [
+      "D1"
+    ],
+    "reason": "Align summary with shared-representation permission",
+    "before": "16feb88f0741d90e11543c1db21ccbff5543399d040c758095bdf2ccde7582a3",
+    "after": "40b03779dec5b48ccbb53a68bddf3465c456c5ef3bccfa5a3ef5f1ea1c139d2b"
+  },
+  {
+    "path": "rcf/modules/geometry/projection/dual_projection.md",
+    "decisions": [
+      "D7"
+    ],
+    "reason": "Replace untyped fixed-point/reconstruction with downstream diagnostic",
+    "before": "8351831bb4b7d11692cf1f8eb9f1c4c3ea8a04ed32dcca5ef65f2023044e1389",
+    "after": "d807de4f41ba2bc70a1cfe47d4ec35d3050342716e49898aacb93a901789d512"
+  },
+  {
+    "path": "rcf/modules/geometry/projection/dual_projection.md",
+    "decisions": [
+      "D7"
+    ],
+    "reason": "Remove survivor-selection backflow from consequences",
+    "before": "d807de4f41ba2bc70a1cfe47d4ec35d3050342716e49898aacb93a901789d512",
+    "after": "3de03d9c91a4e6ff78d952db5e1c5549e852cc9575121a27b7b7ca02907ff0a5"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/survival-sieve.md",
+    "decisions": [
+      "D7"
+    ],
+    "reason": "Keep triangle-specific restrictions downstream of neutral LCO",
+    "before": "de625d6e64c7bf456939553e7aaaa485952105a22e8380a78ba04349149673ea",
+    "after": "3bfd08a33d204ad6742fc643ad1df35ad898279de94d99defb3586ae101c13e6"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/candidate-geometries.md",
+    "decisions": [
+      "D7"
+    ],
+    "reason": "Scope geometric triangle profile without changing mathematical results",
+    "before": "3199d0cf0d2fa8e2f50b4918c1a1fd7b548bdcc310252bdfecaaf35e471812eb",
+    "after": "cf11ddf3ae16e36ed75a7d8cac3298935142102a7d3fe3a07887e1604eb1076d"
+  },
+  {
+    "path": "rcf/modules/lco/lco-invariants.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Replace universal descent-capability requirement with evaluator contract",
+    "before": "98936a9354b684e8408551ac0d5002f8945e7ea0965f92e3a1274d113c908e18",
+    "after": "cf2380cf975a1daf6cfee92c26b4ee34875abbf48e8bc38df41020f26a504244"
+  },
+  {
+    "path": "rcf/modules/lco/lco-operator.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Remove scorer descent obligation",
+    "before": "a9ce95033bc93fbc178ee356102ddd3c8c3c540fe20fabde1b56cc37d474a017",
+    "after": "882a2602c19357c4ce3b70ec6c6791ee28b04f3dea9bfd57affcb3b60631a7c2"
+  },
+  {
+    "path": "rcf/modules/lco/lco-operator.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Separate deterministic scoring from realization and mutation",
+    "before": "882a2602c19357c4ce3b70ec6c6791ee28b04f3dea9bfd57affcb3b60631a7c2",
+    "after": "17f84b63ceddbb6ca9de43cf2d79c081744ac98d66f3e33fa63171c9189f534f"
+  },
+  {
+    "path": "rcf/modules/lco/README.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Remove uniqueness and optimization overclaim",
+    "before": "c7e273630e9fe5ff8af7f014b1bbd8e70eb6a48d34c106695d100c1f4b9c441e",
+    "after": "d01515694ba9a62e003d171c2f7d1591ddeb0ce8481cfadd683a89a06c5739f7"
+  },
+  {
+    "path": "rcf/modules/lco/README.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Propagate evaluator-only semantics without changing score equations",
+    "before": "d01515694ba9a62e003d171c2f7d1591ddeb0ce8481cfadd683a89a06c5739f7",
+    "after": "79b4a32e660928c299a169048a227ae8f247e7243758eb4cfb405e837134c1a6"
+  },
+  {
+    "path": "rcf/modules/lco/lco-core.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Propagate evaluator-only semantics without changing score equations",
+    "before": "6584ff86bdd0bcc27b258f045921065784a1f10f056007e64b718811853ffd64",
+    "after": "62a05e74c1d55e34ec67354312feac997488a33c37570b80255d844c84c06537"
+  },
+  {
+    "path": "rcf/modules/lco/lco-dispersion.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Propagate evaluator-only semantics without changing score equations",
+    "before": "cced5e6f68346abed2275c55bc55fb2c6558a5882019e534b543524fb5efdf68",
+    "after": "398b37e1dc50b60ee3ca1c635bebec194573a3e905846e3a8b005e23f61437a1"
+  },
+  {
+    "path": "rcf/modules/lco/lco-update-policy.md",
+    "decisions": [
+      "D8"
+    ],
+    "reason": "Correct stochastic/deterministic examples without imposing general descent",
+    "before": "f9a8a869ce4899984b97ae78ed4ac4ff1acb0ab4650c8e373a43ae88823fda55",
+    "after": "d96f545958c08b1e0bdba0582572c1d51c26d0ee080d1ef94f201c05eacc241e"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/mismatch-function.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Historical exploratory evidence — owner clarification",
+    "before": "1e061ef6c3a187ecfb783a48d4a2c2ed468448da1337fec011172f0cb60f2357",
+    "after": "6630f21e50dfd020ce6a62d88fcbb3cdc4842a7da4db3ce02e51a94d895bce57"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/candidate-geometries/density-regimes.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Historical exploratory evidence — owner clarification",
+    "before": "58c8b683f88c91a4e8e18b5c103774b1112e100181e2aad29b47e7867b381d70",
+    "after": "bb27d89bf6d3e812ff035bcf4812de394033cb8f20a49b75e85f24263b6adf81"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/600-cell/survival-stats.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Historical exploratory evidence — owner clarification",
+    "before": "3a232b305ea9ffa0d3093e829f5ff20bd3cdbe0f7f22befebefa25351789cd04",
+    "after": "b51128e3404eddfd500cbbd8512ef7878eee28f8e2ea1e1f8d01c9b8256bcc4c"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/dual-5-demicube/survival-stats.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Historical exploratory evidence — owner clarification",
+    "before": "417ed86e362a305749bb85d9339495dde1b0ce2523819788aedca7c40b119374",
+    "after": "3de83d18094843d12288bc2d4f1ba16999426e88e4c931eaa1d1b7c32b043f82"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/e8/survival-stats.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Historical exploratory evidence — owner clarification",
+    "before": "7223653a6cff957239bc9b929e9a57c8228b44f85bc5261354b033c164fb6c50",
+    "after": "298139ecfe5ab7d5850ca320ea0be40519749a568c3f8827c6b3c46426905941"
+  },
+  {
+    "path": "rcf/modules/geometry/discrete/600-cell/survival-stats.md",
+    "decisions": [
+      "D6"
+    ],
+    "reason": "Correct empirical-invariant overstatement",
+    "before": "b51128e3404eddfd500cbbd8512ef7878eee28f8e2ea1e1f8d01c9b8256bcc4c",
+    "after": "00ad03e2200bf6296bb810cc892fb780c73f927d8f4ce20c843f3b4b3469086a"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/gamma-plateau-behavior.md",
+    "decisions": [
+      "D5",
+      "D6"
+    ],
+    "reason": "Scope plateau observations without changing historical data",
+    "before": "ed428de2a6291b1ecc223610c6dd5d0af37cd4c1c1691a2a459cc35120e9e228",
+    "after": "d8428b6d3e5cf83a222ab6dfc334195d86a2181ed9135cf9d74240e2613d2c3a"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/gamma-plateau-behavior.md",
+    "decisions": [
+      "D5",
+      "D6",
+      "D9"
+    ],
+    "reason": "Parameter and evidence boundary",
+    "before": "d8428b6d3e5cf83a222ab6dfc334195d86a2181ed9135cf9d74240e2613d2c3a",
+    "after": "475e6e1ce69f07bc858ebc240ebf86a842e550a05c711d78db89775d1f9af5a3"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/survivor_indexing.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indexing and target-driven regime choice",
+    "before": "6d43d74b78feec6bebfcf34d66d622b9f0df4b527fdd460da12e50772039d8c1",
+    "after": "59133609b265e6b3d3e0ab67cc43b75255a0ee3fe0006c15b7e5c3e5d750b8d1"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/README.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indexing and target-driven regime choice",
+    "before": "0d105a9a18002c6be63d698e667d02b6ab84840de0b94941d7a3f7bc24ffdec7",
+    "after": "e82d29a743fc3e8f8b67211853717443ce0bdf56dc6e4975e52c7123e0aa1ab1"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/mode-structure.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indexing and target-driven regime choice",
+    "before": "83449a394b44f661b401df23976ae6c33134d3e197869e3f310c73e92e03880a",
+    "after": "199e931db8a1085d7908d54bacdd8a8af136e1d135aa629b18a950405d149842"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/symmetry-alignment.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indexing and target-driven regime choice",
+    "before": "28d7c2aeffcf70b015f0895a619c5c6f7ef34f26b5aa30e57647b9ce886b8ad5",
+    "after": "0f55f02f2ee32304395bcf6631c559ef28f0bee48b604edc9de2e45f8a999e63"
+  },
+  {
+    "path": "rcf/modules/geometry/adjacent/mode-structure.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Remove independent-emergence overclaim while retaining construction",
+    "before": "199e931db8a1085d7908d54bacdd8a8af136e1d135aa629b18a950405d149842",
+    "after": "d3910d3b9532e8c7853e2206a60e9a4521b589c2ed42f4b081eec50248b93e05"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/sectorization.md",
+    "decisions": [
+      "D7",
+      "D9"
+    ],
+    "reason": "Carrier, geometry-profile and historical-indexing scope",
+    "before": "c031dedb9a08d7f933ae20326131de6b7fc590c3699a9f7d0534124b8442b521",
+    "after": "cc9d1f397bd101b0ac2a4e74e1bdbd9b5fd9291b7ccec73fd863ffec1592d713"
+  },
+  {
+    "path": "rcf/modules/gcm_interface/sectorization.md",
+    "decisions": [
+      "D7"
+    ],
+    "reason": "Remove universal triangle requirement from GCM body",
+    "before": "cc9d1f397bd101b0ac2a4e74e1bdbd9b5fd9291b7ccec73fd863ffec1592d713",
+    "after": "6799660a3f662b92f132bc2dfaeefd78b46645791803d4d3233e7c615a91dc94"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Correct authoritative public GCM index reference",
+    "before": "36c27111d6f012d1bbeb27cd3437d58155b6183ce419c6e57c8215b659a7dd3a",
+    "after": "9c778c8b671ece7b8d753fbcff5acd982f893d8f73d5ef7977eb83204ed99e5e"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/gcm_bindings.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical binding status",
+    "before": "9c778c8b671ece7b8d753fbcff5acd982f893d8f73d5ef7977eb83204ed99e5e",
+    "after": "babcc3cd3bf1fd3462946f84d45c63f141d678eb9aacb55c04f0b006251d7a11"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/physics_bindings.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Correct support/boundary schema path",
+    "before": "bc11dd251f2876749c380d5bad0dab235d19c258a876731ec35fd8fd74a918f9",
+    "after": "aab45b8df2633fbf1aa4ec43a21f16df7ae85ae81f87aa870c3df8c69ff360d4"
+  },
+  {
+    "path": "rcmt/smg_v2.1/bindings/physics_bindings.md",
+    "decisions": [
+      "D3"
+    ],
+    "reason": "Schema and consumer-stage scope",
+    "before": "aab45b8df2633fbf1aa4ec43a21f16df7ae85ae81f87aa870c3df8c69ff360d4",
+    "after": "74c833d61d2bd94046a5ad124132cb9c5f4549b7c96094ae992559774a637554"
+  },
+  {
+    "path": "rcmt/smg_v2.1/smg_contract.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indices and downstream adoption",
+    "before": "a4a218459a644da8876597745ec360b62f90cecc3a59a8fc71b79a9394f89294",
+    "after": "b8b91225cf93641065760d1ab8187f032b349bc0679a797c6fdb06266e362ae7"
+  },
+  {
+    "path": "rcmt/smg_v2.1/claims/dual_closure.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indices and downstream adoption",
+    "before": "d54f409f39f98e5092527974f1b3a53816207666741230dcfd1741baf1557281",
+    "after": "2a789cb7aff8eadac6fbb4e5dde4eeb641945d1c0f87da7301bed9c7c63f4cf8"
+  },
+  {
+    "path": "rcmt/smg_v2.1/dictionary/gamma_generations.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indices and downstream adoption",
+    "before": "8f0bd9c829ab5153996d5a72c085ba4ca0b3cdbf33cc119b3b7479c4dd7bdbc4",
+    "after": "fc87b5f94f12e05c41a6fcae5a4081f376246caa8824e10d129c8264bf9f1de3"
+  },
+  {
+    "path": "rcmt/smg_v2.1/exports/standard_model_kinematics.md",
+    "decisions": [
+      "D5",
+      "D9"
+    ],
+    "reason": "Historical indices and downstream adoption",
+    "before": "c95b0ebd15d50ff767f8c1961d4fab7d8f60d2bc731b64aec8e7180a7db0dfcc",
+    "after": "73fe34d82f023bb196922b2e3df91a476568655fbd058dde036b447241a85f39"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-routing.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Provisional routing adoption",
+    "before": "48c491ab8a53a6421f96f97a2e17f4f3df700ee438e407b178f274d237d57e81",
+    "after": "a18d632bcf7abf726a3b13f88c915eb10ff8e399b4ce267062545e9b690e972b"
+  },
+  {
+    "path": "rcmt/smg_v2.1/translations/24-cell-tranlsation.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Provisional routing adoption",
+    "before": "99ba94243a3375f200551a604cd81adea7a96c30caa562633fe123636a105c75",
+    "after": "0cc40017a126547bd5114a05c2bee7135abb27866fea5f882b6f6d0ce3b4a5d1"
+  },
+  {
+    "path": "rcmt/smg_v2.1/REFACTOR_STATUS.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Record factual current status without fabricating historical completion",
+    "before": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "after": "c8f657bcfc2fbb82ca0bb7fb75c92dcc32a634c4ae462265d199a1310bcd2c8f"
+  },
+  {
+    "path": "rcmt/README.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4"
+    ],
+    "reason": "State adopted roles versus provisional implementation",
+    "before": "3d09ce270aa98b28cc4ad50a4cb78e236a29f6ada49aa3603e64314a4cc26f34",
+    "after": "182d98be3a9a9edbf47773a3cbf5d0439f6fd56d9358749603df861441b2f408"
+  },
+  {
+    "path": "rcmt/README.md",
+    "decisions": [
+      "D1",
+      "D2",
+      "D4",
+      "D8"
+    ],
+    "reason": "Correct architectural summary and repository navigation",
+    "before": "182d98be3a9a9edbf47773a3cbf5d0439f6fd56d9358749603df861441b2f408",
+    "after": "697f5b33da3623f75819648b196d1e3f6d27bcfbb0649cf912deeccf0ab00479"
+  },
+  {
+    "path": "rcf/modules/geometry/projection/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Correct existing-file navigation",
+    "before": "e426d7772e85a3ac7d65a4405b922a4c734907ee05d5379fdcb7717acee272d5",
+    "after": "2d350d309eb2a186fece2df2a1136ccac71a675b303ff2bd709bda498352d9d7"
+  },
+  {
+    "path": "rcmt/local/README.md",
+    "decisions": [
+      "D10"
+    ],
+    "reason": "Point authority and protocol references to actual sources",
+    "before": "2f206abbb96a356eb7cba1b73b1ad689928484b71ecc7ec9818538f2d7dd0633",
+    "after": "d4ea8398ffa56ce4ad4b836ed6fe20743056ec8c29a9ef12de8472b0a54f4d7a"
+  },
+  {
+    "path": "projects/lisi-smg-test/PLAN.md",
+    "decisions": [
+      "D9",
+      "D10"
+    ],
+    "reason": "Historical planning snapshot",
+    "before": "0cf3643109fc97e2c9034bf787b3b5a0ba8324ca402642311b4e70b9237c0a8c",
+    "after": "62fad349bac91b572132d795a2ad2c59df8bd55ead9da9c23e0b279c89b5b853"
+  },
+  {
+    "path": "projects/lisi-smg-test/summary.md",
+    "decisions": [
+      "D9"
+    ],
+    "reason": "Verification and configuration scope",
+    "before": "a61798c09a4af56d5059d508f2f8870c99dd7ccd6763cf66b30ec4e12be0c020",
+    "after": "3b4bb45e40f201604aa2e5f015039cd0650b7a927c524f75fef0cecee277945f"
+  },
+  {
+    "path": "projects/Operational_Phase_Space/Vocabulary_Packet.md",
+    "decisions": [
+      "D1",
+      "D9"
+    ],
+    "reason": "Later verified status — 2026-10-24",
+    "before": "06a96731582e3a36272c3313b0ec8c9ad34bf64c2e7bdecc1babfee464413004",
+    "after": "5ed267a9b183cec56b38817ab85d052c085ef68487061ff1a3d0ee5ee7da368c"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "rcf": {
+    "markdown_files": 199,
+    "complete_field_presence": 196
+  },
+  "rcmt": {
+    "markdown_files": 163,
+    "complete_field_presence": 0
+  },
+  "projects/Operational_Phase_Space": {
+    "markdown_files": 6,
+    "complete_field_presence": 0
+  },
+  "projects/lisi-smg-test": {
+    "markdown_files": 15,
+    "complete_field_presence": 0
+  }
+}

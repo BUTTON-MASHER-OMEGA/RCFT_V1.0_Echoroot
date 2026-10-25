@@ -1,0 +1,195 @@
+[
+  {
+    "path": "projects/lco-related/cell-600-test.py",
+    "syntax": "valid",
+    "lines": 89,
+    "functions": [
+      {
+        "name": "generate_600_cell_vertices",
+        "line": 4
+      },
+      {
+        "name": "analyze_projection_spectrum",
+        "line": 53
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/constraint_regime_sweep.py",
+    "syntax": "valid",
+    "lines": 85,
+    "functions": [
+      {
+        "name": "generate_600_cell",
+        "line": 4
+      },
+      {
+        "name": "parity",
+        "line": 28
+      },
+      {
+        "name": "generate_e8_roots",
+        "line": 38
+      },
+      {
+        "name": "analyze_spectrum",
+        "line": 57
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/h3-parameter-sweep.py",
+    "syntax": "valid",
+    "lines": 123,
+    "functions": [
+      {
+        "name": "generate_packings",
+        "line": 6
+      },
+      {
+        "name": "run_gamma_sweep",
+        "line": 65
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/isp_phi_probe.py",
+    "syntax": "valid",
+    "lines": 52,
+    "functions": [
+      {
+        "name": "toy_log_det_loss",
+        "line": 3
+      },
+      {
+        "name": "run_isp_frontier_probe",
+        "line": 15
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/Matthew/dynamic_crystalization.py",
+    "syntax": "valid",
+    "lines": 105,
+    "functions": [
+      {
+        "name": "generate_packings",
+        "line": 6
+      },
+      {
+        "name": "run_crystallization",
+        "line": 48
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/Matthew/test-1.py",
+    "syntax": "valid",
+    "lines": 184,
+    "functions": [
+      {
+        "name": "friction",
+        "line": 40
+      },
+      {
+        "name": "transition_probs",
+        "line": 55
+      },
+      {
+        "name": "simulate",
+        "line": 66
+      },
+      {
+        "name": "empirical_kernel_first_order",
+        "line": 103
+      },
+      {
+        "name": "empirical_kernel_second_order",
+        "line": 115
+      },
+      {
+        "name": "coherence_curve",
+        "line": 134
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/mode_sphere_test.1.py",
+    "syntax": "valid",
+    "lines": 104,
+    "functions": [
+      {
+        "name": "V_base",
+        "line": 5
+      },
+      {
+        "name": "run_vector_sphere_probe",
+        "line": 17
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/polytope-packing.py",
+    "syntax": "valid",
+    "lines": 109,
+    "functions": [
+      {
+        "name": "generate_packings",
+        "line": 4
+      },
+      {
+        "name": "parity",
+        "line": 40
+      },
+      {
+        "name": "run_geometry_probe",
+        "line": 56
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/skew_probe.py",
+    "syntax": "valid",
+    "lines": 131,
+    "functions": [
+      {
+        "name": "V_total",
+        "line": 5
+      },
+      {
+        "name": "run_memory_skew_probe",
+        "line": 28
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/u1-relational-universe-probe.py",
+    "syntax": "valid",
+    "lines": 107,
+    "functions": [
+      {
+        "name": "V_base",
+        "line": 5
+      },
+      {
+        "name": "run_u1_universe_probe",
+        "line": 24
+      }
+    ]
+  },
+  {
+    "path": "projects/lco-related/v_test.1.py",
+    "syntax": "valid",
+    "lines": 88,
+    "functions": [
+      {
+        "name": "V_base",
+        "line": 5
+      },
+      {
+        "name": "run_corrected_probe",
+        "line": 17
+      }
+    ]
+  }
+]

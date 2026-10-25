@@ -1,0 +1,11 @@
+{
+  "reports": 8,
+  "valid_citations": 199,
+  "extracted_scripts": 21,
+  "successful_selected_ops_runs": 9,
+  "source_changes_since_baseline": 0,
+  "lisi_test_logs": [
+    "lisi-geometry-tests.txt",
+    "lisi-selected-tests.txt"
+  ]
+}
