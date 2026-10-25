@@ -1348,15 +1348,10 @@ print(
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
-
-
-
-
-
+"""
 RESULTS:
 
 
@@ -2264,3 +2259,4 @@ Interpretive ceiling:
 1338 |
 
 SIM14.1 classifies exact finite structure induced by the frozen SIM14.0 operations. Any recovered PG(2,2) structure is an incidence property of the derived (Z_2)^3 algebra. No octonionic, nonassociative, E8, H4, spinorial, quantum, or physical identification is made.
+"""
