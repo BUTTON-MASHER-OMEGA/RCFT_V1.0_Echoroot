@@ -1247,14 +1247,8 @@ if __name__ == "__main__":
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
-
-
-
+"""
 RESULTS:
 
 
@@ -1613,3 +1607,6 @@ COMPATIBLE BUT NON-UNIQUE: C8 admits canonical symplectic conjugate matchings, b
 1234 |
 
 Next allowed question: SIM14.1 may compare the frozen ordinary C8 carrier against a frozen symplectic surrogate without changing ISP/LCO for any other reason.
+"""
+
+
