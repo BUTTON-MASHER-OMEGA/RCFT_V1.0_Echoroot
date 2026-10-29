@@ -3153,13 +3153,12 @@ if __name__ == "__main__":
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 
 
-
+"""
 
 RESULTS:
 
@@ -3455,3 +3454,4 @@ all_L_intersection_order                  : 2
 12. No RCFT physical interpretation follows from this run alone.
 
 END SIM15.3
+"""
