@@ -283,13 +283,7 @@ print("END SIM16.0")
 
 
 
-~~~~~~~~~~~~~~~~~
-
-
-
-
-
-
+"""
 RESULTS:
 
 
@@ -316,3 +310,4 @@ G | Nplus: FAMILY SURVIVES (dimension 4)
 G | Npm: FAMILY SURVIVES (dimension 2)
 TRUTH_PACKET_JSON={"commutant_dimension": 8, "group_orders": {"Nminus": 24, "Nplus": 24, "Npm": 48}, "omega_pairs": [[0, 2], [1, 3], [4, 6], [5, 7]], "scope": "Frozen orthogonal permutation representation", "sim": "16.0", "symmetric_dimensions": {"Nplus": 6, "Npm": 4}, "tangent_dimensions": {"Nplus": 4, "Npm": 2}, "verdict": {"Nplus": "FAMILY SURVIVES", "Npm": "FAMILY SURVIVES"}}
 END SIM16.0
+"""
