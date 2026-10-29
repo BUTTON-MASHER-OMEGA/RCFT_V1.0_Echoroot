@@ -287,13 +287,13 @@ if __name__=='__main__':main()
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 
 
 
+"""
 ================================================================================
 SIM15.6 — TRIALITY–INCIDENCE REFINEMENT TEST
 ================================================================================
@@ -361,6 +361,6 @@ VERDICT:
   This does not prove uniqueness among every conceivable intrinsic relation.
   NO CLAIM OF ISP DYNAMICS OR PHYSICAL TRANSITIONS.
 END SIM15.6
-
+"""
 
 ** Process exited - Return Code: 0 **
