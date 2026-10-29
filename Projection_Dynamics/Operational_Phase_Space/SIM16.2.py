@@ -294,13 +294,7 @@ print('END SIM16.2')
 
 
 
-~~~~~~~~~~~~~~~
-
-
-
-
-
-
+"""
 RESULTS:
 
 
@@ -337,3 +331,4 @@ PASS | I N+ projector regression
 I | PASS exact algebraic gates and source-limited provenance labeling
 TRUTH_PACKET_JSON={"D0": [[1, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]], "D1": [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1]], "experiment_class": "EXACT_ALGEBRAIC_AUDIT", "external_sign_flip": "NOT_FROZEN_OPERATIONAL_GAUGE", "frozen_metric_equivalence": "SINGLETON_ORBITS", "frozen_regression": "PASS", "group_orders": {"AGL": 1344, "Nminus": 24, "Nplus": 24, "Npm": 48, "T": 8}, "new_dynamics_introduced": false, "new_gauge_group_introduced": false, "operational_observability": "UNRESOLVED", "orbits_Nplus": [{"forbidden_pairs": [], "pairs": [[0, 0], [1, 1], [4, 4], [5, 5]]}, {"forbidden_pairs": [[0, 4], [0, 5], [1, 4], [1, 5], [4, 5]], "pairs": [[0, 1], [0, 4], [0, 5], [1, 4], [1, 5], [4, 5]]}, {"forbidden_pairs": [], "pairs": [[0, 2], [1, 3], [4, 6], [5, 7]]}, {"forbidden_pairs": [[0, 3], [0, 6], [0, 7], [1, 2], [1, 6], [1, 7], [2, 5], [3, 4], [4, 7], [5, 6]], "pairs": [[0, 3], [0, 6], [0, 7], [1, 2], [1, 6], [1, 7], [2, 4], [2, 5], [3, 4], [3, 5], [4, 7], [5, 6]]}, {"forbidden_pairs": [], "pairs": [[2, 2], [3, 3], [6, 6], [7, 7]]}, {"forbidden_pairs": [[2, 3], [2, 6], [2, 7], [3, 6], [3, 7]], "pairs": [[2, 3], [2, 6], [2, 7], [3, 6], [3, 7], [6, 7]]}], "orbits_Npm": [{"forbidden_pairs": [], "pairs": [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7]]}, {"forbidden_pairs": [[0, 4], [0, 5], [1, 4], [1, 5], [2, 3], [2, 6], [2, 7], [3, 6], [3, 7], [4, 5]], "pairs": [[0, 1], [0, 4], [0, 5], [1, 4], [1, 5], [2, 3], [2, 6], [2, 7], [3, 6], [3, 7], [4, 5], [6, 7]]}, {"forbidden_pairs": [], "pairs": [[0, 2], [1, 3], [4, 6], [5, 7]]}, {"forbidden_pairs": [[0, 3], [0, 6], [0, 7], [1, 2], [1, 6], [1, 7], [2, 5], [3, 4], [4, 7], [5, 6]], "pairs": [[0, 3], [0, 6], [0, 7], [1, 2], [1, 6], [1, 7], [2, 4], [2, 5], [3, 4], [3, 5], [4, 7], [5, 6]]}], "parameter_identifiability": "EXACT_PROOF", "parameter_selection": "UNDERDETERMINED_BY_FROZEN_CONSTRAINTS", "primitive_isometry_obstruction": "GENERAL_ALGEBRAIC_THEOREM", "provenance": {"audit_scope": "DECLARED_SOURCE_SCOPE_NOT_AUTOMATED_REPOSITORY_SEARCH", "bridge_equation_supplied_to_executable": false, "bridge_status": "NO_DOCUMENTED_BRIDGE_IDENTIFIED_IN_REVIEWED_SOURCES", "no_bridge_impossibility_theorem": false, "observability": "UNRESOLVED", "reviewed": ["SIM14.6.py", "SIM16.0.py", "SIM16.1.py"], "sim1_13_status": "EXPLORATORY_NOT_FROZEN"}, "signed_complex_structure_covariance": "EXACT_PROOF", "sim": "16.2", "status": "EXACT_ALGEBRAIC_AUDIT_PASSED", "stochastic_commutation_obstruction": "GENERAL_ALGEBRAIC_THEOREM", "symplectic_complex_structure_equivalence": "SAME_ORBIT", "symplectic_conjugacy_is_operational_gauge": "NOT_ESTABLISHED"}
 END SIM16.2
+"""
