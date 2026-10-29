@@ -1,4 +1,4 @@
-
+"""
 SIM14.8 — AFFINE–PARTNER STABILIZER EXTENSION MAP
 =================================================
 
@@ -2185,7 +2185,10 @@ print(
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+"""
 
 
 
@@ -2326,3 +2329,4 @@ ALL SIM14.8 TARGET CHECKS PASS True
 No dynamics, LCO/ISP, J, metric, physical interpretation,D4, Weyl-group, 24-cell, F4, or E8 identification added.
 
 SIM14.8 COMPLETE — FROZEN SANITY CHECKS PASS
+"""
