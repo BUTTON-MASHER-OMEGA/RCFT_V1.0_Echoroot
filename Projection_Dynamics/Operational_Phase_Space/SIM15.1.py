@@ -1792,12 +1792,12 @@ if __name__ == "__main__":
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 
 
+"""
 RESULTS:
 
 
@@ -2420,3 +2420,4 @@ Interpretation gates:
 7. No signed symplectic form is inferred from H4 Euclidean geometry.
 
 END SIM15.1
+"""
