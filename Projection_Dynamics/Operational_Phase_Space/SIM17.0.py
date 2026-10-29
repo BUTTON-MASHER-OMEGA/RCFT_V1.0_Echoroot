@@ -749,7 +749,8 @@ print("END SIM17.0")
 
 
 
-##############Results:
+"""
+Results:
 
 
 
@@ -800,3 +801,53 @@ H | J0-compatible identity-preserving rephasings: 16
 H | affine-origin signatures: [{'shift': 0, 'graph': True, 'omega_sign': 1, 'basin_kernel': True}, {'shift': 1, 'graph': False, 'omega_sign': -1, 'basin_kernel': True}, {'shift': 2, 'graph': True, 'omega_sign': -1, 'basin_kernel': True}, {'shift': 3, 'graph': False, 'omega_sign': 1, 'basin_kernel': True}, {'shift': 4, 'graph': True, 'omega_sign': 1, 'basin_kernel': True}, {'shift': 5, 'graph': False, 'omega_sign': -1, 'basin_kernel': True}, {'shift': 6, 'graph': True, 'omega_sign': -1, 'basin_kernel': True}, {'shift': 7, 'graph': False, 'omega_sign': 1, 'basin_kernel': True}]
 TRUTH_PACKET_JSON={"affine_origin_controls": [{"basin_kernel": true, "graph": true, "omega_sign": 1, "shift": 0}, {"basin_kernel": true, "graph": false, "omega_sign": -1, "shift": 1}, {"basin_kernel": true, "graph": true, "omega_sign": -1, "shift": 2}, {"basin_kernel": true, "graph": false, "omega_sign": 1, "shift": 3}, {"basin_kernel": true, "graph": true, "omega_sign": 1, "shift": 4}, {"basin_kernel": true, "graph": false, "omega_sign": -1, "shift": 5}, {"basin_kernel": true, "graph": true, "omega_sign": -1, "shift": 6}, {"basin_kernel": true, "graph": false, "omega_sign": 1, "shift": 7}], "dynamical_sector_selection_derived": false, "graph_signatures": {"[0, 2, 4, 6]": [3, [4], 2], "[0, 2, 5, 7]": [2, [2, 2], 4]}, "h4_bridge_derived": false, "local_generators_preserve_survivors": true, "octonion": {"alternative": true, "associator_ranks": [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], "eta": [1, 1, 1, 1, 1, 1, 1, -1], "nonassoc_witness": [1, 2, 4], "norm_composition": true, "projectors_from_defect": 7, "signed_j0_lift": true}, "octonion_physical_necessity": "UNRESOLVED", "pre_octonion": {"class_counts": [2, 1, 2, 2], "fano_sectors": 7, "survivors": [[0, 2, 5, 7], [0, 2, 4, 6]]}, "quadratic": {"family_transport_covariance": true, "fixed_J_conservation": true, "positive_semidefinite": true, "rank_each": 4}, "scope": "Frozen OPS plus introduced octonionic multiplication; no physical dynamics", "sign_rephasings_with_frozen_J0": 16, "sim": "17.0", "status": "EXACT_ALGEBRAIC_AUDIT_PASSED"}
 END SIM17.0
+
+
+
+# ============================================================
+# CROSS-SIM NOTATION — SIM14.1 / SIM17.0
+# ============================================================
+#
+# Mathematical object          Existing       Cross-SIM notation
+# ------------------------------------------------------------
+# SIM14 Klein-four subgroup    H_i ~= V4       H_i
+# SIM17 quaternionic algebra   Quaternionic H  mathbb{H}_ell
+# Fano line                    Binary 4-set    ell in PG(2,2)
+# Real carrier subspace        4D in R^8       V_ell
+#
+# DISTINCTIONS
+# ------------
+# H_i          : V4 subgroup of the regular (C2)^3 action.
+# mathbb{H}_ell: Quaternionic subalgebra indexed by Fano
+#                line ell, using SIM17 signed multiplication.
+# V_ell        : Underlying real 4D vector space, used for
+#                symplectic ranks, restrictions, and projection.
+#
+# SIM17 SURVIVING FANO LINES
+# --------------------------
+# ell_1 = span_F2{001, 010}
+# ell_2 = span_F2{001, 110}
+#
+# mathbb{H}_{ell_1} = span_R{e_0, e_2, e_5, e_7}
+# mathbb{H}_{ell_2} = span_R{e_0, e_2, e_4, e_6}
+#
+# mathbb{H}_{ell_1} intersect mathbb{H}_{ell_2} ~= C
+#
+# alg<mathbb{H}_{ell_1}, mathbb{H}_{ell_2}> = O
+#
+# CROSS-LAYER CORRESPONDENCE
+# --------------------------
+# H_i <--> ell_i <--> mathbb{H}_{ell_i}
+#
+# The first correspondence uses SIM14's regular binary
+# action. These are related but distinct mathematical
+# objects, not interchangeable algebraic structures.
+#
+# Existing SIM14 H_i labels remain unchanged.
+# ell_1 and ell_2 label SIM17 survivors locally;
+# they do not renumber SIM14 subgroups.
+#
+# Scope: Algebraic notation only; no new physical claims.
+# ============================================================
+
+"""
