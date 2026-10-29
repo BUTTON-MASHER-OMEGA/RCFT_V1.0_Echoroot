@@ -1,3 +1,4 @@
+"""
 SIM14.7 — TRANSLATION–SYMPLECTIC INTERSECTION MAP
 ==================================================
 
@@ -1923,11 +1924,9 @@ print(
 
 
 
-#####################
 
 
-
-
+"""
 
 RESULTS:
 
@@ -2038,3 +2037,4 @@ S3 complement exists True
 semidirect product criterion True
 ALL SIM14.7 TARGET CHECKS PASS True
 No geometry, dynamics, J, metric, or physical interpretation added.
+"""
