@@ -352,12 +352,10 @@ print("END SIM16.1")
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~
 
 
 
-
-
+"""
 RESULTS:
 
 
@@ -398,3 +396,4 @@ G | partner t=+1.00: forbidden=0.000e+00, signed_J=0.000e+00
 H | EXACT GLOBAL CLASSIFICATION PASSED
 TRUTH_PACKET_JSON={"Nplus_global_local_family_dimension": 2, "graph_preserving_elements": {"Nplus": 2, "Npm": 4}, "group_orders": {"Nminus": 24, "Nplus": 24, "Npm": 48}, "local_symmetric_dimensions": {"Nplus": 3, "Npm": 2}, "local_tangent_dimensions": {"Nplus": 2, "Npm": 1}, "partner_matrix": [[0, 0, 1, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0]], "proof_method": "Exact invariant sparse metric space, G*Omega*G=Omega, and SPD eigenvalue criterion", "scope": "Frozen OPS, strong C8 metric sparsity", "signed_global_verdict": "PARTNER_FAMILY_ONLY", "signed_local_family": "G(t)=cosh(t)*I+sinh(t)*abs(Omega), t in R", "sim": "16.1", "status": "EXACT_PROOF", "symmetric_dimensions": {"Nplus": 6, "Npm": 4}, "tangent_dimensions": {"Nplus": 4, "Npm": 2}}
 END SIM16.1
+"""
