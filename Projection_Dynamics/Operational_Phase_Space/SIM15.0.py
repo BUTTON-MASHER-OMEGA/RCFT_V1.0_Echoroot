@@ -1721,13 +1721,11 @@ if __name__ == "__main__":
 
 
 
-~~~~~~~~~~~~~~~~~~~~~
 
 
 
 
-
-
+"""
 
 Results:
 
@@ -2026,3 +2024,4 @@ No F4/B4/A4 compatibility claimed.
 No projection-friction interpretation added.
 
 Elapsed seconds
+"""
