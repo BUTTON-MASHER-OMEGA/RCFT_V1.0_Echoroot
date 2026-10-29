@@ -1,4 +1,6 @@
+"""
 # SIM14.5 — AFFINE–SYMPLECTIC COMPATIBILITY CLASSIFICATION
+"""
 from itertools import permutations, combinations
 from collections import Counter, deque
 import numpy as np
@@ -206,7 +208,8 @@ assert all(compose(a,b) in PLUS for a in PLUS for b in PLUS)
 
 
 
----
+
+"""
 
 
 
@@ -297,3 +300,4 @@ SIM14.5 COMPLETE — classification sanity checks PASS
 
 
 ** Process exited - Return Code: 0 **
+"""
