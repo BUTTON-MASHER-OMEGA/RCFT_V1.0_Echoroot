@@ -1,4 +1,4 @@
-
+"""
 SIM14.4 — Affine Phase-Space Structure Map 
 ==========================================
 
@@ -1831,10 +1831,15 @@ print(
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
+"""
+
+
+
+
+RESULTS:
 
 
 
@@ -2182,3 +2187,4 @@ INTERPRETIVE CEILING:
 
 
 SIM14.4 COMPLETE — bookkeeping sanity checks PASS
+"""
