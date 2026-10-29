@@ -2600,14 +2600,10 @@ main()
 
 
 
-~~~~~~~~~~~~~~~
 
 
 
-
-
-
-
+"""
 RESULTS:
 
 
@@ -2950,3 +2946,4 @@ ALL_HARD_GATES_A_TO_J                           : True
 21. No downstream success rescues an upstream failed gate.
 
 END SIM15.5
+"""
