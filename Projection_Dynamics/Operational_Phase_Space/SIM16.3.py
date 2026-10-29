@@ -618,13 +618,7 @@ print("END SIM16.3")
 
 
 
-#################
-
-
-
-
-
-
+"""
 
 RESULTS:
 
@@ -676,3 +670,4 @@ PASS | F signed-group graph automorphism count
 F | Npm graph-preserving: 4
 TRUTH_PACKET_JSON={"Npm_graph_preserving": 4, "Npm_sector_nonpreserving": 32, "Npm_sector_preserving": 16, "adjacency_restrictions_similar": false, "adjacency_sector_traces": [2, -2], "alternative_M1_valid": true, "alternative_basin_obstructs_J0": true, "complex_quotient_descent": true, "direct_symplectic_form_descent": false, "explicit_nondescending_symplectic_witness": [["1", "0", "2", "0", "0", "0", "0", "0"], ["0", "1", "0", "0", "0", "0", "0", "0"], ["0", "0", "1", "0", "0", "0", "0", "0"], ["0", "0", "0", "1", "0", "0", "0", "0"], ["0", "0", "0", "0", "1", "0", "0", "0"], ["0", "0", "0", "0", "0", "1", "0", "0"], ["0", "0", "0", "0", "0", "0", "1", "0"], ["0", "0", "0", "0", "0", "0", "0", "1"]], "generic_complex_control_obstructs_descent": true, "intrinsic_sector_swap_symplectic": true, "new_dynamics": false, "new_gauge_group": false, "operational_observability": "UNRESOLVED", "orders": {"AGL": 1344, "Nminus": 24, "Nplus": 24, "Npm": 48, "T": 8}, "parameter_recovery": "t=asinh(tr(K_sector G_sector)/4)", "parameter_selection": "UNRESOLVED", "ranks": {"B": 4, "Omega_minus": 4, "Omega_plus": 4, "Vminus": 4, "Vplus": 4}, "scope": "Frozen OPS, linear projection, no ISP or physical boundary", "sector_equal_in_normalized_frozen_bases": true, "sector_swap_preserves_B": false, "sector_swap_preserves_adjacency": false, "sector_swap_preserves_p": false, "sim": "16.3", "source_shas": {"SIM16.0.py": "e01b90b751353273241e6c516e30b16571dcbfdf", "SIM16.1.py": "76970c358d128d136782310a2b6afa41efd793f7", "SIM16.2.py": "d8acde23c8ee0c45de29aa88c4005ab4efa26e26"}, "split_induced_symplectic_form": true, "status": "EXACT_ALGEBRAIC_AUDIT_PASSED", "symplectic_conjugacy_descent": true}
 END SIM16.3
+"""
