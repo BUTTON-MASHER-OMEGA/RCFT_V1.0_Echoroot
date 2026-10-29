@@ -1997,7 +1997,13 @@ print("and prove the criterion analytically before promoting it.")
 
 
 
-~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+"""
 
 
 
@@ -2892,3 +2898,4 @@ OUTCOME A — EXACT ORBIT-BRIDGE LAW: within the complete commuting fixed-point-
 If an exact iff criterion has appeared, stop the numerical sequence
 
 and prove the criterion analytically before promoting it.
+"""
