@@ -50,6 +50,7 @@
 #
 # =============================================================================
 
+
 from itertools import permutations, combinations, product
 from collections import Counter, defaultdict, deque
 
@@ -2259,4 +2260,50 @@ Interpretive ceiling:
 1338 |
 
 SIM14.1 classifies exact finite structure induced by the frozen SIM14.0 operations. Any recovered PG(2,2) structure is an incidence property of the derived (Z_2)^3 algebra. No octonionic, nonassociative, E8, H4, spinorial, quantum, or physical identification is made.
+
+# ============================================================
+# CROSS-SIM NOTATION — SIM14.1 / SIM17.0
+# ============================================================
+#
+# Mathematical object          Existing       Cross-SIM notation
+# ------------------------------------------------------------
+# SIM14 Klein-four subgroup    H_i ~= V4       H_i
+# SIM17 quaternionic algebra   Quaternionic H  mathbb{H}_ell
+# Fano line                    Binary 4-set    ell in PG(2,2)
+# Real carrier subspace        4D in R^8       V_ell
+#
+# DISTINCTIONS
+# ------------
+# H_i          : V4 subgroup of the regular (C2)^3 action.
+# mathbb{H}_ell: Quaternionic subalgebra indexed by Fano
+#                line ell, using SIM17 signed multiplication.
+# V_ell        : Underlying real 4D vector space, used for
+#                symplectic ranks, restrictions, and projection.
+#
+# SIM17 SURVIVING FANO LINES
+# --------------------------
+# ell_1 = span_F2{001, 010}
+# ell_2 = span_F2{001, 110}
+#
+# mathbb{H}_{ell_1} = span_R{e_0, e_2, e_5, e_7}
+# mathbb{H}_{ell_2} = span_R{e_0, e_2, e_4, e_6}
+#
+# mathbb{H}_{ell_1} intersect mathbb{H}_{ell_2} ~= C
+#
+# alg<mathbb{H}_{ell_1}, mathbb{H}_{ell_2}> = O
+#
+# CROSS-LAYER CORRESPONDENCE
+# --------------------------
+# H_i <--> ell_i <--> mathbb{H}_{ell_i}
+#
+# The first correspondence uses SIM14's regular binary
+# action. These are related but distinct mathematical
+# objects, not interchangeable algebraic structures.
+#
+# Existing SIM14 H_i labels remain unchanged.
+# ell_1 and ell_2 label SIM17 survivors locally;
+# they do not renumber SIM14 subgroups.
+#
+# Scope: Algebraic notation only; no new physical claims.
+# ============================================================
 """
